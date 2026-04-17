@@ -1,0 +1,55 @@
+services:
+  postgresql:
+    image: postgres:15
+    container_name: transcendence_postgresql
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+
+  backend:
+    build: ./backend
+    container_name: transcendence_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - frontend_net
+
+  frontend:
+    build: ./frontend
+    container_name: transcendence_frontend
+    restart: unless-stopped
+    networks:
+      - frontend_net
+
+  nginx:
+    build: ./nginx
+    container_name: transcendence_nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - frontend_net
+
+volumes:
+  postgres_data:
+
+networks:
+  backend_net:
+  frontend_net:
