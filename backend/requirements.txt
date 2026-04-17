@@ -1,0 +1,26 @@
+# Web framework
+Django==4.2.11
+djangorestframework==3.15.1
+
+# Base de données
+# psycopg2-binary==2.9.9
+psycopg2-binary>=2.9.9
+
+# Authentification JWT
+djangorestframework-simplejwt==5.3.1
+
+# CORS (pour le frontend React)
+django-cors-headers==4.3.1
+
+# Variables d'environnement
+python-decouple==3.8
+
+# Rate limiting (Public API)
+django-ratelimit==4.1.0
+
+# WebSockets (pour Roman)
+channels==4.0.0
+channels-redis==4.2.0
+
+# Linter
+flake8==7.0.0
