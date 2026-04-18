@@ -48,8 +48,8 @@ LOCAL_APPS_SYDNEY = [
 
 # Apps autres Thaïs/Roman
 LOCAL_APPS_TEAM = [
-    'users',    # Thaïs — AUTH_USER_MODEL
-    'bets',     # Roman — paris & wallet
+#    'users',    # Thaïs — AUTH_USER_MODEL
+#    'bets',     # Roman — paris & wallet
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS_SYDNEY + LOCAL_APPS_TEAM
