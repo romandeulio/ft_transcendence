@@ -36,5 +36,5 @@ urlpatterns = [
 	# ===========================================================================
 	# APPS autres
 	# ===========================================================================
-	path('api/bets/', include('bets.urls')),	  # Roman
+	# path('api/bets/', include('bets.urls')),  # Roman — commenté en attendant la création de l'app
 ]
