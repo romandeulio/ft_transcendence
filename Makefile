@@ -43,4 +43,7 @@ exec-db:
 ps:
 	$(COMPOSE) ps
 
-.PHONY: all up down restart clean fclean re logs exec-backend exec-frontend exec-db ps
+backup:
+	docker exec transcendence_backup /backup.sh
+
+.PHONY: all up down restart clean fclean re logs exec-backend exec-frontend exec-db ps backup

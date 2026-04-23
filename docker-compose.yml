@@ -22,6 +22,19 @@ services:
     networks:
       - backend_net
 
+  backup:
+    build: ./backup
+    container_name: transcendence_backup
+    env_file:
+      - .env
+    volumes:
+      - backup_data:/backups
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - backend_net
+
   backend:
     build: ./backend
     container_name: transcendence_backend
@@ -55,6 +68,7 @@ services:
     restart: unless-stopped
     ports:
       - "443:443"
+      - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -65,6 +79,7 @@ services:
 
 volumes:
   postgres_data:
+  backup_data:
 
 networks:
   backend_net:

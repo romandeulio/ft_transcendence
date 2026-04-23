@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
 	TokenObtainPairView,
 	TokenRefreshView,
 )
+from . import health
 
 urlpatterns = [
 
@@ -37,4 +38,6 @@ urlpatterns = [
 	# APPS autres
 	# ===========================================================================
 	# path('api/bets/', include('bets.urls')),  # Roman — commenté en attendant la création de l'app
+
+	path('health', health.health),
 ]
