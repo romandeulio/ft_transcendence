@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WS Test Panel</title>
+  <style>
+    body { font-family: Arial; background: #111; color: #eee; }
+    .box { border: 1px solid #444; padding: 10px; margin: 10px; }
+    button { margin: 5px; }
+    textarea { width: 100%; height: 80px; }
+    .log { background: #000; padding: 5px; height: 100px; overflow: auto; }
+  </style>
+</head>
+<body>
+
+<h1>🔥 WebSocket Test Panel</h1>
+
+<div>
+  Token: <input id="token" placeholder="optionnel (JWT)">
+</div>
+
+<!-- CHAT -->
+<div class="box">
+  <h2>Chat WS</h2>
+  <button onclick="connect('chat')">Connect</button>
+  <button onclick="disconnect('chat')">Disconnect</button>
+  <button onclick="sendMsg('chat')">Send</button>
+  <textarea id="chat-msg">{ "message": "hello chat" }</textarea>
+  <div class="log" id="chat-log"></div>
+</div>
+
+<!-- GAME
+<div class="box">
+  <h2>Game WS</h2>
+  <button onclick="connect('game')">Connect</button>
+  <button onclick="disconnect('game')">Disconnect</button>
+  <button onclick="sendMsg('game')">Send</button>
+  <textarea id="game-msg">{ "action": "move" }</textarea>
+  <div class="log" id="game-log"></div>
+</div> -->
+
+<!-- BET -->
+<div class="box">
+  <h2>Bet WS</h2>
+  <button onclick="connect('bet')">Connect</button>
+  <button onclick="disconnect('bet')">Disconnect</button>
+  <button onclick="sendMsg('bet')">Send</button>
+  <textarea id="bet-msg">{ "amount": 10 }</textarea>
+  <div class="log" id="bet-log"></div>
+</div>
+
+<script>
+const sockets = {};
+
+function log(type, msg) {
+  const el = document.getElementById(type + "-log");
+  el.innerHTML += msg + "<br>";
+  el.scrollTop = el.scrollHeight;
+}
+
+function getUrl(type) {
+  const token = document.getElementById("token").value;
+
+  const protocol = location.protocol === "https:" ? "wss" : "ws";
+  let url = `${protocol}://${location.host}/ws/${type}/`;
+
+  if (token) {
+    url += `?token=${token}`;
+  }
+
+  return url;
+}
+
+function connect(type) {
+  if (sockets[type]) {
+    log(type, "⚠️ Already connected");
+    return;
+  }
+
+  const url = getUrl(type);
+  log(type, "Connecting to " + url);
+
+  const socket = new WebSocket(url);
+
+  socket.onopen = () => log(type, "✅ Connected");
+  socket.onmessage = (e) => log(type, "📩 " + e.data);
+  socket.onerror = () => log(type, "❌ Error");
+  socket.onclose = () => {
+    log(type, "🔌 Closed");
+    delete sockets[type];
+  };
+
+  sockets[type] = socket;
+}
+
+function disconnect(type) {
+  if (sockets[type]) {
+    sockets[type].close();
+  }
+}
+
+function sendMsg(type) {
+  const socket = sockets[type];
+  if (!socket) {
+    log(type, "❌ Not connected");
+    return;
+  }
+
+  const msg = document.getElementById(type + "-msg").value;
+
+  try {
+    socket.send(msg);
+    log(type, "➡️ Sent: " + msg);
+  } catch {
+    log(type, "❌ Send failed");
+  }
+}
+</script>
+
+</body>
+</html>
