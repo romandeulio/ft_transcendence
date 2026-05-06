@@ -1,0 +1,59 @@
+.wrap {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--orange-light);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1.5px solid var(--beige);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(64,104,219,0.12);
+  z-index: 999;
+  list-style: none;
+  overflow: hidden;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.item:hover {
+  background: var(--bg2);
+}
+.item + .item {
+  border-top: 1px solid var(--bg2);
+}
+
+.login {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.name {
+  font-size: 11px;
+  color: var(--ink3);
+}
