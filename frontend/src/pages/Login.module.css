@@ -1,0 +1,107 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg3);
+  padding: 20px;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+
+.logo {
+  font-size: 36px;
+}
+
+.title {
+  font-size: 26px;
+  font-family: var(--font-title);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--ink3);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.btn42 {
+  width: 100%;
+  padding: 12px;
+  background: var(--ink);
+  color: white;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.btn42:hover { background: #2A1510; }
+
+.divider {
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink3);
+  position: relative;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--beige);
+}
+
+.divider::before { left: 0; }
+.divider::after  { right: 0; }
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--orange-light);
+}
+
+.btnLogin {
+  width: 100%;
+  padding: 12px;
+  background: var(--orange);
+  color: white;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.btnLogin:hover { background: #A02830; }
