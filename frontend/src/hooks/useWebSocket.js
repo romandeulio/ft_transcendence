@@ -1,13 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-
-function buildAbsoluteUrl(url) {
-  if (!url) return null
-  if (/^wss?:\/\//i.test(url)) return url
-  if (typeof window === 'undefined') return null
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const path = url.startsWith('/') ? url : `/${url}`
-  return `${proto}//${window.location.host}${path}`
-}
+import { useState, useEffect, useRef } from 'react'
 
 export function useWebSocket(url) {
   const [data, setData] = useState(null)
@@ -15,41 +6,20 @@ export function useWebSocket(url) {
   const wsRef = useRef(null)
 
   useEffect(() => {
-    const absUrl = buildAbsoluteUrl(url)
-    if (!absUrl) return
-
-    let cancelled = false
-    let ws
+    if (!url) return
     try {
-      ws = new WebSocket(absUrl)
-    } catch {
-      return
-    }
-    wsRef.current = ws
-
-    ws.onopen = () => { if (!cancelled) setConnected(true) }
-    ws.onmessage = (e) => {
-      if (cancelled) return
-      try { setData(JSON.parse(e.data)) } catch { setData(e.data) }
-    }
-    ws.onclose = () => { if (!cancelled) setConnected(false) }
-    ws.onerror = () => { if (!cancelled) setConnected(false) }
-
-    return () => {
-      cancelled = true
-      wsRef.current = null
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close()
+      const ws = new WebSocket(url)
+      wsRef.current = ws
+      ws.onopen = () => setConnected(true)
+      ws.onmessage = (e) => {
+        try { setData(JSON.parse(e.data)) } catch { setData(e.data) }
       }
+      ws.onclose = () => setConnected(false)
+      return () => ws.close()
+    } catch {
+      // WebSocket unavailable in dev
     }
   }, [url])
 
-  const send = useCallback((payload) => {
-    const ws = wsRef.current
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false
-    ws.send(typeof payload === 'string' ? payload : JSON.stringify(payload))
-    return true
-  }, [])
-
-  return { data, connected, send }
+  return { data, connected }
 }

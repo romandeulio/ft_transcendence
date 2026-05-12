@@ -1,38 +1,30 @@
-from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth import get_user_model
 from urllib.parse import parse_qs
 
 User = get_user_model()
 
 
-@database_sync_to_async
-def _get_user(user_id):
-    try:
-        return User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return AnonymousUser()
-
-
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
+        query_string = scope["query_string"].decode()
+        
         scope["user"] = AnonymousUser()
-        scope["ws_username"] = None
 
-        query_params = parse_qs(scope["query_string"].decode())
-
-        token = (query_params.get("token") or [None])[0]
-        if token:
-            try:
-                access_token = AccessToken(token)
-                scope["user"] = await _get_user(access_token["user_id"])
-            except Exception as e:
-                print(f"JWT auth error: {e}")
-
-        ws_username = (query_params.get("username") or [None])[0]
-        if ws_username:
-            scope["ws_username"] = ws_username.strip()[:32] or None
+        if query_string:
+            query_params = parse_qs(query_string)
+            token_list = query_params.get("token")
+            token = token_list[0] if token_list else None
+            
+            if token:
+                try:
+                    access_token = AccessToken(token)
+                    user = User.objects.get(id=access_token["user_id"])
+                    scope["user"] = user
+                except Exception as e:
+                    print(f"JWT auth error: {e}")
+                    pass
 
         return await super().__call__(scope, receive, send)

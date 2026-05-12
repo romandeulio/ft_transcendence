@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider }  from './context/AuthContext'
 import { NotifProvider } from './context/NotifContext'
 import { BetsProvider }  from './context/BetsContext'
-import { QueueProvider } from './context/QueueContext'
 import Status from './pages/Status'
 import Accueil     from './pages/Accueil'
 import Classement  from './pages/Classement'
@@ -20,7 +19,6 @@ export default function App() {
     <AuthProvider>
       <NotifProvider>
         <BetsProvider>
-          <QueueProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/"              element={<Navigate to="/accueil" replace />} />
@@ -34,7 +32,6 @@ export default function App() {
               <Route path="/login"         element={<Login />} />
             </Routes>
           </BrowserRouter>
-          </QueueProvider>
         </BetsProvider>
       </NotifProvider>
       <Status />
