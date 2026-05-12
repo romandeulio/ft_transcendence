@@ -19,7 +19,7 @@ COPY . .
 # Server port Vite
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["npm", "run", "dev"]
 
 # ====================================================
 # VERSION PROD (à activer pour la démo finale)

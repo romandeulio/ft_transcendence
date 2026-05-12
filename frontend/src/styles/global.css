@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* ── New palette ── */
+  --color-primary:   #4068DB;   /* bleu principal */
+  --color-accent:    #E6B447;   /* or accent */
+  --color-secondary: #57722F;   /* vert succès */
+  --color-danger:    #CD3122;   /* rouge CTA / destructif */
+
+  /* ── Named palette tokens ── */
+  --blue:        #4068DB;
+  --gold:        #E6B447;
+  --forest:      #57722F;
+  --red-vivid:   #CD3122;
+  --cream:       #F5F7FF;
+  --blue-light:  #C8D3F0;
+  --blue-medium: #4068DB;
+  --navy:        #4068DB;
+
+  /* ── Design System — Light mode ── */
+  --bg:             #F5F7FF;
+  --bg2:            #EBF0FC;
+  --bg3:            #F5F7FF;
+  --border:         #C8D3F0;
+  --primary:        #CD3122;
+  --sidebar-bg:     #001A57;
+  --topbar-bg:      #001A57;
+  --text-primary:   #1A2B5E;
+  --text-secondary: #4068DB;
+
+  /* ── Legacy variable mapping (keeps existing CSS working) ── */
+  --orange:         #CD3122;
+  --orange-light:   #CD3122;
+  --orange-pale:    #FBEAE8;
+  --yellow:         #E6B447;
+  --yellow-pale:    #FDF6E0;
+  --green:          #57722F;
+  --green-pale:     #E4EDD4;
+  --beige:          #C8D3F0;
+  --beige-dark:     #4068DB;
+  --ink:            #1A2B5E;
+  --ink2:           #4068DB;
+  --ink3:           #7A8FD0;
+  --white:          #F5F7FF;
+  --red:            #CD3122;
+  --red-pale:       #FBEAE8;
+
+  --font-display: 'Inter', -apple-system, sans-serif;
+  --font-title:   'Inter', -apple-system, sans-serif;
+  --font-mono:    'Bebas Neue', 'Courier New', monospace;
+}
+
+[data-theme="dark"] {
+  --bg:             #111827;
+  --bg2:            #1E2D5E;
+  --bg3:            #0C1220;
+  --border:         #2A3A7A;
+  --primary:        #CD3122;
+  --sidebar-bg:     #0C1220;
+  --topbar-bg:      #0C1220;
+  --text-primary:   #F5F7FF;
+  --text-secondary: #C8D3F0;
+
+  --orange:         #CD3122;
+  --orange-light:   #CD3122;
+  --orange-pale:    #2A1210;
+  --yellow:         #2A3A7A;
+  --yellow-pale:    #111827;
+  --green:          #C8D3F0;
+  --green-pale:     #111827;
+  --beige:          #2A3A7A;
+  --beige-dark:     #C8D3F0;
+  --ink:            #F5F7FF;
+  --ink2:           #C8D3F0;
+  --ink3:           #7A8FD0;
+  --white:          #1E2D5E;
+  --red:            #CD3122;
+  --red-pale:       #2A1210;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg3);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h2, h3 {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

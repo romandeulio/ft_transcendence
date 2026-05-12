@@ -1,0 +1,78 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.default {
+  background: var(--bg2);
+  color: #000000;
+  border: 1px solid var(--beige);
+}
+
+.live {
+  background: #CD3122;
+  color: #FFFFFF;
+  border: 1px solid #CD3122;
+}
+
+.live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  margin-right: 5px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.soon {
+  background: #EBF0FC;
+  color: #000000;
+  border: 1px solid #EBF0FC;
+}
+
+.done {
+  background: var(--bg2);
+  color: #000000;
+  border: 1px solid var(--beige);
+}
+
+.win {
+  background: #4068DB;
+  color: #FFFFFF;
+  border: 1px solid #4068DB;
+}
+
+.loss {
+  background: #CD3122;
+  color: #FFFFFF;
+  border: 1px solid #CD3122;
+}
+
+.season {
+  background: #EBF0FC;
+  color: #000000;
+  border: 1px solid #EBF0FC;
+}
+
+.orange {
+  background: #CD3122;
+  color: #FFFFFF;
+  border: 1px solid #CD3122;
+}
+
+.gold {
+  background: #4068DB;
+  color: #FFFFFF;
+  border: 1px solid #4068DB;
+}
