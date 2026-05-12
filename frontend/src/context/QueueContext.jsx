@@ -7,7 +7,10 @@ const QueueContext = createContext(null)
 export function QueueProvider({ children }) {
   const { user } = useAuth()
   const [queue, setQueue] = useState([])
-  const { data, connected, send } = useWebSocket(user ? '/ws/queue/' : null)
+  const wsUrl = user?.username
+    ? `/ws/queue/?username=${encodeURIComponent(user.username)}`
+    : null
+  const { data, connected, send } = useWebSocket(wsUrl)
 
   // Sync WebSocket messages to queue state
   useEffect(() => {
