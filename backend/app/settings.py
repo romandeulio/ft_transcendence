@@ -49,6 +49,7 @@ LOCAL_APPS_SYDNEY = [
 # Apps autres Thaïs/Roman
 LOCAL_APPS_TEAM = [
     'users',    # Thaïs — AUTH_USER_MODEL
+#    'realtime', # Roman — WebSockets
 #    'bets',     # Roman — paris & wallet
 ]
 

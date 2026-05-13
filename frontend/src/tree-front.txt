@@ -1,0 +1,86 @@
+tree
+.
+├── App.css
+├── App.jsx
+├── assets
+│   ├── hero.png
+│   ├── react.svg
+│   └── vite.svg
+├── components
+│   ├── bracket
+│   │   ├── BracketTree.jsx
+│   │   ├── BracketTree.module.css
+│   │   ├── PlayerBlock.jsx
+│   │   └── PlayerBlock.module.css
+│   ├── layout
+│   │   ├── Shell.jsx
+│   │   ├── Shell.module.css
+│   │   ├── Sidebar.jsx
+│   │   ├── Sidebar.module.css
+│   │   ├── Topbar.jsx
+│   │   └── Topbar.module.css
+│   └── ui
+│       ├── AvatarCreator.jsx
+│       ├── AvatarCreator.module.css
+│       ├── AvatarEditor.jsx
+│       ├── AvatarEditor.module.css
+│       ├── Avatar.jsx
+│       ├── Avatar.module.css
+│       ├── BetButton.jsx
+│       ├── BetButton.module.css
+│       ├── Card.jsx
+│       ├── Card.module.css
+│       ├── JouerMode.jsx
+│       ├── JouerMode.module.css
+│       ├── LoginInput.jsx
+│       ├── LoginInput.module.css
+│       ├── Modal.jsx
+│       ├── Modal.module.css
+│       ├── PerformanceChart.jsx
+│       ├── PerformanceChart.module.css
+│       ├── Pill.jsx
+│       ├── Pill.module.css
+│       ├── ProgressBar.jsx
+│       ├── ProgressBar.module.css
+│       ├── QueueItem.jsx
+│       ├── QueueItem.module.css
+│       ├── StatCard.jsx
+│       ├── StatCard.module.css
+│       ├── Toggle.jsx
+│       └── Toggle.module.css
+├── context
+│   ├── AuthContext.jsx
+│   ├── BetsContext.jsx
+│   └── NotifContext.jsx
+├── hooks
+│   ├── useAuth.js
+│   ├── useQueue.js
+│   └── useWebSocket.js
+├── index.css
+├── main.jsx
+├── mock
+│   ├── mockBets.js
+│   ├── mockPlayers.js
+│   └── mockQueue.js
+├── pages
+│   ├── Accueil.jsx
+│   ├── Accueil.module.css
+│   ├── Classement.jsx
+│   ├── Classement.module.css
+│   ├── Login.jsx
+│   ├── Login.module.css
+│   ├── Parametres.jsx
+│   ├── Parametres.module.css
+│   ├── Paris.jsx
+│   ├── Paris.module.css
+│   ├── Planning.jsx
+│   ├── Planning.module.css
+│   ├── Profil.jsx
+│   ├── Profil.module.css
+│   ├── Status.jsx
+│   ├── Tournois.jsx
+│   └── Tournois.module.css
+└── styles
+    └── global.css
+
+11 directories, 72 files

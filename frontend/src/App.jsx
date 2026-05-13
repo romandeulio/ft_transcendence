@@ -30,11 +30,11 @@ export default function App() {
               <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
               <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
               <Route path="/login"         element={<Login />} />
+			  <Route path="/status" element={<Status />} />
             </Routes>
           </BrowserRouter>
         </BetsProvider>
       </NotifProvider>
-      <Status />
     </AuthProvider>
   )
 }
