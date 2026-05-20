@@ -1,0 +1,250 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: #0e1a28;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Rotation portrait → paysage */
+@media (orientation: portrait) {
+  .overlay {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    width: 100vh;
+    height: 100vw;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+  }
+}
+
+/* ── Chrono ── */
+.chrono {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Bebas Neue', 'Courier New', Courier, monospace;
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: 8px;
+  color: #F5F7FF;
+  z-index: 10;
+  text-shadow: 0 0 20px rgba(176,222,223,0.4);
+}
+
+/* Quitter discret */
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  background: rgba(250,253,249,0.08);
+  border: 1px solid rgba(250,253,249,0.15);
+  color: rgba(250,253,249,0.45);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 10;
+}
+.closeBtn:hover { background: rgba(250,253,249,0.14); color: rgba(250,253,249,0.7); }
+
+/* ── Terrain ── */
+.field {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.sideRed, .sideBlue {
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: filter 0.1s;
+  position: relative;
+}
+.sideRed:active, .sideBlue:active { filter: brightness(1.12); }
+
+.sideRed  { background: #CD3122; }
+.sideBlue { background: #4068DB; }
+
+.sideLabel {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(250,253,249,0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.sideScore {
+  font-family: 'Bebas Neue', 'Courier New', Courier, monospace;
+  font-size: 110px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: #F5F7FF;
+  line-height: 1;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.25);
+}
+
+.demiIndicator {
+  position: absolute;
+  top: 20px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #F5F7FF;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* ── Centre ── */
+.center {
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #0e1a28;
+  padding: 16px 8px;
+}
+
+.vsText {
+  font-family: 'Bebas Neue', 'Courier New', Courier, monospace;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: rgba(176,222,223,0.35);
+}
+
+/* Bouton Fin de partie — central, très visible */
+.finPartieBtn {
+  width: 100%;
+  padding: 14px 8px;
+  border-radius: 10px;
+  background: #F5F7FF;
+  border: none;
+  color: #4068DB;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  transition: opacity 0.15s, transform 0.1s;
+}
+.finPartieBtn:hover { opacity: 0.92; transform: scale(1.03); }
+.finPartieBtn:active { transform: scale(0.97); }
+
+.centerBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.demiBtn {
+  width: 100%;
+  padding: 10px 8px;
+  border-radius: 9px;
+  border: 2px solid rgba(205,49,34,0.5);
+  background: rgba(205,49,34,0.1);
+  color: #CD3122;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.demiBtnActive {
+  background: #CD3122;
+  color: #F5F7FF;
+  border-color: #CD3122;
+}
+
+.gamelleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+
+.gamelleBtn {
+  width: 100%;
+  padding: 9px 6px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(176,222,223,0.2);
+  background: rgba(176,222,223,0.07);
+  color: rgba(176,222,223,0.6);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gamelleBtn:hover { background: rgba(176,222,223,0.14); }
+
+/* ── Écran de fin ── */
+.endScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  height: 100%;
+  width: 100%;
+}
+
+.endTitle {
+  font-family: 'Bebas Neue', 'Courier New', Courier, monospace;
+  font-size: 56px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.endScore {
+  font-family: 'Bebas Neue', 'Courier New', Courier, monospace;
+  font-size: 96px;
+  letter-spacing: 8px;
+  color: #F5F7FF;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.endVs {
+  color: rgba(176,222,223,0.4);
+  font-size: 64px;
+}
+
+.endTime {
+  font-size: 14px;
+  color: rgba(176,222,223,0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.endCloseBtn {
+  padding: 14px 32px;
+  border-radius: 10px;
+  background: #F5F7FF;
+  border: none;
+  color: #4068DB;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+.endCloseBtn:hover { opacity: 0.88; }

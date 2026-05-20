@@ -24,6 +24,7 @@ django-ratelimit==4.1.0
 # WebSockets (pour Roman)
 channels==4.0.0
 channels-redis==4.2.0
+daphne==4.1.0
 
 # Linter
 flake8==7.0.0

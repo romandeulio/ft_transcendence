@@ -1,0 +1,431 @@
+.content {
+  flex: 1;
+
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg3);
+}
+
+.heroCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heroLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatarWrap {
+  flex-shrink: 0;
+}
+
+.avatarClickable {
+  position: relative;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: visible;
+}
+
+.avatarEditBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--yellow);
+  border: 2px solid var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.editAvatarBtn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: #EBF0FC;
+  border: 1.5px solid #4068DB;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: opacity 0.12s;
+}
+.editAvatarBtn:hover { opacity: 0.82; }
+
+.heroInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heroName {
+  font-family: var(--font-title);
+  font-size: 22px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.heroLogin {
+  font-size: 12px;
+  color: var(--ink2);
+  display: flex;
+  gap: 5px;
+}
+
+.loginLabel {
+  color: var(--ink3);
+}
+
+.heroBadges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.heroElo {
+  text-align: right;
+}
+
+.eloVal {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.eloDelta {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .statsGrid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.leftCol, .rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.counter {
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.teammateRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+
+.teammateRow:last-child {
+  border-bottom: none;
+}
+
+.teammateName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.planBtn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #4068DB;
+  border: 1px solid #4068DB;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.addTeammate {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1.5px dashed var(--beige-dark);
+}
+
+.addInput {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.addInput:focus {
+  outline: none;
+  border-color: var(--orange-light);
+}
+
+.addBtn {
+  padding: 7px 12px;
+  border-radius: 7px;
+  background: #CD3122;
+  border: none;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.divider {
+  height: 16px;
+}
+
+.opponentRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+
+.opponentRow:last-child {
+  border-bottom: none;
+}
+
+.opponentName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.winrate {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.lossrate {
+  font-size: 12px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.fearedNote {
+  font-size: 11px;
+  color: var(--ink3);
+  font-style: italic;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--bg2);
+  margin-bottom: 4px;
+}
+
+.teammateNote {
+  font-size: 11px;
+  color: var(--ink3);
+  font-style: italic;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--bg2);
+  margin-bottom: 4px;
+}
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+
+.matchRow:last-child {
+  border-bottom: none;
+}
+
+.matchInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.matchVs {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.matchScore {
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.matchRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.eloPos { font-size: 12px; font-weight: 700; color: var(--green); }
+.eloNeg { font-size: 12px; font-weight: 700; color: var(--red); }
+
+.matchDate {
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.rightCol > * + * {
+  margin-top: 16px;
+}
+
+.seasonRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+
+.seasonRow:last-child {
+  border-bottom: none;
+}
+
+.seasonName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  flex: 0 0 70px;
+}
+
+.seasonRank {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.noPrize {
+  color: var(--ink3);
+  font-size: 13px;
+}
+
+.matchSearch {
+  margin-bottom: 10px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--ink);
+}
+.searchInput:focus {
+  outline: none;
+  border-color: var(--orange-light);
+}
+
+.matchNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bg2);
+  margin-top: 4px;
+}
+
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navBtn:hover:not(:disabled) { background: var(--bg3); }
+.navBtn:disabled { opacity: 0.3; cursor: default; }
+
+.navInfo {
+  font-size: 12px;
+  color: var(--ink3);
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+.noMatch {
+  font-size: 12px;
+  color: var(--ink3);
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .heroElo {
+    text-align: left;
+  }
+
+  .planBtn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}

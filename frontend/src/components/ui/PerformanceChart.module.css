@@ -1,0 +1,50 @@
+.wrapper {
+  background: var(--white);
+  border: 1.5px solid var(--beige);
+  border-radius: 14px;
+  padding: 16px 18px 12px;
+}
+
+.header {
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-family: var(--font-display);
+}
+
+.controls {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.controlLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink3);
+  font-family: var(--font-display);
+}
+
+.controlSelect {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--beige);
+  background: var(--bg2);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-display);
+}

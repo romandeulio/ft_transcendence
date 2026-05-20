@@ -1,0 +1,541 @@
+.content {
+  flex: 1;
+  padding: 20px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg3);
+}
+
+/* ── Dropdown saison ── */
+.seasonRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seasonLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+
+.seasonSelect {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+}
+.seasonSelect:focus { outline: none; border-color: var(--orange-light); }
+
+/* ── Ligne des deux classements — même hauteur ── */
+.rankingRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* ── Bloc ELO commun ── */
+.eloCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.eloHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--beige);
+}
+
+.eloTitle {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-title);
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.eloSeason {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink3);
+}
+
+.eloBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.colHead {
+  display: flex;
+  align-items: center;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--beige);
+  background: var(--bg2);
+}
+
+.headName, .headTeam {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink3);
+  margin-left: 38px;
+}
+
+.headVd {
+  width: 54px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink3);
+  text-align: center;
+}
+
+.headElo {
+  width: 64px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink3);
+  text-align: right;
+  padding-right: 4px;
+}
+
+.headRank {
+  width: 64px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink3);
+  text-align: center;
+  border-left: 1px solid var(--beige);
+  margin-left: 8px;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--bg2);
+  transition: background 0.1s;
+}
+.playerRow:last-child { border-bottom: none; }
+.playerRow:hover      { background: var(--bg2); }
+.playerRowMe          { background: rgba(0,0,0,0.06) !important; }
+.playerRowMe:hover    { background: rgba(0,0,0,0.06) !important; }
+
+.teamAvatars {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.playerName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.playerRowMe .playerName { color: #000000; }
+
+.playerVd {
+  width: 54px;
+  font-size: 12px;
+  color: var(--ink2);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.playerEloVal {
+  width: 64px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: var(--ink2);
+  text-align: right;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+.playerRowMe .playerEloVal { color: #000000; }
+
+.rankColCell {
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-left: 1px solid var(--bg2);
+  margin-left: 8px;
+}
+
+.medal   { font-size: 18px; }
+.rankNum {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: var(--ink2);
+  padding: 3px 7px;
+  border-radius: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--beige);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--beige);
+  margin-top: auto;
+}
+
+.pageBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 16px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pageBtn:hover:not(:disabled) { background: var(--bg3); border-color: var(--beige-dark); }
+.pageBtn:disabled              { opacity: 0.3; cursor: default; }
+
+.pageInfo {
+  font-size: 12px;
+  color: var(--ink3);
+  font-weight: 600;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ── Hall of Fame ── */
+.hallCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hallHeader {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--beige);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-title);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: var(--bg2);
+}
+
+.hallSplit {
+  display: flex;
+  min-height: 180px;
+}
+
+.hallLeft {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hallDivider {
+  width: 1px;
+  background: var(--beige);
+  flex-shrink: 0;
+  margin: 12px 0;
+}
+
+.hallRight {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hallRightTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hallSectionTitle {
+  font-size: 11px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+
+.hallOrderSelect {
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 12px;
+  color: var(--ink2);
+  font-family: inherit;
+  cursor: pointer;
+}
+.hallOrderSelect:focus { outline: none; border-color: var(--orange-light); }
+
+.recordRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+.recordRow:last-child { border-bottom: none; }
+
+.recordIconBox {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.recordInfo { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+.recordLabel {
+  font-size: 10px;
+  color: var(--ink3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recordValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.recordStat {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.hallEntries {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.hallEntry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.hallSeasonLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink3);
+}
+
+.hallName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hallElo {
+  font-size: 11px;
+  color: var(--ink3);
+  font-weight: 600;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .rankingRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hallSplit {
+    flex-direction: column;
+  }
+
+  .hallLeft {
+    flex: none;
+    padding: 16px;
+    border-bottom: 1px solid var(--beige);
+  }
+
+  .hallDivider { display: none; }
+
+  .hallRight {
+    padding: 16px;
+  }
+
+  .hallRightTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Graphique ELO ── */
+.eloChartCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.eloChartHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--beige);
+  background: var(--bg2);
+}
+
+.eloChartTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  font-family: var(--font-title);
+}
+
+.eloChartSub {
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.eloChartBody {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chartControls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addLoginRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chartLoginInput {
+  max-width: 220px;
+}
+
+.addLoginBtn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  background: var(--primary);
+  border: none;
+  color: #F5F7FF;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.addLoginBtn:hover { opacity: 0.88; }
+.addLoginBtn:disabled { opacity: 0.4; cursor: default; }
+
+.loginTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.loginTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #F5F7FF;
+}
+
+.loginTagRemove {
+  background: none;
+  border: none;
+  color: rgba(250,253,249,0.7);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.loginTagRemove:hover { color: #F5F7FF; }
+
+.chartArea {
+  overflow-x: auto;
+}
+
+.eloChartSvg {
+  display: block;
+  min-width: 320px;
+}
+
+.chartEmpty {
+  font-size: 12px;
+  color: var(--ink3);
+  text-align: center;
+  padding: 32px 16px;
+  font-style: italic;
+}

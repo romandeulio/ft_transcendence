@@ -1,0 +1,497 @@
+.content {
+  flex: 1;
+
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg3);
+}
+
+.bdeBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.bdeBtn:hover { opacity: 0.85; }
+
+.tournamentCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tcHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.tcName {
+  font-size: 16px;
+  font-family: var(--font-title);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.tcDate {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 3px;
+}
+
+.tcMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.participants {
+  font-size: 13px;
+  color: var(--ink2);
+  font-weight: 600;
+}
+
+.registerBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg2);
+  border: 1px solid var(--beige);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #000000;
+}
+
+.registerBtn {
+  padding: 9px 18px;
+  background: var(--orange);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.registerBtn:hover {
+  opacity: 0.88;
+}
+
+.bracketWrap {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.blurred {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.bracketBlur {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(180, 180, 180, 0.6);
+  backdrop-filter: blur(5px);
+  pointer-events: none;
+}
+
+.countdownBox {
+  background: rgba(0,0,0,0.30);
+  border-radius: 12px;
+  padding: 24px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.countdownLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: white;
+}
+
+.countdownParts {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.countdownPart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.countdownNum {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #3bbfad;
+  line-height: 1;
+  font-family: 'Inter', -apple-system, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.countdownUnit {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.countdownColon {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3bbfad;
+  line-height: 1;
+  padding-top: 4px;
+}
+
+.countdownSub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+}
+
+.bdeError {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 6px;
+}
+
+.soloNote {
+  font-size: 12px;
+  color: #000000;
+  line-height: 1.6;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid #EBF0FC;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+/* Forms */
+.formGroup {
+  margin-bottom: 14px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--orange-light);
+}
+
+.meInput {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  color: #000000;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.levelBtns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.levelBtn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.level_facile {
+  background: #4068DB;
+  border-color: #4068DB;
+  color: #FFFFFF;
+}
+
+.level_moyen {
+  background: #EBF0FC;
+  border-color: #EBF0FC;
+  color: #000000;
+}
+
+.level_difficile {
+  background: #CD3122;
+  border-color: #CD3122;
+  color: #FFFFFF;
+}
+
+.levelNote {
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-radius: 7px;
+}
+
+.partnerNote {
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-radius: 7px;
+  line-height: 1.4;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  background: var(--orange);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.confirmBtn:hover {
+  opacity: 0.88;
+}
+
+/* ── Panneau recrutement coéquipier ── */
+.recruitPanel {
+  background: var(--white);
+  border: 2px solid var(--beige);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recruitHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.recruitIcon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.recruitTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: var(--font-title);
+}
+
+.recruitSub {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.recruitRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+.recruitRow:last-child { border-bottom: none; }
+
+.recruitAvatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--beige);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  flex-shrink: 0;
+}
+
+.recruitInfo { flex: 1; min-width: 0; }
+.recruitLogin { font-size: 13px; font-weight: 700; color: var(--ink); }
+.recruitSince { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+.inviteBtn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.inviteBtn:hover { opacity: 0.85; }
+
+.invitedBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+/* ── Liste d'attente ── */
+.waitingListBox {
+  background: var(--white);
+  border: 1.5px solid var(--beige);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.waitingListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.waitingListTitle {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  font-family: var(--font-display);
+}
+
+.waitingListCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.waitingListItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--beige);
+  font-size: 12px;
+}
+.waitingListItem:last-child { border-bottom: none; }
+
+.waitingRank {
+  font-weight: 800;
+  color: var(--yellow);
+  min-width: 24px;
+  font-family: var(--font-display);
+}
+
+.waitingPlayers {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.waitingSep { color: var(--yellow); }
+
+.waitingLevel {
+  font-size: 10px;
+  background: var(--beige);
+  color: var(--ink3);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.waitingTime {
+  font-size: 10px;
+  color: var(--ink3);
+}
+
+.waitingListEmpty {
+  text-align: center;
+  color: var(--ink3);
+  font-size: 12px;
+  padding: 16px 0;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .tournamentCard {
+    padding: 14px;
+  }
+
+  .tcHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bracketWrap {
+    overflow-x: auto;
+  }
+}

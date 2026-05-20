@@ -1,0 +1,743 @@
+.content {
+  flex: 1;
+  padding: 20px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg3);
+}
+
+/* ── Topbar droite ── */
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.editBtn:hover { background: var(--bg2); }
+
+.btnJoin {
+  padding: 8px 16px;
+  background: var(--green);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btnJoin:hover { background: #A82215; }
+
+/* ── Timeline ── */
+.timelineCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.timelineHeader {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--beige);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.timelineOuter {
+  overflow-x: auto;
+  padding: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--beige-dark) var(--bg2);
+}
+.timelineOuter::-webkit-scrollbar       { height: 4px; }
+.timelineOuter::-webkit-scrollbar-track { background: var(--bg2); }
+.timelineOuter::-webkit-scrollbar-thumb { background: var(--beige-dark); border-radius: 2px; }
+
+.timeline {
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+}
+
+.slotWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Zone de label fixe au-dessus de chaque slot — même hauteur pour aligner les slots */
+.slotLabel {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.liveLabelText {
+  font-size: 10px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  background: #CD3122;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.mineLabelText {
+  font-size: 10px;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  background: #EBF0FC;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.slot {
+  width: 116px;
+  min-height: 90px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.slotFree {
+  background: var(--bg3);
+  cursor: pointer;
+  opacity: 0.75;
+}
+.slotFree:hover {
+  opacity: 1;
+  border-color: var(--green);
+}
+
+.slotBook {
+  border: 2px dashed var(--beige) !important;
+  background: transparent !important;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: border-color 0.15s;
+}
+.slotBook:hover {
+  border-color: var(--green) !important;
+  background: rgba(0,0,0,0.02) !important;
+}
+.bookPlus {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink3);
+  line-height: 1;
+}
+.bookLabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.slotLive  { background: rgba(205,49,34,0.08); border-color: #CD3122; }
+.slotMine  { background: rgba(0,0,0,0.06); border-color: #EBF0FC; }
+.slotTaken { cursor: default; }
+
+.slotNames {
+  font-size: 11px;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.slotFormat {
+  font-size: 10px;
+  color: var(--ink3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.slotPlus {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--green);
+  line-height: 1;
+  margin-top: auto;
+}
+
+.myBadge {
+  display: none;
+}
+
+.editSlotBtn {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--orange-light);
+  background: var(--white);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.editSlotBtn:hover { background: var(--bg2); }
+
+.hoverBetBtn {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--orange);
+  border: none;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Deux petits blocs info ── */
+.infoRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.infoCard {
+  background: var(--white);
+  border: 1px solid var(--beige);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.infoCardHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--beige);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: var(--bg2);
+}
+
+.infoCardBody {
+  padding: 16px;
+}
+
+.myMatchInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.myMatchVs {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.myMatchSub {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 3px;
+}
+
+.liveMatchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.liveMatchNames {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.noMatch {
+  font-size: 13px;
+  color: var(--ink3);
+}
+
+/* ── Modals ── */
+.betMatchRow {
+  padding: 10px 14px;
+  background: var(--bg2);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+
+.modalSection { margin-bottom: 14px; }
+
+.betTeamChoice {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.betTeamBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid var(--beige);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.betTeamBtn:hover { background: var(--bg2); }
+.betTeamActive {
+  border-color: var(--primary);
+  background: var(--orange-pale);
+  color: var(--primary);
+}
+
+.modalLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sliderBox {
+  background: var(--bg2);
+  border: 1px solid var(--beige);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sliderLabel { font-size: 12px; color: var(--ink2); }
+.slider      { width: 100%; accent-color: var(--orange); cursor: pointer; }
+.sliderRange { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink3); }
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--green);
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+}
+.confirmBtn:hover { background: #2A2A2A; }
+
+/* Multi-step form */
+.stepLabel {
+  font-size: 11px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink3);
+  margin-bottom: 14px;
+}
+
+.modeBtns, .formatBtns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.modeBtn, .formatBtn {
+  flex: 1;
+  padding: 12px 10px;
+  border-radius: 9px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.modeBtnCompet { background: #CD3122; border-color: #CD3122; color: #FFFFFF; }
+.modeBtnChill  { background: #4068DB; border-color: #4068DB; color: #FFFFFF; }
+.formatBtnActive { background: #CD3122; border-color: #CD3122; color: #FFFFFF; }
+
+.modeNote, .soloNote {
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-radius: 7px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.stepActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.backBtn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.nextBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--orange);
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+}
+.nextBtn:hover { opacity: 0.88; }
+
+.teamsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.teamBlue {
+  background: rgba(0,0,0,0.04);
+  border: 1.5px solid #EBF0FC;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.teamRed {
+  background: rgba(205,49,34,0.08);
+  border: 1.5px solid #CD3122;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.teamLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink2);
+}
+.meInput {
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  color: #000000;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+}
+.partnerInput {
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+}
+.partnerInput:focus { outline: none; border-color: var(--orange-light); }
+
+/* La gagne */
+.lagagneBox {
+  background: var(--bg2);
+  border: 1px solid var(--beige);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.lagagneLabel { font-size: 13px; font-weight: 600; color: var(--ink); }
+.lagagneRow   { display: flex; align-items: center; gap: 20px; }
+.lagagneVal   { font-size: 32px; font-weight: 800; font-family: 'Inter', -apple-system, sans-serif; color: var(--ink); min-width: 48px; text-align: center; }
+.lagagneBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--beige);
+  background: var(--white);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lagagneBtn:hover { background: var(--bg3); }
+.lagagneSub { font-size: 11px; color: var(--ink3); }
+
+/* Step 5 — équipe précédente */
+.prevTeamQuestion {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.prevTeamCard {
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.prevTeamLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+
+.prevTeamPlayers {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prevTeamName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.prevTeamVs {
+  font-size: 12px;
+  color: var(--ink3);
+  font-weight: 600;
+}
+
+.prevTeamFormat {
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.nonBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.nonBtn:hover { background: var(--bg3); }
+
+.ouiBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--green);
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F5F7FF;
+  cursor: pointer;
+}
+.ouiBtn:hover { opacity: 0.88; }
+
+/* Popup liste d'attente */
+.waitingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.waitingPopup {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 28px 32px;
+  width: 460px;
+  max-width: 95vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+}
+.popupClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 13px;
+  color: var(--ink2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.waitingTitle { font-size: 16px; font-weight: 800; color: var(--ink); }
+.waitingDesc  { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.waitingList  { display: flex; flex-direction: column; gap: 8px; }
+.waitingRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-radius: 9px;
+}
+.waitingLogin { flex: 1; font-size: 13px; font-weight: 600; color: #000000; }
+.requestBtn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: #CD3122;
+  border: none;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.waitingInput {
+  display: flex;
+  gap: 8px;
+}
+
+/* Edit modal */
+.editOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.editCancelBtn {
+  padding: 12px;
+  border-radius: 9px;
+  background: #CD3122;
+  border: 1.5px solid #CD3122;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.editModifyBtn {
+  padding: 12px;
+  border-radius: 9px;
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .btnJoin {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .timelineOuter { padding: 12px; }
+
+  .slot {
+    width: 96px;
+    min-height: 80px;
+  }
+
+  .infoRow {
+    grid-template-columns: 1fr;
+  }
+
+  .teamsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .waitingOverlay { align-items: flex-end; padding: 0; }
+  .waitingPopup {
+    width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 24px 20px;
+  }
+}
