@@ -5,7 +5,7 @@ export default function JouerMode({ onClose }) {
   const [scoreRed,  setScoreRed]  = useState(0)
   const [scoreBlue, setScoreBlue] = useState(0)
   const [elapsed,   setElapsed]   = useState(0)
-  const [demi,      setDemi]      = useState(false)
+  const [fois,      setFois]      = useState(0)
   const [ended,     setEnded]     = useState(false)
   const intervalRef = useRef(null)
 
@@ -22,13 +22,13 @@ export default function JouerMode({ onClose }) {
 
   const addRed = () => {
     if (ended) return
-    setScoreRed(n => n + (demi ? 2 : 1))
-    setDemi(false)
+    setScoreRed(n => n + (fois > 0 ? fois : 1))
+    setFois(0)
   }
   const addBlue = () => {
     if (ended) return
-    setScoreBlue(n => n + (demi ? 2 : 1))
-    setDemi(false)
+    setScoreBlue(n => n + (fois > 0 ? fois : 1))
+    setFois(0)
   }
   const removeRed  = () => !ended && setScoreRed(n => Math.max(0, n - 1))
   const removeBlue = () => !ended && setScoreBlue(n => Math.max(0, n - 1))
@@ -75,7 +75,7 @@ export default function JouerMode({ onClose }) {
         <button className={styles.sideRed} onClick={addRed}>
           <div className={styles.sideLabel}>Rouge</div>
           <div className={styles.sideScore}>{scoreRed}</div>
-          {demi && <div className={styles.demiIndicator}>×2</div>}
+          {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
         {/* Centre */}
@@ -89,10 +89,10 @@ export default function JouerMode({ onClose }) {
           </button>
           <div className={styles.centerBtns}>
             <button
-              className={`${styles.demiBtn} ${demi ? styles.demiBtnActive : ''}`}
-              onClick={() => setDemi(d => !d)}
+              className={`${styles.demiBtn} ${fois > 0 ? styles.demiBtnActive : ''}`}
+              onClick={() => setFois(f => f === 0 ? 2 : f + 1)}
             >
-              Demi {demi ? '✓' : ''}
+              {fois > 0 ? `×${fois}` : 'Demi ×2'}
             </button>
           </div>
           <div className={styles.gamelleRow}>
@@ -105,7 +105,7 @@ export default function JouerMode({ onClose }) {
         <button className={styles.sideBlue} onClick={addBlue}>
           <div className={styles.sideLabel}>Bleu</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
-          {demi && <div className={styles.demiIndicator}>×2</div>}
+          {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
       </div>

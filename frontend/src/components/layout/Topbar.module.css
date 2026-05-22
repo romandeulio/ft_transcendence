@@ -48,20 +48,30 @@
 .themeToggle:hover { background: rgba(255,255,255,0.22); }
 
 @media (max-width: 768px) {
-  .topbar { padding: 0 14px; height: 50px; }
+  .topbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 8px 14px;
+    height: auto !important;
+    min-height: 50px;
+    gap: 4px 0;
+  }
 
   .title {
     font-size: 15px !important;
+    flex: 0 0 100%;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100vw - 110px);
   }
 
   .right {
-    right: 14px;
-    transform: translateY(-50%) scale(0.9);
-    transform-origin: right center;
+    position: static !important;
+    transform: none !important;
+    flex: 0 0 100%;
+    justify-content: flex-end;
+    padding-bottom: 4px;
   }
 }
 

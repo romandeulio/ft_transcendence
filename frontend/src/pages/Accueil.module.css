@@ -176,7 +176,7 @@
   background: var(--white);
   border: 2px solid #EBF0FC;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cardHeader {
@@ -192,6 +192,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 10px 10px 0 0;
 }
 
 .counter {

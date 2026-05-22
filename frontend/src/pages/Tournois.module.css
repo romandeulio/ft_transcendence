@@ -73,7 +73,7 @@
   border: 1px solid var(--beige);
   border-radius: 10px;
   font-size: 13px;
-  color: #000000;
+  color: var(--ink);
 }
 
 .registerBtn {
@@ -191,11 +191,11 @@
 
 .soloNote {
   font-size: 12px;
-  color: #000000;
+  color: var(--ink);
   line-height: 1.6;
   padding: 10px 14px;
-  background: rgba(0,0,0,0.04);
-  border: 1px solid #EBF0FC;
+  background: var(--bg2);
+  border: 1px solid var(--beige);
   border-radius: 8px;
   margin-top: 10px;
 }
@@ -237,7 +237,7 @@
   border-radius: 8px;
   border: 1.5px solid var(--beige);
   background: var(--bg2);
-  color: #000000;
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -270,7 +270,7 @@
 .level_moyen {
   background: #EBF0FC;
   border-color: #EBF0FC;
-  color: #000000;
+  color: var(--ink);
 }
 
 .level_difficile {

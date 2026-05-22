@@ -5,8 +5,12 @@ import StatCard from '../components/ui/StatCard'
 import Card from '../components/ui/Card'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
-import AvatarCreator, { HumanSVG } from '../components/ui/AvatarCreator'
+import LoginInput from '../components/ui/LoginInput'
+import { getPlayerBadge } from '../utils/playerBadge'
 import styles from './Profil.module.css'
+
+const MY_WINS = 28
+const MY_LOGIN = 'ltcherp'
 
 const teammates = [
   { login: 'thais',  name: 'Thaïs'  },
@@ -45,12 +49,16 @@ export default function Profil() {
   const [newPartner,  setNewPartner]  = useState('')
   const [matchSearch, setMatchSearch] = useState('')
   const [matchPage,   setMatchPage]   = useState(0)
-  const [avatarOpen,  setAvatarOpen]  = useState(false)
-  const [avatarConfig, setAvatarConfig] = useState({
-    faceShape: 'Rond',  hairStyle: 'Court',  hairColor: 'Brun',
-    eyeStyle:  'Rond',  eyeColor:  'Marron', skinTone:  'Pêche',
-    accessory: 'Aucun', outfit:    'Bleu',
-  })
+  const [photoUrl,         setPhotoUrl]         = useState(null)
+  const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => { setPhotoUrl(ev.target.result); setPhotoUploadOpen(false) }
+    reader.readAsDataURL(file)
+  }
 
   const filteredMatches = recentMatches.filter(m =>
     m.vs.toLowerCase().includes(matchSearch.toLowerCase())
@@ -69,20 +77,42 @@ export default function Profil() {
     <Shell>
       <Topbar title="Mon Profil" titleSize={30} />
 
-      <AvatarCreator
-        open={avatarOpen}
-        onClose={() => setAvatarOpen(false)}
-        config={avatarConfig}
-        onChange={setAvatarConfig}
-      />
+      {photoUploadOpen && (
+        <div className={styles.photoOverlay} onClick={() => setPhotoUploadOpen(false)}>
+          <div className={styles.photoDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.photoTitle}>Photo de profil</div>
+            <label className={styles.photoDropZone}>
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+              <span className={styles.photoDropIcon}>📷</span>
+              <span>Cliquer pour choisir une image</span>
+            </label>
+            {photoUrl && (
+              <div className={styles.photoPreviewRow}>
+                <img src={photoUrl} className={styles.photoPreview} alt="preview" />
+                <button className={styles.photoRemoveBtn} onClick={() => { setPhotoUrl(null); setPhotoUploadOpen(false) }}>
+                  Supprimer la photo
+                </button>
+              </div>
+            )}
+            <div className={styles.photoDialogFooter}>
+              <button className={styles.photoCloseBtn} onClick={() => setPhotoUploadOpen(false)}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.content}>
         <div className={styles.heroCard}>
           <div className={styles.heroLeft}>
             <div className={styles.avatarWrap}>
-              <div className={styles.avatarClickable} onClick={() => setAvatarOpen(true)}>
-                <HumanSVG config={avatarConfig} size={66} />
-                <div className={styles.avatarEditBadge}>✏️</div>
+              <div className={styles.avatarStack}>
+                {photoUrl
+                  ? <img src={photoUrl} className={styles.avatarPhoto} alt="avatar" onClick={() => setPhotoUploadOpen(true)} />
+                  : <div onClick={() => setPhotoUploadOpen(true)} style={{ cursor: 'pointer' }}>
+                      <Avatar initials={MY_LOGIN[0]} size={66} bg="var(--color-primary)" color="#fff" round />
+                    </div>
+                }
+                <button className={styles.photoUploadBtn} onClick={() => setPhotoUploadOpen(true)}>📷 Photo</button>
               </div>
             </div>
             <div className={styles.heroInfo}>
@@ -91,9 +121,14 @@ export default function Profil() {
                 <Pill label="#5 Classement" type="orange" />
                 <Pill label="28 Victoires" type="win" />
               </div>
-              <button className={styles.editAvatarBtn} onClick={() => setAvatarOpen(true)}>
-                Modifier l'avatar
-              </button>
+              {(() => {
+                const b = getPlayerBadge(MY_WINS)
+                return (
+                  <span className={styles.playerTitleBadge} style={{ background: b.bg, color: b.color }}>
+                    Mon badge : {b.label}
+                  </span>
+                )
+              })()}
             </div>
           </div>
           <div className={styles.heroElo}>
@@ -128,12 +163,10 @@ export default function Profil() {
               ))}
               {teammates_.length < 5 && (
                 <div className={styles.addTeammate}>
-                  <input
-                    className={styles.addInput}
-                    placeholder="Login joueur..."
+                  <LoginInput
                     value={newPartner}
-                    onChange={e => setNewPartner(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addTeammate()}
+                    onChange={setNewPartner}
+                    placeholder="Login joueur..."
                   />
                   <button className={styles.addBtn} onClick={addTeammate}>+ Ajouter</button>
                 </div>

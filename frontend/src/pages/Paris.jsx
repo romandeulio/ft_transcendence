@@ -5,6 +5,8 @@ import StatCard from '../components/ui/StatCard'
 import Pill from '../components/ui/Pill'
 import ProgressBar from '../components/ui/ProgressBar'
 import { useBets } from '../context/BetsContext'
+import { playerWins } from '../mock/mockBets'
+import { getPlayerBadge } from '../utils/playerBadge'
 import styles from './Paris.module.css'
 
 const MAX_TOKENS = 1412
@@ -209,6 +211,9 @@ export default function Paris() {
                                 onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p1' }))}
                               >
                                 {bet.p1}
+                                {(() => { const b = getPlayerBadge(playerWins[bet.p1] ?? 0); return (
+                                  <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
+                                )})()}
                               </button>
                               <span className={styles.playerChoiceVs}>vs</span>
                               <button
@@ -216,6 +221,9 @@ export default function Paris() {
                                 onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p2' }))}
                               >
                                 {bet.p2}
+                                {(() => { const b = getPlayerBadge(playerWins[bet.p2] ?? 0); return (
+                                  <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
+                                )})()}
                               </button>
                             </div>
                           </>

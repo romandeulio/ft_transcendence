@@ -86,6 +86,11 @@
   font-size: 13px;
 }
 
+.input::placeholder {
+  color: var(--ink);
+  opacity: 0.6;
+}
+
 .input:focus {
   outline: none;
   border-color: var(--orange-light);

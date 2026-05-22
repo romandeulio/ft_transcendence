@@ -1,3 +1,14 @@
+export const playerWins = {
+  sydney:   32,
+  roman:     8,
+  thais:    22,
+  jblanc:    3,
+  ltcherp:  28,
+  coraline: 15,
+  kperez:    6,
+  amorin:   11,
+}
+
 export const bets = [
   {
     id: 1,
