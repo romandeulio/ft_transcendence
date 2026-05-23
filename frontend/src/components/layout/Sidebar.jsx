@@ -19,7 +19,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
     <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
       <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
 
-      <Link to="/accueil" className={styles.userBlock} onClick={onClose}>
+      <Link to="/profil" className={styles.userBlock} onClick={onClose}>
         <div className={styles.avatarWrap}>
           <Avatar initials="LT" size={44} bg="rgba(255,255,255,0.15)" round />
         </div>

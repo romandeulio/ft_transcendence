@@ -145,7 +145,11 @@ export default function Accueil() {
                 <div className={styles.orLine} />
               </div>
               <button className={styles.addMatchBtn} onClick={() => { resetJoin(); setJoinOpen(true) }}>
-                + Ajouter un match
+                <span className={styles.addEmoji}>⚽</span>
+                <span className={styles.addTextGroup}>
+                  <span className={styles.addLine}>Ajouter un</span>
+                  <span className={styles.addLine}>match</span>
+                </span>
               </button>
             </div>
 

@@ -7,7 +7,7 @@ import BracketTree from '../components/bracket/BracketTree'
 import styles from './Tournois.module.css'
 
 const TOURNAMENT_START = new Date('2026-05-08T18:00:00')
-const BDE_PASSWORD     = '42bde2026'
+const BDE_PASSWORD     = 'starbucks'
 
 const WAITING_LIST = [
   { id: 1, player1: 'ltcherp',  player2: 'srobert', registeredAt: '14:32' },
@@ -45,6 +45,7 @@ export default function Tournois() {
   const [bdeUnlocked,  setBdeUnlocked]  = useState(false)
   const [bdeError,     setBdeError]     = useState(false)
   const [createOpen,   setCreateOpen]   = useState(false)
+  const [maxPlayers,   setMaxPlayers]   = useState('16')
   const [registerOpen, setRegisterOpen] = useState(false)
   const [registered,   setRegistered]   = useState(false)
   const [partner,      setPartner]      = useState('')
@@ -227,6 +228,18 @@ export default function Tournois() {
         <div className={styles.formGroup}>
           <label className={styles.label}>Limite d'inscription</label>
           <input className={styles.input} type="datetime-local" />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Nombre maximum de joueurs</label>
+          <select
+            className={styles.input}
+            value={maxPlayers}
+            onChange={e => setMaxPlayers(e.target.value)}
+          >
+            {[8, 16, 32, 64].map(n => (
+              <option key={n} value={n}>{n} joueurs</option>
+            ))}
+          </select>
         </div>
         <div className={styles.modalFooter}>
           <button className={styles.confirmBtn} onClick={() => setCreateOpen(false)}>Créer le tournoi</button>

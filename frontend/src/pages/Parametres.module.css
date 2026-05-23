@@ -99,7 +99,7 @@
   border-radius: 8px;
   border: 1.5px solid var(--beige);
   background: var(--bg2);
-  color: #000000;
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;

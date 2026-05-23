@@ -49,18 +49,16 @@
 
 @media (max-width: 768px) {
   .topbar {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    padding: 8px 14px;
-    height: auto !important;
-    min-height: 50px;
-    gap: 4px 0;
+    flex-wrap: nowrap;
+    justify-content: center;
+    padding: 0 12px 0 52px;
+    height: 56px !important;
   }
 
   .title {
     font-size: 15px !important;
-    flex: 0 0 100%;
-    text-align: left;
+    flex: 1;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -69,9 +67,7 @@
   .right {
     position: static !important;
     transform: none !important;
-    flex: 0 0 100%;
-    justify-content: flex-end;
-    padding-bottom: 4px;
+    flex-shrink: 0;
   }
 }
 

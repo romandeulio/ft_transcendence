@@ -13,6 +13,7 @@
   font-size: 13px;
   color: var(--ink);
 }
+.input::placeholder { color: var(--ink3); }
 .input:focus {
   outline: none;
   border-color: var(--orange-light);

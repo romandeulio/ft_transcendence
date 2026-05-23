@@ -1,7 +1,7 @@
+/* ── Layout ── */
 .tree {
   display: flex;
-  align-items: center;
-  gap: 0;
+  align-items: flex-start;
   overflow-x: auto;
   padding: 16px 0;
 }
@@ -9,26 +9,57 @@
 .round {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   min-width: 160px;
+  flex-shrink: 0;
 }
 
 .roundLabel {
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ink3);
-  margin-bottom: 4px;
-  text-align: center;
 }
 
+.slots {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed-height slots — must match SVG coordinate system (4×80=320) */
+.slot1 {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.slot2 {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.slot4 {
+  height: 320px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+/* ── Match block ── */
 .match {
   border: 1px solid var(--beige);
   border-radius: 8px;
   overflow: hidden;
   background: var(--white);
-  position: relative;
+  width: 100%;
 }
 
 .final {
@@ -47,13 +78,13 @@
   background: var(--beige);
 }
 
+/* ── Connectors ── */
 .connectors {
   width: 40px;
-  align-self: stretch;
   flex-shrink: 0;
+  padding-top: 28px; /* aligns with slot area (below roundLabel) */
 }
 
 .connectors svg {
-  width: 100%;
-  height: 100%;
+  display: block;
 }

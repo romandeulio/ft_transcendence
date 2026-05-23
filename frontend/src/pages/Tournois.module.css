@@ -116,20 +116,28 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: rgba(180, 180, 180, 0.6);
-  backdrop-filter: blur(5px);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(150, 165, 200, 0.28) 0px,
+    rgba(150, 165, 200, 0.28) 8px,
+    rgba(200, 211, 240, 0.10) 8px,
+    rgba(200, 211, 240, 0.10) 20px
+  );
   pointer-events: none;
 }
 
 .countdownBox {
-  background: rgba(0,0,0,0.30);
-  border-radius: 12px;
+  background: rgba(0, 26, 87, 0.90);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
   padding: 24px 40px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 
 .countdownLabel {

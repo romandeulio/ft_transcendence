@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Toggle from '../components/ui/Toggle'
@@ -37,8 +38,17 @@ const NOTICE_SECTIONS = [
   },
 ]
 
+const TAB_PARAM_MAP = { notice: "Notice d'utilisation" }
+
 export default function Parametres() {
-  const [activeTab, setActiveTab] = useState('Profil')
+  const [searchParams] = useSearchParams()
+  const initialTab = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'Profil'
+  const [activeTab, setActiveTab] = useState(initialTab)
+
+  useEffect(() => {
+    const tab = TAB_PARAM_MAP[searchParams.get('tab')]
+    if (tab) setActiveTab(tab)
+  }, [searchParams])
   const [tfa,       setTfa]       = useState(false)
   const [oauth,     setOauth]     = useState(true)
   const [notifs,    setNotifs]    = useState({ turn:true, bet:true, tourney:false, season:true, invite:true })

@@ -20,9 +20,6 @@ export default function Topbar({ title, right, titleSize = 18 }) {
 			</h1>
 			<div className={styles.right}>
 				{right}
-				<NavLink to="/status" className={styles.statusLink}>
-					Status
-				</NavLink>
 				<button
 					className={styles.themeToggle}
 					onClick={() => setDark(d => !d)}

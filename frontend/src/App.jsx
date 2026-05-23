@@ -11,6 +11,8 @@ import Tournois    from './pages/Tournois'
 import Profil      from './pages/Profil'
 import Parametres  from './pages/Parametres'
 import Login       from './pages/Login'
+import Admin       from './pages/Admin'
+import Ticket      from './pages/Ticket'
 
 function PrivateRoute({ element }) { return element }
 
@@ -30,6 +32,8 @@ export default function App() {
               <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
               <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
               <Route path="/login"         element={<Login />} />
+              <Route path="/admin"         element={<Admin />} />
+              <Route path="/ticket"        element={<Ticket />} />
 			  <Route path="/status" element={<Status />} />
             </Routes>
           </BrowserRouter>
