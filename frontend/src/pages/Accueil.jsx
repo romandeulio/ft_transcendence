@@ -7,55 +7,37 @@ import Modal from '../components/ui/Modal'
 import JouerMode from '../components/ui/JouerMode'
 import LoginInput from '../components/ui/LoginInput'
 import PerformanceChart from '../components/ui/PerformanceChart'
+import { useAuth } from '../context/AuthContext'
 import styles from './Accueil.module.css'
-
-const PREV_SLOT_MATCH = { p1: 'sydney', p2: 'amorin', format: '1v1', mode: 'Compét' }
-
-const MY_UPCOMING = [
-  { id: 1, vs: 'coraline', format: '1v1', mode: 'Compétition', label: 'File d\'attente — place 2' },
-]
-
-const ALL_MATCHES = [
-  { result: 'Victoire', vs: 'amorin',   score: '10-7', elo: '+18', date: '20 avr' },
-  { result: 'Défaite',  vs: 'sydney',   score: '5-10', elo: '-14', date: '19 avr' },
-  { result: 'Victoire', vs: 'coraline', score: '10-4', elo: '+16', date: '18 avr' },
-  { result: 'Victoire', vs: 'jblanc',   score: '10-8', elo: '+12', date: '17 avr' },
-  { result: 'Défaite',  vs: 'thais',    score: '4-10', elo: '-10', date: '16 avr' },
-]
-
-const INIT_TEAMMATES = [
-  { login: 'thais',  name: 'Thaïs'  },
-  { login: 'sydney', name: 'Sydney' },
-  { login: 'roman',  name: 'Roman'  },
-]
 
 const MATCHES_PER_PAGE = 3
 
 export default function Accueil() {
+  const { user } = useAuth()
+
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
   const [matchPickOpen,  setMatchPickOpen]  = useState(false)
   const [joinOpen,       setJoinOpen]       = useState(false)
 
-  // Historique matchs
+  const [matches,        setMatches]        = useState([])
+  const [upcomingMatches,setUpcomingMatches] = useState([])
   const [matchSearch,    setMatchSearch]    = useState('')
   const [matchPage,      setMatchPage]      = useState(0)
 
-  // Amis favoris
-  const [teammates,      setTeammates]      = useState(INIT_TEAMMATES)
+  const [teammates,      setTeammates]      = useState([])
   const [newTeammate,    setNewTeammate]    = useState('')
 
-  // Multi-step join queue
   const [step,        setStep]        = useState(1)
   const [joinMode,    setJoinMode]    = useState('compet')
   const [joinFormat,  setJoinFormat]  = useState('1v1')
   const [redPlayers,  setRedPlayers]  = useState(['', ''])
-  const [bluePlayers, setBluePlayers] = useState(['ltcherp', ''])
+  const [bluePlayers, setBluePlayers] = useState([user?.login ?? '', ''])
   const [takeWin,     setTakeWin]     = useState(null)
 
   const resetJoin = () => {
     setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
-    setRedPlayers(['', '']); setBluePlayers(['ltcherp', '']); setTakeWin(null)
+    setRedPlayers(['', '']); setBluePlayers([user?.login ?? '', '']); setTakeWin(null)
   }
 
   const addTeammate = () => {
@@ -65,7 +47,7 @@ export default function Accueil() {
     }
   }
 
-  const filtered = ALL_MATCHES.filter(m =>
+  const filtered = matches.filter(m =>
     m.vs.toLowerCase().includes(matchSearch.toLowerCase())
   )
   const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE)
@@ -82,54 +64,35 @@ export default function Accueil() {
         {/* ── Section Jouer ── */}
         <div className={styles.jouerSection}>
 
-          {/* Terrain SVG background */}
           <svg className={styles.pitchBg} viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            {/* Grass stripes */}
             {[0,1,2,3,4,5,6,7,8,9].map(i => (
               <rect key={i} x={i*80} y={0} width={80} height={320} fill={i%2===0 ? '#3a8832' : '#449e3b'} />
             ))}
-            {/* Outer border */}
             <rect x="28" y="22" width="744" height="276" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2.5"/>
-            {/* Halfway line */}
             <line x1="400" y1="22" x2="400" y2="298" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Center circle */}
             <circle cx="400" cy="160" r="62" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Center spot */}
             <circle cx="400" cy="160" r="5" fill="rgba(255,255,255,0.7)"/>
-            {/* Ball */}
             <circle cx="400" cy="160" r="13" fill="white" opacity="0.6"/>
-            {/* Left penalty area */}
             <rect x="28" y="88" width="115" height="144" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Left goal area */}
             <rect x="28" y="120" width="48" height="80" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Left penalty spot */}
             <circle cx="98" cy="160" r="4" fill="rgba(255,255,255,0.65)"/>
-            {/* Left penalty arc */}
             <path d="M 143 100 A 68 68 0 0 1 143 220" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" clipPath="url(#lpClip)"/>
             <defs>
               <clipPath id="lpClip"><rect x="143" y="0" width="800" height="320"/></clipPath>
               <clipPath id="rpClip"><rect x="0" y="0" width="657" height="320"/></clipPath>
             </defs>
-            {/* Left goal */}
             <rect x="8" y="132" width="20" height="56" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Right penalty area */}
             <rect x="657" y="88" width="115" height="144" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Right goal area */}
             <rect x="724" y="120" width="48" height="80" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Right penalty spot */}
             <circle cx="702" cy="160" r="4" fill="rgba(255,255,255,0.65)"/>
-            {/* Right penalty arc */}
             <path d="M 657 100 A 68 68 0 0 0 657 220" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" clipPath="url(#rpClip)"/>
-            {/* Right goal */}
             <rect x="772" y="132" width="20" height="56" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
-            {/* Corner arcs */}
             <path d="M 28 22 A 16 16 0 0 1 44 38" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
             <path d="M 772 22 A 16 16 0 0 0 756 38" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
             <path d="M 28 298 A 16 16 0 0 0 44 282" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
             <path d="M 772 298 A 16 16 0 0 1 756 282" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
           </svg>
 
-          {/* Contenu au-dessus du terrain */}
           <div className={styles.pitchContent}>
             <div className={styles.matchChoiceBtns}>
               <button
@@ -170,7 +133,6 @@ export default function Accueil() {
         {/* ── Grid : Mes matchs + Amis ── */}
         <div className={styles.grid}>
 
-          {/* Mes matchs */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>Mes matchs</div>
             <div className={styles.cardBody}>
@@ -206,7 +168,6 @@ export default function Accueil() {
             </div>
           </div>
 
-          {/* Amis favoris */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <span>Amis favoris</span>
@@ -242,7 +203,6 @@ export default function Accueil() {
 
         </div>
 
-        {/* Graphique de performances */}
         <PerformanceChart />
 
       </div>
@@ -250,7 +210,7 @@ export default function Accueil() {
       {/* ── Popup : choisir un match prévu ── */}
       <Modal open={matchPickOpen} onClose={() => setMatchPickOpen(false)} title="Mes matchs prévus">
         <div className={styles.matchPickList}>
-          {MY_UPCOMING.map(m => (
+          {upcomingMatches.map(m => (
             <button
               key={m.id}
               className={`${styles.matchPickItem} ${selectedMatch?.id === m.id ? styles.matchPickSelected : ''}`}
@@ -260,7 +220,7 @@ export default function Accueil() {
               <div className={styles.matchPickSub}>{m.format} · {m.mode} · {m.label}</div>
             </button>
           ))}
-          {MY_UPCOMING.length === 0 && (
+          {upcomingMatches.length === 0 && (
             <div className={styles.noMatch}>Aucun match prévu. Ajoute-toi à la file d'attente.</div>
           )}
         </div>
@@ -373,14 +333,7 @@ export default function Accueil() {
             </div>
             <div className={styles.prevSlotTitle}>Créneau précédent</div>
             <div className={styles.prevSlotCard}>
-              <div className={styles.prevSlotDuel}>
-                <Avatar initials={PREV_SLOT_MATCH.p1} size={28} bg="var(--beige)" round />
-                <span className={styles.prevSlotName}>{PREV_SLOT_MATCH.p1}</span>
-                <span className={styles.prevSlotVs}>vs</span>
-                <Avatar initials={PREV_SLOT_MATCH.p2} size={28} bg="var(--beige)" round />
-                <span className={styles.prevSlotName}>{PREV_SLOT_MATCH.p2}</span>
-              </div>
-              <div className={styles.prevSlotMeta}>{PREV_SLOT_MATCH.format} · {PREV_SLOT_MATCH.mode}</div>
+              <div className={styles.noMatch}>Aucun créneau précédent disponible</div>
             </div>
             <div className={styles.stepActions}>
               <button className={styles.backBtn} onClick={() => setStep(3)}>← Retour</button>

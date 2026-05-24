@@ -2,31 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styles from './Admin.module.css'
 
-const STATS = [
-  { label: 'Joueurs actifs',      value: '24',     icon: '👥' },
-  { label: 'Matchs cette semaine', value: '147',   icon: '🏓' },
-  { label: 'Tournois créés',      value: '3',      icon: '🏆' },
-  { label: 'Jetons distribués',   value: '18 500', icon: '🪙' },
-]
-
-const RECENT_MATCHES = [
-  { p1: 'ltcherp',  p2: 'thais',    score: '10 – 7',  date: '23/05', mode: 'Compét' },
-  { p1: 'roman',    p2: 'sydney',   score: '8 – 10',  date: '22/05', mode: 'Compét' },
-  { p1: 'amorin',   p2: 'jblanc',   score: '10 – 5',  date: '22/05', mode: 'Chill'  },
-  { p1: 'coraline', p2: 'kperez',   score: '10 – 9',  date: '21/05', mode: 'Compét' },
-  { p1: 'ltcherp',  p2: 'roman',    score: '7 – 10',  date: '21/05', mode: 'Compét' },
-]
-
-const PLAYERS = [
-  { initials: 'LT', login: 'ltcherp',  elo: 1420, status: 'Actif'   },
-  { initials: 'SY', login: 'sydney',   elo: 1385, status: 'Actif'   },
-  { initials: 'TH', login: 'thais',    elo: 1360, status: 'Actif'   },
-  { initials: 'RO', login: 'roman',    elo: 1340, status: 'Inactif' },
-  { initials: 'AM', login: 'amorin',   elo: 1310, status: 'Actif'   },
-]
-
-const SEASONS = ['Saison 1 — Automne 2025', 'Saison 2 — Hiver 2026', 'Saison 3 — Printemps 2026']
-
 function StatusMini() {
   const [data, setData] = useState(null)
 
@@ -68,14 +43,14 @@ function StatusMini() {
 }
 
 function SeasonPanel() {
-  const [seasons,    setSeasons]    = useState(SEASONS)
-  const [current,    setCurrent]    = useState(2)
-  const [confirm,    setConfirm]    = useState(false)
-  const [updated,    setUpdated]    = useState(false)
-  const [addOpen,    setAddOpen]    = useState(false)
-  const [newNum,     setNewNum]     = useState('')
-  const [newStart,   setNewStart]   = useState('')
-  const [newEnd,     setNewEnd]     = useState('')
+  const [seasons,  setSeasons]  = useState([])
+  const [current,  setCurrent]  = useState(0)
+  const [confirm,  setConfirm]  = useState(false)
+  const [updated,  setUpdated]  = useState(false)
+  const [addOpen,  setAddOpen]  = useState(false)
+  const [newNum,   setNewNum]   = useState('')
+  const [newStart, setNewStart] = useState('')
+  const [newEnd,   setNewEnd]   = useState('')
 
   const handleNext = () => {
     if (current < seasons.length - 1) { setCurrent(c => c + 1); setConfirm(false); setUpdated(true) }
@@ -117,36 +92,42 @@ function SeasonPanel() {
         </div>
       )}
 
-      <div className={styles.seasonCurrent}>
-        <span className={styles.seasonIcon}>📅</span>
-        <div>
-          <div className={styles.seasonLabel}>Saison en cours</div>
-          <div className={styles.seasonName}>{seasons[current]}</div>
-        </div>
-      </div>
-      {updated && <div className={styles.seasonUpdated}>✓ Saison mise à jour</div>}
-      {current < seasons.length - 1 ? (
+      {seasons.length > 0 ? (
         <>
-          <div className={styles.seasonNext}>Prochaine : <strong>{seasons[current + 1]}</strong></div>
-          {!confirm ? (
-            <button className={styles.seasonBtn} onClick={() => setConfirm(true)}>
-              Passer à la saison suivante →
-            </button>
-          ) : (
-            <div className={styles.seasonConfirm}>
-              <div className={styles.seasonConfirmText}>
-                Confirmer le passage à <strong>{seasons[current + 1]}</strong> ?<br/>
-                <span className={styles.seasonWarn}>Les ELO seront archivés et remis à zéro.</span>
-              </div>
-              <div className={styles.seasonConfirmBtns}>
-                <button className={styles.seasonCancelBtn} onClick={() => setConfirm(false)}>Annuler</button>
-                <button className={styles.seasonOkBtn} onClick={handleNext}>Confirmer ✓</button>
-              </div>
+          <div className={styles.seasonCurrent}>
+            <span className={styles.seasonIcon}>📅</span>
+            <div>
+              <div className={styles.seasonLabel}>Saison en cours</div>
+              <div className={styles.seasonName}>{seasons[current]}</div>
             </div>
+          </div>
+          {updated && <div className={styles.seasonUpdated}>✓ Saison mise à jour</div>}
+          {current < seasons.length - 1 ? (
+            <>
+              <div className={styles.seasonNext}>Prochaine : <strong>{seasons[current + 1]}</strong></div>
+              {!confirm ? (
+                <button className={styles.seasonBtn} onClick={() => setConfirm(true)}>
+                  Passer à la saison suivante →
+                </button>
+              ) : (
+                <div className={styles.seasonConfirm}>
+                  <div className={styles.seasonConfirmText}>
+                    Confirmer le passage à <strong>{seasons[current + 1]}</strong> ?<br/>
+                    <span className={styles.seasonWarn}>Les ELO seront archivés et remis à zéro.</span>
+                  </div>
+                  <div className={styles.seasonConfirmBtns}>
+                    <button className={styles.seasonCancelBtn} onClick={() => setConfirm(false)}>Annuler</button>
+                    <button className={styles.seasonOkBtn} onClick={handleNext}>Confirmer ✓</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={styles.seasonNext}>Aucune saison suivante configurée.</div>
           )}
         </>
       ) : (
-        <div className={styles.seasonNext}>Aucune saison suivante configurée.</div>
+        <div className={styles.seasonNext}>Aucune saison configurée.</div>
       )}
     </div>
   )
@@ -200,7 +181,10 @@ function CreateTournamentModal({ onClose }) {
 }
 
 function Dashboard({ onLogout }) {
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createOpen,    setCreateOpen]    = useState(false)
+  const [stats,         setStats]         = useState([])
+  const [recentMatches, setRecentMatches] = useState([])
+  const [players,       setPlayers]       = useState([])
 
   return (
     <div className={styles.dashboard}>
@@ -215,7 +199,10 @@ function Dashboard({ onLogout }) {
 
       <div className={styles.dashContent}>
         <div className={styles.statsRow}>
-          {STATS.map(s => (
+          {stats.length === 0 && (
+            <div className={styles.emptyState}>Chargement des statistiques…</div>
+          )}
+          {stats.map(s => (
             <div key={s.label} className={styles.statCard}>
               <div className={styles.statIcon}>{s.icon}</div>
               <div className={styles.statValue}>{s.value}</div>
@@ -228,66 +215,64 @@ function Dashboard({ onLogout }) {
           <div className={styles.panelMain}>
             <div className={styles.panel}>
               <div className={styles.panelTitle}>Matchs récents</div>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Joueurs</th>
-                    <th>Score</th>
-                    <th>Mode</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {RECENT_MATCHES.map((m, i) => (
-                    <tr key={i}>
-                      <td>{m.p1} <span className={styles.vs}>vs</span> {m.p2}</td>
-                      <td className={styles.tdScore}>{m.score}</td>
-                      <td>
-                        <span className={`${styles.pill} ${m.mode === 'Compét' ? styles.pillCompet : styles.pillChill}`}>
-                          {m.mode}
-                        </span>
-                      </td>
-                      <td className={styles.tdDate}>{m.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {recentMatches.length === 0 ? (
+                <div className={styles.emptyState}>Aucun match récent.</div>
+              ) : (
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Joueurs</th><th>Score</th><th>Mode</th><th>Date</th></tr>
+                  </thead>
+                  <tbody>
+                    {recentMatches.map((m, i) => (
+                      <tr key={i}>
+                        <td>{m.p1} <span className={styles.vs}>vs</span> {m.p2}</td>
+                        <td className={styles.tdScore}>{m.score}</td>
+                        <td>
+                          <span className={`${styles.pill} ${m.mode === 'Compét' ? styles.pillCompet : styles.pillChill}`}>
+                            {m.mode}
+                          </span>
+                        </td>
+                        <td className={styles.tdDate}>{m.date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             <div className={styles.panel}>
               <div className={styles.panelTitle}>Joueurs</div>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Login</th>
-                    <th>ELO</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PLAYERS.map(p => (
-                    <tr key={p.login}>
-                      <td>
-                        <div className={styles.playerCell}>
-                          <div className={styles.playerInitials}>{p.initials}</div>
-                          {p.login}
-                        </div>
-                      </td>
-                      <td className={styles.tdScore}>{p.elo}</td>
-                      <td>
-                        <span className={`${styles.pill} ${p.status === 'Actif' ? styles.pillActif : styles.pillInactif}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className={styles.tdActions}>
-                        <button className={styles.miniBtn}>Modifier</button>
-                        <button className={`${styles.miniBtn} ${styles.miniBtnDanger}`}>Bannir</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {players.length === 0 ? (
+                <div className={styles.emptyState}>Aucun joueur enregistré.</div>
+              ) : (
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Login</th><th>ELO</th><th>Statut</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {players.map(p => (
+                      <tr key={p.login}>
+                        <td>
+                          <div className={styles.playerCell}>
+                            <div className={styles.playerInitials}>{p.initials}</div>
+                            {p.login}
+                          </div>
+                        </td>
+                        <td className={styles.tdScore}>{p.elo}</td>
+                        <td>
+                          <span className={`${styles.pill} ${p.status === 'Actif' ? styles.pillActif : styles.pillInactif}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className={styles.tdActions}>
+                          <button className={styles.miniBtn}>Modifier</button>
+                          <button className={`${styles.miniBtn} ${styles.miniBtnDanger}`}>Bannir</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 
@@ -318,14 +303,27 @@ export default function Admin() {
   const [showPwd,  setShowPwd]  = useState(false)
   const [error,    setError]    = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
+  const [loading,  setLoading]  = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (login === 'admin' && password === 'starbucks') {
-      setError('')
-      setLoggedIn(true)
-    } else {
-      setError('Identifiant ou mot de passe incorrect.')
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password }),
+      })
+      if (res.ok) {
+        setLoggedIn(true)
+      } else {
+        setError('Identifiant ou mot de passe incorrect.')
+      }
+    } catch {
+      setError('Impossible de contacter le serveur.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -374,7 +372,9 @@ export default function Admin() {
             </div>
           </div>
           {error && <div className={styles.error}>{error}</div>}
-          <button className={styles.btn} type="submit">Se connecter</button>
+          <button className={styles.btn} type="submit" disabled={loading}>
+            {loading ? 'Connexion…' : 'Se connecter'}
+          </button>
         </form>
       </div>
     </div>

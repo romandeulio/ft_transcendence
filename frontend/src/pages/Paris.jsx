@@ -5,38 +5,11 @@ import StatCard from '../components/ui/StatCard'
 import Pill from '../components/ui/Pill'
 import ProgressBar from '../components/ui/ProgressBar'
 import { useBets } from '../context/BetsContext'
-import { playerWins } from '../mock/mockBets'
+import { useAuth } from '../context/AuthContext'
 import { getPlayerBadge } from '../utils/playerBadge'
 import styles from './Paris.module.css'
 
-const MAX_TOKENS = 1412
-const WEEK_BETS  = 3
-const MAX_WEEK   = 10
 const HIST_PER_PAGE = 3
-
-// ── Chart data generation (seeded, deterministic) ────────────────────────
-function mkRng(seed) {
-  let s = seed >>> 0
-  return () => { s = (Math.imul(1664525, s) + 1013904223) >>> 0; return (s >>> 16) / 65535 }
-}
-function mkDataset(n, labelFn, seed) {
-  const r = mkRng(seed)
-  return Array.from({ length: n }, (_, i) => ({ date: labelFn(i), delta: Math.round((r() - 0.48) * 52) }))
-}
-const _MO = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
-const _JR = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
-function _dayLabel(offset) {
-  const d = new Date('2026-04-06'); d.setDate(d.getDate() + offset * 2)
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
-}
-const CHART_DATASETS = {
-  '7j':    mkDataset(7,  i => _JR[i], 11),
-  '30j':   mkDataset(15, i => _dayLabel(i), 22),
-  '3m':    mkDataset(12, i => `S${i + 1}`, 33),
-  '6m':    mkDataset(24, i => `S${i + 1}`, 44),
-  'annee': mkDataset(12, i => _MO[i], 55),
-  'tout':  mkDataset(24, i => _MO[i % 12] + (i < 12 ? " '25" : " '26"), 66),
-}
 
 function BetsChart({ history, yRange }) {
   if (!history.length) return null
@@ -103,13 +76,15 @@ function BetsChart({ history, yRange }) {
 
 export default function Paris() {
   const { bets, betHistory, placeBet, cancelBet } = useBets()
+  const { user } = useAuth()
 
-  const [amounts,    setAmounts]    = useState({})
-  const [showSlider, setShowSlider] = useState(null)
-  const [betChoices, setBetChoices] = useState({}) // betId → 'p1' | 'p2'
-  const [histPage,   setHistPage]   = useState(0)
-  const [chartXFilter, setChartXFilter] = useState('7j')
+  const [amounts,      setAmounts]      = useState({})
+  const [showSlider,   setShowSlider]   = useState(null)
+  const [betChoices,   setBetChoices]   = useState({})
+  const [histPage,     setHistPage]     = useState(0)
   const [chartYFilter, setChartYFilter] = useState('auto')
+
+  const maxTokens = user?.tokens ?? 0
 
   const getAmount = (id) => amounts[id] ?? 50
   const getChoice = (id) => betChoices[id] ?? null
@@ -128,16 +103,15 @@ export default function Paris() {
   }
 
   const histTotal = betHistory.length
-  const histPages = Math.ceil(histTotal / HIST_PER_PAGE)
+  const histPages = Math.ceil(histTotal / HIST_PER_PAGE) || 1
   const histSlice = betHistory.slice(histPage * HIST_PER_PAGE, (histPage + 1) * HIST_PER_PAGE)
 
   const bestGain    = [...betHistory].sort((a, b) => b.delta - a.delta)[0]
   const biggestLoss = [...betHistory].sort((a, b) => a.delta - b.delta)[0]
   const totalBalance = betHistory.reduce((s, h) => s + h.delta, 0)
 
-  const chartData    = CHART_DATASETS[chartXFilter] ?? CHART_DATASETS['tout']
   const yRange       = chartYFilter === 'auto' ? null : parseInt(chartYFilter)
-  const chartBalance = chartData.reduce((s, h) => s + h.delta, 0)
+  const chartBalance = totalBalance
 
   return (
     <Shell>
@@ -147,16 +121,16 @@ export default function Paris() {
         right={
           <div className={styles.wallet}>
             <span>🪙</span>
-            <span>{MAX_TOKENS} jetons disponibles</span>
+            <span>{maxTokens} jetons disponibles</span>
           </div>
         }
       />
 
       <div className={styles.content}>
         <div className={styles.statsGrid}>
-          <StatCard color="var(--orange-pale)" label="Paris réalisés" value={WEEK_BETS} sub="cette saison" />
-          <StatCard color="var(--yellow-pale)" label="Total misé"     value="620"       sub="jetons misés" />
-          <StatCard color="var(--green-pale)"  label="Bilan saison"   value="+185"      sub="jetons net" />
+          <StatCard color="var(--orange-pale)" label="Paris réalisés" value={betHistory.length} sub="cette saison" />
+          <StatCard color="var(--yellow-pale)" label="Total misé"     value="—"                 sub="jetons misés" />
+          <StatCard color="var(--green-pale)"  label="Bilan saison"   value={totalBalance >= 0 ? `+${totalBalance}` : totalBalance} sub="jetons net" />
         </div>
 
         <div className={styles.grid}>
@@ -165,11 +139,14 @@ export default function Paris() {
             <div className={styles.cardHeader}>
               <div className={styles.cardTitleRow}>
                 <span className={styles.cardTitle}>Paris disponibles</span>
-                <span className={styles.weekCounter}>{WEEK_BETS} / {MAX_WEEK}</span>
+                <span className={styles.weekCounter}>{bets.length} pari{bets.length !== 1 ? 's' : ''}</span>
               </div>
             </div>
 
             <div className={styles.cardBody}>
+              {bets.length === 0 && (
+                <div className={styles.emptyBets}>Aucun paris disponible pour le moment.</div>
+              )}
               {bets.map(bet => {
                 const isLive     = bet.status === 'live'
                 const hasBet     = !!bet.myBet
@@ -201,7 +178,6 @@ export default function Paris() {
 
                     {sliderOpen && (
                       <div className={styles.sliderBox}>
-                        {/* Étape 1 : choisir sur qui miser */}
                         {!choice && (
                           <>
                             <div className={styles.sliderLabel}>Sur qui pariez-vous ?</div>
@@ -211,7 +187,7 @@ export default function Paris() {
                                 onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p1' }))}
                               >
                                 {bet.p1}
-                                {(() => { const b = getPlayerBadge(playerWins[bet.p1] ?? 0); return (
+                                {(() => { const b = getPlayerBadge(0); return (
                                   <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
                                 )})()}
                               </button>
@@ -221,7 +197,7 @@ export default function Paris() {
                                 onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p2' }))}
                               >
                                 {bet.p2}
-                                {(() => { const b = getPlayerBadge(playerWins[bet.p2] ?? 0); return (
+                                {(() => { const b = getPlayerBadge(0); return (
                                   <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
                                 )})()}
                               </button>
@@ -229,7 +205,6 @@ export default function Paris() {
                           </>
                         )}
 
-                        {/* Étape 2 : montant */}
                         {choice && (
                           <>
                             <div className={styles.sliderLabel}>
@@ -245,12 +220,12 @@ export default function Paris() {
                               Mise : <strong>{amount} jetons</strong>
                             </div>
                             <input
-                              type="range" min={1} max={MAX_TOKENS} value={amount}
+                              type="range" min={1} max={Math.max(maxTokens, 1)} value={amount}
                               onChange={e => setAmounts(p => ({ ...p, [bet.id]: +e.target.value }))}
                               className={styles.slider}
                             />
                             <div className={styles.sliderRange}>
-                              <span>1</span><span>{MAX_TOKENS}</span>
+                              <span>1</span><span>{maxTokens}</span>
                             </div>
                             <button className={styles.confirmMiseBtn} onClick={() => handleBet(bet)}>
                               Confirmer — {amount} jetons
@@ -280,12 +255,14 @@ export default function Paris() {
 
           {/* ─ Droite ─ */}
           <div className={styles.rightCol}>
-            {/* Historique */}
             <div className={styles.cardWrap}>
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>Historique des paris</span>
               </div>
               <div className={styles.cardBody}>
+                {histSlice.length === 0 && (
+                  <div className={styles.emptyBets}>Aucun historique disponible.</div>
+                )}
                 {histSlice.map(h => (
                   <div key={h.id} className={styles.histRow}>
                     <div className={styles.histInfo}>
@@ -301,29 +278,34 @@ export default function Paris() {
                   </div>
                 ))}
               </div>
-              <div className={styles.histPagination}>
-                <button className={styles.pageBtn} onClick={() => setHistPage(p => Math.max(0, p-1))} disabled={histPage === 0}>←</button>
-                <span className={styles.pageInfo}>{histPage + 1} / {histPages}</span>
-                <button className={styles.pageBtn} onClick={() => setHistPage(p => Math.min(histPages-1, p+1))} disabled={histPage === histPages-1}>→</button>
-              </div>
+              {histPages > 1 && (
+                <div className={styles.histPagination}>
+                  <button className={styles.pageBtn} onClick={() => setHistPage(p => Math.max(0, p-1))} disabled={histPage === 0}>←</button>
+                  <span className={styles.pageInfo}>{histPage + 1} / {histPages}</span>
+                  <button className={styles.pageBtn} onClick={() => setHistPage(p => Math.min(histPages-1, p+1))} disabled={histPage === histPages-1}>→</button>
+                </div>
+              )}
             </div>
 
-            {/* Stats + graphique */}
             <div className={styles.cardWrap}>
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>Tes stats de paris</span>
               </div>
               <div className={styles.statsBody}>
-                <div className={styles.glassRow}>
-                  <span className={styles.glassBadgeGreen}>Meilleur gain</span>
-                  <span className={styles.glassPlayer}>{bestGain?.betOn}</span>
-                  <span className={styles.glassVal} style={{ color: '#57722F' }}>+{bestGain?.delta}</span>
-                </div>
-                <div className={styles.glassRow}>
-                  <span className={styles.glassBadgeRed}>Plus grosse perte</span>
-                  <span className={styles.glassPlayer}>{biggestLoss?.betOn}</span>
-                  <span className={styles.glassVal} style={{ color: '#CD3122' }}>{biggestLoss?.delta}</span>
-                </div>
+                {bestGain ? (
+                  <div className={styles.glassRow}>
+                    <span className={styles.glassBadgeGreen}>Meilleur gain</span>
+                    <span className={styles.glassPlayer}>{bestGain.betOn}</span>
+                    <span className={styles.glassVal} style={{ color: '#57722F' }}>+{bestGain.delta}</span>
+                  </div>
+                ) : null}
+                {biggestLoss ? (
+                  <div className={styles.glassRow}>
+                    <span className={styles.glassBadgeRed}>Plus grosse perte</span>
+                    <span className={styles.glassPlayer}>{biggestLoss.betOn}</span>
+                    <span className={styles.glassVal} style={{ color: '#CD3122' }}>{biggestLoss.delta}</span>
+                  </div>
+                ) : null}
               </div>
               <div className={styles.chartSection}>
                 <div className={styles.chartLabel}>
@@ -333,14 +315,6 @@ export default function Paris() {
                   </span>
                 </div>
                 <div className={styles.chartFilters}>
-                  <select className={styles.chartFilter} value={chartXFilter} onChange={e => setChartXFilter(e.target.value)}>
-                    <option value="7j">7 derniers jours</option>
-                    <option value="30j">30 derniers jours</option>
-                    <option value="3m">3 derniers mois</option>
-                    <option value="6m">6 derniers mois</option>
-                    <option value="annee">Cette année</option>
-                    <option value="tout">Tout l'historique</option>
-                  </select>
                   <select className={styles.chartFilter} value={chartYFilter} onChange={e => setChartYFilter(e.target.value)}>
                     <option value="auto">Auto</option>
                     <option value="50">±50</option>
@@ -351,7 +325,10 @@ export default function Paris() {
                     <option value="2000">±2 000</option>
                   </select>
                 </div>
-                <BetsChart history={chartData} yRange={yRange} />
+                <BetsChart history={betHistory} yRange={yRange} />
+                {betHistory.length === 0 && (
+                  <div className={styles.emptyBets}>Aucun historique à afficher.</div>
+                )}
                 <div className={styles.chartHint}>Survolez un point pour voir le détail</div>
               </div>
             </div>

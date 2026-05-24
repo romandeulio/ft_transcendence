@@ -6,32 +6,20 @@ import Pill from '../components/ui/Pill'
 import Avatar from '../components/ui/Avatar'
 import LoginInput from '../components/ui/LoginInput'
 import { useBets } from '../context/BetsContext'
+import { useAuth } from '../context/AuthContext'
 import styles from './Planning.module.css'
-
-const INITIAL_QUEUE = [
-  { type: 'live',  p1: 'sydney',  p2: 'roman',    format: '1v1' },
-  { type: 'mine',  p1: 'ltcherp', p2: 'coraline', format: '1v1' },
-  { type: 'taken', p1: 'thais',   p2: 'jblanc',   format: '2v2', team1: ['thais', 'amorin'], team2: ['jblanc', 'kperez'] },
-  { type: 'taken', p1: 'amorin',  p2: 'kperez',   format: '1v1' },
-  { type: 'taken', p1: 'roman',   p2: 'thais',    format: '1v1' },
-]
-
-// Équipe précédente dans la file (avant les créneaux libres)
-const PREV_TEAM = { p1: 'amorin', p2: 'kperez', format: '1v1' }
-
-const MAX_TOKENS = 1412
 
 export default function Planning() {
   const { addBet } = useBets()
-  const [queue,       setQueue]       = useState(INITIAL_QUEUE)
+  const { user } = useAuth()
+
+  const [queue,       setQueue]       = useState([])
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
 
-  // Modal parier
   const [betSlot,   setBetSlot]   = useState(null)
   const [betAmount, setBetAmount] = useState(50)
   const [betTeam,   setBetTeam]   = useState(null)
 
-  // Modal S'ajouter — multi-step (5 étapes)
   const [joinOpen,    setJoinOpen]    = useState(false)
   const [step,        setStep]        = useState(1)
   const [joinMode,    setJoinMode]    = useState('compet')
@@ -42,12 +30,14 @@ export default function Planning() {
   const [laGagne,     setLaGagne]     = useState(10)
   const [waitingOpen, setWaitingOpen] = useState(false)
   const [teamRequest, setTeamRequest] = useState('')
+  const [soloWaiting, setSoloWaiting] = useState([])
 
-  // Modal modifier mon créneau
   const [editOpen,        setEditOpen]        = useState(false)
   const [editPlayersOpen, setEditPlayersOpen] = useState(false)
   const [editP1,          setEditP1]          = useState('')
   const [editP2,          setEditP2]          = useState('')
+
+  const myLogin = user?.login ?? ''
 
   const resetJoin = () => {
     setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
@@ -118,7 +108,6 @@ export default function Planning() {
 
       <div className={styles.content}>
 
-        {/* Timeline */}
         <div className={styles.timelineCard}>
           <div className={styles.timelineHeader}>Matchs en attente</div>
           <div className={styles.timelineOuter}>
@@ -180,7 +169,6 @@ export default function Planning() {
                 )
               })}
 
-              {/* Booking card — always last, always exactly one */}
               <div className={styles.slotWrapper} key="book">
                 <div className={styles.slotLabel} />
                 <div
@@ -195,14 +183,13 @@ export default function Planning() {
           </div>
         </div>
 
-        {/* Deux petits blocs */}
         <div className={styles.infoRow}>
           <div className={styles.infoCard}>
             <div className={styles.infoCardHeader}>Mon prochain match</div>
             <div className={styles.infoCardBody}>
               {mySlot ? (
                 <div className={styles.myMatchInfo}>
-                  <Avatar initials="CO" size={34} bg="var(--beige)" round />
+                  <Avatar initials={mySlot.p2?.[0] ?? '?'} size={34} bg="var(--beige)" round />
                   <div>
                     <div className={styles.myMatchVs}>vs <strong>{mySlot.p2}</strong></div>
                     <div className={styles.myMatchSub}>{mySlot.format} · Compétition</div>
@@ -260,11 +247,11 @@ export default function Planning() {
               <div className={styles.sliderBox}>
                 <div className={styles.sliderLabel}>Mise : <strong>{betAmount} jetons</strong></div>
                 <input
-                  type="range" min={1} max={MAX_TOKENS} value={betAmount}
+                  type="range" min={1} max={Math.max(user?.tokens ?? 1000, 1)} value={betAmount}
                   onChange={e => setBetAmount(+e.target.value)}
                   className={styles.slider}
                 />
-                <div className={styles.sliderRange}><span>1</span><span>{MAX_TOKENS}</span></div>
+                <div className={styles.sliderRange}><span>1</span><span>{user?.tokens ?? 1000}</span></div>
               </div>
             </div>
             <div className={styles.modalActions}>
@@ -308,7 +295,7 @@ export default function Planning() {
               ))}
             </div>
             {joinFormat === 'Seul' && (
-              <div className={styles.soloNote}>Tu seras placé en liste d'attente. Tu pourras envoyer des demandes d'équipe aux autres joueurs en attente.</div>
+              <div className={styles.soloNote}>Tu seras placé en liste d'attente. Un partenaire te sera attribué automatiquement.</div>
             )}
             <div className={styles.stepActions}>
               <button className={styles.backBtn} onClick={() => setStep(1)}>← Retour</button>
@@ -324,7 +311,7 @@ export default function Planning() {
               <div className={styles.teamsGrid}>
                 <div className={styles.teamBlue}>
                   <div className={styles.teamLabel}>Toi</div>
-                  <input className={styles.meInput} value="ltcherp" readOnly />
+                  <input className={styles.meInput} value={myLogin} readOnly />
                 </div>
                 <div className={styles.teamRed}>
                   <div className={styles.teamLabel}>Adversaire</div>
@@ -336,7 +323,7 @@ export default function Planning() {
               <div className={styles.teamsGrid}>
                 <div className={styles.teamBlue}>
                   <div className={styles.teamLabel}>Ton équipe</div>
-                  <input className={styles.meInput} value="ltcherp" readOnly />
+                  <input className={styles.meInput} value={myLogin} readOnly />
                   <LoginInput value={partner} onChange={setPartner} placeholder="Coéquipier..." className={styles.partnerInput} />
                 </div>
                 <div className={styles.teamRed}>
@@ -384,15 +371,7 @@ export default function Planning() {
               Voulez-vous prendre la gagne de l'équipe précédente dans la file ?
             </div>
             <div className={styles.prevTeamCard}>
-              <div className={styles.prevTeamLabel}>Équipe précédente</div>
-              <div className={styles.prevTeamPlayers}>
-                <Avatar initials={PREV_TEAM.p1} size={36} bg="var(--beige)" round />
-                <span className={styles.prevTeamName}>{PREV_TEAM.p1}</span>
-                <span className={styles.prevTeamVs}>vs</span>
-                <Avatar initials={PREV_TEAM.p2} size={36} bg="var(--beige)" round />
-                <span className={styles.prevTeamName}>{PREV_TEAM.p2}</span>
-              </div>
-              <div className={styles.prevTeamFormat}>{PREV_TEAM.format} · la gagne = {laGagne} pts</div>
+              <div className={styles.noMatch}>Aucun créneau précédent disponible</div>
             </div>
             <div className={styles.stepActions}>
               <button className={styles.backBtn} onClick={() => setStep(4)}>← Retour</button>
@@ -411,9 +390,12 @@ export default function Planning() {
             <div className={styles.waitingTitle}>En attente d'une équipe</div>
             <div className={styles.waitingDesc}>Tu es dans la liste d'attente. Les autres joueurs seuls ci-dessous peuvent rejoindre ton équipe.</div>
             <div className={styles.waitingList}>
-              {['jblanc', 'kperez'].map(login => (
+              {soloWaiting.length === 0 && (
+                <div className={styles.noMatch}>Aucun joueur en attente pour le moment.</div>
+              )}
+              {soloWaiting.map(login => (
                 <div key={login} className={styles.waitingRow}>
-                  <Avatar initials={login} size={32} bg="var(--beige)" round />
+                  <Avatar initials={login[0].toUpperCase()} size={32} bg="var(--beige)" round />
                   <span className={styles.waitingLogin}>{login}</span>
                   <button className={styles.requestBtn}>Inviter →</button>
                 </div>

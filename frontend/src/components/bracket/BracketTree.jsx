@@ -2,17 +2,9 @@ import PlayerBlock from './PlayerBlock'
 import styles from './BracketTree.module.css'
 
 const BRACKET_DATA = {
-  quarters: [
-    { p1: 'sydney',  p2: 'kperez',   winner: 'sydney', done: true  },
-    { p1: 'thais',   p2: 'coraline', winner: 'thais',  done: true  },
-    { p1: 'roman',   p2: 'jblanc',   winner: 'roman',  done: true  },
-    { p1: 'amorin',  p2: 'ltcherp',  winner: null,     done: false },
-  ],
-  semis: [
-    { p1: null, p2: null, winner: null, done: false },
-    { p1: null, p2: null, winner: null, done: false },
-  ],
-  final: { p1: null, p2: null, winner: null, done: false },
+  quarters: Array(4).fill(null).map(() => ({ p1: null, p2: null, winner: null, done: false })),
+  semis:    Array(2).fill(null).map(() => ({ p1: null, p2: null, winner: null, done: false })),
+  final:    { p1: null, p2: null, winner: null, done: false },
 }
 
 function MatchBlock({ match, isFinal = false }) {

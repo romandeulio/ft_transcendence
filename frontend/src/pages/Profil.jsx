@@ -7,45 +7,20 @@ import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
 import LoginInput from '../components/ui/LoginInput'
 import { getPlayerBadge } from '../utils/playerBadge'
+import { useAuth } from '../context/AuthContext'
 import styles from './Profil.module.css'
-
-const MY_WINS = 28
-const MY_LOGIN = 'ltcherp'
-
-const teammates = [
-  { login: 'thais',  name: 'Thaïs'  },
-  { login: 'sydney', name: 'Sydney' },
-  { login: 'roman',  name: 'Roman'  },
-]
-
-const opponents = [
-  { login: 'coraline', name: 'Coraline', winrate: 38 },
-  { login: 'amorin',   name: 'amorin',   winrate: 45 },
-  { login: 'jblanc',   name: 'jblanc',   winrate: 52 },
-]
-
-const feared = [
-  { login: 'sydney', name: 'Sydney',  lossrate: 72 },
-  { login: 'thais',  name: 'Thaïs',   lossrate: 64 },
-  { login: 'roman',  name: 'Roman',   lossrate: 58 },
-]
-
-const recentMatches = [
-  { result: 'Victoire', vs: 'amorin',   score: '10-7', elo: '+18', date: '20 avr' },
-  { result: 'Défaite',  vs: 'sydney',   score: '5-10', elo: '-14', date: '19 avr' },
-  { result: 'Victoire', vs: 'coraline', score: '10-4', elo: '+16', date: '18 avr' },
-  { result: 'Victoire', vs: 'jblanc',   score: '10-8', elo: '+12', date: '17 avr' },
-]
-
-const seasons = [
-  { season: 1, rank: '5ème',     prize: null },
-  { season: 2, rank: 'En cours', prize: 'ongoing' },
-]
 
 const MATCHES_PER_PAGE = 3
 
 export default function Profil() {
-  const [teammates_, setTeammates] = useState(teammates)
+  const { user } = useAuth()
+
+  const [teammates_,    setTeammates]    = useState([])
+  const [opponents,     setOpponents]    = useState([])
+  const [feared,        setFeared]       = useState([])
+  const [recentMatches, setRecentMatches] = useState([])
+  const [seasons,       setSeasons]      = useState([])
+
   const [newPartner,  setNewPartner]  = useState('')
   const [matchSearch, setMatchSearch] = useState('')
   const [matchPage,   setMatchPage]   = useState(0)
@@ -72,6 +47,11 @@ export default function Profil() {
       setNewPartner('')
     }
   }
+
+  const myLogin = user?.login ?? '—'
+  const myWins  = user?.wins  ?? 0
+  const myElo   = user?.elo   ?? '—'
+  const badge   = getPlayerBadge(myWins)
 
   return (
     <Shell>
@@ -109,40 +89,35 @@ export default function Profil() {
                 {photoUrl
                   ? <img src={photoUrl} className={styles.avatarPhoto} alt="avatar" onClick={() => setPhotoUploadOpen(true)} />
                   : <div onClick={() => setPhotoUploadOpen(true)} style={{ cursor: 'pointer' }}>
-                      <Avatar initials={MY_LOGIN[0]} size={66} bg="var(--color-primary)" color="#fff" round />
+                      <Avatar initials={myLogin[0]?.toUpperCase() ?? '?'} size={66} bg="var(--color-primary)" color="#fff" round />
                     </div>
                 }
                 <button className={styles.photoUploadBtn} onClick={() => setPhotoUploadOpen(true)}>📷 Photo</button>
               </div>
             </div>
             <div className={styles.heroInfo}>
-              <div className={styles.heroName}>ltcherp</div>
+              <div className={styles.heroName}>{myLogin}</div>
               <div className={styles.heroBadges}>
-                <Pill label="#5 Classement" type="orange" />
-                <Pill label="28 Victoires" type="win" />
+                {user?.rank != null && <Pill label={`#${user.rank} Classement`} type="orange" />}
+                {myWins > 0 && <Pill label={`${myWins} Victoires`} type="win" />}
               </div>
-              {(() => {
-                const b = getPlayerBadge(MY_WINS)
-                return (
-                  <span className={styles.playerTitleBadge} style={{ background: b.bg, color: b.color }}>
-                    Mon badge : {b.label}
-                  </span>
-                )
-              })()}
+              <span className={styles.playerTitleBadge} style={{ background: badge.bg, color: badge.color }}>
+                Mon badge : {badge.label}
+              </span>
             </div>
           </div>
           <div className={styles.heroElo}>
-            <div className={styles.eloVal}>1412</div>
-            <div className={styles.eloDelta}>+42 ce mois</div>
+            <div className={styles.eloVal}>{myElo}</div>
+            <div className={styles.eloDelta}>ELO</div>
           </div>
         </div>
 
         <div className={styles.statsGrid}>
-          <StatCard color="var(--orange-pale)" label="Ratio"            value="60.9%"  sub="28 V · 18 D" />
-          <StatCard color="var(--yellow-pale)" label="Série en cours"   value="3"      sub="victoires d'affilée" />
-          <StatCard color="var(--green-pale)"  label="Jetons gagnés"    value="+185"   sub="bilan saison 2" />
-          <StatCard color="var(--red-pale)"    label="Gamelles"         value="14"     sub="effectuées cette saison" />
-          <StatCard color="var(--beige)"       label="Parties / mois"   value="18"     sub="moyenne ce mois" />
+          <StatCard color="var(--orange-pale)" label="Ratio"            value="—" sub="V · D" />
+          <StatCard color="var(--yellow-pale)" label="Série en cours"   value="—" sub="victoires d'affilée" />
+          <StatCard color="var(--green-pale)"  label="Jetons gagnés"    value="—" sub="bilan saison" />
+          <StatCard color="var(--red-pale)"    label="Gamelles"         value="—" sub="effectuées cette saison" />
+          <StatCard color="var(--beige)"       label="Parties / mois"   value="—" sub="moyenne ce mois" />
         </div>
 
         <div className={styles.grid}>
@@ -154,6 +129,9 @@ export default function Profil() {
               <div className={styles.teammateNote}>
                 (ajoutés automatiquement selon le nombre de parties jouées ensemble)
               </div>
+              {teammates_.length === 0 && (
+                <div className={styles.noMatch}>Aucun coéquipier enregistré.</div>
+              )}
               {teammates_.map(t => (
                 <div key={t.login} className={styles.teammateRow}>
                   <Avatar initials={t.name} size={30} bg="var(--beige)" />
@@ -176,6 +154,9 @@ export default function Profil() {
             <div className={styles.divider} />
 
             <Card title="Adversaires fréquents">
+              {opponents.length === 0 && (
+                <div className={styles.noMatch}>Aucune donnée disponible.</div>
+              )}
               {opponents.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
                   <Avatar initials={o.name} size={28} bg="var(--beige)" />
@@ -189,6 +170,9 @@ export default function Profil() {
 
             <Card title="Adversaires redoutables">
               <div className={styles.fearedNote}>Joueurs contre qui tu perds le plus souvent</div>
+              {feared.length === 0 && (
+                <div className={styles.noMatch}>Aucune donnée disponible.</div>
+              )}
               {feared.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
                   <Avatar initials={o.name} size={28} bg="var(--red-pale)" />
@@ -235,6 +219,9 @@ export default function Profil() {
             </Card>
 
             <Card title="Historique des saisons">
+              {seasons.length === 0 && (
+                <div className={styles.noMatch}>Aucune saison disponible.</div>
+              )}
               {seasons.map(s => (
                 <div key={s.season} className={styles.seasonRow}>
                   <span className={styles.seasonName}>Saison {s.season}</span>

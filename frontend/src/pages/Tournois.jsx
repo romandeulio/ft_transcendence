@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Modal from '../components/ui/Modal'
@@ -6,28 +7,14 @@ import Pill from '../components/ui/Pill'
 import BracketTree from '../components/bracket/BracketTree'
 import styles from './Tournois.module.css'
 
-const TOURNAMENT_START = new Date('2026-05-08T18:00:00')
-const BDE_PASSWORD     = 'starbucks'
-
-const WAITING_LIST = [
-  { id: 1, player1: 'ltcherp',  player2: 'srobert', registeredAt: '14:32' },
-  { id: 2, player1: 'thbouche', player2: 'cdupont', registeredAt: '14:45' },
-  { id: 3, player1: 'amorin',   player2: 'jblanc',  registeredAt: '15:01' },
-]
-
-const SOLO_WAITING = [
-  { login: 'coraline', since: '18 min' },
-  { login: 'jblanc',   since: '9 min'  },
-  { login: 'thais',    since: '3 min'  },
-]
-
 function useCountdown(target) {
-  const [diff, setDiff] = useState(() => target - Date.now())
+  const [diff, setDiff] = useState(() => target ? target - Date.now() : null)
   useEffect(() => {
+    if (!target) return
     const id = setInterval(() => setDiff(target - Date.now()), 1000)
     return () => clearInterval(id)
   }, [target])
-  return Math.max(0, diff)
+  return diff != null ? Math.max(0, diff) : null
 }
 
 function splitCountdown(ms) {
@@ -40,10 +27,13 @@ function splitCountdown(ms) {
 }
 
 export default function Tournois() {
+  const { user } = useAuth()
+
   const [bdeOpen,      setBdeOpen]      = useState(false)
   const [bdeInput,     setBdeInput]     = useState('')
   const [bdeUnlocked,  setBdeUnlocked]  = useState(false)
   const [bdeError,     setBdeError]     = useState(false)
+  const [bdeLoading,   setBdeLoading]   = useState(false)
   const [createOpen,   setCreateOpen]   = useState(false)
   const [maxPlayers,   setMaxPlayers]   = useState('16')
   const [registerOpen, setRegisterOpen] = useState(false)
@@ -52,17 +42,34 @@ export default function Tournois() {
   const [showRecruit,  setShowRecruit]  = useState(false)
   const [invitedSet,   setInvitedSet]   = useState(new Set())
 
-  const countdown    = useCountdown(TOURNAMENT_START.getTime())
-  const hasStarted   = countdown === 0
+  const [tournament,  setTournament]  = useState(null)
+  const [waitingList, setWaitingList] = useState([])
+  const [soloWaiting, setSoloWaiting] = useState([])
 
-  const handleBdeSubmit = () => {
-    if (bdeInput === BDE_PASSWORD) {
-      setBdeUnlocked(true)
-      setBdeOpen(false)
-      setCreateOpen(true)
-      setBdeError(false)
-    } else {
+  const tournamentStart = tournament?.startDate ? new Date(tournament.startDate).getTime() : null
+  const countdown  = useCountdown(tournamentStart)
+  const hasStarted = countdown === 0
+
+  const handleBdeSubmit = async () => {
+    setBdeLoading(true)
+    setBdeError(false)
+    try {
+      const res = await fetch('/api/bde/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: bdeInput }),
+      })
+      if (res.ok) {
+        setBdeUnlocked(true)
+        setBdeOpen(false)
+        setCreateOpen(true)
+      } else {
+        setBdeError(true)
+      }
+    } catch {
       setBdeError(true)
+    } finally {
+      setBdeLoading(false)
     }
   }
 
@@ -78,19 +85,30 @@ export default function Tournois() {
         }
       />
       <div className={styles.content}>
-        <div className={styles.tournamentCard}>
-          <div className={styles.tcHeader}>
-            <div>
-              <div className={styles.tcName}>TOURNOI DU JEUDI</div>
-              <div className={styles.tcDate}>Jeudi 24 avril 2026 — 18h00</div>
+
+        {tournament ? (
+          <div className={styles.tournamentCard}>
+            <div className={styles.tcHeader}>
+              <div>
+                <div className={styles.tcName}>{tournament.name}</div>
+                <div className={styles.tcDate}>{tournament.dateLabel}</div>
+              </div>
+              {tournament.prize && <Pill label={`🏆 ${tournament.prize}`} type="season" />}
             </div>
-            <Pill label="🏆 500 jetons" type="season" />
+            <div className={styles.tcMeta}>
+              {tournament.deadline && <Pill label={`Inscriptions jusqu'au ${tournament.deadline}`} type="live" />}
+              {tournament.registered != null && tournament.maxPlayers != null && (
+                <span className={styles.participants}>{tournament.registered} / {tournament.maxPlayers} inscrits</span>
+              )}
+            </div>
           </div>
-          <div className={styles.tcMeta}>
-            <Pill label="Inscriptions jusqu'au 23/04 20h" type="live" />
-            <span className={styles.participants}>8 / 16 inscrits</span>
+        ) : (
+          <div className={styles.tournamentCard}>
+            <div className={styles.tcHeader}>
+              <div className={styles.tcName}>Aucun tournoi en cours</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {!registered && (
           <div className={styles.registerBanner}>
@@ -110,7 +128,10 @@ export default function Tournois() {
             <div className={styles.recruitSub}>
               Ces joueurs sont seuls en liste d'attente pour ce tournoi. Envoie-leur une invitation d'équipe.
             </div>
-            {SOLO_WAITING.map(p => (
+            {soloWaiting.length === 0 && (
+              <div className={styles.waitingListEmpty}>Aucun joueur en attente pour le moment.</div>
+            )}
+            {soloWaiting.map(p => (
               <div key={p.login} className={styles.recruitRow}>
                 <div className={styles.recruitAvatar}>{p.login[0].toUpperCase()}</div>
                 <div className={styles.recruitInfo}>
@@ -136,13 +157,13 @@ export default function Tournois() {
         <div className={styles.waitingListBox}>
           <div className={styles.waitingListHeader}>
             <span className={styles.waitingListTitle}>LISTE D'ATTENTE</span>
-            <span className={styles.waitingListCount}>{WAITING_LIST.length} équipe{WAITING_LIST.length > 1 ? 's' : ''}</span>
+            <span className={styles.waitingListCount}>{waitingList.length} équipe{waitingList.length > 1 ? 's' : ''}</span>
           </div>
-          {WAITING_LIST.length === 0 ? (
+          {waitingList.length === 0 ? (
             <p className={styles.waitingListEmpty}>Aucune équipe en attente</p>
           ) : (
             <div>
-              {WAITING_LIST.map((team, i) => (
+              {waitingList.map((team, i) => (
                 <div key={team.id} className={styles.waitingListItem}>
                   <span className={styles.waitingRank}>#{i + 1}</span>
                   <div className={styles.waitingPlayers}>
@@ -160,7 +181,7 @@ export default function Tournois() {
 
         {/* Bracket avec overlay gris si pas encore commencé */}
         <div className={styles.bracketWrap}>
-          {!hasStarted && (() => {
+          {countdown != null && !hasStarted && (() => {
             const cd = splitCountdown(countdown)
             return (
               <div className={styles.bracketBlur}>
@@ -192,6 +213,13 @@ export default function Tournois() {
               </div>
             )
           })()}
+          {countdown == null && (
+            <div className={styles.bracketBlur}>
+              <div className={styles.countdownBox}>
+                <div className={styles.countdownLabel}>Aucun tournoi planifié</div>
+              </div>
+            </div>
+          )}
           <BracketTree />
         </div>
       </div>
@@ -211,7 +239,9 @@ export default function Tournois() {
           {bdeError && <div className={styles.bdeError}>Mot de passe incorrect</div>}
         </div>
         <div className={styles.modalFooter}>
-          <button className={styles.confirmBtn} onClick={handleBdeSubmit}>Accéder</button>
+          <button className={styles.confirmBtn} onClick={handleBdeSubmit} disabled={bdeLoading}>
+            {bdeLoading ? 'Vérification…' : 'Accéder'}
+          </button>
         </div>
       </Modal>
 
@@ -250,7 +280,7 @@ export default function Tournois() {
       <Modal open={registerOpen} onClose={() => setRegisterOpen(false)} title="S'inscrire au tournoi">
         <div className={styles.formGroup}>
           <label className={styles.label}>Mon login</label>
-          <input className={styles.meInput} value="ltcherp" readOnly />
+          <input className={styles.meInput} value={user?.login ?? ''} readOnly />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>Partenaire</label>
