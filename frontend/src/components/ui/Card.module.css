@@ -2,7 +2,8 @@
   background: var(--white);
   border: 1px solid var(--beige);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 .header {
@@ -11,6 +12,7 @@
   justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--beige);
+  border-radius: 12px 12px 0 0;
 }
 
 .title {

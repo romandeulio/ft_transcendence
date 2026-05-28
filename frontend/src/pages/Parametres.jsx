@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Toggle from '../components/ui/Toggle'
@@ -37,13 +39,23 @@ const NOTICE_SECTIONS = [
   },
 ]
 
+const TAB_PARAM_MAP = { notice: "Notice d'utilisation" }
+
 export default function Parametres() {
-  const [activeTab, setActiveTab] = useState('Profil')
+  const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const initialTab = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'Profil'
+  const [activeTab, setActiveTab] = useState(initialTab)
+
+  useEffect(() => {
+    const tab = TAB_PARAM_MAP[searchParams.get('tab')]
+    if (tab) setActiveTab(tab)
+  }, [searchParams])
   const [tfa,       setTfa]       = useState(false)
   const [oauth,     setOauth]     = useState(true)
   const [notifs,    setNotifs]    = useState({ turn:true, bet:true, tourney:false, season:true, invite:true })
   const [lang,      setLang]      = useState('FR')
-  const [email,     setEmail]     = useState('ltcherp@student.42.fr')
+  const [email,     setEmail]     = useState('')
 
   const toggleNotif = (id) => setNotifs(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -78,7 +90,7 @@ export default function Parametres() {
               </div>
               <div className={styles.section}>
                 <label className={styles.label}>Login 42</label>
-                <input className={styles.inputLocked} value="ltcherp" readOnly />
+                <input className={styles.inputLocked} value={user?.login ?? ''} readOnly />
               </div>
               <div className={styles.section}>
                 <label className={styles.label}>Email</label>

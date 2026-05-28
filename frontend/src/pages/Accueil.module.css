@@ -42,7 +42,7 @@
 
 .matchChoiceBtns {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
@@ -53,12 +53,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
   border: 1.5px solid rgba(255,255,255,0.5);
   background: rgba(255,255,255,0.88);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #1A2B5E;
   cursor: pointer;
@@ -111,21 +111,39 @@
 .addMatchBtn {
   flex: 1;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
+  padding: 4px 10px;
+  border-radius: 8px;
   border: 1.5px solid rgba(255,255,255,0.5);
   background: rgba(255,255,255,0.88);
-  font-size: 13px;
-  font-weight: 600;
   color: #1A2B5E;
   cursor: pointer;
   transition: all 0.15s;
   backdrop-filter: blur(4px);
 }
 .addMatchBtn:hover { background: rgba(255,255,255,0.96); }
+
+.addEmoji {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.addTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.addLine {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
 
 .jouerBtn {
   display: flex;
@@ -176,7 +194,7 @@
   background: var(--white);
   border: 2px solid #EBF0FC;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cardHeader {
@@ -192,6 +210,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 10px 10px 0 0;
 }
 
 .counter {

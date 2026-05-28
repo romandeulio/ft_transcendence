@@ -18,13 +18,13 @@
 .me {
   background: #EBF0FC;
   border-color: #4068DB;
-  color: #000000;
+  color: var(--ink);
 }
 
 .pos {
   font-size: 13px;
   font-weight: 800;
-  color: #000000;
+  color: var(--ink);
   width: 20px;
   flex-shrink: 0;
 }
@@ -46,12 +46,12 @@
 
 .vs {
   font-size: 11px;
-  color: #000000;
+  color: var(--ink);
 }
 
 .wait {
   font-size: 12px;
-  color: #000000;
+  color: var(--ink);
   flex-shrink: 0;
 }
 
