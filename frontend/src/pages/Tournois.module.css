@@ -73,7 +73,7 @@
   border: 1px solid var(--beige);
   border-radius: 10px;
   font-size: 13px;
-  color: #000000;
+  color: var(--ink);
 }
 
 .registerBtn {
@@ -116,20 +116,28 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: rgba(180, 180, 180, 0.6);
-  backdrop-filter: blur(5px);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(150, 165, 200, 0.28) 0px,
+    rgba(150, 165, 200, 0.28) 8px,
+    rgba(200, 211, 240, 0.10) 8px,
+    rgba(200, 211, 240, 0.10) 20px
+  );
   pointer-events: none;
 }
 
 .countdownBox {
-  background: rgba(0,0,0,0.30);
-  border-radius: 12px;
+  background: rgba(0, 26, 87, 0.90);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
   padding: 24px 40px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 
 .countdownLabel {
@@ -191,11 +199,11 @@
 
 .soloNote {
   font-size: 12px;
-  color: #000000;
+  color: var(--ink);
   line-height: 1.6;
   padding: 10px 14px;
-  background: rgba(0,0,0,0.04);
-  border: 1px solid #EBF0FC;
+  background: var(--bg2);
+  border: 1px solid var(--beige);
   border-radius: 8px;
   margin-top: 10px;
 }
@@ -237,7 +245,7 @@
   border-radius: 8px;
   border: 1.5px solid var(--beige);
   background: var(--bg2);
-  color: #000000;
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -270,7 +278,7 @@
 .level_moyen {
   background: #EBF0FC;
   border-color: #EBF0FC;
-  color: #000000;
+  color: var(--ink);
 }
 
 .level_difficile {

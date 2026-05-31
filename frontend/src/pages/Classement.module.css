@@ -160,7 +160,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.playerRowMe .playerName { color: #000000; }
+.playerRowMe .playerName { color: var(--ink); }
 
 .playerVd {
   width: 54px;
@@ -180,7 +180,7 @@
   padding-right: 4px;
   flex-shrink: 0;
 }
-.playerRowMe .playerEloVal { color: #000000; }
+.playerRowMe .playerEloVal { color: var(--ink); }
 
 .rankColCell {
   width: 64px;

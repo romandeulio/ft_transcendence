@@ -1,10 +1,22 @@
-import { useState } from 'react'
-import { queue as mockQueue } from '../mock/mockQueue'
+import { useState, useEffect } from 'react'
 import { useWebSocket } from './useWebSocket'
 
 export function useQueue() {
-  const [queue, setQueue] = useState(mockQueue)
-  const { data } = useWebSocket(null) // wire to '/ws/queue/' in production
+  const [queue, setQueue] = useState([])
+
+  const { data } = useWebSocket('/ws/queue/')
+
+  useEffect(() => {
+    if (!data) return
+
+    if (Array.isArray(data)) {
+      setQueue(data)
+    } else if (data.queue) {
+      setQueue(data.queue)
+    } else {
+      setQueue([])
+    }
+  }, [data])
 
   return { queue }
 }

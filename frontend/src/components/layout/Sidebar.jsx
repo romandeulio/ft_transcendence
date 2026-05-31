@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import Avatar from '../ui/Avatar'
+import { useAuth } from '../../context/AuthContext'
 import styles from './Sidebar.module.css'
 
 const NAV_ITEMS = [
@@ -15,19 +16,21 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
+  const { user } = useAuth()
+
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
       <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
 
-      <div className={styles.userBlock}>
+      <Link to="/profil" className={styles.userBlock} onClick={onClose}>
         <div className={styles.avatarWrap}>
-          <Avatar initials="LT" size={44} bg="rgba(255,255,255,0.15)" round />
+          <Avatar initials={user?.login?.[0]?.toUpperCase() ?? '?'} size={44} bg="rgba(255,255,255,0.15)" round />
         </div>
         <div className={styles.userInfo}>
-          <div className={styles.userName}>Léa Tcherepoff</div>
-          <div className={styles.userTokens}>🪙 1 412 jetons</div>
+          <div className={styles.userName}>{user?.name ?? user?.login ?? ''}</div>
+          <div className={styles.userTokens}>{user?.tokens != null ? `🪙 ${user.tokens} jetons` : ''}</div>
         </div>
-      </div>
+      </Link>
 
       <nav className={styles.nav}>
         {NAV_ITEMS.map((item, i) => {

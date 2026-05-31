@@ -10,7 +10,7 @@
 
 .default {
   background: var(--bg2);
-  color: #000000;
+  color: var(--ink);
   border: 1px solid var(--beige);
 }
 
@@ -37,13 +37,13 @@
 
 .soon {
   background: #EBF0FC;
-  color: #000000;
+  color: var(--ink);
   border: 1px solid #EBF0FC;
 }
 
 .done {
   background: var(--bg2);
-  color: #000000;
+  color: var(--ink);
   border: 1px solid var(--beige);
 }
 
@@ -61,8 +61,8 @@
 
 .season {
   background: #EBF0FC;
-  color: #000000;
-  border: 1px solid #EBF0FC;
+  color: #1A2B5E;
+  border: 1px solid #C8D3F0;
 }
 
 .orange {

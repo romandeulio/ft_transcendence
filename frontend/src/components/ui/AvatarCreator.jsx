@@ -450,7 +450,7 @@ export default function AvatarCreator({ open, onClose, config, onChange }) {
           <div className={styles.previewCircle}>
             <HumanSVG config={cfg} size={175}/>
           </div>
-          <div className={styles.previewName}>ltcherp</div>
+          <div className={styles.previewName}>Aperçu</div>
         </div>
 
         {/* ─ Right panel ─ */}

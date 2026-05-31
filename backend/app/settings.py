@@ -48,8 +48,8 @@ LOCAL_APPS_SYDNEY = [
 
 # Apps autres Thaïs/Roman
 LOCAL_APPS_TEAM = [
-	'users',    # Thaïs — AUTH_USER_MODEL
-#    'realtime', # Roman — WebSockets
+    'users',    # Thaïs — AUTH_USER_MODEL
+    'realtime', # Roman — WebSockets
 #    'bets',     # Roman — paris & wallet
 ]
 
@@ -178,12 +178,17 @@ CORS_ALLOW_CREDENTIALS = True
 # ===========================================================================
 
 CHANNEL_LAYERS = {
-	'default': {
-		'BACKEND': 'channels_redis.core.RedisChannelLayer',
-		'CONFIG': {
-			'hosts': [(config('REDIS_HOST', default='redis'), 6379)],
-		},
-	},
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [
+                (
+                    config('REDIS_HOST', default='redis'),
+                    config('REDIS_PORT', default=6379, cast=int)
+                )
+            ],
+        },
+    },
 }
 
 # ===========================================================================

@@ -3,37 +3,16 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
-import { players } from '../mock/mockPlayers'
 import styles from './Classement.module.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 const PAGE_SIZE   = 5
 
-const TEAMS_2V2 = [
-  { id:1, team: ['Sydney', 'Thaïs'],    elo: 2120, wins: 34, losses: 5,  rank: 1 },
-  { id:2, team: ['Roman', 'amorin'],    elo: 1980, wins: 28, losses: 9,  rank: 2 },
-  { id:3, team: ['Léa', 'jblanc'],      elo: 1840, wins: 24, losses: 12, rank: 3, isMe: true },
-  { id:4, team: ['coraline', 'kperez'], elo: 1720, wins: 19, losses: 16, rank: 4 },
-  { id:5, team: ['thais', 'amorin'],    elo: 1610, wins: 14, losses: 18, rank: 5 },
-]
-
-const PAST_SEASONS = [
-  { season: 2, name: 'Thaïs',  initials: 'TH', elo: 1834 },
-  { season: 1, name: 'Sydney', initials: 'SY', elo: 1920 },
-]
-
 const SEASON_OPTIONS = [
-  { value: 'current', label: 'Saison actuelle (S2)' },
+  { value: 'current', label: 'Saison actuelle' },
   { value: 'season1', label: 'Saison 1' },
   { value: 'annual',  label: 'Classement annuel' },
 ]
-
-const HALL_RECORDS = [
-  { icon: '🏆', label: 'Plus grand nombre de victoires', value: 'Sydney', stat: '42 victoires' },
-  { icon: '💥', label: 'Plus grand nombre de gamelles',  value: 'amorin', stat: '31 gamelles' },
-  { icon: '🔥', label: 'Plus de victoires d\'affilée',   value: 'Thaïs',  stat: '9 de suite' },
-]
-
 
 export default function Classement() {
   const [season,    setSeason]    = useState('current')
@@ -41,12 +20,17 @@ export default function Classement() {
   const [page2v2,   setPage2v2]   = useState(0)
   const [hallOrder, setHallOrder] = useState('recent')
 
+  const [players,     setPlayers]     = useState([])
+  const [teams2v2,    setTeams2v2]    = useState([])
+  const [pastSeasons, setPastSeasons] = useState([])
+  const [hallRecords, setHallRecords] = useState([])
+
   const totalPages   = Math.ceil(players.length / PAGE_SIZE)
   const pageSlice    = players.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
-  const total2v2     = Math.ceil(TEAMS_2V2.length / PAGE_SIZE)
-  const pageSlice2v2 = TEAMS_2V2.slice(page2v2 * PAGE_SIZE, page2v2 * PAGE_SIZE + PAGE_SIZE)
+  const total2v2     = Math.ceil(teams2v2.length / PAGE_SIZE)
+  const pageSlice2v2 = teams2v2.slice(page2v2 * PAGE_SIZE, page2v2 * PAGE_SIZE + PAGE_SIZE)
 
-  const sortedSeasons = [...PAST_SEASONS].sort((a, b) =>
+  const sortedSeasons = [...pastSeasons].sort((a, b) =>
     hallOrder === 'recent' ? b.season - a.season : a.season - b.season
   )
 
@@ -55,12 +39,11 @@ export default function Classement() {
       <Topbar
         title="Classement"
         titleSize={30}
-        right={<Pill label="Saison 2" type="season" />}
+        right={<Pill label="Saison en cours" type="season" />}
       />
 
       <div className={styles.content}>
 
-        {/* Sélecteur saison */}
         <div className={styles.seasonRow}>
           <label className={styles.seasonLabel}>Afficher :</label>
           <select
@@ -74,7 +57,6 @@ export default function Classement() {
           </select>
         </div>
 
-        {/* Classements 1v1 + 2v2 */}
         <div className={styles.rankingRow}>
 
           {/* 1v1 */}
@@ -90,6 +72,9 @@ export default function Classement() {
                 <span className={styles.headElo}>ELO</span>
                 <span className={styles.headRank}>Rang</span>
               </div>
+              {pageSlice.length === 0 && (
+                <div className={styles.emptyState}>Aucune donnée disponible</div>
+              )}
               {pageSlice.map(p => (
                 <div key={p.id} className={`${styles.playerRow} ${p.isMe ? styles.playerRowMe : ''}`}>
                   <Avatar initials={p.name} size={28} bg={p.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round />
@@ -105,11 +90,13 @@ export default function Classement() {
                 </div>
               ))}
             </div>
-            <div className={styles.pagination}>
-              <button className={styles.pageBtn} onClick={() => setPage(p => Math.max(0, p-1))} disabled={page === 0}>←</button>
-              <span className={styles.pageInfo}>{page * PAGE_SIZE + 1}–{Math.min((page+1)*PAGE_SIZE, players.length)} / {players.length}</span>
-              <button className={styles.pageBtn} onClick={() => setPage(p => Math.min(totalPages-1, p+1))} disabled={page === totalPages-1}>→</button>
-            </div>
+            {players.length > PAGE_SIZE && (
+              <div className={styles.pagination}>
+                <button className={styles.pageBtn} onClick={() => setPage(p => Math.max(0, p-1))} disabled={page === 0}>←</button>
+                <span className={styles.pageInfo}>{page * PAGE_SIZE + 1}–{Math.min((page+1)*PAGE_SIZE, players.length)} / {players.length}</span>
+                <button className={styles.pageBtn} onClick={() => setPage(p => Math.min(totalPages-1, p+1))} disabled={page === totalPages-1}>→</button>
+              </div>
+            )}
           </div>
 
           {/* 2v2 */}
@@ -125,6 +112,9 @@ export default function Classement() {
                 <span className={styles.headElo}>ELO</span>
                 <span className={styles.headRank}>Rang</span>
               </div>
+              {pageSlice2v2.length === 0 && (
+                <div className={styles.emptyState}>Aucune donnée disponible</div>
+              )}
               {pageSlice2v2.map(t => (
                 <div key={t.id} className={`${styles.playerRow} ${t.isMe ? styles.playerRowMe : ''}`}>
                   <div className={styles.teamAvatars}>
@@ -143,11 +133,13 @@ export default function Classement() {
                 </div>
               ))}
             </div>
-            <div className={styles.pagination}>
-              <button className={styles.pageBtn} onClick={() => setPage2v2(p => Math.max(0, p-1))} disabled={page2v2 === 0}>←</button>
-              <span className={styles.pageInfo}>{page2v2 * PAGE_SIZE + 1}–{Math.min((page2v2+1)*PAGE_SIZE, TEAMS_2V2.length)} / {TEAMS_2V2.length}</span>
-              <button className={styles.pageBtn} onClick={() => setPage2v2(p => Math.min(total2v2-1, p+1))} disabled={page2v2 === total2v2-1}>→</button>
-            </div>
+            {teams2v2.length > PAGE_SIZE && (
+              <div className={styles.pagination}>
+                <button className={styles.pageBtn} onClick={() => setPage2v2(p => Math.max(0, p-1))} disabled={page2v2 === 0}>←</button>
+                <span className={styles.pageInfo}>{page2v2 * PAGE_SIZE + 1}–{Math.min((page2v2+1)*PAGE_SIZE, teams2v2.length)} / {teams2v2.length}</span>
+                <button className={styles.pageBtn} onClick={() => setPage2v2(p => Math.min(total2v2-1, p+1))} disabled={page2v2 === total2v2-1}>→</button>
+              </div>
+            )}
           </div>
 
         </div>
@@ -157,10 +149,12 @@ export default function Classement() {
           <div className={styles.hallHeader}>Hall of Fame</div>
           <div className={styles.hallSplit}>
 
-            {/* Gauche : records 50% */}
             <div className={styles.hallLeft}>
               <div className={styles.hallSectionTitle}>Records all-time</div>
-              {HALL_RECORDS.map((r, i) => (
+              {hallRecords.length === 0 && (
+                <div className={styles.emptyState}>Aucune donnée disponible</div>
+              )}
+              {hallRecords.map((r, i) => (
                 <div key={i} className={styles.recordRow}>
                   <div className={styles.recordIconBox}>{r.icon}</div>
                   <div className={styles.recordInfo}>
@@ -174,7 +168,6 @@ export default function Classement() {
 
             <div className={styles.hallDivider} />
 
-            {/* Droite : champions 50% */}
             <div className={styles.hallRight}>
               <div className={styles.hallRightTop}>
                 <div className={styles.hallSectionTitle}>Champions des saisons</div>
@@ -188,6 +181,9 @@ export default function Classement() {
                 </select>
               </div>
               <div className={styles.hallEntries}>
+                {sortedSeasons.length === 0 && (
+                  <div className={styles.emptyState}>Aucune donnée disponible</div>
+                )}
                 {sortedSeasons.map(s => (
                   <div key={s.season} className={styles.hallEntry}>
                     <div className={styles.hallSeasonLabel}>Saison {s.season}</div>
@@ -202,7 +198,6 @@ export default function Classement() {
 
           </div>
         </div>
-
 
       </div>
     </Shell>

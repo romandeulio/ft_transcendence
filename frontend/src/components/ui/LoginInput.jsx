@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { players } from '../../mock/mockPlayers'
 import styles from './LoginInput.module.css'
 
-export default function LoginInput({ value, onChange, placeholder, className }) {
+export default function LoginInput({ value, onChange, placeholder, className, players = [] }) {
   const [open, setOpen] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const ref = useRef(null)
@@ -18,11 +17,11 @@ export default function LoginInput({ value, onChange, placeholder, className }) 
   const handleChange = (e) => {
     const val = e.target.value
     onChange(val)
-    if (val.trim()) {
+    if (val.trim() && players.length > 0) {
       const filtered = players
         .filter(p =>
           p.login.toLowerCase().startsWith(val.toLowerCase()) ||
-          p.name.toLowerCase().startsWith(val.toLowerCase())
+          p.name?.toLowerCase().startsWith(val.toLowerCase())
         )
         .slice(0, 6)
       setSuggestions(filtered)

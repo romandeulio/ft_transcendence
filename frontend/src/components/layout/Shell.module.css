@@ -1,8 +1,14 @@
 .shell {
-  display: grid;
-  grid-template-columns: 210px 1fr 52px;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   width: 100vw;
+}
+
+.shellBody {
+  display: grid;
+  grid-template-columns: 210px 1fr 52px;
+  flex: 1;
 }
 
 .main {
@@ -39,7 +45,7 @@
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
-  .shell {
+  .shellBody {
     grid-template-columns: 1fr;
     width: 100%;
   }
@@ -53,14 +59,14 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     position: fixed;
-    top: 15px;
-    left: 14px;
+    top: 13px;
+    left: 12px;
     z-index: 150;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: var(--bg);
     border: 1px solid var(--border);
     cursor: pointer;
@@ -70,7 +76,7 @@
 
   .hamburger span {
     display: block;
-    width: 18px;
+    width: 15px;
     height: 2px;
     background: var(--ink);
     border-radius: 2px;
