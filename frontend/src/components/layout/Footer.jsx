@@ -19,7 +19,7 @@ export default function Footer() {
             <div className={styles.colTitle}>Conseils et services</div>
             <span className={styles.link}>Politique de confidentialité</span>
             <Link to="/ticket" className={styles.link}>Envoyer un ticket</Link>
-            <span className={styles.link}>Contact</span>
+            <Link to="/status" className={styles.link}>Status</Link>
             <span className={styles.link}>RGPD</span>
           </div>
 

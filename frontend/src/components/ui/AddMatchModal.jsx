@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Modal from './Modal'
 import LoginInput from './LoginInput'
 import styles from './AddMatchModal.module.css'
@@ -27,6 +27,24 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     reset()
     onClose()
   }
+
+  // Ref toujours à jour pour le handler keydown
+  const confirmRef = useRef(handleConfirm)
+  confirmRef.current = handleConfirm
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e) => {
+      if (e.key !== 'Enter') return
+      if (step === 1) setStep(2)
+      else if (step === 2) setStep(3)
+      else if (step === 3 && joinFormat === 'Seul') confirmRef.current()
+      else if (step === 3) setStep(4)
+      else if (step === 4 && takeWin !== null) confirmRef.current()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, step, joinFormat, takeWin])
 
   return (
     <Modal open={open} onClose={handleClose} title="Ajouter un match">
