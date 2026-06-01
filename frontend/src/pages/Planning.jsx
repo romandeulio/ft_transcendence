@@ -5,13 +5,11 @@ import Modal from '../components/ui/Modal'
 import Pill from '../components/ui/Pill'
 import Avatar from '../components/ui/Avatar'
 import LoginInput from '../components/ui/LoginInput'
+import AddMatchModal from '../components/ui/AddMatchModal'
 import { useBets } from '../context/BetsContext'
 import { useQueue } from '../context/QueueContext'
 import { useAuth } from '../hooks/useAuth'
 import styles from './Planning.module.css'
-
-// Équipe précédente dans la file (avant les créneaux libres)
-const PREV_TEAM = { p1: 'amorin', p2: 'kperez', format: '1v1' }
 
 const MAX_TOKENS = 1412
 
@@ -25,26 +23,24 @@ export default function Planning() {
   const [betAmount, setBetAmount] = useState(50)
   const [betTeam,   setBetTeam]   = useState(null)
 
-  const [joinOpen,    setJoinOpen]    = useState(false)
-  const [step,        setStep]        = useState(1)
-  const [joinMode,    setJoinMode]    = useState('compet')
-  const [joinFormat,  setJoinFormat]  = useState('1v1')
-  const [partner,     setPartner]     = useState('')
-  const [opp1,        setOpp1]        = useState('')
-  const [opp2,        setOpp2]        = useState('')
-  const [laGagne,     setLaGagne]     = useState(10)
-  const [waitingOpen, setWaitingOpen] = useState(false)
-  const [teamRequest, setTeamRequest] = useState('')
-  const [soloWaiting, setSoloWaiting] = useState([])
+  const [joinOpen, setJoinOpen] = useState(false)
 
   const [editOpen,        setEditOpen]        = useState(false)
   const [editPlayersOpen, setEditPlayersOpen] = useState(false)
   const [editP1,          setEditP1]          = useState('')
   const [editP2,          setEditP2]          = useState('')
 
-  const resetJoin = () => {
-    setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
-    setPartner(''); setOpp1(''); setOpp2(''); setLaGagne(10)
+  const handleJoinConfirm = ({ format, redPlayers, bluePlayers }) => {
+    if (format === 'Seul') return
+    const newSlot = {
+      p1: bluePlayers[0],
+      p2: redPlayers[0],
+      format,
+      team1: format === '2v2' ? bluePlayers : undefined,
+      team2: format === '2v2' ? redPlayers : undefined,
+      type: 'taken',
+    }
+    joinQueue(newSlot)
   }
 
   const handleBet = () => {
@@ -62,32 +58,6 @@ export default function Planning() {
     setBetTeam(null)
   }
 
-  const handleJoinConfirm = () => {
-    if (joinFormat === 'Seul') {
-      setJoinOpen(false)
-      setWaitingOpen(true)
-    } else {
-      setStep(4)
-    }
-  }
-
-  const handleToStep5 = () => setStep(5)
-
-  const handleFinalConfirm = () => {
-    // Create and join slot
-    const newSlot = {
-      p1: joinFormat === '1v1' || joinFormat === '2v2' ? user?.username : '',
-      p2: joinFormat === '1v1' ? opp1 : '',
-      format: joinFormat,
-      team1: joinFormat === '2v2' ? [user?.username, partner] : undefined,
-      team2: joinFormat === '2v2' ? [opp1, opp2] : undefined,
-      type: 'taken',
-      laGagne: laGagne
-    }
-    joinQueue(newSlot)
-    setJoinOpen(false)
-    resetJoin()
-  }
 
   const cancelSlot = () => {
     const mySlot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
@@ -115,6 +85,7 @@ export default function Planning() {
   const mySlot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
   const liveSlots = queue.filter(s => s.type === 'live')
   const displaySlots = queue.filter(s => s.type !== 'free' && s.type !== 'live')
+  const prevTeam = displaySlots.length > 0 ? displaySlots[displaySlots.length - 1] : null
 
   return (
     <Shell>
@@ -124,7 +95,7 @@ export default function Planning() {
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {!connected && <span style={{ fontSize: '12px', color: 'var(--red)' }}>Déconnecté</span>}
-            <button className={styles.btnJoin} onClick={() => { resetJoin(); setJoinOpen(true) }}>
+            <button className={styles.btnJoin} onClick={() => setJoinOpen(true)}>
               + S'ajouter à la file
             </button>
           </div>
@@ -198,7 +169,7 @@ export default function Planning() {
                 <div className={styles.slotLabel} />
                 <div
                   className={`${styles.slot} ${styles.slotBook}`}
-                  onClick={() => { resetJoin(); setJoinOpen(true) }}
+                  onClick={() => setJoinOpen(true)}
                 >
                   <div className={styles.bookPlus}>+</div>
                   <div className={styles.bookLabel}>Réserver ce créneau</div>
@@ -293,154 +264,13 @@ export default function Planning() {
         )}
       </Modal>
 
-      {/* ── Modal S'ajouter (5 étapes) ── */}
-      <Modal open={joinOpen} onClose={() => { setJoinOpen(false); resetJoin() }} title="S'ajouter à la file d'attente">
-        {step === 1 && (
-          <div>
-            <div className={styles.stepLabel}>Étape 1 / 5 — Mode de jeu</div>
-            <div className={styles.modeBtns}>
-              <button className={`${styles.modeBtn} ${joinMode === 'compet' ? styles.modeBtnCompet : ''}`} onClick={() => setJoinMode('compet')}>🏆 Compétition</button>
-              <button className={`${styles.modeBtn} ${joinMode === 'chill'  ? styles.modeBtnChill  : ''}`} onClick={() => setJoinMode('chill')}>😎 Chill</button>
-            </div>
-            <div className={styles.modeNote}>{joinMode === 'compet' ? 'ELO pris en compte · Résultats officiels' : "Partie détendue · Pas d'impact ELO"}</div>
-            <div className={styles.stepActions}>
-              <button className={styles.nextBtn} onClick={() => setStep(2)}>Suivant →</button>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div>
-            <div className={styles.stepLabel}>Étape 2 / 5 — Format</div>
-            <div className={styles.formatBtns}>
-              {['1v1', '2v2', 'Seul'].map(f => (
-                <button key={f} className={`${styles.formatBtn} ${joinFormat === f ? styles.formatBtnActive : ''}`} onClick={() => setJoinFormat(f)}>
-                  {f === 'Seul' ? '👤 Seul' : f === '1v1' ? '⚔️ 1v1' : '👥 2v2'}
-                </button>
-              ))}
-            </div>
-            {joinFormat === 'Seul' && (
-              <div className={styles.soloNote}>Tu seras placé en liste d'attente. Un partenaire te sera attribué automatiquement.</div>
-            )}
-            <div className={styles.stepActions}>
-              <button className={styles.backBtn} onClick={() => setStep(1)}>← Retour</button>
-              <button className={styles.nextBtn} onClick={() => setStep(3)}>Suivant →</button>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
-            <div className={styles.stepLabel}>Étape 3 / 5 — Joueurs</div>
-            {joinFormat === '1v1' && (
-              <div className={styles.teamsGrid}>
-                <div className={styles.teamBlue}>
-                  <div className={styles.teamLabel}>Toi</div>
-                  <input className={styles.meInput} value={user?.username || ""} readOnly />
-                </div>
-                <div className={styles.teamRed}>
-                  <div className={styles.teamLabel}>Adversaire</div>
-                  <LoginInput value={opp1} onChange={setOpp1} placeholder="Login..." className={styles.partnerInput} />
-                </div>
-              </div>
-            )}
-            {joinFormat === '2v2' && (
-              <div className={styles.teamsGrid}>
-                <div className={styles.teamBlue}>
-                  <div className={styles.teamLabel}>Ton équipe</div>
-                  <input className={styles.meInput} value={user?.username || ""} readOnly />
-                  <LoginInput value={partner} onChange={setPartner} placeholder="Coéquipier..." className={styles.partnerInput} />
-                </div>
-                <div className={styles.teamRed}>
-                  <div className={styles.teamLabel}>Adversaires</div>
-                  <LoginInput value={opp1} onChange={setOpp1} placeholder="Adv. 1..." className={styles.partnerInput} />
-                  <LoginInput value={opp2} onChange={setOpp2} placeholder="Adv. 2..." className={styles.partnerInput} />
-                </div>
-              </div>
-            )}
-            {joinFormat === 'Seul' && (
-              <div className={styles.soloNote}>Tu rejoindras la liste d'attente. Un partenaire te sera attribué automatiquement.</div>
-            )}
-            <div className={styles.stepActions}>
-              <button className={styles.backBtn} onClick={() => setStep(2)}>← Retour</button>
-              <button className={styles.nextBtn} onClick={handleJoinConfirm}>
-                {joinFormat === 'Seul' ? 'Rejoindre →' : 'Suivant →'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <div className={styles.stepLabel}>Étape 4 / 5 — La gagne ?</div>
-            <div className={styles.lagagneBox}>
-              <div className={styles.lagagneLabel}>Nombre de points pour gagner</div>
-              <div className={styles.lagagneRow}>
-                <button className={styles.lagagneBtn} onClick={() => setLaGagne(n => Math.max(1, n-1))}>−</button>
-                <span className={styles.lagagneVal}>{laGagne}</span>
-                <button className={styles.lagagneBtn} onClick={() => setLaGagne(n => n+1)}>+</button>
-              </div>
-              <div className={styles.lagagneSub}>Pré-rempli selon le dernier match ({joinFormat})</div>
-            </div>
-            <div className={styles.stepActions}>
-              <button className={styles.backBtn} onClick={() => setStep(3)}>← Retour</button>
-              <button className={styles.nextBtn} onClick={handleToStep5}>Suivant →</button>
-            </div>
-          </div>
-        )}
-
-        {step === 5 && (
-          <div>
-            <div className={styles.stepLabel}>Étape 5 / 5 — Gagne de l'équipe précédente</div>
-            <div className={styles.prevTeamQuestion}>
-              Voulez-vous prendre la gagne de l'équipe précédente dans la file ?
-            </div>
-            <div className={styles.prevTeamCard}>
-              <div className={styles.prevTeamLabel}>Équipe précédente</div>
-              <div className={styles.prevTeamPlayers}>
-                <Avatar initials={PREV_TEAM.p1?.substring(0, 2).toUpperCase()} size={36} bg="var(--beige)" round />
-                <span className={styles.prevTeamName}>{PREV_TEAM.p1}</span>
-                <span className={styles.prevTeamVs}>vs</span>
-                <Avatar initials={PREV_TEAM.p2?.substring(0, 2).toUpperCase()} size={36} bg="var(--beige)" round />
-                <span className={styles.prevTeamName}>{PREV_TEAM.p2}</span>
-              </div>
-              <div className={styles.prevTeamFormat}>{PREV_TEAM.format} · la gagne = {laGagne} pts</div>
-            </div>
-            <div className={styles.stepActions}>
-              <button className={styles.backBtn} onClick={() => setStep(4)}>← Retour</button>
-              <button className={styles.nonBtn} onClick={handleFinalConfirm}>Non</button>
-              <button className={styles.ouiBtn} onClick={handleFinalConfirm}>Oui ✓</button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* ── Popup liste d'attente ── */}
-      {waitingOpen && (
-        <div className={styles.waitingOverlay} onClick={() => setWaitingOpen(false)}>
-          <div className={styles.waitingPopup} onClick={e => e.stopPropagation()}>
-            <button className={styles.popupClose} onClick={() => setWaitingOpen(false)}>✕</button>
-            <div className={styles.waitingTitle}>En attente d'une équipe</div>
-            <div className={styles.waitingDesc}>Tu es dans la liste d'attente. Les autres joueurs seuls ci-dessous peuvent rejoindre ton équipe.</div>
-            <div className={styles.waitingList}>
-              {soloWaiting.length === 0 && (
-                <div className={styles.noMatch}>Aucun joueur en attente pour le moment.</div>
-              )}
-              {soloWaiting.map(login => (
-                <div key={login} className={styles.waitingRow}>
-                  <Avatar initials={login?.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round />
-                  <span className={styles.waitingLogin}>{login}</span>
-                  <button className={styles.requestBtn}>Inviter →</button>
-                </div>
-              ))}
-            </div>
-            <div className={styles.waitingInput}>
-              <LoginInput value={teamRequest} onChange={setTeamRequest} placeholder="Envoyer demande à un login..." className={styles.partnerInput} />
-              <button className={styles.confirmBtn} onClick={() => setTeamRequest('')}>Envoyer</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddMatchModal
+        open={joinOpen}
+        onClose={() => setJoinOpen(false)}
+        onConfirm={handleJoinConfirm}
+        user={user}
+        prevTeam={prevTeam}
+      />
 
       {/* ── Modal modifier créneau ── */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Mon créneau">

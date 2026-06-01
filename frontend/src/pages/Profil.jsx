@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import StatCard from '../components/ui/StatCard'
@@ -13,7 +14,8 @@ import styles from './Profil.module.css'
 const MATCHES_PER_PAGE = 3
 
 export default function Profil() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const [teammates_,    setTeammates]    = useState([])
   const [opponents,     setOpponents]    = useState([])
@@ -109,6 +111,12 @@ export default function Profil() {
           <div className={styles.heroElo}>
             <div className={styles.eloVal}>{myElo}</div>
             <div className={styles.eloDelta}>ELO</div>
+            <button
+              className={styles.logoutBtn}
+              onClick={() => { logout(); navigate('/login') }}
+            >
+              Déconnexion
+            </button>
           </div>
         </div>
 

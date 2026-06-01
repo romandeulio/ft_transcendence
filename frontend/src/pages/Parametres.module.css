@@ -37,6 +37,27 @@
   background: var(--bg2);
 }
 
+.navDivider {
+  height: 1px;
+  background: var(--beige);
+  margin: 4px 0;
+}
+
+.logoutBtn {
+  padding: 9px 12px;
+  border-radius: 7px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #CD3122;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.1s;
+}
+.logoutBtn:hover { background: var(--bg2); }
+
 .tabActive {
   background: var(--white);
   border: 1px solid var(--beige) !important;
