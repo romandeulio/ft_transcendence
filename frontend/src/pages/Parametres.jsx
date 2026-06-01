@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
@@ -42,7 +42,8 @@ const NOTICE_SECTIONS = [
 const TAB_PARAM_MAP = { notice: "Notice d'utilisation" }
 
 export default function Parametres() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const initialTab = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'Profil'
   const [activeTab, setActiveTab] = useState(initialTab)
@@ -73,6 +74,13 @@ export default function Parametres() {
               {tab}
             </button>
           ))}
+          <div className={styles.navDivider} />
+          <button
+            className={styles.logoutBtn}
+            onClick={() => { logout(); navigate('/login') }}
+          >
+            Déconnexion
+          </button>
         </div>
 
         <div className={styles.panel}>

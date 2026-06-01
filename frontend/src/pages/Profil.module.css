@@ -215,6 +215,19 @@
   margin-top: 3px;
 }
 
+.logoutBtn {
+  margin-top: 10px;
+  padding: 7px 14px;
+  background: none;
+  border: 1.5px solid var(--beige);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  cursor: pointer;
+}
+.logoutBtn:hover { background: var(--bg2); color: var(--ink); }
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
