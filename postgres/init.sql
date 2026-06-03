@@ -12,6 +12,8 @@ CREATE TABLE users
     oauth_42_id TEXT UNIQUE,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10,
+    elo_solo INT DEFAULT 1000,
+    elo_team INT DEFAULT 1000,
     created_at  TIMESTAMP DEFAULT NOW()
 );
 

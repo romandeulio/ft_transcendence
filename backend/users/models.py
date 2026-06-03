@@ -15,12 +15,15 @@ class UserManager(BaseUserManager):
         user.set_password(password)
         user.save()
         return user
+    
 
 class User(AbstractBaseUser, PermissionsMixin):
 
     # -------------------------------------------------------------------------
     # Champs ELO — ajoutés nécessaires pour la logique matches ??
     # -------------------------------------------------------------------------
+    class Meta:
+        db_table = 'users'
     elo_solo = models.IntegerField(
         default=1000,
         help_text="ELO individuel 1v1. Mis à jour à chaque match SOLO classé validé.",

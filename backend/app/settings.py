@@ -5,6 +5,7 @@ Django settings for ft_transcendence
 from pathlib import Path
 from decouple import config
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ===========================================================================
@@ -46,11 +47,11 @@ LOCAL_APPS_SYDNEY = [
 	'public_api',
 ]
 
-# Apps autres Thaïs/Roman
+# Apps autres
 LOCAL_APPS_TEAM = [
-    'users',    # Thaïs — AUTH_USER_MODEL
-    'realtime', # Roman — WebSockets
-#    'bets',     # Roman — paris & wallet
+    'users',    # AUTH_USER_MODEL
+    'realtime', # WebSockets
+#    'bets',     # paris & wallet
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS_SYDNEY + LOCAL_APPS_TEAM
@@ -88,7 +89,7 @@ TEMPLATES = [
 	},
 ]
 
-# WebSockets Roman
+# WebSockets
 WSGI_APPLICATION = 'app.wsgi.application'
 ASGI_APPLICATION = 'app.asgi.application'
 
@@ -100,7 +101,7 @@ DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.postgresql',
 		'NAME': config('POSTGRES_DB', default='postgresql'),
-		'USER': config('POSTGRES_USER', default='postgres'),
+		'USER': config('POSTGRES_USER', default='postgresql'),
 		'PASSWORD': config('POSTGRES_PASSWORD'),
 		'HOST': config('POSTGRES_HOST', default='db'),
 		'PORT': config('POSTGRES_PORT', default='5432'),
@@ -109,10 +110,7 @@ DATABASES = {
 
 # ===========================================================================
 # AUTHENTIFICATION
-# À COMPLÉTER avec Thaïs quand elle confirme le nom du modèle
 # ===========================================================================
-
-# TODO: confirmer avec Thaïs — User ou User ?
 AUTH_USER_MODEL = 'users.User'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -192,6 +190,17 @@ CHANNEL_LAYERS = {
 }
 
 # ===========================================================================
+# CHACHES (pour token 42 — Thaïs)
+# ===========================================================================
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{config('REDIS_HOST', default='redis')}:{config('REDIS_PORT', default=6379)}/1",
+    }
+}
+
+# ===========================================================================
 # INTERNATIONALISATION
 # ===========================================================================
 
@@ -208,3 +217,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OAUTH_42_CLIENT_ID = config("OAUTH_42_CLIENT_ID")
+OAUTH_42_CLIENT_SECRET = config("OAUTH_42_CLIENT_SECRET")
