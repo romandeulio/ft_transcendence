@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+import pyotp
 
 class UserManager(BaseUserManager):
     def create_user(self, email, username, password=None):
@@ -52,7 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     wallet_tokens = models.IntegerField(default=10)
 
     created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]

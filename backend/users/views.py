@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.shortcuts import get_object_or_404
 
 def get_tokens(user):
     refresh = RefreshToken.for_user(user)
@@ -100,3 +102,23 @@ class Enable2FAView(APIView):
         request.user.save()
         return Response({'status': '2FA activé'})
 
+# Activation par email
+class ActivateAccountView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_object_or_404(User, pk=uid)
+        except Exception:
+            return Response(
+                {"error": "Invalid activation link"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"message": "Account activated"}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)

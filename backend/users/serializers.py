@@ -4,6 +4,13 @@ from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from .models import User
 from django.conf import settings
+from django.core.validators import validate_email as django_validate_email
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
 import requests
 import json
 
@@ -12,7 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'username', 'password']
+        fields = ['email', 'username', 'password', 'password2']
 
     def get_42_token(self):
         token = cache.get('42_token')
@@ -54,17 +61,44 @@ class RegisterSerializer(serializers.ModelSerializer):
             return None
 
     def validate_username(self, value):
-        if not self.get_42_user(value):
+        if self.get_42_user(value) == None:
             raise serializers.ValidationError('Not a valid 42 login')
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already in use")
+        return value
+
+    def validate_password2(self, value):
+        if value != self.initial_data.get('password'):
+            raise serializers.ValidationError("Passwords don't match")
+        return value
+
+
+    def validate_email(self, value):
+        if not django_validate_email(value):
+            raise serializers.ValidationError("Invalid email format")
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already in use")
         return value
 
     def create(self, validated_data):
         user_42 = self.get_42_user(validated_data["username"])
+        user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password2'])
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
 
-        with open("/tmp/user42.json", "w", encoding="utf-8") as f:
-            json.dump(user_42, f, indent=4, ensure_ascii=False)
+        activation_link = (
+            f"https://ton-domaine.fr/api/auth/activate/{uid}/{token}/"
+        )
 
-        return User.objects.create_user(**validated_data)
+        send_mail(
+            subject="Activation de votre compte",
+            message=f"Activez votre compte : {activation_link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

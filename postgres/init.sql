@@ -11,6 +11,7 @@ CREATE TABLE users
     totp_secret TEXT,
     oauth_42_id TEXT UNIQUE,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10,
     elo_solo INT DEFAULT 1000,
     elo_team INT DEFAULT 1000,
