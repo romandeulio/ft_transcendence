@@ -221,3 +221,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 OAUTH_42_CLIENT_ID = config("OAUTH_42_CLIENT_ID")
 OAUTH_42_CLIENT_SECRET = config("OAUTH_42_CLIENT_SECRET")
 OAUTH_42_REDIRECT_URI = config("OAUTH_42_REDIRECT_URI")
+
+# mail verification
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = "smtp.outlook.fr"   # serveur SMTP d'Outlook
+EMAIL_PORT = 587                    # port TLS
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "babyfoot@outlook.fr"  # ton vrai email
+EMAIL_HOST_PASSWORD = "qhlyrvbiilatkjqi"   # mot de passe de ton compte ou mot de passe d'application
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

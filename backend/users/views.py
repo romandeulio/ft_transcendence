@@ -25,6 +25,12 @@ class  RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        return Response(
+            {
+                "message": "Compte créé. Vérifiez votre email pour activer votre compte."
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 #connexion mail/mdp
 class LoginView(APIView):

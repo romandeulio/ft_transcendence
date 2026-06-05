@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('elo_team', models.IntegerField(default=1000, help_text='ELO personnel en 2v2. Indépendant du partenaire.')),
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('username', models.CharField(max_length=8, unique=True)),
-                ('email', models.EmailField(max_length=254, unique=True)),
+                ('email', models.EmailField(max_length=255, unique=True)),
                 ('role', models.CharField(default='user', max_length=15)),
                 ('is_2fa_enabled', models.BooleanField(default=False)),
                 ('totp_secret', models.TextField(blank=True, null=True)),

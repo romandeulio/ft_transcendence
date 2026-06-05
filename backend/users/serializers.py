@@ -16,7 +16,7 @@ import json
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
-
+    password2 = serializers.CharField(write_only=True,required=True)
     class Meta:
         model = User
         fields = ['email', 'username', 'password', 'password2']
@@ -74,7 +74,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
     def validate_email(self, value):
-        if not django_validate_email(value):
+        try:
+            django_validate_email(value)
+        except ValidationErrors:
             raise serializers.ValidationError("Invalid email format")
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already in use")
@@ -82,12 +84,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user_42 = self.get_42_user(validated_data["username"])
-        user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password2'])
+        validated_data.pop("password2")
+        user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password'])
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
         activation_link = (
-            f"https://ton-domaine.fr/api/auth/activate/{uid}/{token}/"
+            f"https://localhost/api/auth/activate/{uid}/{token}/"
         )
 
         send_mail(

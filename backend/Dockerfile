@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8000
 
 # probablement a rajouter a voir avec coco
@@ -25,6 +28,6 @@ EXPOSE 8000
 #python manage.py migrate --noinput
 #exec "$@"
 #RUN chmod +x /entrypoint.sh
-#ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "app.asgi:application"]
