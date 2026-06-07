@@ -42,11 +42,13 @@ class LoginView(APIView):
         totp_code = request.data.get('totp_code')
         try:
             user = User.objects.get(email=email)
+            if not user.is_active:
+                return Response({'error': 'Account not activated'}, status=403)
         except User.DoesNotExist:
-            return Response({'error': 'Identifiants invalides'}, status= 401)
+            return Response({'error': 'Bad email or password'}, status= 401)
         
         if not user.check_password(password):
-            return Response({'error': 'Identifiants invalides'}, status=401)
+            return Response({'error': 'Bad email or password'}, status=401)
         
         if user.is_2fa_enabled:
             if not totp_code:
