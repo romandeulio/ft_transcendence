@@ -14,7 +14,8 @@ import styles from './Profil.module.css'
 const MATCHES_PER_PAGE = 3
 
 export default function Profil() {
-  const { user, logout } = useAuth()
+  //const { user, logout } = useAuth()
+  const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate()
 
   const [teammates_,    setTeammates]    = useState([])
@@ -50,7 +51,7 @@ export default function Profil() {
     }
   }
 
-  const myLogin = user?.login ?? '—'
+  const myLogin = user?.username ?? '—'
   const myWins  = user?.wins  ?? 0
   const myElo   = user?.elo   ?? '—'
   const badge   = getPlayerBadge(myWins)

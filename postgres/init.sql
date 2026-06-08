@@ -5,11 +5,13 @@ CREATE TABLE users
     id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(8) UNIQUE NOT NULL,
     email   VARCHAR(255) UNIQUE NOT NULL,
-    password_hash TEXT,
+    password TEXT,
     role    VARCHAR(15) DEFAULT 'user' check( role IN ('user', 'bocalien', 'piscineux', 'stud', 'bde', 'admin', 'alumnni')),
     is_2fa_enabled BOOLEAN DEFAULT FALSE,
     totp_secret TEXT,
     oauth_42_id TEXT UNIQUE,
+    avatar_url TEXT,
+    last_login TIMESTAMP,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10,
@@ -22,8 +24,8 @@ CREATE TABLE seasons
 (
     id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name    VARCHAR(15) NOT NULL,
-    start   DATE NOT NULL,
-    end     DATE
+    start_date   DATE NOT NULL,
+    end_date     DATE
 );
 
 CREATE TABLE matches
@@ -117,4 +119,4 @@ CREATE INDEX idx_rankings_scope   ON rankings(scope, mode, score DESC);
 CREATE INDEX idx_history_user     ON ranking_history(user_id, recorded_at DESC);
 CREATE INDEX idx_bets_match       ON bets(match_id);
 CREATE INDEX idx_users_oauth      ON users(oauth_42_id);
-CREATE INDEX idx_reservations_slot ON reservations(slot_time, status);
+CREATE INDEX idx_queue_slot_time  ON queue(slot_time, status);

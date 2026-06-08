@@ -34,10 +34,23 @@ export default function Login() {
 
           setResponse(data);
           if (res.ok && data.access) {
-              localStorage.setItem("token", data.access);
-              console.log("Login OK, token stocké:", data.access);
-              navigate("/profil");
-          }
+            //localStorage.setItem("token", data.access);
+            //console.log("Login OK, token stocké:", data.access);
+            //navigate("/profil");
+            const me = await fetch("/api/auth/profile/", {
+                headers: {
+                    Authorization: `Bearer ${data.access}`,
+                },
+            });
+
+            const user = await me.json();
+
+            console.log(user);
+
+            localStorage.setItem("user", JSON.stringify(user));
+
+            navigate("/profil");
+            }
       } catch (err) {
           console.error(err);
       }
@@ -64,10 +77,10 @@ export default function Login() {
         <div className={styles.logo}>⚽</div>
         <h1 className={styles.title}>BABYFOOT 42</h1>
         <p className={styles.sub}>Connecte-toi pour accéder à la plateforme</p>
-        <a href="https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-29dcfe906e0f8b18e2511684727174672ce9648b697ddb278b04095f22bdebae&redirect_uri=https%3A%2F%2Flocalhost%2Fprofil&response_type=code">
-        <button className={styles.btn42}>
-          Se connecter avec 42
-        </button>
+        <a href="https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-29dcfe906e0f8b18e2511684727174672ce9648b697ddb278b04095f22bdebae&redirect_uri=https%3A%2F%2Flocalhost%2Fapi%2Fauth%2Foauth%2F42%2Fcallback%2F&response_type=code">
+          <button className={styles.btn42}>
+            Se connecter avec 42
+          </button>
         </a>
         <div className={styles.divider}>ou</div>
         <form onSubmit={handleSubmit}>

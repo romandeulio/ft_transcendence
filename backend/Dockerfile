@@ -21,13 +21,4 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
-# probablement a rajouter a voir avec coco
-#COPY entrypoint.sh /entrypoint.sh
-#entrypoint.sh = 
-#!/bin/sh
-#python manage.py migrate --noinput
-#exec "$@"
-#RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "app.asgi:application"]

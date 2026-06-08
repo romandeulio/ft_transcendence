@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 
 def get_tokens(user):
     refresh = RefreshToken.for_user(user)
@@ -81,16 +82,22 @@ class OAuth42CallbackView(APIView):
         profile = requests.get('https://api.intra.42.fr/v2/me', headers={
             'Authorization': f'Bearer {access_token}'
         }).json()
-
+        avatar = profile.get('image', {}).get('link')
         user, created = User.objects.get_or_create(
             oauth_42_id=str(profile['id']),
             defaults={
                 'email': profile.get('email', f"{profile['login']}@42.fr"),
                 'username': profile['login'],
-                'avatar_url': profile.get('image', {}).get('link'),
+                'avatar_url': avatar,
             }
         )
-        return Response(get_tokens(user))
+        if avatar and user.avatar_url != avatar:
+            user.avatar_url = avatar
+            user.save(update_fields=['avatar_url'])
+        tokens = get_tokens(user)
+        return redirect(
+            f"https://localhost/login-success?access={tokens['access']}&refresh={tokens['refresh']}"
+        )
 
 # 2FA
 class Enable2FAView(APIView):
@@ -130,3 +137,10 @@ class ActivateAccountView(APIView):
             return Response({"message": "Account activated"}, status=status.HTTP_200_OK)
 
         return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

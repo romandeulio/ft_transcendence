@@ -18,7 +18,7 @@ class UserManager(BaseUserManager):
         return user
     
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser):
 
     # -------------------------------------------------------------------------
     # Champs ELO — ajoutés nécessaires pour la logique matches ??
@@ -54,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
-
+    avatar_url = models.CharField(max_length=500, blank=True, null=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
     objects = UserManager()
