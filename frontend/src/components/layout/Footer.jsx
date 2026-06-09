@@ -1,31 +1,33 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import styles from './Footer.module.css'
 
 export default function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.columns}>
 
           <div className={styles.column}>
-            <div className={styles.colTitle}>Explorer</div>
-            <Link to="/parametres?tab=notice" className={styles.link}>Plan du site</Link>
-            <Link to="/classement" className={styles.link}>Classement</Link>
-            <Link to="/tournois" className={styles.link}>Tournois</Link>
-            <Link to="/admin" className={styles.link}>Admin</Link>
+            <div className={styles.colTitle}>{t('footer.explore')}</div>
+            <Link to="/parametres?tab=notice" className={styles.link}>{t('footer.sitemap')}</Link>
+            <Link to="/classement" className={styles.link}>{t('footer.ranking')}</Link>
+            <Link to="/tournois" className={styles.link}>{t('footer.tournaments')}</Link>
+            <Link to="/admin" className={styles.link}>{t('footer.admin')}</Link>
           </div>
 
           <div className={styles.column}>
-            <div className={styles.colTitle}>Conseils et services</div>
-            <span className={styles.link}>Politique de confidentialité</span>
-            <Link to="/ticket" className={styles.link}>Envoyer un ticket</Link>
-            <Link to="/status" className={styles.link}>Status</Link>
-            <span className={styles.link}>RGPD</span>
+            <div className={styles.colTitle}>{t('footer.services')}</div>
+            <span className={styles.link}>{t('footer.privacy')}</span>
+            <Link to="/ticket" className={styles.link}>{t('footer.ticket')}</Link>
+            <Link to="/status" className={styles.link}>{t('footer.status')}</Link>
+            <span className={styles.link}>{t('footer.rgpd')}</span>
           </div>
 
         </div>
         <div className={styles.bottom}>
-          © {new Date().getFullYear()} ft_transcendence — Tous droits réservés
+          {t('footer.copyright', { year: new Date().getFullYear() })}
         </div>
       </div>
     </footer>

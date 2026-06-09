@@ -63,6 +63,7 @@
     position: fixed;
     top: 13px;
     left: 12px;
+    /* RTL handled via global CSS */
     z-index: 150;
     width: 32px;
     height: 32px;

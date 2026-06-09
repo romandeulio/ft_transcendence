@@ -8,6 +8,7 @@ import LoginInput from '../components/ui/LoginInput'
 import AddMatchModal from '../components/ui/AddMatchModal'
 import { useBets } from '../context/BetsContext'
 import { useQueue } from '../context/QueueContext'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import styles from './Planning.module.css'
 
@@ -17,6 +18,7 @@ export default function Planning() {
   const { addBet } = useBets()
   const { queue, joinQueue, leaveQueue, updateSlot, connected } = useQueue()
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
 
   const [betSlot,   setBetSlot]   = useState(null)
@@ -90,13 +92,13 @@ export default function Planning() {
   return (
     <Shell>
       <Topbar
-        title="File d'attente"
+        title={t('topbar.queue')}
         titleSize={30}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {!connected && <span style={{ fontSize: '12px', color: 'var(--red)' }}>Déconnecté</span>}
+            {!connected && <span style={{ fontSize: '12px', color: 'var(--red)' }}>{t('queue.disconnected')}</span>}
             <button className={styles.btnJoin} onClick={() => setJoinOpen(true)}>
-              + S'ajouter à la file
+              {t('queue.joinQueue')}
             </button>
           </div>
         }
@@ -105,7 +107,7 @@ export default function Planning() {
       <div className={styles.content}>
 
         <div className={styles.timelineCard}>
-          <div className={styles.timelineHeader}>Matchs en attente</div>
+          <div className={styles.timelineHeader}>{t('queue.waitingMatches')}</div>
           <div className={styles.timelineOuter}>
             <div className={styles.timeline}>
               {displaySlots.map((slot, i) => {
@@ -122,8 +124,8 @@ export default function Planning() {
                     onMouseLeave={() => setHoveredIdx(null)}
                   >
                     <div className={styles.slotLabel}>
-                      {isLive && <span className={styles.liveLabelText}>En cours</span>}
-                      {isMe   && <span className={styles.mineLabelText}>Mon match</span>}
+                      {isLive && <span className={styles.liveLabelText}>{t('queue.live')}</span>}
+                      {isMe   && <span className={styles.mineLabelText}>{t('queue.myMatch')}</span>}
                     </div>
 
                     <div
@@ -148,7 +150,7 @@ export default function Planning() {
                         <button
                           className={styles.editSlotBtn}
                           onClick={e => { e.stopPropagation(); setEditOpen(true) }}
-                          title="Modifier"
+                          title={t('queue.editSlot')}
                         >✏️</button>
                       )}
 
@@ -157,7 +159,7 @@ export default function Planning() {
                           className={styles.hoverBetBtn}
                           onClick={e => { e.stopPropagation(); setBetSlot(slot); setBetAmount(50) }}
                         >
-                          Parier →
+                          {t('queue.betOn')}
                         </button>
                       )}
                     </div>
@@ -172,7 +174,7 @@ export default function Planning() {
                   onClick={() => setJoinOpen(true)}
                 >
                   <div className={styles.bookPlus}>+</div>
-                  <div className={styles.bookLabel}>Réserver ce créneau</div>
+                  <div className={styles.bookLabel}>{t('queue.bookSlot')}</div>
                 </div>
               </div>
             </div>
@@ -181,7 +183,7 @@ export default function Planning() {
 
         <div className={styles.infoRow}>
           <div className={styles.infoCard}>
-            <div className={styles.infoCardHeader}>Mon prochain match</div>
+            <div className={styles.infoCardHeader}>{t('queue.nextMatch')}</div>
             <div className={styles.infoCardBody}>
               {mySlot ? (
                 <div className={styles.myMatchInfo}>
@@ -192,13 +194,13 @@ export default function Planning() {
                   </div>
                 </div>
               ) : (
-                <div className={styles.noMatch}>Pas de match prévu</div>
+                <div className={styles.noMatch}>{t('queue.noMatch')}</div>
               )}
             </div>
           </div>
 
           <div className={styles.infoCard}>
-            <div className={styles.infoCardHeader}>Match en cours</div>
+            <div className={styles.infoCardHeader}>{t('queue.currentMatch')}</div>
             <div className={styles.infoCardBody}>
               {liveSlots.map((s, i) => (
                 <div key={i} className={styles.liveMatchRow}>
@@ -207,7 +209,7 @@ export default function Planning() {
                 </div>
               ))}
               {liveSlots.length === 0 && (
-                <div className={styles.noMatch}>Aucun match en cours</div>
+                <div className={styles.noMatch}>{t('queue.noLive')}</div>
               )}
             </div>
           </div>
@@ -215,14 +217,14 @@ export default function Planning() {
       </div>
 
       {/* ── Modal parier ── */}
-      <Modal open={!!betSlot} onClose={() => { setBetSlot(null); setBetTeam(null) }} title="Parier sur ce match">
+      <Modal open={!!betSlot} onClose={() => { setBetSlot(null); setBetTeam(null) }} title={t('queue.betModalTitle')}>
         {betSlot && (
           <>
             <div className={styles.betMatchRow}>
               <strong>{betSlot.p1}</strong> vs <strong>{betSlot.p2}</strong>
             </div>
             <div className={styles.modalSection}>
-              <label className={styles.modalLabel}>Parier sur</label>
+              <label className={styles.modalLabel}>{t('queue.betOn2')}</label>
               <div className={styles.betTeamChoice}>
                 <button
                   className={`${styles.betTeamBtn} ${betTeam === betSlot.p1 ? styles.betTeamActive : ''}`}
@@ -239,9 +241,9 @@ export default function Planning() {
               </div>
             </div>
             <div className={styles.modalSection}>
-              <label className={styles.modalLabel}>Montant de la mise</label>
+              <label className={styles.modalLabel}>{t('queue.betAmount')}</label>
               <div className={styles.sliderBox}>
-                <div className={styles.sliderLabel}>Mise : <strong>{betAmount} jetons</strong></div>
+                <div className={styles.sliderLabel}>{t('bets.amount', { amount: betAmount })}</div>
                 <input
                   type="range" min={1} max={Math.max(user?.tokens ?? 1000, 1)} value={betAmount}
                   onChange={e => setBetAmount(+e.target.value)}
@@ -257,7 +259,7 @@ export default function Planning() {
                 disabled={!betTeam}
                 style={!betTeam ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
               >
-                Confirmer — {betAmount} jetons
+                {t('queue.confirmBet', { amount: betAmount })}
               </button>
             </div>
           </>
@@ -273,27 +275,26 @@ export default function Planning() {
       />
 
       {/* ── Modal modifier créneau ── */}
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Mon créneau">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('queue.mySlotTitle')}>
         <div className={styles.editOptions}>
-          <button className={styles.editCancelBtn} onClick={cancelSlot}>✕ Annuler mon créneau</button>
-          <button className={styles.editModifyBtn} onClick={openEditPlayers}>✏️ Modifier les joueurs</button>
+          <button className={styles.editCancelBtn} onClick={cancelSlot}>{t('queue.cancelSlot')}</button>
+          <button className={styles.editModifyBtn} onClick={openEditPlayers}>{t('queue.modifyPlayers')}</button>
         </div>
       </Modal>
 
-      {/* ── Modal modifier les joueurs ── */}
-      <Modal open={editPlayersOpen} onClose={() => setEditPlayersOpen(false)} title="Modifier les joueurs">
+      <Modal open={editPlayersOpen} onClose={() => setEditPlayersOpen(false)} title={t('queue.modifyPlayers')}>
         <div className={styles.teamsGrid}>
           <div className={styles.teamBlue}>
-            <div className={styles.teamLabel}>Toi</div>
+            <div className={styles.teamLabel}>{t('queue.me')}</div>
             <input className={styles.meInput} value={editP1} onChange={e => setEditP1(e.target.value)} />
           </div>
           <div className={styles.teamRed}>
-            <div className={styles.teamLabel}>Adversaire</div>
-            <LoginInput value={editP2} onChange={setEditP2} placeholder="Login..." className={styles.partnerInput} />
+            <div className={styles.teamLabel}>{t('queue.opponent')}</div>
+            <LoginInput value={editP2} onChange={setEditP2} placeholder={t('queue.loginPlaceholder')} className={styles.partnerInput} />
           </div>
         </div>
         <div className={styles.modalActions}>
-          <button className={styles.confirmBtn} onClick={saveEditPlayers}>Enregistrer</button>
+          <button className={styles.confirmBtn} onClick={saveEditPlayers}>{t('queue.save')}</button>
         </div>
       </Modal>
     </Shell>

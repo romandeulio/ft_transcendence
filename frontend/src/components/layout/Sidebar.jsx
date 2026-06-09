@@ -1,26 +1,28 @@
 import { NavLink, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Avatar from '../ui/Avatar'
 import { useAuth } from '../../context/AuthContext'
 import styles from './Sidebar.module.css'
 
-const NAV_ITEMS = [
-  { section: 'Jeu' },
-  { label: 'Accueil',         route: '/accueil' },
-  { label: 'Classement',      route: '/classement' },
-  { label: 'Paris',           route: '/paris' },
-  { label: "File d'attente",  route: '/planning' },
-  { label: 'Tournois',        route: '/tournois' },
-  { section: 'Compte' },
-  { label: 'Mon profil',  route: '/profil' },
-  { label: 'Paramètres',  route: '/parametres' },
-]
-
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
+
+  const NAV_ITEMS = [
+    { section: t('nav.game') },
+    { label: t('nav.home'),        route: '/accueil' },
+    { label: t('nav.ranking'),     route: '/classement' },
+    { label: t('nav.bets'),        route: '/paris' },
+    { label: t('nav.queue'),       route: '/planning' },
+    { label: t('nav.tournaments'), route: '/tournois' },
+    { section: t('nav.account') },
+    { label: t('nav.profile'),     route: '/profil' },
+    { label: t('nav.settings'),    route: '/parametres' },
+  ]
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
-      <button className={styles.closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
+      <button className={styles.closeBtn} onClick={onClose} aria-label={t('sidebar.close')}>✕</button>
 
       <Link to="/profil" className={styles.userBlock} onClick={onClose}>
         <div className={styles.avatarWrap}>
@@ -28,7 +30,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         </div>
         <div className={styles.userInfo}>
           <div className={styles.userName}>{user?.name ?? user?.login ?? ''}</div>
-          <div className={styles.userTokens}>{user?.tokens != null ? `🪙 ${user.tokens} jetons` : ''}</div>
+          <div className={styles.userTokens}>{user?.tokens != null ? t('sidebar.tokens', { count: user.tokens }) : ''}</div>
         </div>
       </Link>
 

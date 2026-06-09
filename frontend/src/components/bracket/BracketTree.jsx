@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import PlayerBlock from './PlayerBlock'
 import styles from './BracketTree.module.css'
 
@@ -29,12 +30,13 @@ function MatchBlock({ match, isFinal = false }) {
 }
 
 export default function BracketTree() {
+  const { t } = useTranslation()
   return (
     <div className={styles.tree}>
 
       {/* ── Quarts de finale ── */}
       <div className={styles.round}>
-        <div className={styles.roundLabel}>Quarts de finale</div>
+        <div className={styles.roundLabel}>{t('bracket.quarters')}</div>
         <div className={styles.slots}>
           {BRACKET_DATA.quarters.map((m, i) => (
             <div key={i} className={styles.slot1}>
@@ -56,7 +58,7 @@ export default function BracketTree() {
 
       {/* ── Demi-finales ── */}
       <div className={styles.round}>
-        <div className={styles.roundLabel}>Demi-finales</div>
+        <div className={styles.roundLabel}>{t('bracket.semis')}</div>
         <div className={styles.slots}>
           {BRACKET_DATA.semis.map((m, i) => (
             <div key={i} className={styles.slot2}>
@@ -76,7 +78,7 @@ export default function BracketTree() {
 
       {/* ── Finale ── */}
       <div className={styles.round}>
-        <div className={styles.roundLabel}>Finale</div>
+        <div className={styles.roundLabel}>{t('bracket.final')}</div>
         <div className={styles.slots}>
           <div className={styles.slot4}>
             <MatchBlock match={BRACKET_DATA.final} isFinal />

@@ -1,77 +1,71 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { applyLang } from '../i18n/index.js'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Toggle from '../components/ui/Toggle'
 import styles from './Parametres.module.css'
 
-const TABS = ['Profil', 'Sécurité', 'Notifications', 'Langue & affichage', 'Compte', "Notice d'utilisation"]
-
-const NOTIF_ITEMS = [
-  { id: 'turn',    label: "C'est ton tour au baby" },
-  { id: 'bet',     label: 'Résultat de pari' },
-  { id: 'tourney', label: 'Tournoi — rappel' },
-  { id: 'season',  label: 'Fin de saison' },
-  { id: 'invite',  label: 'Demande de partie' },
+const NOTIF_IDS = ['turn', 'bet', 'tourney', 'season', 'invite']
+const LANG_OPTIONS = [
+  { code: 'fr', label: 'FR' },
+  { code: 'en', label: 'EN' },
+  { code: 'es', label: 'ES' },
+  { code: 'he', label: 'עב' },
 ]
-
-const NOTICE_SECTIONS = [
-  {
-    title: '🏓 Jouer un match',
-    body: "Rejoins la file d'attente depuis la page \"File d'attente\". Choisis ton mode (Chill ou Compétition), ton format (1v1, 2v2 ou Seul), puis attends qu'un adversaire soit disponible. Une notification te prévient quand ton match commence.",
-  },
-  {
-    title: '🪙 Les jetons',
-    body: 'Tu gagnes des jetons en jouant et en gagnant des matchs. Tu peux les utiliser pour parier sur les matchs des autres joueurs depuis la page Paris. Les jetons gagnés sur les paris sont crédités immédiatement.',
-  },
-  {
-    title: '🏆 Les tournois',
-    body: "Les tournois sont organisés par le BDE. Tu peux t'inscrire seul (liste d'attente pour former une équipe) ou avec un partenaire. Le format est en équipe de 2. Le bracket est révélé au démarrage du tournoi.",
-  },
-  {
-    title: "📊 L'ELO",
-    body: "L'ELO est ton score de classement. Il augmente quand tu gagnes et diminue quand tu perds. Les matchs en mode Chill n'affectent pas l'ELO. Le classement 1v1 et 2v2 sont indépendants.",
-  },
-  {
-    title: "📅 Le Planning",
-    body: "Depuis la page File d'attente, tu peux voir les matchs en cours et à venir. Le crayon dans ton créneau te permet de modifier ou annuler ton match. Tu peux aussi parier sur les matchs des autres en passant ta souris dessus.",
-  },
-]
-
-const TAB_PARAM_MAP = { notice: "Notice d'utilisation" }
 
 export default function Parametres() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
   const [searchParams] = useSearchParams()
-  const initialTab = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'Profil'
-  const [activeTab, setActiveTab] = useState(initialTab)
+
+  const TABS = [
+    { key: 'profile',  label: t('settings.tabs.profile') },
+    { key: 'security', label: t('settings.tabs.security') },
+    { key: 'notifs',   label: t('settings.tabs.notifications') },
+    { key: 'language', label: t('settings.tabs.language') },
+    { key: 'account',  label: t('settings.tabs.account') },
+    { key: 'notice',   label: t('settings.tabs.notice') },
+  ]
+
+  const TAB_PARAM_MAP = { notice: 'notice' }
+  const initialTabKey = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'profile'
+  const [activeTab, setActiveTab] = useState(initialTabKey)
 
   useEffect(() => {
     const tab = TAB_PARAM_MAP[searchParams.get('tab')]
     if (tab) setActiveTab(tab)
   }, [searchParams])
-  const [tfa,       setTfa]       = useState(false)
-  const [oauth,     setOauth]     = useState(true)
-  const [notifs,    setNotifs]    = useState({ turn:true, bet:true, tourney:false, season:true, invite:true })
-  const [lang,      setLang]      = useState('FR')
-  const [email,     setEmail]     = useState('')
+
+  const [tfa,   setTfa]   = useState(false)
+  const [oauth, setOauth] = useState(true)
+  const [notifs, setNotifs] = useState({ turn: true, bet: true, tourney: false, season: true, invite: true })
+  const [email, setEmail]   = useState('')
 
   const toggleNotif = (id) => setNotifs(prev => ({ ...prev, [id]: !prev[id] }))
 
+  const handleLang = (code) => {
+    i18n.changeLanguage(code)
+    applyLang(code)
+  }
+
+  const noticeSections = t('settings.notice.sections', { returnObjects: true })
+
   return (
     <Shell>
-      <Topbar title="Paramètres" titleSize={30} />
+      <Topbar title={t('topbar.settings')} titleSize={30} />
       <div className={styles.content}>
         <div className={styles.nav}>
           {TABS.map(tab => (
             <button
-              key={tab}
-              className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key}
+              className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab(tab.key)}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
           <div className={styles.navDivider} />
@@ -79,130 +73,129 @@ export default function Parametres() {
             className={styles.logoutBtn}
             onClick={() => { logout(); navigate('/login') }}
           >
-            Déconnexion
+            {t('settings.logout')}
           </button>
         </div>
 
         <div className={styles.panel}>
-          {activeTab === 'Profil' && (
+          {activeTab === 'profile' && (
             <div>
               <div className={styles.section}>
-                <div className={styles.sectionTitle}>Photo de profil</div>
+                <div className={styles.sectionTitle}>{t('settings.profile.photo')}</div>
                 <div className={styles.avatarRow}>
                   <div className={styles.avatarPreview}>LT</div>
                   <div className={styles.avatarBtns}>
-                    <button className={styles.btnSecondary}>Modifier</button>
-                    <button className={styles.btnDanger}>Supprimer</button>
+                    <button className={styles.btnSecondary}>{t('settings.profile.edit')}</button>
+                    <button className={styles.btnDanger}>{t('settings.profile.delete')}</button>
                   </div>
                 </div>
               </div>
               <div className={styles.section}>
-                <label className={styles.label}>Login 42</label>
+                <label className={styles.label}>{t('settings.profile.login42')}</label>
                 <input className={styles.inputLocked} value={user?.login ?? ''} readOnly />
               </div>
               <div className={styles.section}>
-                <label className={styles.label}>Email</label>
+                <label className={styles.label}>{t('settings.profile.email')}</label>
                 <input className={styles.input} value={email} onChange={e => setEmail(e.target.value)} />
               </div>
-              <button className={styles.btnPrimary}>Sauvegarder les modifications</button>
+              <button className={styles.btnPrimary}>{t('settings.profile.save')}</button>
             </div>
           )}
 
-          {activeTab === 'Sécurité' && (
+          {activeTab === 'security' && (
             <div>
               <div className={styles.section}>
-                <button className={styles.btnSecondary}>Changer le mot de passe</button>
+                <button className={styles.btnSecondary}>{t('settings.security.changePassword')}</button>
               </div>
               <div className={styles.toggleRow}>
                 <div>
-                  <div className={styles.toggleLabel}>Authentification 2FA</div>
-                  <div className={styles.toggleSub}>Code par application ou SMS</div>
+                  <div className={styles.toggleLabel}>{t('settings.security.tfa')}</div>
+                  <div className={styles.toggleSub}>{t('settings.security.tfaSub')}</div>
                 </div>
                 <Toggle on={tfa} onChange={setTfa} />
               </div>
               <div className={styles.toggleRow}>
                 <div>
-                  <div className={styles.toggleLabel}>OAuth 42</div>
-                  <div className={styles.toggleSub}>Connexion via compte 42</div>
+                  <div className={styles.toggleLabel}>{t('settings.security.oauth')}</div>
+                  <div className={styles.toggleSub}>{t('settings.security.oauthSub')}</div>
                 </div>
                 <Toggle on={oauth} onChange={setOauth} />
               </div>
               <div className={styles.section}>
-                <div className={styles.sectionTitle}>Sessions actives</div>
-                <button className={styles.btnDanger}>Déconnecter tout</button>
+                <div className={styles.sectionTitle}>{t('settings.security.activeSessions')}</div>
+                <button className={styles.btnDanger}>{t('settings.security.disconnectAll')}</button>
               </div>
             </div>
           )}
 
-          {activeTab === 'Notifications' && (
+          {activeTab === 'notifs' && (
             <div>
-              {NOTIF_ITEMS.map(n => (
-                <div key={n.id} className={styles.toggleRow}>
-                  <div className={styles.toggleLabel}>{n.label}</div>
-                  <Toggle on={notifs[n.id]} onChange={() => toggleNotif(n.id)} />
+              {NOTIF_IDS.map(id => (
+                <div key={id} className={styles.toggleRow}>
+                  <div className={styles.toggleLabel}>{t(`settings.notifications.${id}`)}</div>
+                  <Toggle on={notifs[id]} onChange={() => toggleNotif(id)} />
                 </div>
               ))}
             </div>
           )}
 
-          {activeTab === 'Langue & affichage' && (
+          {activeTab === 'language' && (
             <div>
               <div className={styles.section}>
-                <div className={styles.sectionTitle}>Langue</div>
+                <div className={styles.sectionTitle}>{t('settings.language.title')}</div>
                 <div className={styles.langBtns}>
-                  {['FR', 'EN', 'AR'].map(l => (
+                  {LANG_OPTIONS.map(l => (
                     <button
-                      key={l}
-                      className={`${styles.langBtn} ${lang === l ? styles.langActive : ''}`}
-                      onClick={() => setLang(l)}
+                      key={l.code}
+                      className={`${styles.langBtn} ${i18n.language === l.code ? styles.langActive : ''}`}
+                      onClick={() => handleLang(l.code)}
                     >
-                      {l}
+                      {l.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div className={styles.section}>
-                <label className={styles.label}>Fuseau horaire</label>
+                <label className={styles.label}>{t('settings.language.timezone')}</label>
                 <input className={styles.input} defaultValue="Europe/Paris (UTC+2)" />
               </div>
             </div>
           )}
 
-          {activeTab === 'Compte' && (
+          {activeTab === 'account' && (
             <div>
               <div className={styles.section}>
-                <button className={styles.btnSecondary}>Exporter mes données (RGPD) → JSON</button>
+                <button className={styles.btnSecondary}>{t('settings.account.export')}</button>
               </div>
               <div className={styles.section}>
-                <a href="#" className={styles.link}>Politique de confidentialité</a>
+                <a href="#" className={styles.link}>{t('settings.account.privacy')}</a>
               </div>
               <div className={styles.dangerZone}>
-                <div className={styles.dangerTitle}>Zone dangereuse</div>
+                <div className={styles.dangerTitle}>{t('settings.account.dangerZone')}</div>
                 <div className={styles.dangerRow}>
                   <div>
-                    <div className={styles.dangerLabel}>Réinitialiser mes stats</div>
-                    <div className={styles.dangerSub}>Supprime ton historique de matchs et ELO</div>
+                    <div className={styles.dangerLabel}>{t('settings.account.resetStats')}</div>
+                    <div className={styles.dangerSub}>{t('settings.account.resetStatsSub')}</div>
                   </div>
-                  <button className={styles.btnDanger}>Réinitialiser</button>
+                  <button className={styles.btnDanger}>{t('settings.account.reset')}</button>
                 </div>
                 <div className={styles.dangerRow}>
                   <div>
-                    <div className={styles.dangerLabel}>Supprimer mon compte</div>
-                    <div className={styles.dangerSub}>Confirmation envoyée par email</div>
+                    <div className={styles.dangerLabel}>{t('settings.account.deleteAccount')}</div>
+                    <div className={styles.dangerSub}>{t('settings.account.deleteAccountSub')}</div>
                   </div>
-                  <button className={styles.btnDangerFill}>Supprimer</button>
+                  <button className={styles.btnDangerFill}>{t('settings.account.delete')}</button>
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab === "Notice d'utilisation" && (
+          {activeTab === 'notice' && (
             <div>
               <div className={styles.noticeIntro}>
-                Bienvenue sur Transcendance — le système de gestion des matchs de baby-foot de la promo 42.
-                Voici comment utiliser le site.
+                {t('settings.notice.intro')}
               </div>
-              {NOTICE_SECTIONS.map((s, i) => (
+              {Array.isArray(noticeSections) && noticeSections.map((s, i) => (
                 <div key={i} className={styles.noticeSection}>
                   <div className={styles.noticeTitle}>{s.title}</div>
                   <div className={styles.noticeBody}>{s.body}</div>

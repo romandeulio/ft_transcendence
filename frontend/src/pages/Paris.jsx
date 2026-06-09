@@ -7,6 +7,7 @@ import ProgressBar from '../components/ui/ProgressBar'
 import { useBets } from '../context/BetsContext'
 import { useAuth } from '../context/AuthContext'
 import { getPlayerBadge } from '../utils/playerBadge'
+import { useTranslation } from 'react-i18next'
 import styles from './Paris.module.css'
 
 const HIST_PER_PAGE = 3
@@ -77,6 +78,7 @@ function BetsChart({ history, yRange }) {
 export default function Paris() {
   const { bets, betHistory, placeBet, cancelBet } = useBets()
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   const [amounts,      setAmounts]      = useState({})
   const [showSlider,   setShowSlider]   = useState(null)
@@ -116,21 +118,21 @@ export default function Paris() {
   return (
     <Shell>
       <Topbar
-        title="Paris"
+        title={t('topbar.bets')}
         titleSize={30}
         right={
           <div className={styles.wallet}>
             <span>🪙</span>
-            <span>{maxTokens} jetons disponibles</span>
+            <span>{maxTokens} {t('bets.availableTokens')}</span>
           </div>
         }
       />
 
       <div className={styles.content}>
         <div className={styles.statsGrid}>
-          <StatCard color="var(--orange-pale)" label="Paris réalisés" value={betHistory.length} sub="cette saison" />
-          <StatCard color="var(--yellow-pale)" label="Total misé"     value="—"                 sub="jetons misés" />
-          <StatCard color="var(--green-pale)"  label="Bilan saison"   value={totalBalance >= 0 ? `+${totalBalance}` : totalBalance} sub="jetons net" />
+          <StatCard color="var(--orange-pale)" label={t('bets.betsPlaced')} value={betHistory.length} sub={t('bets.thisSeason')} />
+          <StatCard color="var(--yellow-pale)" label={t('bets.totalBet')}   value="—"                 sub={t('bets.tokensBet')} />
+          <StatCard color="var(--green-pale)"  label={t('bets.seasonBalance')} value={totalBalance >= 0 ? `+${totalBalance}` : totalBalance} sub={t('bets.netTokens')} />
         </div>
 
         <div className={styles.grid}>
@@ -138,14 +140,14 @@ export default function Paris() {
           <div className={styles.cardWrap}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitleRow}>
-                <span className={styles.cardTitle}>Paris disponibles</span>
-                <span className={styles.weekCounter}>{bets.length} pari{bets.length !== 1 ? 's' : ''}</span>
+                <span className={styles.cardTitle}>{t('bets.availableBets')}</span>
+                <span className={styles.weekCounter}>{t(bets.length === 1 ? 'bets.betCount_one' : 'bets.betCount_other', { count: bets.length })}</span>
               </div>
             </div>
 
             <div className={styles.cardBody}>
               {bets.length === 0 && (
-                <div className={styles.emptyBets}>Aucun paris disponible pour le moment.</div>
+                <div className={styles.emptyBets}>{t('bets.noBets')}</div>
               )}
               {bets.map(bet => {
                 const isLive     = bet.status === 'live'
@@ -161,14 +163,14 @@ export default function Paris() {
                       <div className={styles.betHeaderRight}>
                         {isLive && <Pill label="LIVE" type="live" />}
                         {!isLive && hasBet && (
-                          <button className={styles.cancelBtn} onClick={() => cancelBet(bet.id)}>Annuler</button>
+                          <button className={styles.cancelBtn} onClick={() => cancelBet(bet.id)}>{t('bets.cancel')}</button>
                         )}
                         {!isLive && !hasBet && (
                           <button
                             className={`${styles.miserBtn} ${sliderOpen ? styles.miserBtnOpen : ''}`}
                             onClick={() => sliderOpen ? setShowSlider(null) : openMiser(bet.id)}
                           >
-                            {sliderOpen ? '✕' : 'Miser'}
+                            {sliderOpen ? '✕' : t('bets.bet')}
                           </button>
                         )}
                       </div>
@@ -180,7 +182,7 @@ export default function Paris() {
                       <div className={styles.sliderBox}>
                         {!choice && (
                           <>
-                            <div className={styles.sliderLabel}>Sur qui pariez-vous ?</div>
+                            <div className={styles.sliderLabel}>{t('bets.whoDoYouBet')}</div>
                             <div className={styles.playerChoiceRow}>
                               <button
                                 className={`${styles.playerChoiceBtn} ${styles.playerChoiceBtnRed}`}
@@ -208,16 +210,16 @@ export default function Paris() {
                         {choice && (
                           <>
                             <div className={styles.sliderLabel}>
-                              Parié sur <strong>{choice === 'p1' ? bet.p1 : bet.p2}</strong> —{' '}
+                              {t('bets.betPlacedOn', { player: choice === 'p1' ? bet.p1 : bet.p2 })}{' '}
                               <button
                                 className={styles.changeChoiceBtn}
                                 onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: null }))}
                               >
-                                changer
+                                {t('bets.change')}
                               </button>
                             </div>
                             <div className={styles.sliderLabel} style={{ marginTop: 8 }}>
-                              Mise : <strong>{amount} jetons</strong>
+                              {t('bets.amount', { amount })}
                             </div>
                             <input
                               type="range" min={1} max={Math.max(maxTokens, 1)} value={amount}
@@ -228,7 +230,7 @@ export default function Paris() {
                               <span>1</span><span>{maxTokens}</span>
                             </div>
                             <button className={styles.confirmMiseBtn} onClick={() => handleBet(bet)}>
-                              Confirmer — {amount} jetons
+                              {t('bets.confirm', { amount })}
                             </button>
                           </>
                         )}
@@ -237,7 +239,7 @@ export default function Paris() {
 
                     {hasBet && (
                       <div className={styles.myBetRow}>
-                        <span className={styles.myBetLabel}>Mise placée sur {bet.myBet.player} :</span>
+                        <span className={styles.myBetLabel}>{t('bets.betPlacedOn', { player: bet.myBet.player })}</span>
                         <span className={styles.myBetVal}>{bet.myBet.amount} jetons</span>
                       </div>
                     )}
@@ -257,17 +259,17 @@ export default function Paris() {
           <div className={styles.rightCol}>
             <div className={styles.cardWrap}>
               <div className={styles.cardHeader}>
-                <span className={styles.cardTitle}>Historique des paris</span>
+                <span className={styles.cardTitle}>{t('bets.history')}</span>
               </div>
               <div className={styles.cardBody}>
                 {histSlice.length === 0 && (
-                  <div className={styles.emptyBets}>Aucun historique disponible.</div>
+                  <div className={styles.emptyBets}>{t('bets.noHistory')}</div>
                 )}
                 {histSlice.map(h => (
                   <div key={h.id} className={styles.histRow}>
                     <div className={styles.histInfo}>
                       <div className={styles.histMatch}>{h.match}</div>
-                      <div className={styles.histBet}>Parié sur {h.betOn} · {h.date}</div>
+                      <div className={styles.histBet}>{t('bets.bettedOn', { player: h.betOn, date: h.date })}</div>
                     </div>
                     <div className={styles.histResult}>
                       <span className={h.delta > 0 ? styles.win : styles.loss}>
@@ -289,19 +291,19 @@ export default function Paris() {
 
             <div className={styles.cardWrap}>
               <div className={styles.cardHeader}>
-                <span className={styles.cardTitle}>Tes stats de paris</span>
+                <span className={styles.cardTitle}>{t('bets.yourBetStats')}</span>
               </div>
               <div className={styles.statsBody}>
                 {bestGain ? (
                   <div className={styles.glassRow}>
-                    <span className={styles.glassBadgeGreen}>Meilleur gain</span>
+                    <span className={styles.glassBadgeGreen}>{t('bets.bestGain')}</span>
                     <span className={styles.glassPlayer}>{bestGain.betOn}</span>
                     <span className={styles.glassVal} style={{ color: '#57722F' }}>+{bestGain.delta}</span>
                   </div>
                 ) : null}
                 {biggestLoss ? (
                   <div className={styles.glassRow}>
-                    <span className={styles.glassBadgeRed}>Plus grosse perte</span>
+                    <span className={styles.glassBadgeRed}>{t('bets.biggestLoss')}</span>
                     <span className={styles.glassPlayer}>{biggestLoss.betOn}</span>
                     <span className={styles.glassVal} style={{ color: '#CD3122' }}>{biggestLoss.delta}</span>
                   </div>
@@ -309,7 +311,7 @@ export default function Paris() {
               </div>
               <div className={styles.chartSection}>
                 <div className={styles.chartLabel}>
-                  Évolution du solde
+                  {t('bets.balanceEvolution')}
                   <span className={chartBalance >= 0 ? styles.chartPos : styles.chartNeg}>
                     {chartBalance >= 0 ? '+' : ''}{chartBalance} jetons
                   </span>
@@ -327,9 +329,9 @@ export default function Paris() {
                 </div>
                 <BetsChart history={betHistory} yRange={yRange} />
                 {betHistory.length === 0 && (
-                  <div className={styles.emptyBets}>Aucun historique à afficher.</div>
+                  <div className={styles.emptyBets}>{t('bets.noChartData')}</div>
                 )}
-                <div className={styles.chartHint}>Survolez un point pour voir le détail</div>
+                <div className={styles.chartHint}>{t('bets.hoverHint')}</div>
               </div>
             </div>
           </div>

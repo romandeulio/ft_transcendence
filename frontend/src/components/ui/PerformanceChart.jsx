@@ -3,33 +3,35 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import styles from './PerformanceChart.module.css'
-
-const Y_OPTIONS = [
-  { value: 'elo',             label: 'ELO'                },
-  { value: 'wins',            label: 'Victoires'          },
-  { value: 'losses',          label: 'Défaites'           },
-  { value: 'winrate',         label: 'Win rate (%)'       },
-  { value: 'goals',           label: 'Buts marqués'       },
-  { value: 'goals_against',   label: 'Buts encaissés'     },
-  { value: 'bets_won',        label: 'Paris gagnés'       },
-  { value: 'bets_lost',       label: 'Paris perdus'       },
-  { value: 'tournaments_won', label: 'Tournois remportés' },
-  { value: 'streak',          label: 'Série en cours'     },
-]
-
-const X_OPTIONS = [
-  { value: 'weeks',   label: 'Semaines'     },
-  { value: 'months',  label: 'Mois'         },
-  { value: 'seasons', label: 'Saisons'      },
-  { value: 'matches', label: 'Matchs joués' },
-]
 
 const COLORS = ['#CD3122', '#4068DB', '#57722F', '#E6B447', '#9B59B6', '#1ABC9C', '#E67E22', '#2C3E50']
 
 export default function PerformanceChart() {
+  const { t } = useTranslation()
   const [xAxis,    setXAxis]    = useState('weeks')
   const [yAxis,    setYAxis]    = useState('elo')
+
+  const Y_OPTIONS = [
+    { value: 'elo',             label: t('performance.y.elo')            },
+    { value: 'wins',            label: t('performance.y.wins')           },
+    { value: 'losses',          label: t('performance.y.losses')         },
+    { value: 'winrate',         label: t('performance.y.winrate')        },
+    { value: 'goals',           label: t('performance.y.goals')          },
+    { value: 'goals_against',   label: t('performance.y.goals_against')  },
+    { value: 'bets_won',        label: t('performance.y.bets_won')       },
+    { value: 'bets_lost',       label: t('performance.y.bets_lost')      },
+    { value: 'tournaments_won', label: t('performance.y.tournaments_won')},
+    { value: 'streak',          label: t('performance.y.streak')         },
+  ]
+
+  const X_OPTIONS = [
+    { value: 'weeks',   label: t('performance.x.weeks')   },
+    { value: 'months',  label: t('performance.x.months')  },
+    { value: 'seasons', label: t('performance.x.seasons') },
+    { value: 'matches', label: t('performance.x.matches') },
+  ]
   const [search,   setSearch]   = useState('')
   const [selected, setSelected] = useState([])
   const [players,  setPlayers]  = useState([])
@@ -49,18 +51,18 @@ export default function PerformanceChart() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <span className={styles.title}>PERFORMANCE</span>
+        <span className={styles.title}>{t('performance.title')}</span>
       </div>
 
       <div className={styles.controls}>
         <label className={styles.controlLabel}>
-          Axe X
+          {t('performance.axisX')}
           <select className={styles.controlSelect} value={xAxis} onChange={e => setXAxis(e.target.value)}>
             {X_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </label>
         <label className={styles.controlLabel}>
-          Axe Y
+          {t('performance.axisY')}
           <select className={styles.controlSelect} value={yAxis} onChange={e => setYAxis(e.target.value)}>
             {Y_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
@@ -70,12 +72,12 @@ export default function PerformanceChart() {
       <div className={styles.playerPicker}>
         <div className={styles.pickerHeader}>
           <span className={styles.pickerLabel}>
-            Joueurs à comparer <span className={styles.pickerCount}>{selected.length}/4</span>
+            {t('performance.comparePlayers')} <span className={styles.pickerCount}>{selected.length}/4</span>
           </span>
           <input
             className={styles.pickerSearch}
             type="text"
-            placeholder="Rechercher un joueur…"
+            placeholder={t('performance.searchPlayer')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -104,14 +106,14 @@ export default function PerformanceChart() {
           })}
           {filtered.length === 0 && (
             <span className={styles.pickerEmpty}>
-              {players.length === 0 ? 'Données non disponibles' : 'Aucun joueur trouvé'}
+              {players.length === 0 ? t('performance.noData') : t('performance.noPlayer')}
             </span>
           )}
         </div>
       </div>
 
       <div className={styles.emptyChart}>
-        Sélectionne au moins un joueur pour afficher le graphique.
+        {t('performance.selectPlayer')}
       </div>
     </div>
   )

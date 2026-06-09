@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
+import LanguageSwitcher from '../ui/LanguageSwitcher'
 import styles from './Topbar.module.css'
 
 export default function Topbar({ title, right, titleSize = 18 }) {
@@ -20,6 +21,7 @@ export default function Topbar({ title, right, titleSize = 18 }) {
 			</h1>
 			<div className={styles.right}>
 				{right}
+				<LanguageSwitcher />
 				<button
 					className={styles.themeToggle}
 					onClick={() => setDark(d => !d)}

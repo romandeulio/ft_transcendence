@@ -3,18 +3,20 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
+import { useTranslation } from 'react-i18next'
 import styles from './Classement.module.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 const PAGE_SIZE   = 5
 
-const SEASON_OPTIONS = [
-  { value: 'current', label: 'Saison actuelle' },
-  { value: 'season1', label: 'Saison 1' },
-  { value: 'annual',  label: 'Classement annuel' },
-]
-
 export default function Classement() {
+  const { t } = useTranslation()
+
+  const SEASON_OPTIONS = [
+    { value: 'current', label: t('ranking.currentSeason') },
+    { value: 'season1', label: t('ranking.season', { num: 1 }) },
+    { value: 'annual',  label: t('ranking.annualRanking') },
+  ]
   const [season,    setSeason]    = useState('current')
   const [page,      setPage]      = useState(0)
   const [page2v2,   setPage2v2]   = useState(0)
@@ -37,15 +39,15 @@ export default function Classement() {
   return (
     <Shell>
       <Topbar
-        title="Classement"
+        title={t('topbar.ranking')}
         titleSize={30}
-        right={<Pill label="Saison en cours" type="season" />}
+        right={<Pill label={t('ranking.seasonBadge')} type="season" />}
       />
 
       <div className={styles.content}>
 
         <div className={styles.seasonRow}>
-          <label className={styles.seasonLabel}>Afficher :</label>
+          <label className={styles.seasonLabel}>{t('ranking.show')}</label>
           <select
             className={styles.seasonSelect}
             value={season}
@@ -62,18 +64,18 @@ export default function Classement() {
           {/* 1v1 */}
           <div className={styles.eloCard}>
             <div className={styles.eloHeader}>
-              <span className={styles.eloTitle}>PALMARÈS 1v1</span>
+              <span className={styles.eloTitle}>{t('ranking.palmares1v1')}</span>
               <span className={styles.eloSeason}>{SEASON_OPTIONS.find(o => o.value === season)?.label}</span>
             </div>
             <div className={styles.eloBody}>
               <div className={styles.colHead}>
-                <span className={styles.headName}>Joueur</span>
-                <span className={styles.headVd}>V · D</span>
+                <span className={styles.headName}>{t('ranking.player')}</span>
+                <span className={styles.headVd}>{t('ranking.winsLosses')}</span>
                 <span className={styles.headElo}>ELO</span>
-                <span className={styles.headRank}>Rang</span>
+                <span className={styles.headRank}>{t('ranking.rank')}</span>
               </div>
               {pageSlice.length === 0 && (
-                <div className={styles.emptyState}>Aucune donnée disponible</div>
+                <div className={styles.emptyState}>{t('ranking.noData')}</div>
               )}
               {pageSlice.map(p => (
                 <div key={p.id} className={`${styles.playerRow} ${p.isMe ? styles.playerRowMe : ''}`}>
@@ -102,18 +104,18 @@ export default function Classement() {
           {/* 2v2 */}
           <div className={styles.eloCard}>
             <div className={styles.eloHeader}>
-              <span className={styles.eloTitle}>PALMARÈS 2v2</span>
+              <span className={styles.eloTitle}>{t('ranking.palmares2v2')}</span>
               <span className={styles.eloSeason}>{SEASON_OPTIONS.find(o => o.value === season)?.label}</span>
             </div>
             <div className={styles.eloBody}>
               <div className={styles.colHead}>
-                <span className={styles.headTeam}>Équipe</span>
+                <span className={styles.headTeam}>{t('ranking.team')}</span>
                 <span className={styles.headVd}>V · D</span>
                 <span className={styles.headElo}>ELO</span>
                 <span className={styles.headRank}>Rang</span>
               </div>
               {pageSlice2v2.length === 0 && (
-                <div className={styles.emptyState}>Aucune donnée disponible</div>
+                <div className={styles.emptyState}>{t('ranking.noData')}</div>
               )}
               {pageSlice2v2.map(t => (
                 <div key={t.id} className={`${styles.playerRow} ${t.isMe ? styles.playerRowMe : ''}`}>
@@ -146,13 +148,13 @@ export default function Classement() {
 
         {/* ── Hall of Fame ── */}
         <div className={styles.hallCard}>
-          <div className={styles.hallHeader}>Hall of Fame</div>
+          <div className={styles.hallHeader}>{t('ranking.hallOfFame')}</div>
           <div className={styles.hallSplit}>
 
             <div className={styles.hallLeft}>
-              <div className={styles.hallSectionTitle}>Records all-time</div>
+              <div className={styles.hallSectionTitle}>{t('ranking.allTimeRecords')}</div>
               {hallRecords.length === 0 && (
-                <div className={styles.emptyState}>Aucune donnée disponible</div>
+                <div className={styles.emptyState}>{t('ranking.noData')}</div>
               )}
               {hallRecords.map((r, i) => (
                 <div key={i} className={styles.recordRow}>
@@ -170,27 +172,27 @@ export default function Classement() {
 
             <div className={styles.hallRight}>
               <div className={styles.hallRightTop}>
-                <div className={styles.hallSectionTitle}>Champions des saisons</div>
+                <div className={styles.hallSectionTitle}>{t('ranking.seasonChampions')}</div>
                 <select
                   className={styles.hallOrderSelect}
                   value={hallOrder}
                   onChange={e => setHallOrder(e.target.value)}
                 >
-                  <option value="recent">Plus récent en premier</option>
-                  <option value="oldest">Plus ancien en premier</option>
+                  <option value="recent">{t('ranking.recentFirst')}</option>
+                  <option value="oldest">{t('ranking.oldestFirst')}</option>
                 </select>
               </div>
               <div className={styles.hallEntries}>
                 {sortedSeasons.length === 0 && (
-                  <div className={styles.emptyState}>Aucune donnée disponible</div>
+                  <div className={styles.emptyState}>{t('ranking.noData')}</div>
                 )}
                 {sortedSeasons.map(s => (
                   <div key={s.season} className={styles.hallEntry}>
-                    <div className={styles.hallSeasonLabel}>Saison {s.season}</div>
+                    <div className={styles.hallSeasonLabel}>{t('ranking.seasonLabel', { num: s.season })}</div>
                     <Avatar initials={s.initials} size={44} bg="var(--yellow-pale)" round />
                     <div className={styles.hallName}>{s.name}</div>
                     <div className={styles.hallElo}>{s.elo} ELO</div>
-                    <Pill label="🏆 Champion" type="gold" />
+                    <Pill label={t('ranking.champion')} type="gold" />
                   </div>
                 ))}
               </div>

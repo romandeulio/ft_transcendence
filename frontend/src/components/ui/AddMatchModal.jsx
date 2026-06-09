@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Modal from './Modal'
 import LoginInput from './LoginInput'
+import { useTranslation } from 'react-i18next'
 import styles from './AddMatchModal.module.css'
 
 export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam }) {
+  const { t } = useTranslation()
   const [step,        setStep]        = useState(1)
   const [joinMode,    setJoinMode]    = useState('compet')
   const [joinFormat,  setJoinFormat]  = useState('1v1')
@@ -47,36 +49,36 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
   }, [open, step, joinFormat, takeWin])
 
   return (
-    <Modal open={open} onClose={handleClose} title="Ajouter un match">
+    <Modal open={open} onClose={handleClose} title={t('addMatch.title')}>
       {step === 1 && (
         <div>
-          <div className={styles.stepLabel}>Étape 1 / 4 — Mode de jeu</div>
+          <div className={styles.stepLabel}>{t('addMatch.step1')}</div>
           <div className={styles.modeBtns}>
-            <button className={`${styles.modeBtn} ${joinMode === 'compet' ? styles.modeBtnCompet : ''}`} onClick={() => setJoinMode('compet')}>🏆 Compétition</button>
-            <button className={`${styles.modeBtn} ${joinMode === 'chill'  ? styles.modeBtnChill  : ''}`} onClick={() => setJoinMode('chill')}>😎 Chill</button>
+            <button className={`${styles.modeBtn} ${joinMode === 'compet' ? styles.modeBtnCompet : ''}`} onClick={() => setJoinMode('compet')}>{t('addMatch.competition')}</button>
+            <button className={`${styles.modeBtn} ${joinMode === 'chill'  ? styles.modeBtnChill  : ''}`} onClick={() => setJoinMode('chill')}>{t('addMatch.chill')}</button>
           </div>
           <div className={styles.modeNote}>
-            {joinMode === 'compet' ? 'ELO pris en compte · Résultats officiels' : "Partie détendue · Pas d'impact ELO"}
+            {joinMode === 'compet' ? t('addMatch.competNote') : t('addMatch.chillNote')}
           </div>
           <div className={styles.stepActions}>
-            <button className={styles.nextBtn} onClick={() => setStep(2)}>Suivant →</button>
+            <button className={styles.nextBtn} onClick={() => setStep(2)}>{t('addMatch.next')}</button>
           </div>
         </div>
       )}
 
       {step === 2 && (
         <div>
-          <div className={styles.stepLabel}>Étape 2 / 4 — Format</div>
+          <div className={styles.stepLabel}>{t('addMatch.step2')}</div>
           <div className={styles.formatBtns}>
             {['1v1', '2v2', 'Seul'].map(f => (
               <button key={f} className={`${styles.modeBtn} ${joinFormat === f ? styles.modeBtnCompet : ''}`} onClick={() => setJoinFormat(f)}>
-                {f === '1v1' ? '⚔️ 1v1' : f === '2v2' ? '👥 2v2' : '👤 Seul'}
+                {f === '1v1' ? '⚔️ 1v1' : f === '2v2' ? '👥 2v2' : t('addMatch.solo')}
               </button>
             ))}
           </div>
           <div className={styles.stepActions}>
-            <button className={styles.backBtn} onClick={() => setStep(1)}>← Retour</button>
-            <button className={styles.nextBtn} onClick={() => setStep(3)}>Suivant →</button>
+            <button className={styles.backBtn} onClick={() => setStep(1)}>{t('addMatch.back')}</button>
+            <button className={styles.nextBtn} onClick={() => setStep(3)}>{t('addMatch.next')}</button>
           </div>
         </div>
       )}
@@ -84,44 +86,44 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
       {step === 3 && (
         <div>
           <div className={styles.stepLabel}>
-            {joinFormat === 'Seul' ? "Étape 3 / 3 — File d'attente" : 'Étape 3 / 4 — Joueurs'}
+            {joinFormat === 'Seul' ? t('addMatch.step3Queue') : t('addMatch.step3Players')}
           </div>
           {joinFormat === 'Seul' ? (
             <div className={styles.seulMsg}>
-              Vous allez être redirigé en file d'attente afin de pouvoir rejoindre un match.
+              {t('addMatch.soloMsg')}
             </div>
           ) : (
             <div className={styles.teamsGrid}>
               <div className={styles.teamRed}>
-                <div className={styles.teamLabel}>🔴 Équipe Rouge</div>
+                <div className={styles.teamLabel}>{t('addMatch.redTeam')}</div>
                 {Array.from({ length: joinFormat === '2v2' ? 2 : 1 }).map((_, i) => (
                   <LoginInput
                     key={i}
                     value={redPlayers[i] || ''}
                     onChange={v => setRedPlayers(prev => { const n = [...prev]; n[i] = v; return n })}
-                    placeholder={joinFormat === '2v2' ? `Joueur rouge ${i + 1}...` : 'Login joueur rouge...'}
+                    placeholder={joinFormat === '2v2' ? t('addMatch.redPlayer2v2', { num: i + 1 }) : t('addMatch.redPlayer')}
                   />
                 ))}
               </div>
               <div className={styles.teamBlue}>
-                <div className={styles.teamLabel}>🔵 Équipe Bleue</div>
+                <div className={styles.teamLabel}>{t('addMatch.blueTeam')}</div>
                 {Array.from({ length: joinFormat === '2v2' ? 2 : 1 }).map((_, i) => (
                   <LoginInput
                     key={i}
                     value={bluePlayers[i] || ''}
                     onChange={v => setBluePlayers(prev => { const n = [...prev]; n[i] = v; return n })}
-                    placeholder={joinFormat === '2v2' ? `Joueur bleu ${i + 1}...` : 'Login joueur bleu...'}
+                    placeholder={joinFormat === '2v2' ? t('addMatch.bluePlayer2v2', { num: i + 1 }) : t('addMatch.bluePlayer')}
                   />
                 ))}
               </div>
             </div>
           )}
           <div className={styles.stepActions}>
-            <button className={styles.backBtn} onClick={() => setStep(2)}>← Retour</button>
+            <button className={styles.backBtn} onClick={() => setStep(2)}>{t('addMatch.back')}</button>
             {joinFormat === 'Seul' ? (
-              <button className={styles.confirmBtn} onClick={handleConfirm}>Rejoindre la file ✓</button>
+              <button className={styles.confirmBtn} onClick={handleConfirm}>{t('addMatch.joinQueue')}</button>
             ) : (
-              <button className={styles.nextBtn} onClick={() => setStep(4)}>Suivant →</button>
+              <button className={styles.nextBtn} onClick={() => setStep(4)}>{t('addMatch.next')}</button>
             )}
           </div>
         </div>
@@ -129,46 +131,46 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
 
       {step === 4 && (
         <div>
-          <div className={styles.stepLabel}>Étape 4 / 4 — Reprendre la gagne ?</div>
+          <div className={styles.stepLabel}>{t('addMatch.step4')}</div>
           <div className={styles.step4Question}>
-            Voulez-vous reprendre la gagne de l'équipe qui joue actuellement avant vous ?
+            {t('addMatch.takeWinQuestion')}
           </div>
           <div className={styles.ouiNonRow}>
             <button
               className={`${styles.nonBtn} ${takeWin === false ? styles.nonBtnActive : ''}`}
               onClick={() => setTakeWin(false)}
             >
-              Non
+              {t('addMatch.no')}
             </button>
             <button
               className={`${styles.ouiBtn} ${takeWin === true ? styles.ouiBtnActive : ''}`}
               onClick={() => setTakeWin(true)}
             >
-              Oui ✓
+              {t('addMatch.yes')}
             </button>
           </div>
-          <div className={styles.prevSlotTitle}>Créneau précédent</div>
+          <div className={styles.prevSlotTitle}>{t('addMatch.prevSlot')}</div>
           <div className={styles.prevSlotCard}>
             {prevTeam ? (
               <div className={styles.prevSlotDuel}>
                 <span className={styles.prevSlotName}>{prevTeam.p1}</span>
-                <span className={styles.prevSlotVs}>vs</span>
+                <span className={styles.prevSlotVs}>{t('common.vs')}</span>
                 <span className={styles.prevSlotName}>{prevTeam.p2}</span>
                 {prevTeam.format && <span className={styles.prevSlotMeta}>{prevTeam.format}</span>}
               </div>
             ) : (
-              <div className={styles.noMatch}>Aucun créneau précédent disponible</div>
+              <div className={styles.noMatch}>{t('addMatch.noPrevSlot')}</div>
             )}
           </div>
           <div className={styles.stepActions}>
-            <button className={styles.backBtn} onClick={() => setStep(3)}>← Retour</button>
+            <button className={styles.backBtn} onClick={() => setStep(3)}>{t('addMatch.back')}</button>
             <button
               className={styles.confirmBtn}
               onClick={handleConfirm}
               disabled={takeWin === null}
               style={takeWin === null ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
             >
-              Confirmer ✓
+              {t('addMatch.confirm')}
             </button>
           </div>
         </div>

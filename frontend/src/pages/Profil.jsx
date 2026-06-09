@@ -9,6 +9,7 @@ import Pill from '../components/ui/Pill'
 import LoginInput from '../components/ui/LoginInput'
 import { getPlayerBadge } from '../utils/playerBadge'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import styles from './Profil.module.css'
 
 const MATCHES_PER_PAGE = 3
@@ -16,6 +17,7 @@ const MATCHES_PER_PAGE = 3
 export default function Profil() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const [teammates_,    setTeammates]    = useState([])
   const [opponents,     setOpponents]    = useState([])
@@ -57,27 +59,27 @@ export default function Profil() {
 
   return (
     <Shell>
-      <Topbar title="Mon Profil" titleSize={30} />
+      <Topbar title={t('topbar.profile')} titleSize={30} />
 
       {photoUploadOpen && (
         <div className={styles.photoOverlay} onClick={() => setPhotoUploadOpen(false)}>
           <div className={styles.photoDialog} onClick={e => e.stopPropagation()}>
-            <div className={styles.photoTitle}>Photo de profil</div>
+            <div className={styles.photoTitle}>{t('profile.profilePhoto')}</div>
             <label className={styles.photoDropZone}>
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
               <span className={styles.photoDropIcon}>📷</span>
-              <span>Cliquer pour choisir une image</span>
+              <span>{t('profile.clickToChoose')}</span>
             </label>
             {photoUrl && (
               <div className={styles.photoPreviewRow}>
                 <img src={photoUrl} className={styles.photoPreview} alt="preview" />
                 <button className={styles.photoRemoveBtn} onClick={() => { setPhotoUrl(null); setPhotoUploadOpen(false) }}>
-                  Supprimer la photo
+                  {t('profile.removePhoto')}
                 </button>
               </div>
             )}
             <div className={styles.photoDialogFooter}>
-              <button className={styles.photoCloseBtn} onClick={() => setPhotoUploadOpen(false)}>Fermer</button>
+              <button className={styles.photoCloseBtn} onClick={() => setPhotoUploadOpen(false)}>{t('profile.close')}</button>
             </div>
           </div>
         </div>
@@ -94,7 +96,7 @@ export default function Profil() {
                       <Avatar initials={myLogin[0]?.toUpperCase() ?? '?'} size={66} bg="var(--color-primary)" color="#fff" round />
                     </div>
                 }
-                <button className={styles.photoUploadBtn} onClick={() => setPhotoUploadOpen(true)}>📷 Photo</button>
+                <button className={styles.photoUploadBtn} onClick={() => setPhotoUploadOpen(true)}>{t('profile.photo')}</button>
               </div>
             </div>
             <div className={styles.heroInfo}>
@@ -104,7 +106,7 @@ export default function Profil() {
                 {myWins > 0 && <Pill label={`${myWins} Victoires`} type="win" />}
               </div>
               <span className={styles.playerTitleBadge} style={{ background: badge.bg, color: badge.color }}>
-                Mon badge : {badge.label}
+                {t('profile.myBadge', { label: badge.label })}
               </span>
             </div>
           </div>
@@ -115,36 +117,36 @@ export default function Profil() {
               className={styles.logoutBtn}
               onClick={() => { logout(); navigate('/login') }}
             >
-              Déconnexion
+              {t('profile.logout')}
             </button>
           </div>
         </div>
 
         <div className={styles.statsGrid}>
-          <StatCard color="var(--orange-pale)" label="Ratio"            value="—" sub="V · D" />
-          <StatCard color="var(--yellow-pale)" label="Série en cours"   value="—" sub="victoires d'affilée" />
-          <StatCard color="var(--green-pale)"  label="Jetons gagnés"    value="—" sub="bilan saison" />
-          <StatCard color="var(--red-pale)"    label="Gamelles"         value="—" sub="effectuées cette saison" />
-          <StatCard color="var(--beige)"       label="Parties / mois"   value="—" sub="moyenne ce mois" />
+          <StatCard color="var(--orange-pale)" label={t('profile.ratio')}         value="—" sub={t('profile.winLoss')} />
+          <StatCard color="var(--yellow-pale)" label={t('profile.streak')}        value="—" sub={t('profile.streakSub')} />
+          <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value="—" sub={t('profile.tokensSub')} />
+          <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value="—" sub={t('profile.lossesSub')} />
+          <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value="—" sub={t('profile.gamesPerMonthSub')} />
         </div>
 
         <div className={styles.grid}>
           <div className={styles.leftCol}>
             <Card
-              title="Coéquipiers favoris"
-              right={<span className={styles.counter}>{teammates_.length} / 5 max</span>}
+              title={t('profile.favoriteTeammates')}
+              right={<span className={styles.counter}>{t('profile.counter', { count: teammates_.length })}</span>}
             >
               <div className={styles.teammateNote}>
-                (ajoutés automatiquement selon le nombre de parties jouées ensemble)
+                {t('profile.teammateNote')}
               </div>
               {teammates_.length === 0 && (
-                <div className={styles.noMatch}>Aucun coéquipier enregistré.</div>
+                <div className={styles.noMatch}>{t('profile.noTeammate')}</div>
               )}
               {teammates_.map(t => (
                 <div key={t.login} className={styles.teammateRow}>
                   <Avatar initials={t.name} size={30} bg="var(--beige)" />
                   <span className={styles.teammateName}>{t.name}</span>
-                  <button className={styles.planBtn}>Planifier une partie</button>
+                  <button className={styles.planBtn}>{t('profile.planGame')}</button>
                 </div>
               ))}
               {teammates_.length < 5 && (
@@ -152,51 +154,51 @@ export default function Profil() {
                   <LoginInput
                     value={newPartner}
                     onChange={setNewPartner}
-                    placeholder="Login joueur..."
+                    placeholder={t('profile.loginPlayerPlaceholder')}
                   />
-                  <button className={styles.addBtn} onClick={addTeammate}>+ Ajouter</button>
+                  <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
                 </div>
               )}
             </Card>
 
             <div className={styles.divider} />
 
-            <Card title="Adversaires fréquents">
+            <Card title={t('profile.frequentOpponents')}>
               {opponents.length === 0 && (
-                <div className={styles.noMatch}>Aucune donnée disponible.</div>
+                <div className={styles.noMatch}>{t('profile.noData')}</div>
               )}
               {opponents.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
                   <Avatar initials={o.name} size={28} bg="var(--beige)" />
                   <span className={styles.opponentName}>{o.name}</span>
-                  <span className={styles.winrate}>{o.winrate}% victoires</span>
+                  <span className={styles.winrate}>{t('profile.winrate', { pct: o.winrate })}</span>
                 </div>
               ))}
             </Card>
 
             <div className={styles.divider} />
 
-            <Card title="Adversaires redoutables">
-              <div className={styles.fearedNote}>Joueurs contre qui tu perds le plus souvent</div>
+            <Card title={t('profile.fearOpponents')}>
+              <div className={styles.fearedNote}>{t('profile.fearNote')}</div>
               {feared.length === 0 && (
-                <div className={styles.noMatch}>Aucune donnée disponible.</div>
+                <div className={styles.noMatch}>{t('profile.noData')}</div>
               )}
               {feared.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
                   <Avatar initials={o.name} size={28} bg="var(--red-pale)" />
                   <span className={styles.opponentName}>{o.name}</span>
-                  <span className={styles.lossrate}>{o.lossrate}% défaites</span>
+                  <span className={styles.lossrate}>{t('profile.lossrate', { pct: o.lossrate })}</span>
                 </div>
               ))}
             </Card>
           </div>
 
           <div className={styles.rightCol}>
-            <Card title="Mes matchs">
+            <Card title={t('profile.myMatches')}>
               <div className={styles.matchSearch}>
                 <input
                   className={styles.searchInput}
-                  placeholder="Rechercher un login..."
+                  placeholder={t('profile.searchLogin')}
                   value={matchSearch}
                   onChange={e => { setMatchSearch(e.target.value); setMatchPage(0) }}
                 />
@@ -215,7 +217,7 @@ export default function Profil() {
                 </div>
               ))}
               {filteredMatches.length === 0 && (
-                <div className={styles.noMatch}>Aucun match trouvé</div>
+                <div className={styles.noMatch}>{t('profile.noMatch')}</div>
               )}
               {totalMatchPages > 1 && (
                 <div className={styles.matchNav}>
@@ -226,18 +228,18 @@ export default function Profil() {
               )}
             </Card>
 
-            <Card title="Historique des saisons">
+            <Card title={t('profile.seasonHistory')}>
               {seasons.length === 0 && (
-                <div className={styles.noMatch}>Aucune saison disponible.</div>
+                <div className={styles.noMatch}>{t('profile.noSeason')}</div>
               )}
               {seasons.map(s => (
                 <div key={s.season} className={styles.seasonRow}>
-                  <span className={styles.seasonName}>Saison {s.season}</span>
+                  <span className={styles.seasonName}>{t('profile.seasonLabel', { num: s.season })}</span>
                   <span className={styles.seasonRank}>{s.rank}</span>
                   {s.prize === 'ongoing'
-                    ? <Pill label="En cours" type="orange" />
+                    ? <Pill label={t('profile.ongoing')} type="orange" />
                     : s.prize === 'gold'
-                    ? <Pill label="Champion 🏆" type="gold" />
+                    ? <Pill label={t('profile.champion')} type="gold" />
                     : <span className={styles.noPrize}>—</span>
                   }
                 </div>

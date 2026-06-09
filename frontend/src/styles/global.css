@@ -134,3 +134,44 @@ a {
 	text-decoration: none;
 	color: inherit;
 }
+
+/* ── RTL support ── */
+[dir="rtl"] {
+	font-family: 'Inter', 'Arial Hebrew', 'David', sans-serif;
+}
+
+[dir="rtl"] .sidebar {
+	left: auto;
+	right: 0;
+	transform: translateX(100%);
+}
+
+[dir="rtl"] .sidebar.sidebarOpen {
+	transform: translateX(0);
+}
+
+[dir="rtl"] .navItem {
+	flex-direction: row-reverse;
+}
+
+[dir="rtl"] .topbar {
+	flex-direction: row-reverse;
+}
+
+[dir="rtl"] .right {
+	flex-direction: row-reverse;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+	text-align: right;
+}
+
+@media (max-width: 768px) {
+  [dir="rtl"] .hamburger {
+    left: auto;
+    right: 12px;
+  }
+}
+

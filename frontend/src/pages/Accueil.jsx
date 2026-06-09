@@ -8,6 +8,7 @@ import JouerMode from '../components/ui/JouerMode'
 import LoginInput from '../components/ui/LoginInput'
 import PerformanceChart from '../components/ui/PerformanceChart'
 import AddMatchModal from '../components/ui/AddMatchModal'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import styles from './Accueil.module.css'
 
@@ -15,6 +16,7 @@ const MATCHES_PER_PAGE = 3
 
 export default function Accueil() {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
@@ -44,7 +46,7 @@ export default function Accueil() {
 
   return (
     <Shell>
-      <Topbar title="Accueil" titleSize={30} />
+      <Topbar title={t('topbar.home')} titleSize={30} />
 
       {jouerOpen && <JouerMode onClose={() => setJouerOpen(false)} />}
 
@@ -88,20 +90,17 @@ export default function Accueil() {
                 className={`${styles.choiceBtn} ${selectedMatch ? styles.choiceBtnSelected : ''}`}
                 onClick={() => setMatchPickOpen(true)}
               >
-                📋 Match prévu
+                {t('home.scheduledMatch')}
                 {selectedMatch && <span className={styles.selectedBadge}>vs {selectedMatch.vs}</span>}
               </button>
               <div className={styles.orSep}>
                 <div className={styles.orLine} />
-                <span className={styles.orText}>OU</span>
+                <span className={styles.orText}>{t('home.or')}</span>
                 <div className={styles.orLine} />
               </div>
               <button className={styles.addMatchBtn} onClick={() => setJoinOpen(true)}>
                 <span className={styles.addEmoji}>⚽</span>
-                <span className={styles.addTextGroup}>
-                  <span className={styles.addLine}>Ajouter un</span>
-                  <span className={styles.addLine}>match</span>
-                </span>
+                <span className={styles.addLine}>{t('home.addMatch')}</span>
               </button>
             </div>
 
@@ -111,10 +110,10 @@ export default function Accueil() {
               disabled={!selectedMatch}
             >
               <span className={styles.jouerIcon}>▶</span>
-              Jouer
+              {t('home.play')}
             </button>
             {!selectedMatch && (
-              <div className={styles.jouerHint}>Sélectionne un match pour activer</div>
+              <div className={styles.jouerHint}>{t('home.selectToPlay')}</div>
             )}
           </div>
         </div>
@@ -123,13 +122,13 @@ export default function Accueil() {
         <div className={styles.grid}>
 
           <div className={styles.card}>
-            <div className={styles.cardHeader}>Mes matchs</div>
+            <div className={styles.cardHeader}>{t('home.myMatches')}</div>
             <div className={styles.cardBody}>
               <div className={styles.matchSearch}>
                 <LoginInput
                   value={matchSearch}
                   onChange={(val) => { setMatchSearch(val); setMatchPage(0) }}
-                  placeholder="Rechercher un login..."
+                  placeholder={t('home.searchLogin')}
                   className={styles.searchInput}
                 />
               </div>
@@ -146,7 +145,7 @@ export default function Accueil() {
                   </div>
                 </div>
               ))}
-              {filtered.length === 0 && <div className={styles.noMatch}>Aucun match trouvé</div>}
+              {filtered.length === 0 && <div className={styles.noMatch}>{t('home.noMatch')}</div>}
               {totalPages > 1 && (
                 <div className={styles.matchNav}>
                   <button className={styles.navBtn} onClick={() => setMatchPage(p => Math.max(0, p-1))} disabled={matchPage === 0}>←</button>
@@ -159,8 +158,8 @@ export default function Accueil() {
 
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <span>Amis favoris</span>
-              <span className={styles.counter}>{teammates.length} / 5</span>
+              <span>{t('home.favFriends')}</span>
+              <span className={styles.counter}>{t('home.counter', { count: teammates.length })}</span>
             </div>
             <div className={styles.cardBody}>
               <div className={styles.teamNote}>Ajoutés selon le nombre de parties ensemble</div>
@@ -172,7 +171,7 @@ export default function Accueil() {
                     className={styles.queueBtn}
                     onClick={() => setJoinOpen(true)}
                   >
-                    Ajouter file d'attente
+                    {t('home.addQueue')}
                   </button>
                 </div>
               ))}
@@ -181,10 +180,10 @@ export default function Accueil() {
                   <LoginInput
                     value={newTeammate}
                     onChange={setNewTeammate}
-                    placeholder="Login joueur..."
+                    placeholder={t('home.loginPlayer')}
                     className={styles.addInput}
                   />
-                  <button className={styles.addBtn} onClick={addTeammate}>+ Ajouter</button>
+                  <button className={styles.addBtn} onClick={addTeammate}>{t('home.addPlayer')}</button>
                 </div>
               )}
             </div>
@@ -197,7 +196,7 @@ export default function Accueil() {
       </div>
 
       {/* ── Popup : choisir un match prévu ── */}
-      <Modal open={matchPickOpen} onClose={() => setMatchPickOpen(false)} title="Mes matchs prévus">
+      <Modal open={matchPickOpen} onClose={() => setMatchPickOpen(false)} title={t('home.scheduledMatchesTitle')}>
         <div className={styles.matchPickList}>
           {upcomingMatches.map(m => (
             <button
@@ -210,13 +209,13 @@ export default function Accueil() {
             </button>
           ))}
           {upcomingMatches.length === 0 && (
-            <div className={styles.noMatch}>Aucun match prévu. Ajoute-toi à la file d'attente.</div>
+            <div className={styles.noMatch}>{t('home.noScheduled')}</div>
           )}
         </div>
         {selectedMatch && (
           <div className={styles.clearMatch}>
             <button className={styles.clearBtn} onClick={() => { setSelectedMatch(null); setMatchPickOpen(false) }}>
-              ✕ Désélectionner
+              {t('home.deselect')}
             </button>
           </div>
         )}
