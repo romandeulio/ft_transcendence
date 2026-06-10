@@ -16,6 +16,10 @@ const MATCHES_PER_PAGE = 3
 export default function Profil() {
   //const { user, logout } = useAuth()
   const user = JSON.parse(localStorage.getItem("user"));
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  };
   const navigate = useNavigate()
 
   const [teammates_,    setTeammates]    = useState([])

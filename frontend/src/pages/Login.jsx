@@ -34,8 +34,8 @@ export default function Login() {
 
           setResponse(data);
           if (res.ok && data.access) {
-            //localStorage.setItem("token", data.access);
-            //console.log("Login OK, token stocké:", data.access);
+            localStorage.setItem("token", data.access);
+            console.log("Login OK, token stocké:", data.access);
             //navigate("/profil");
             const me = await fetch("/api/auth/profile/", {
                 headers: {

@@ -28,7 +28,7 @@ CREATE TABLE seasons
     end_date     DATE
 );
 
-CREATE TABLE matches
+/*CREATE TABLE matches
 (
     id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     season_id UUID REFERENCES seasons(id),
@@ -46,13 +46,42 @@ CREATE TABLE match_participants (
     score_before INT DEFAULT 0,
     score_after  INT DEFAULT 0,
     score_delta  INT DEFAULT 0
+);*/
+CREATE TABLE matches (
+    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    season_id  UUID REFERENCES seasons(id),
+    match_type VARCHAR(10) NOT NULL DEFAULT 'SOLO'
+               CHECK (match_type IN ('SOLO', 'TEAM', 'FUN')),
+    is_ranked  BOOLEAN NOT NULL DEFAULT TRUE,
+    status     VARCHAR(10) NOT NULL DEFAULT 'PENDING'
+               CHECK (status IN ('PENDING', 'VALIDATED', 'CANCELLED')),
+    player1_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player1_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    score_player1 INT DEFAULT 0,
+    score_player2 INT DEFAULT 0,
+    elo_solo_p1_before INT DEFAULT 1000,
+    elo_solo_p1_after  INT DEFAULT 1000,
+    elo_solo_p2_before INT DEFAULT 1000,
+    elo_solo_p2_after  INT DEFAULT 1000,
+    elo_team_p1_before    INT DEFAULT 1000,
+    elo_team_p1_after     INT DEFAULT 1000,
+    elo_team_p1tm_before  INT DEFAULT 1000,
+    elo_team_p1tm_after   INT DEFAULT 1000,
+    elo_team_p2_before    INT DEFAULT 1000,
+    elo_team_p2_after     INT DEFAULT 1000,
+    elo_team_p2tm_before  INT DEFAULT 1000,
+    elo_team_p2tm_after   INT DEFAULT 1000,
+    played_at  TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE rankings (
     id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id   UUID REFERENCES users(id),
     season_id UUID REFERENCES seasons(id),
-    mode      VARCHAR(10),
+    mode      VARCHAR(10) CHECK (mode IN ('SOLO', 'TEAM')),
     scope     VARCHAR(10) CHECK (scope IN ('season', 'annual', 'global')),
     score     INT DEFAULT 0,
     wins      INT DEFAULT 0,
@@ -73,18 +102,50 @@ CREATE TABLE ranking_history (
     recorded_at  TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE reservations (
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    match_type          VARCHAR(10) DEFAULT 'SOLO'
+                        CHECK (match_type IN ('SOLO', 'TEAM', 'FUN')),
+    is_ranked           BOOLEAN DEFAULT TRUE,
+    status              VARCHAR(15) DEFAULT 'IN_PROGRESS'
+                        CHECK (status IN ('IN_PROGRESS', 'DONE', 'CANCELLED')),
+    player1_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player1_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    match_id            UUID REFERENCES matches(id) ON DELETE SET NULL,
+    started_at          TIMESTAMP DEFAULT NOW(),
+    ended_at            TIMESTAMP,
+    created_at          TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE queue (
-    id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id   UUID REFERENCES users(id),
-    slot_time TIMESTAMP NOT NULL,
-    status    VARCHAR(20) DEFAULT 'waiting'
-              CHECK (status IN ('waiting', 'confirmed', 'cancelled'))
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    match_type          VARCHAR(10) DEFAULT 'SOLO'
+                        CHECK (match_type IN ('SOLO', 'TEAM', 'FUN')),
+    is_ranked           BOOLEAN DEFAULT TRUE,
+    status              VARCHAR(15) DEFAULT 'WAITING'
+                        CHECK (status IN ('WAITING', 'CONFIRMED', 'DONE', 'CANCELLED')),
+    player1_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player1_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_id          UUID REFERENCES users(id) ON DELETE SET NULL,
+    player2_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    joined_at           TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE wallets (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID UNIQUE REFERENCES users(id),
     balance    INTEGER NOT NULL DEFAULT 100 CHECK (balance >= 0)
+);
+
+CREATE TABLE wallet_transactions (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    wallet_id    UUID REFERENCES wallets(id),
+    type         VARCHAR(20) CHECK (type IN ('bet', 'win', 'deposit', 'refund')),
+    amount       INTEGER NOT NULL,
+    reference_id UUID,
+    created_at   TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE bets (
@@ -115,8 +176,24 @@ CREATE TRIGGER trigger_no_self_bet
 BEFORE INSERT ON bets
 FOR EACH ROW EXECUTE FUNCTION check_no_self_bet();
 
+CREATE OR REPLACE FUNCTION check_fun_not_ranked()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.match_type = 'FUN' AND NEW.is_ranked = TRUE THEN
+        RAISE EXCEPTION 'Un match FUN ne peut pas être classé.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_fun_not_ranked
+BEFORE INSERT OR UPDATE ON matches
+FOR EACH ROW EXECUTE FUNCTION check_fun_not_ranked();
+
 CREATE INDEX idx_rankings_scope   ON rankings(scope, mode, score DESC);
 CREATE INDEX idx_history_user     ON ranking_history(user_id, recorded_at DESC);
 CREATE INDEX idx_bets_match       ON bets(match_id);
 CREATE INDEX idx_users_oauth      ON users(oauth_42_id);
-CREATE INDEX idx_queue_slot_time  ON queue(slot_time, status);
+CREATE INDEX idx_queue_status      ON queue(status, joined_at);
+CREATE INDEX idx_matches_players   ON matches(player1_id, player2_id);
+CREATE INDEX idx_reservations_status ON reservations(status);

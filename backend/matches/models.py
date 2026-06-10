@@ -13,7 +13,7 @@ class Match(models.Model):
 	class MatchType(models.TextChoices):
 		SOLO      = 'SOLO',      '1v1 — individuel'
 		TEAM      = 'TEAM',      '2v2 — équipes ad-hoc'
-		TWO_V_ONE = 'TWO_V_ONE', '2v1 — match libre uniquement'
+		TWO_V_ONE = 'FUN',		'2v1 — match libre uniquement'
 
 	match_type = models.CharField(
 		max_length=10,
@@ -73,14 +73,14 @@ class Match(models.Model):
 
 	# --- ELO 2v2 personnel (TEAM classé uniquement) ---
 	# Chaque joueur possède son propre ELO 2v2, indépendant de son partenaire
-	elo_team_player1_before          = models.IntegerField(default=1000)
-	elo_team_player1_after           = models.IntegerField(default=1000)
-	elo_team_player1_teammate_before = models.IntegerField(default=1000)
-	elo_team_player1_teammate_after  = models.IntegerField(default=1000)
-	elo_team_player2_before          = models.IntegerField(default=1000)
-	elo_team_player2_after           = models.IntegerField(default=1000)
-	elo_team_player2_teammate_before = models.IntegerField(default=1000)
-	elo_team_player2_teammate_after  = models.IntegerField(default=1000)
+	elo_team_p1_before          = models.IntegerField(default=1000)
+	elo_team_p1_after           = models.IntegerField(default=1000)
+	elo_team_p1tm_before 		= models.IntegerField(default=1000)
+	elo_team_p1tm_after  		= models.IntegerField(default=1000)
+	elo_team_p2_before          = models.IntegerField(default=1000)
+	elo_team_p2_after           = models.IntegerField(default=1000)
+	elo_team_p2tm_before 		= models.IntegerField(default=1000)
+	elo_team_p2tm_after  		= models.IntegerField(default=1000)
 
 	season = models.ForeignKey(
 		'seasons.Season',
@@ -93,6 +93,7 @@ class Match(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		db_table = 'matches'
 		ordering = ['-played_at']
 
 	def clean(self):
