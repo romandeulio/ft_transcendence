@@ -22,10 +22,15 @@ CREATE TABLE users
 
 CREATE TABLE seasons
 (
-    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name    VARCHAR(15) NOT NULL,
-    start_date   DATE NOT NULL,
-    end_date     DATE
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name                VARCHAR(100) NOT NULL,
+    start_date          DATE NOT NULL,
+    end_date            DATE NOT NULL,
+    status              VARCHAR(10) NOT NULL DEFAULT 'UPCOMING'
+                        CHECK (status IN ('UPCOMING', 'ACTIVE', 'FINISHED')),
+    rewards_distributed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 /*CREATE TABLE matches
@@ -78,14 +83,15 @@ CREATE TABLE matches (
 );
 
 CREATE TABLE rankings (
-    id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id   UUID REFERENCES users(id),
-    season_id UUID REFERENCES seasons(id),
-    mode      VARCHAR(10) CHECK (mode IN ('SOLO', 'TEAM')),
-    scope     VARCHAR(10) CHECK (scope IN ('season', 'annual', 'global')),
-    score     INT DEFAULT 0,
-    wins      INT DEFAULT 0,
-    losses    INT DEFAULT 0,
+    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id    UUID REFERENCES users(id),
+    season_id  UUID REFERENCES seasons(id),
+    mode       VARCHAR(10) CHECK (mode IN ('SOLO', 'TEAM')),
+    scope      VARCHAR(10) CHECK (scope IN ('season', 'global')),
+    score      INT DEFAULT 0,
+    wins       INT DEFAULT 0,
+    losses     INT DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     UNIQUE (user_id, season_id, mode, scope)
 );
 

@@ -38,10 +38,10 @@ class MatchSerializer(serializers.ModelSerializer):
 			'elo_solo_player1_before', 'elo_solo_player1_after',
 			'elo_solo_player2_before', 'elo_solo_player2_after',
 			# ELO team
-			'elo_team_player1_before',          'elo_team_player1_after',
-			'elo_team_player1_teammate_before', 'elo_team_player1_teammate_after',
-			'elo_team_player2_before',          'elo_team_player2_after',
-			'elo_team_player2_teammate_before', 'elo_team_player2_teammate_after',
+			'elo_team_p1_before',   'elo_team_p1_after',
+			'elo_team_p1tm_before', 'elo_team_p1tm_after',
+			'elo_team_p2_before',   'elo_team_p2_after',
+			'elo_team_p2tm_before', 'elo_team_p2tm_after',
 			# saison & dates
 			'season',
 			'played_at',
@@ -51,10 +51,10 @@ class MatchSerializer(serializers.ModelSerializer):
 			'id', 'status',
 			'elo_solo_player1_before', 'elo_solo_player1_after',
 			'elo_solo_player2_before', 'elo_solo_player2_after',
-			'elo_team_player1_before',          'elo_team_player1_after',
-			'elo_team_player1_teammate_before', 'elo_team_player1_teammate_after',
-			'elo_team_player2_before',          'elo_team_player2_after',
-			'elo_team_player2_teammate_before', 'elo_team_player2_teammate_after',
+			'elo_team_p1_before',   'elo_team_p1_after',
+			'elo_team_p1tm_before', 'elo_team_p1tm_after',
+			'elo_team_p2_before',   'elo_team_p2_after',
+			'elo_team_p2tm_before', 'elo_team_p2tm_after',
 			'played_at', 'updated_at',
 		]
 
@@ -65,32 +65,22 @@ class MatchSerializer(serializers.ModelSerializer):
 class MatchCreateSerializer(serializers.ModelSerializer):
 	"""
 	Serializer pour créer un match (POST /api/matches/).
-	On passe les IDs des joueurs, pas les objets complets.
+	Les joueurs sont identifiés par leur username.
 	Les champs ELO et status sont gérés par le backend, jamais par le front.
 	"""
 
-	player1_id          = serializers.PrimaryKeyRelatedField(
-		source='player1', queryset=User.objects.all(), required=True,
-	)
-	player2_id          = serializers.PrimaryKeyRelatedField(
-		source='player2', queryset=User.objects.all(), required=True,
-	)
-	player1_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player1_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
-	player2_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player2_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
+	player1          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
+	player2          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
+	player1_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
+	player2_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
 
 	class Meta:
 		model  = Match
 		fields = [
 			'match_type',
 			'is_ranked',
-			'player1_id', 'player1_teammate_id',
-			'player2_id', 'player2_teammate_id',
+			'player1', 'player1_teammate',
+			'player2', 'player2_teammate',
 			'score_player1', 'score_player2',
 			'season',
 		]

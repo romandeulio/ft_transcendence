@@ -10,16 +10,16 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
   const [joinMode,    setJoinMode]    = useState('compet')
   const [joinFormat,  setJoinFormat]  = useState('1v1')
   const [redPlayers,  setRedPlayers]  = useState(['', ''])
-  const [bluePlayers, setBluePlayers] = useState([user?.login ?? '', ''])
+  const [bluePlayers, setBluePlayers] = useState(['', ''])
   const [takeWin,     setTakeWin]     = useState(null)
 
   useEffect(() => {
-    if (open) setBluePlayers([user?.login ?? '', ''])
-  }, [open, user?.login])
+    if (open) setBluePlayers(['', ''])
+  }, [open])
 
   const reset = () => {
     setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
-    setRedPlayers(['', '']); setBluePlayers([user?.login ?? '', '']); setTakeWin(null)
+    setRedPlayers(['', '']); setBluePlayers(['', '']); setTakeWin(null)
   }
 
   const handleClose = () => { reset(); onClose() }
@@ -107,14 +107,18 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
               </div>
               <div className={styles.teamBlue}>
                 <div className={styles.teamLabel}>{t('addMatch.blueTeam')}</div>
-                {Array.from({ length: joinFormat === '2v2' ? 2 : 1 }).map((_, i) => (
+                {/* Joueur 1 bleu = toujours l'utilisateur connecté, verrouillé */}
+                <div className={styles.lockedPlayer}>
+                  <span>{user?.username}</span>
+                  <span className={styles.lockedPlayerTag}>{t('addMatch.you')}</span>
+                </div>
+                {joinFormat === '2v2' && (
                   <LoginInput
-                    key={i}
-                    value={bluePlayers[i] || ''}
-                    onChange={v => setBluePlayers(prev => { const n = [...prev]; n[i] = v; return n })}
-                    placeholder={joinFormat === '2v2' ? t('addMatch.bluePlayer2v2', { num: i + 1 }) : t('addMatch.bluePlayer')}
+                    value={bluePlayers[1] || ''}
+                    onChange={v => setBluePlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                    placeholder={t('addMatch.bluePlayer2v2', { num: 2 })}
                   />
-                ))}
+                )}
               </div>
             </div>
           )}

@@ -59,6 +59,12 @@
   border: 1px solid #CD3122;
 }
 
+.draw {
+  background: #E87B1A;
+  color: #FFFFFF;
+  border: 1px solid #E87B1A;
+}
+
 .season {
   background: #EBF0FC;
   color: #1A2B5E;

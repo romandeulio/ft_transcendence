@@ -3,9 +3,11 @@ import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Login.module.css'
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const { t } = useTranslation()
+  const { login } = useAuth()
   const [form, setForm] = useState({
       email: "",
       password: "",
@@ -50,7 +52,7 @@ export default function Login() {
 
             console.log(user);
 
-            localStorage.setItem("user", JSON.stringify(user));
+            login(user);
 
             navigate("/profil");
             }

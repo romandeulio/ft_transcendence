@@ -39,6 +39,7 @@
     "addMatch": "הוסף משחק",
     "play": "שחק",
     "selectToPlay": "בחר משחק כדי להפעיל",
+    "notParticipant": "אינך משתתף במשחק זה",
     "myMatches": "המשחקים שלי",
     "favFriends": "חברים מועדפים",
     "searchLogin": "חפש לוגין...",
@@ -318,7 +319,8 @@
     "yes": "כן ✓",
     "prevSlot": "חריץ קודם",
     "noPrevSlot": "אין חריץ קודם זמין",
-    "confirm": "אשר ✓"
+    "confirm": "אשר ✓",
+    "you": "אתה"
   },
   "game": {
     "red": "אדום",

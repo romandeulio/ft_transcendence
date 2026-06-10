@@ -2,14 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './JouerMode.module.css'
 
-export default function JouerMode({ onClose }) {
+export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
   const { t } = useTranslation()
-  const [scoreRed,  setScoreRed]  = useState(0)
-  const [scoreBlue, setScoreBlue] = useState(0)
+  const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
+  const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
   const [elapsed,   setElapsed]   = useState(0)
   const [fois,      setFois]      = useState(0)
   const [ended,     setEnded]     = useState(false)
   const intervalRef = useRef(null)
+  const localUpdate = useRef(false)
+
+  // Sync external score changes (from the other player via WS)
+  useEffect(() => {
+    if (localUpdate.current) return
+    if (extRed  !== undefined) setScoreRed(extRed)
+    if (extBlue !== undefined) setScoreBlue(extBlue)
+  }, [extRed, extBlue])
 
   useEffect(() => {
     if (!ended) {
@@ -24,16 +32,40 @@ export default function JouerMode({ onClose }) {
 
   const addRed = () => {
     if (ended) return
-    setScoreRed(n => n + (fois > 0 ? fois : 1))
+    const inc = fois > 0 ? fois : 1
+    const next = Math.min(19, scoreRed + inc)
+    localUpdate.current = true
+    setScoreRed(next)
     setFois(0)
+    onScoreChange?.(next, scoreBlue)
+    setTimeout(() => { localUpdate.current = false }, 300)
   }
   const addBlue = () => {
     if (ended) return
-    setScoreBlue(n => n + (fois > 0 ? fois : 1))
+    const inc = fois > 0 ? fois : 1
+    const next = Math.min(19, scoreBlue + inc)
+    localUpdate.current = true
+    setScoreBlue(next)
     setFois(0)
+    onScoreChange?.(scoreRed, next)
+    setTimeout(() => { localUpdate.current = false }, 300)
   }
-  const removeRed  = () => !ended && setScoreRed(n => Math.max(0, n - 1))
-  const removeBlue = () => !ended && setScoreBlue(n => Math.max(0, n - 1))
+  const removeRed = () => {
+    if (ended) return
+    const next = Math.max(0, scoreRed - 1)
+    localUpdate.current = true
+    setScoreRed(next)
+    onScoreChange?.(next, scoreBlue)
+    setTimeout(() => { localUpdate.current = false }, 300)
+  }
+  const removeBlue = () => {
+    if (ended) return
+    const next = Math.max(0, scoreBlue - 1)
+    localUpdate.current = true
+    setScoreBlue(next)
+    onScoreChange?.(scoreRed, next)
+    setTimeout(() => { localUpdate.current = false }, 300)
+  }
 
   const handleEnd = () => {
     setEnded(true)
@@ -55,7 +87,10 @@ export default function JouerMode({ onClose }) {
             <span style={{ color: '#4068DB' }}>{scoreBlue}</span>
           </div>
           <div className={styles.endTime}>{t('game.duration', { time: fmt(elapsed) })}</div>
-          <button className={styles.endCloseBtn} onClick={onClose}>
+          <button className={styles.endCloseBtn} onClick={() => {
+            if (onComplete) onComplete(scoreRed, scoreBlue)
+            else onClose()
+          }}>
             {t('game.close')}
           </button>
         </div>

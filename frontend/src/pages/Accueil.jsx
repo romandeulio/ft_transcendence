@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
@@ -10,6 +10,8 @@ import PerformanceChart from '../components/ui/PerformanceChart'
 import AddMatchModal from '../components/ui/AddMatchModal'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { useQueue } from '../context/QueueContext'
+import { authFetch, matchToRow } from '../services/api'
 import styles from './Accueil.module.css'
 
 const MATCHES_PER_PAGE = 3
@@ -17,6 +19,7 @@ const MATCHES_PER_PAGE = 3
 export default function Accueil() {
   const { user } = useAuth()
   const { t } = useTranslation()
+  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd } = useQueue()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
@@ -24,12 +27,149 @@ export default function Accueil() {
   const [joinOpen,       setJoinOpen]       = useState(false)
 
   const [matches,        setMatches]        = useState([])
-  const [upcomingMatches,setUpcomingMatches] = useState([])
   const [matchSearch,    setMatchSearch]    = useState('')
   const [matchPage,      setMatchPage]      = useState(0)
 
   const [teammates,      setTeammates]      = useState([])
   const [newTeammate,    setNewTeammate]    = useState('')
+  const [matchError,     setMatchError]     = useState(null)
+
+  // Matchs que j'ai initiés (persistant via localStorage)
+  const myUpcoming = mySlots
+    .filter(s => !completedGameIds.has(s._localId))
+    .map(s => ({
+      id:     s._localId,
+      vs:     s.p2 || '?',
+      format: s.format || '1v1',
+      mode:   s.is_ranked ? 'Compétition' : 'Chill',
+      label:  'En attente',
+      _slot:  s,
+    }))
+
+  // Tous les matchs en attente créés par d'autres (visibles par tous)
+  const invitedUpcoming = queue
+    .filter(s =>
+      s.p1 !== user?.username &&
+      !completedGameIds.has(s._localId) &&
+      !completedGameIds.has(s.id)
+    )
+    .map(s => {
+      const u = user?.username
+      const isInMatch = s.p1 === u || s.p2 === u ||
+        s.team1?.includes(u) || s.team2?.includes(u)
+      return {
+        id:        s.id || s._localId,
+        vs:        s.p1 || '?',
+        format:    s.format || '1v1',
+        mode:      s.is_ranked ? 'Compétition' : 'Chill',
+        label:     isInMatch ? 'En attente' : 'Spectateur',
+        _slot:     s,
+      }
+    })
+
+  const upcomingMatches = [...myUpcoming, ...invitedUpcoming]
+
+  const isParticipant = (m) => {
+    const slot = m?._slot
+    if (!slot || !user?.username) return false
+    const u = user.username
+    return slot.p1 === u || slot.p2 === u ||
+      slot.team1?.includes(u) || slot.team2?.includes(u)
+  }
+
+  // Premier match dans la file globale (ordre d'arrivée côté serveur)
+  // C'est lui qui détermine qui a le droit de jouer maintenant
+  const firstGlobalSlot = queue.find(s =>
+    !completedGameIds.has(s._localId) && !completedGameIds.has(s.id)
+  ) || mySlots.find(s => !completedGameIds.has(s._localId)) || null
+
+  const matchToPlay = selectedMatch || (upcomingMatches.length > 0 ? upcomingMatches[0] : null)
+  const canPlay = firstGlobalSlot ? isParticipant({ _slot: firstGlobalSlot }) : false
+
+  const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers }) => {
+    setMatchError(null)
+    const isRanked  = mode === 'compet'
+    const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
+    const body = {
+      match_type:       matchType,
+      is_ranked:        isRanked,
+      player1:          user?.username,
+      player2:          redPlayers[0]  || null,
+      ...(matchType === 'TEAM' ? {
+        player1_teammate: bluePlayers[1] || null,
+        player2_teammate: redPlayers[1]  || null,
+      } : {}),
+    }
+
+    try {
+      // Essaie d'abord de réserver directement (baby libre)
+      const resv = await authFetch('/api/planning/reservation/', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      const baseSlot = {
+        p1:              body.player1,
+        p2:              body.player2 || null,
+        player1:         body.player1,
+        player2:         body.player2 || null,
+        player1_teammate: body.player1_teammate || null,
+        player2_teammate: body.player2_teammate || null,
+        match_type:      matchType,
+        is_ranked:       isRanked,
+        format:          format === '2v2' ? '2v2' : '1v1',
+        ...(matchType === 'TEAM' ? {
+          team1: [body.player1, body.player1_teammate].filter(Boolean),
+          team2: [body.player2, body.player2_teammate].filter(Boolean),
+        } : {}),
+      }
+
+      if (resv.ok) {
+        const resvData = await resv.json().catch(() => ({}))
+        setMatchError('✅ Table réservée ! À vous de jouer.')
+        joinQueue({ ...baseSlot, reservationId: resvData.id, type: 'live' })
+        return
+      }
+
+      const resvErr = await resv.json().catch(() => ({}))
+      const isBusy = JSON.stringify(resvErr).toLowerCase().includes('occupé')
+      if (!isBusy) {
+        setMatchError(Object.values(resvErr).flat().join(' '))
+        return
+      }
+
+      // Baby occupé → rejoindre la file d'attente
+      const queueRes = await authFetch('/api/planning/queue/join/', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      })
+      if (queueRes.ok) {
+        setMatchError('✅ Ajouté à la file d\'attente !')
+        joinQueue({ ...baseSlot, type: 'waiting' })
+      } else {
+        const err = await queueRes.json().catch(() => ({}))
+        setMatchError(Object.values(err).flat().join(' ') || 'Erreur inconnue')
+      }
+    } catch (err) {
+      console.error(err)
+      setMatchError('Erreur réseau, réessaie.')
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.username) return
+
+    // Matchs validés (historique)
+    authFetch(`/api/matches/?player=${user.username}&status=VALIDATED`)
+      .then(r => r.json())
+      .then(data => {
+        const rows = (Array.isArray(data) ? data : (data?.results ?? []))
+          .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
+          .map(m => matchToRow(m, user.username))
+        setMatches(rows)
+      })
+      .catch(console.error)
+
+  }, [user?.username])
 
   const addTeammate = () => {
     if (newTeammate.trim() && teammates.length < 5) {
@@ -37,6 +177,101 @@ export default function Accueil() {
       setNewTeammate('')
     }
   }
+
+  const handleMatchComplete = async (scoreRed, scoreBlue) => {
+    setJouerOpen(false)
+    const slot = selectedMatch?._slot
+
+    // Prévenir l'autre joueur immédiatement via WS (avant les appels API)
+    // sans modifier l'état local — évite que l'autre soumette aussi le score
+    const gameId = slot?._localId || activeGame?.gameId
+    signalGameEnd(gameId)
+
+    const doCleanup = () => {
+      if (slot?._localId) leaveQueue(slot._localId)
+      closeGame(gameId)
+      setSelectedMatch(null)
+    }
+
+    if (!slot?.player1 || !slot?.player2) {
+      doCleanup()
+      return
+    }
+
+    try {
+      const matchBody = {
+        match_type:      slot.match_type || 'SOLO',
+        is_ranked:       slot.is_ranked  ?? false,
+        player1:         slot.player1,
+        player2:         slot.player2,
+        score_player1:   scoreBlue,
+        score_player2:   scoreRed,
+        ...(slot.player1_teammate ? { player1_teammate: slot.player1_teammate } : {}),
+        ...(slot.player2_teammate ? { player2_teammate: slot.player2_teammate } : {}),
+      }
+      const matchRes = await authFetch('/api/matches/', {
+        method: 'POST',
+        body: JSON.stringify(matchBody),
+      })
+      if (!matchRes.ok) {
+        const err = await matchRes.json().catch(() => ({}))
+        setMatchError(Object.values(err).flat().join(' ') || 'Erreur création match')
+        doCleanup()
+        return
+      }
+      const matchData = await matchRes.json()
+
+      const validateRes = await authFetch(`/api/matches/${matchData.id}/validate/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ score_player1: scoreBlue, score_player2: scoreRed }),
+      })
+      if (!validateRes.ok) {
+        const err = await validateRes.json().catch(() => ({}))
+        const alreadyValidated = err.detail?.includes('actuel')
+        if (!alreadyValidated) {
+          setMatchError(err.detail || Object.values(err).flat().join(' ') || 'Erreur validation match')
+        }
+        doCleanup()
+        return
+      }
+
+      if (slot.reservationId) {
+        await authFetch(`/api/planning/reservation/${slot.reservationId}/close/`, {
+          method: 'PATCH',
+          body: JSON.stringify({}),
+        })
+      }
+
+      doCleanup()
+
+      // Rafraîchir l'historique
+      authFetch(`/api/matches/?player=${user.username}&status=VALIDATED`)
+        .then(r => r.json())
+        .then(data => {
+          const rows = (Array.isArray(data) ? data : (data?.results ?? []))
+            .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
+            .map(m => matchToRow(m, user.username))
+          setMatches(rows)
+        })
+        .catch(console.error)
+    } catch (err) {
+      console.error(err)
+      setMatchError('Erreur réseau lors de la validation.')
+      doCleanup()
+    }
+  }
+
+  // Auto-close JouerMode when the other player ends the game
+  useEffect(() => {
+    if (!lastGameEndedId || !jouerOpen) return
+    const slot = selectedMatch?._slot
+    const slotId = slot?._localId || slot?.id || selectedMatch?.id
+    if (slotId !== lastGameEndedId) return
+    if (slot?._localId) leaveQueue(slot._localId)
+    setSelectedMatch(null)
+    setJouerOpen(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastGameEndedId])
 
   const filtered = matches.filter(m =>
     m.vs.toLowerCase().includes(matchSearch.toLowerCase())
@@ -48,7 +283,16 @@ export default function Accueil() {
     <Shell>
       <Topbar title={t('topbar.home')} titleSize={30} />
 
-      {jouerOpen && <JouerMode onClose={() => setJouerOpen(false)} />}
+      {jouerOpen && (
+        <JouerMode
+          onClose={() => { closeGame(activeGame?.gameId); setJouerOpen(false) }}
+          match={selectedMatch}
+          onComplete={handleMatchComplete}
+          scoreRed={activeGame?.scoreRed}
+          scoreBlue={activeGame?.scoreBlue}
+          onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
+        />
+      )}
 
       <div className={styles.content}>
 
@@ -105,15 +349,23 @@ export default function Accueil() {
             </div>
 
             <button
-              className={`${styles.jouerBtn} ${!selectedMatch ? styles.jouerBtnDisabled : ''}`}
-              onClick={() => selectedMatch && setJouerOpen(true)}
-              disabled={!selectedMatch}
+              className={`${styles.jouerBtn} ${!canPlay ? styles.jouerBtnDisabled : ''}`}
+              disabled={!canPlay}
+              onClick={() => {
+                const match = selectedMatch || (upcomingMatches.length > 0 ? upcomingMatches[0] : null)
+                if (!selectedMatch && match) setSelectedMatch(match)
+                if (match?._slot) openGame(match._slot)
+                setJouerOpen(true)
+              }}
             >
               <span className={styles.jouerIcon}>▶</span>
               {t('home.play')}
             </button>
-            {!selectedMatch && (
+            {upcomingMatches.length === 0 && (
               <div className={styles.jouerHint}>{t('home.selectToPlay')}</div>
+            )}
+            {upcomingMatches.length > 0 && !canPlay && (
+              <div className={styles.jouerHint}>{t('home.notParticipant')}</div>
             )}
           </div>
         </div>
@@ -134,7 +386,7 @@ export default function Accueil() {
               </div>
               {pageSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>
-                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : 'loss'} />
+                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : m.result === 'Egalité' ? 'draw' : 'loss'} />
                   <div className={styles.matchInfo}>
                     <span className={styles.matchVs}>vs {m.vs}</span>
                     <span className={styles.matchScore}>{m.score}</span>
@@ -221,11 +473,22 @@ export default function Accueil() {
         )}
       </Modal>
 
+      {matchError && (
+        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background: matchError.startsWith('✅') ? '#22aa55' : '#ff4444', color:'#fff', padding:'10px 20px', borderRadius:8, zIndex:9999 }}>
+          {matchError}
+        </div>
+      )}
+
       <AddMatchModal
         open={joinOpen}
-        onClose={() => setJoinOpen(false)}
+        onClose={() => { setJoinOpen(false); setMatchError(null) }}
+        onConfirm={handleAddMatch}
         user={user}
-        prevTeam={null}
+        prevTeam={firstGlobalSlot ? {
+          p1:     firstGlobalSlot.p1 || '?',
+          p2:     firstGlobalSlot.p2 || '?',
+          format: firstGlobalSlot.format || '1v1',
+        } : null}
       />
     </Shell>
   )

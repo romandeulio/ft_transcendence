@@ -39,6 +39,7 @@
     "addMatch": "Ajouter un match",
     "play": "Jouer",
     "selectToPlay": "Sélectionne un match pour activer",
+    "notParticipant": "Tu n'es pas participant de ce match",
     "myMatches": "Mes matchs",
     "favFriends": "Amis favoris",
     "searchLogin": "Rechercher un login...",
@@ -318,7 +319,8 @@
     "yes": "Oui ✓",
     "prevSlot": "Créneau précédent",
     "noPrevSlot": "Aucun créneau précédent disponible",
-    "confirm": "Confirmer ✓"
+    "confirm": "Confirmer ✓",
+    "you": "Vous"
   },
   "game": {
     "red": "Rouge",

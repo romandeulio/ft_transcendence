@@ -120,14 +120,14 @@ def _compute_team(match, score_p1: int, score_p2: int) -> None:
 	new_p2_tm = new_elo(elo_p2_tm, exp2, actual2)
 
 	# Champs du match
-	match.elo_team_player1_before          = elo_p1
-	match.elo_team_player1_after           = new_p1
-	match.elo_team_player1_teammate_before = elo_p1_tm
-	match.elo_team_player1_teammate_after  = new_p1_tm
-	match.elo_team_player2_before          = elo_p2
-	match.elo_team_player2_after           = new_p2
-	match.elo_team_player2_teammate_before = elo_p2_tm
-	match.elo_team_player2_teammate_after  = new_p2_tm
+	match.elo_team_p1_before   = elo_p1
+	match.elo_team_p1_after    = new_p1
+	match.elo_team_p1tm_before = elo_p1_tm
+	match.elo_team_p1tm_after  = new_p1_tm
+	match.elo_team_p2_before   = elo_p2
+	match.elo_team_p2_after    = new_p2
+	match.elo_team_p2tm_before = elo_p2_tm
+	match.elo_team_p2tm_after  = new_p2_tm
 
 	# Mise à jour des joueurs
 	p1.elo_team    = new_p1

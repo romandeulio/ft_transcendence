@@ -54,8 +54,8 @@ def _get_players_with_deltas(match):
 
     if match.match_type == 'SOLO':
         return [
-            (match.player1, match.elo_solo_p1_after - match.elo_solo_p1_before, p1_won),
-            (match.player2, match.elo_solo_p2_after - match.elo_solo_p2_before, not p1_won),
+            (match.player1, match.elo_solo_player1_after - match.elo_solo_player1_before, p1_won),
+            (match.player2, match.elo_solo_player2_after - match.elo_solo_player2_before, not p1_won),
         ]
 
     # TEAM

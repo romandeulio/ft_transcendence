@@ -45,27 +45,17 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
 	Le status démarre toujours à IN_PROGRESS, géré par la view.
 	"""
 
-	player1_id          = serializers.PrimaryKeyRelatedField(
-		source='player1', queryset=User.objects.all(), required=True,
-	)
-	player2_id          = serializers.PrimaryKeyRelatedField(
-		source='player2', queryset=User.objects.all(), required=True,
-	)
-	player1_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player1_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
-	player2_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player2_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
+	player1          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
+	player2          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
+	player1_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
+	player2_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
 
 	class Meta:
 		model  = Reservation
 		fields = [
 			'match_type', 'is_ranked',
-			'player1_id', 'player1_teammate_id',
-			'player2_id', 'player2_teammate_id',
+			'player1', 'player1_teammate',
+			'player2', 'player2_teammate',
 		]
 
 	def validate(self, data):
@@ -136,31 +126,21 @@ class QueueEntrySerializer(serializers.ModelSerializer):
 
 class QueueEntryCreateSerializer(serializers.ModelSerializer):
 	"""
-	Rejoindre la file d'attente (POST /api/planning/queue/).
+	Rejoindre la file d'attente (POST /api/planning/queue/join/).
 	Déclenché quand le baby est occupé.
 	"""
 
-	player1_id          = serializers.PrimaryKeyRelatedField(
-		source='player1', queryset=User.objects.all(), required=True,
-	)
-	player2_id          = serializers.PrimaryKeyRelatedField(
-		source='player2', queryset=User.objects.all(), required=True,
-	)
-	player1_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player1_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
-	player2_teammate_id = serializers.PrimaryKeyRelatedField(
-		source='player2_teammate', queryset=User.objects.all(),
-		required=False, allow_null=True,
-	)
+	player1          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
+	player2          = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
+	player1_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
+	player2_teammate = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), required=False, allow_null=True)
 
 	class Meta:
 		model  = QueueEntry
 		fields = [
 			'match_type', 'is_ranked',
-			'player1_id', 'player1_teammate_id',
-			'player2_id', 'player2_teammate_id',
+			'player1', 'player1_teammate',
+			'player2', 'player2_teammate',
 		]
 
 	def validate(self, data):

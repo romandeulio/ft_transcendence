@@ -1,5 +1,6 @@
 # backend/app/matches/models_ranking.py
 
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -14,6 +15,7 @@ class Ranking(models.Model):
         SEASON = 'season', 'Saisonnier'
         GLOBAL = 'global', 'Global'
 
+    id     = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -31,7 +33,6 @@ class Ranking(models.Model):
     score  = models.IntegerField(default=1000)
     wins   = models.IntegerField(default=0)
     losses = models.IntegerField(default=0)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'season', 'mode', 'scope')
@@ -60,6 +61,7 @@ class RankingHistory(models.Model):
         SEASON = 'season', 'Saisonnier'
         GLOBAL = 'global', 'Global'
 
+    id    = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

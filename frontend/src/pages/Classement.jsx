@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../context/AuthContext'
+import { authFetch } from '../services/api'
 import styles from './Classement.module.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
@@ -11,12 +13,9 @@ const PAGE_SIZE   = 5
 
 export default function Classement() {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
-  const SEASON_OPTIONS = [
-    { value: 'current', label: t('ranking.currentSeason') },
-    { value: 'season1', label: t('ranking.season', { num: 1 }) },
-    { value: 'annual',  label: t('ranking.annualRanking') },
-  ]
+  const [seasonOptions, setSeasonOptions] = useState([{ value: 'current', label: t('ranking.currentSeason') }])
   const [season,    setSeason]    = useState('current')
   const [page,      setPage]      = useState(0)
   const [page2v2,   setPage2v2]   = useState(0)
@@ -26,6 +25,77 @@ export default function Classement() {
   const [teams2v2,    setTeams2v2]    = useState([])
   const [pastSeasons, setPastSeasons] = useState([])
   const [hallRecords, setHallRecords] = useState([])
+  const [seasonMap,   setSeasonMap]   = useState({}) // value → season id
+
+  useEffect(() => {
+    authFetch('/api/seasons/')
+      .then(r => r.json())
+      .then(raw => {
+        const allSeasons = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        if (!allSeasons.length && !Array.isArray(raw)) return
+
+        // Construire le sélecteur de saisons
+        const opts = [{ value: 'current', label: t('ranking.currentSeason') }]
+        const smap = {}
+        allSeasons.forEach(s => {
+          const key = `season_${s.id}`
+          opts.push({ value: key, label: s.name })
+          smap[key] = s.id
+          if (s.status === 'ACTIVE') smap['current'] = s.id
+        })
+        setSeasonOptions(opts)
+        setSeasonMap(smap)
+
+        // Hall of Fame : champions des saisons terminées
+        const finished = allSeasons.filter(s => s.status === 'FINISHED' && s.rewards_distributed)
+        const champions = finished.map(s => {
+          const reward = s.rewards?.find(r => r.ranking_type === 'Solo' && r.tier === 'Top 1')
+          if (!reward) return null
+          return { season: s.id, name: reward.player, initials: reward.player?.[0]?.toUpperCase() ?? '?', elo: reward.elo_at_end }
+        }).filter(Boolean)
+        setPastSeasons(champions)
+      })
+      .catch(console.error)
+  }, [])
+
+  useEffect(() => {
+    const seasonId = seasonMap[season]
+    if (!seasonId) return
+
+    authFetch(`/api/seasons/${seasonId}/ranking/?type=solo`)
+      .then(r => r.json())
+      .then(raw => {
+        const ranking = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        if (!ranking.length && !Array.isArray(raw)) return
+        setPlayers(ranking.map(e => ({
+          id:     e.username,
+          name:   e.username,
+          isMe:   e.username === user?.username,
+          wins:   e.wins,
+          losses: e.losses,
+          elo:    e.elo,
+          rank:   e.rank,
+        })))
+      })
+      .catch(console.error)
+
+    authFetch(`/api/seasons/${seasonId}/ranking/?type=team`)
+      .then(r => r.json())
+      .then(raw => {
+        const ranking = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        if (!ranking.length && !Array.isArray(raw)) return
+        setTeams2v2(ranking.map(e => ({
+          id:     e.username,
+          team:   [e.username, ''],
+          isMe:   e.username === user?.username,
+          wins:   e.wins,
+          losses: e.losses,
+          elo:    e.elo,
+          rank:   e.rank,
+        })))
+      })
+      .catch(console.error)
+  }, [season, seasonMap, user?.username])
 
   const totalPages   = Math.ceil(players.length / PAGE_SIZE)
   const pageSlice    = players.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
@@ -53,7 +123,7 @@ export default function Classement() {
             value={season}
             onChange={e => { setSeason(e.target.value); setPage(0); setPage2v2(0) }}
           >
-            {SEASON_OPTIONS.map(opt => (
+            {seasonOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
@@ -65,7 +135,7 @@ export default function Classement() {
           <div className={styles.eloCard}>
             <div className={styles.eloHeader}>
               <span className={styles.eloTitle}>{t('ranking.palmares1v1')}</span>
-              <span className={styles.eloSeason}>{SEASON_OPTIONS.find(o => o.value === season)?.label}</span>
+              <span className={styles.eloSeason}>{seasonOptions.find(o => o.value === season)?.label}</span>
             </div>
             <div className={styles.eloBody}>
               <div className={styles.colHead}>
@@ -105,7 +175,7 @@ export default function Classement() {
           <div className={styles.eloCard}>
             <div className={styles.eloHeader}>
               <span className={styles.eloTitle}>{t('ranking.palmares2v2')}</span>
-              <span className={styles.eloSeason}>{SEASON_OPTIONS.find(o => o.value === season)?.label}</span>
+              <span className={styles.eloSeason}>{seasonOptions.find(o => o.value === season)?.label}</span>
             </div>
             <div className={styles.eloBody}>
               <div className={styles.colHead}>

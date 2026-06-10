@@ -1,5 +1,48 @@
 const BASE = '/api'
 
+// Fetch authentifié — ajoute automatiquement le header Bearer
+export function authFetch(url, options = {}) {
+  const token = localStorage.getItem('token')
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  })
+}
+
+// Transforme un match API en ligne affichable pour Profil / Accueil
+export function matchToRow(m, username) {
+  const isP1 = m.player1 === username
+  let vs = isP1 ? m.player2 : m.player1
+  if (m.match_type === 'TEAM') {
+    const tm = isP1 ? m.player2_teammate : m.player1_teammate
+    if (tm) vs = `${vs} & ${tm}`
+  }
+  const myScore    = isP1 ? m.score_player1 : m.score_player2
+  const theirScore = isP1 ? m.score_player2 : m.score_player1
+  const isWin = (isP1 && m.winner === 'player1_side') || (!isP1 && m.winner === 'player2_side')
+
+  let eloDelta = null
+  if (m.is_ranked) {
+    const [before, after] = m.match_type === 'SOLO'
+      ? [isP1 ? m.elo_solo_player1_before : m.elo_solo_player2_before,
+         isP1 ? m.elo_solo_player1_after  : m.elo_solo_player2_after]
+      : [isP1 ? m.elo_team_p1_before : m.elo_team_p2_before,
+         isP1 ? m.elo_team_p1_after  : m.elo_team_p2_after]
+    if (before != null && after != null) eloDelta = after - before
+  }
+  const eloStr = eloDelta != null ? (eloDelta >= 0 ? `+${eloDelta}` : `${eloDelta}`) : '—'
+
+  const d = new Date(m.played_at)
+  const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
+
+  const isDraw = myScore != null && theirScore != null && myScore === theirScore
+  return { vs: vs ?? '?', score: `${myScore ?? '?'}-${theirScore ?? '?'}`, result: isDraw ? 'Egalité' : (isWin ? 'Victoire' : 'Défaite'), elo: eloStr, date }
+}
+
 export async function apiRegister({ username, email, password }) {
   const res = await fetch(`${BASE}/register/`, {
     method: 'POST',

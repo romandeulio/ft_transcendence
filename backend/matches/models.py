@@ -1,9 +1,11 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
 class Match(models.Model):
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
 	class Status(models.TextChoices):
 		PENDING   = 'PENDING',   'En attente de validation'
@@ -66,10 +68,10 @@ class Match(models.Model):
 	score_player2 = models.IntegerField(default=0)
 
 	# --- ELO solo (1v1 classé uniquement) ---
-	elo_solo_player1_before = models.IntegerField(default=1000)
-	elo_solo_player1_after  = models.IntegerField(default=1000)
-	elo_solo_player2_before = models.IntegerField(default=1000)
-	elo_solo_player2_after  = models.IntegerField(default=1000)
+	elo_solo_player1_before = models.IntegerField(default=1000, db_column='elo_solo_p1_before')
+	elo_solo_player1_after  = models.IntegerField(default=1000, db_column='elo_solo_p1_after')
+	elo_solo_player2_before = models.IntegerField(default=1000, db_column='elo_solo_p2_before')
+	elo_solo_player2_after  = models.IntegerField(default=1000, db_column='elo_solo_p2_after')
 
 	# --- ELO 2v2 personnel (TEAM classé uniquement) ---
 	# Chaque joueur possède son propre ELO 2v2, indépendant de son partenaire

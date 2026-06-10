@@ -3,6 +3,7 @@ import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 queue = []
+games = {}  # gameId -> { player1, player2, scoreRed, scoreBlue }
 
 
 def _identity_from_scope(scope, channel_name):
@@ -48,7 +49,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
 
         if action == "join":
             slot = data.get("slot") or {}
-            slot["id"] = str(uuid.uuid4())
+            # Use client-provided _localId as the server ID so leave/update can reference it
+            slot["id"] = slot.get("_localId") or str(uuid.uuid4())
             slot["ownerId"] = self.user_id
             slot["type"] = "taken"
             queue.append(slot)
@@ -67,6 +69,50 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 if slot.get("id") == slot_id and slot.get("ownerId") == self.user_id:
                     slot.update(updates)
                     break
+
+        elif action == "game_open":
+            game_id  = data.get("gameId")
+            player1  = data.get("player1")
+            player2  = data.get("player2")
+            if game_id and player1 and player2:
+                if game_id not in games:
+                    games[game_id] = {"player1": player1, "player2": player2, "scoreRed": 0, "scoreBlue": 0}
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
+                )
+            return
+
+        elif action == "score_update":
+            game_id    = data.get("gameId")
+            score_red  = data.get("scoreRed", 0)
+            score_blue = data.get("scoreBlue", 0)
+            if game_id and game_id in games:
+                games[game_id]["scoreRed"]  = score_red
+                games[game_id]["scoreBlue"] = score_blue
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
+                )
+            return
+
+        elif action == "game_end":
+            game_id = data.get("gameId")
+            if game_id and game_id in games:
+                del games[game_id]
+            # Remove the matching queue slot so every client sees it disappear
+            if game_id:
+                queue = [s for s in queue if s.get("id") != game_id]
+            await self.channel_layer.group_send(
+                self.group_name,
+                {"type": "game_ended_msg", "gameId": game_id},
+            )
+            await self.channel_layer.group_send(
+                self.group_name,
+                {"type": "queue_update", "queue": queue},
+            )
+            return
+
         else:
             return
 
@@ -79,4 +125,16 @@ class QueueConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "queue_state",
             "queue": event["queue"],
+        }))
+
+    async def game_state_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "game_state",
+            "game": event["game"],
+        }))
+
+    async def game_ended_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "game_ended",
+            "gameId": event["gameId"],
         }))

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
@@ -10,25 +10,65 @@ import LoginInput from '../components/ui/LoginInput'
 import { getPlayerBadge } from '../utils/playerBadge'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { authFetch, matchToRow } from '../services/api'
 import styles from './Profil.module.css'
 
 const MATCHES_PER_PAGE = 3
 
 export default function Profil() {
-  //const { user, logout } = useAuth()
-  const user = JSON.parse(localStorage.getItem("user"));
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  };
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
 
+  const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null })
   const [teammates_,    setTeammates]    = useState([])
   const [opponents,     setOpponents]    = useState([])
   const [feared,        setFeared]       = useState([])
   const [recentMatches, setRecentMatches] = useState([])
   const [seasons,       setSeasons]      = useState([])
+
+  useEffect(() => {
+    if (!user?.username) return
+
+    // Matchs du joueur
+    authFetch(`/api/matches/?player=${user.username}`)
+      .then(r => r.json())
+      .then(data => {
+        const rows = (Array.isArray(data) ? data : (data?.results ?? []))
+          .filter(m => m.status === 'VALIDATED')
+          .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
+          .map(m => matchToRow(m, user.username))
+        setRecentMatches(rows)
+      })
+      .catch(console.error)
+
+    // Saisons + classement du joueur
+    authFetch('/api/seasons/')
+      .then(r => r.json())
+      .then(raw => {
+        const allSeasons = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        if (!allSeasons.length) return
+        const active = allSeasons.find(s => s.status === 'ACTIVE')
+        if (active) {
+          authFetch(`/api/seasons/${active.id}/ranking/?type=solo`)
+            .then(r => r.json())
+            .then(ranking => {
+              const entry = ranking.find(e => e.username === user.username)
+              if (entry) setStats({ wins: entry.wins, losses: entry.losses, rank: entry.rank })
+            })
+            .catch(console.error)
+        }
+        const mapped = allSeasons
+          .filter(s => s.status === 'FINISHED' || s.status === 'ACTIVE')
+          .map(s => {
+            const champion = s.rewards?.find(r => r.ranking_type === 'Solo' && r.tier === 'Top 1')
+            const isMe = s.status === 'ACTIVE'
+            return { season: s.id, name: s.name, prize: isMe ? 'ongoing' : (champion?.player === user.username ? 'gold' : null), rank: '—' }
+          })
+        setSeasons(mapped)
+      })
+      .catch(console.error)
+  }, [user?.username])
 
   const [newPartner,  setNewPartner]  = useState('')
   const [matchSearch, setMatchSearch] = useState('')
@@ -58,8 +98,8 @@ export default function Profil() {
   }
 
   const myLogin = user?.username ?? '—'
-  const myWins  = user?.wins  ?? 0
-  const myElo   = user?.elo   ?? '—'
+  const myWins  = stats.wins
+  const myElo   = user?.elo_solo ?? '—'
   const badge   = getPlayerBadge(myWins)
 
   return (
@@ -120,7 +160,7 @@ export default function Profil() {
             <div className={styles.eloDelta}>ELO</div>
             <button
               className={styles.logoutBtn}
-              onClick={() => { logout(); navigate('/login') }}
+              onClick={() => { logout(); navigate('/login', { replace: true }) }}
             >
               {t('profile.logout')}
             </button>
@@ -128,10 +168,10 @@ export default function Profil() {
         </div>
 
         <div className={styles.statsGrid}>
-          <StatCard color="var(--orange-pale)" label={t('profile.ratio')}         value="—" sub={t('profile.winLoss')} />
+          <StatCard color="var(--orange-pale)" label={t('profile.ratio')}         value={stats.wins + stats.losses > 0 ? `${Math.round(stats.wins / (stats.wins + stats.losses) * 100)}%` : '—'} sub={t('profile.winLoss')} />
           <StatCard color="var(--yellow-pale)" label={t('profile.streak')}        value="—" sub={t('profile.streakSub')} />
-          <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value="—" sub={t('profile.tokensSub')} />
-          <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value="—" sub={t('profile.lossesSub')} />
+          <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
+          <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value={stats.losses || '—'} sub={t('profile.lossesSub')} />
           <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value="—" sub={t('profile.gamesPerMonthSub')} />
         </div>
 
@@ -210,7 +250,7 @@ export default function Profil() {
               </div>
               {matchSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>
-                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : 'loss'} />
+                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : m.result === 'Egalité' ? 'draw' : 'loss'} />
                   <div className={styles.matchInfo}>
                     <span className={styles.matchVs}>vs {m.vs}</span>
                     <span className={styles.matchScore}>{m.score}</span>

@@ -39,6 +39,7 @@
     "addMatch": "Add a match",
     "play": "Play",
     "selectToPlay": "Select a match to enable",
+    "notParticipant": "You are not a participant in this match",
     "myMatches": "My matches",
     "favFriends": "Favourite friends",
     "searchLogin": "Search a login...",
@@ -318,7 +319,8 @@
     "yes": "Yes ✓",
     "prevSlot": "Previous slot",
     "noPrevSlot": "No previous slot available",
-    "confirm": "Confirm ✓"
+    "confirm": "Confirm ✓",
+    "you": "You"
   },
   "game": {
     "red": "Red",

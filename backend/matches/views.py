@@ -37,7 +37,6 @@ class MatchListCreateView(generics.ListCreateAPIView):
 		qs = Match.objects.select_related(
 			'player1', 'player1_teammate',
 			'player2', 'player2_teammate',
-			'season',
 		)
 		params = self.request.query_params
 
@@ -70,13 +69,37 @@ class MatchListCreateView(generics.ListCreateAPIView):
 		return qs
 
 	def create(self, request, *args, **kwargs):
+		import hashlib
+		from datetime import timedelta
+		from django.db import connection
+		from django.utils import timezone
+		p1 = request.data.get('player1')
+		p2 = request.data.get('player2')
+		if p1 and p2:
+			cutoff = timezone.now() - timedelta(minutes=2)
+			# Advisory lock ensures only one match is created even if both players
+			# submit simultaneously — pg_advisory_xact_lock serialises the pair
+			pair_key = int(hashlib.md5(
+				f"{min(p1, p2)}:{max(p1, p2)}".encode()
+			).hexdigest()[:15], 16) % (2 ** 62)
+			with transaction.atomic():
+				with connection.cursor() as cur:
+					cur.execute("SELECT pg_advisory_xact_lock(%s)", [pair_key])
+				recent = Match.objects.filter(
+					player1__username=p1,
+					player2__username=p2,
+					played_at__gte=cutoff,
+				).first()
+				if recent:
+					return Response(MatchSerializer(recent).data, status=status.HTTP_200_OK)
+				serializer = self.get_serializer(data=request.data)
+				serializer.is_valid(raise_exception=True)
+				match = serializer.save()
+				return Response(MatchSerializer(match).data, status=status.HTTP_201_CREATED)
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		match = serializer.save()
-		return Response(
-			MatchSerializer(match).data,
-			status=status.HTTP_201_CREATED,
-		)
+		return Response(MatchSerializer(match).data, status=status.HTTP_201_CREATED)
 
 
 # ---------------------------------------------------------------------------

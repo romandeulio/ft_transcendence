@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -5,6 +6,7 @@ from django.utils import timezone
 
 
 class Season(models.Model):
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
 	class Status(models.TextChoices):
 		UPCOMING = 'UPCOMING', 'À venir'

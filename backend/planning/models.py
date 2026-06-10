@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -8,6 +9,7 @@ MATCH_DURATION_MINUTES = 20
 
 
 class Reservation(models.Model):
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	"""
 	Créneau actif au baby-foot.
 	Quand les joueurs ont fini, un Match séparé est créé avec le score.
@@ -131,6 +133,7 @@ class QueueEntry(models.Model):
 	Ordre déterminé par joined_at (premier arrivé, premier servi).
 	Quand c'est leur tour, l'entrée est marquée CALLED puis une Reservation est créée.
 	"""
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
 	class Status(models.TextChoices):
 		WAITING   = 'WAITING',   'En attente'

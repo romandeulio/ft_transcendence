@@ -39,6 +39,7 @@
     "addMatch": "Agregar partido",
     "play": "Jugar",
     "selectToPlay": "Selecciona un partido para activar",
+    "notParticipant": "No eres participante de este partido",
     "myMatches": "Mis partidos",
     "favFriends": "Amigos favoritos",
     "searchLogin": "Buscar un login...",
@@ -318,7 +319,8 @@
     "yes": "Sí ✓",
     "prevSlot": "Espacio anterior",
     "noPrevSlot": "Ningún espacio anterior disponible",
-    "confirm": "Confirmar ✓"
+    "confirm": "Confirmar ✓",
+    "you": "Tú"
   },
   "game": {
     "red": "Rojo",

@@ -179,12 +179,12 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [
-                (
-                    config('REDIS_HOST', default='redis'),
-                    config('REDIS_PORT', default=6379, cast=int)
-                )
-            ],
+            'hosts': [{
+                'host': config('REDIS_HOST', default='redis'),
+                'port': config('REDIS_PORT', default=6379, cast=int),
+                'socket_timeout': None,
+                'socket_keepalive': True,
+            }],
         },
     },
 }
