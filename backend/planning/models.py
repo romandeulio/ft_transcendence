@@ -79,6 +79,7 @@ class Reservation(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
+		db_table = 'reservations'
 		ordering = ['-started_at']
 
 	def __str__(self):
@@ -183,6 +184,7 @@ class QueueEntry(models.Model):
 	joined_at = models.DateTimeField(default=timezone.now)
 
 	class Meta:
+		db_table = 'queue'
 		ordering = ['joined_at']  # premier arrivé = premier dans la file
 
 	def __str__(self):

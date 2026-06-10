@@ -159,7 +159,7 @@ def season_close(request, pk):
 def _distribute_rewards(season, ranking_type: str) -> None:
 	"""
 	Calcule le classement final d'un type (SOLO ou TEAM) et crée les SeasonReward.
-	Les tokens sont ajoutés au wallet du joueur (champ wallet_tokens sur CustomUser,
+	Les tokens sont ajoutés au wallet du joueur (champ wallet_tokens sur User,
 	ajouté par Thaïs — on utilise getattr avec fallback 0 si pas encore présent).
 	"""
 	ranking = _build_ranking(season, ranking_type)

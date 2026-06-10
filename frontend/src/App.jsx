@@ -14,8 +14,13 @@ import Parametres  from './pages/Parametres'
 import Login       from './pages/Login'
 import Admin       from './pages/Admin'
 import Ticket      from './pages/Ticket'
+import Register    from './pages/Register'
 
-function PrivateRoute({ element }) { return element }
+//function PrivateRoute({ element }) { return element }
+function PrivateRoute({ element }) {
+  const token = localStorage.getItem("token");
+  return token ? element : <Navigate to="/login" replace />;
+}
 
 export default function App() {
   return (
@@ -34,6 +39,7 @@ export default function App() {
                 <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
                 <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
                 <Route path="/login"         element={<Login />} />
+                <Route path="/register"      element={<Register />} />
                 <Route path="/admin"         element={<Admin />} />
                 <Route path="/ticket"        element={<Ticket />} />
                 <Route path="/status"        element={<Status />} />

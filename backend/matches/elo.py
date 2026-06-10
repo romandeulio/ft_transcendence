@@ -3,8 +3,8 @@ Calcul ELO — ft_transcendence
 ==============================
 
 Deux classements indépendants :
-  - SOLO (1v1 classé)  → elo_solo sur CustomUser
-  - TEAM (2v2 classé)  → elo_team sur CustomUser (ELO personnel,
+  - SOLO (1v1 classé)  → elo_solo sur User
+  - TEAM (2v2 classé)  → elo_team sur User (ELO personnel,
 						  indépendant du partenaire de la partie)
 
 Formule ELO standard avec facteur K dynamique (plus élevé pour les débutants,
@@ -151,7 +151,7 @@ def compute_elo_changes(match, score_p1: int, score_p2: int) -> None:
 
 	- Modifie les champs elo_*_before / elo_*_after sur l'objet match
 	  (le save() final est fait dans la view, pas ici).
-	- Met à jour elo_solo / elo_team directement sur chaque CustomUser.
+	- Met à jour elo_solo / elo_team directement sur chaque User.
 	- Ne fait rien si le match n'est pas classé ou si c'est un TWO_V_ONE.
 	"""
 	if not match.is_ranked:

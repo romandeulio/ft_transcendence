@@ -28,3 +28,10 @@ daphne==4.1.0
 
 # Linter
 flake8==7.0.0
+
+#2FA TOTP
+pyotp==2.9.0
+# QR code pour l'appli 2FA
+qrcode==7.4.2
+# OAuth 42
+requests==2.31.0

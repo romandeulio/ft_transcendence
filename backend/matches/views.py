@@ -14,7 +14,7 @@ from .serializers import (
 	MatchSerializer,
 	MatchValidateSerializer,
 )
-
+from .ranking_service import update_rankings_after_match
 
 # ---------------------------------------------------------------------------
 # GET /api/matches/   POST /api/matches/
@@ -142,7 +142,7 @@ def match_validate(request, pk):
 
 		match.status = Match.Status.VALIDATED
 		match.save()
-
+		update_rankings_after_match(match)
 	return Response(MatchSerializer(match).data)
 
 
