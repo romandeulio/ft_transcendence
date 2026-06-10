@@ -1,8 +1,23 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import User
 
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    pass
+@admin.register(User)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = (
+        "email",
+        "username",
+        "role",
+        "is_active",
+        "created_at",
+    )
+
+    search_fields = (
+        "email",
+        "username",
+    )
+
+    list_filter = (
+        "role",
+        "is_active",
+    )

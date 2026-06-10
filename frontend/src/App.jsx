@@ -14,8 +14,28 @@ import Parametres  from './pages/Parametres'
 import Login       from './pages/Login'
 import Admin       from './pages/Admin'
 import Ticket      from './pages/Ticket'
+import Register    from './pages/Register'
 
-function PrivateRoute({ element }) { return element }
+//function PrivateRoute({ element }) { return element }
+function isTokenValid(token) {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function PrivateRoute({ element }) {
+  const token = localStorage.getItem("token");
+  if (!isTokenValid(token)) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    return <Navigate to="/login" replace />;
+  }
+  return element;
+}
 
 export default function App() {
   return (
@@ -34,6 +54,7 @@ export default function App() {
                 <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
                 <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
                 <Route path="/login"         element={<Login />} />
+                <Route path="/register"      element={<Register />} />
                 <Route path="/admin"         element={<Admin />} />
                 <Route path="/ticket"        element={<Ticket />} />
                 <Route path="/status"        element={<Status />} />

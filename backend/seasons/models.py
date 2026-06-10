@@ -31,6 +31,7 @@ class Season(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		db_table = 'seasons'
 		ordering = ['-start_date']
 
 	def __str__(self):
