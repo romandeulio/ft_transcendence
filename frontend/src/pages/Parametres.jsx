@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { applyLang } from '../i18n/index.js'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import Toggle from '../components/ui/Toggle'
 import styles from './Parametres.module.css'
 
@@ -143,17 +144,7 @@ export default function Parametres() {
             <div>
               <div className={styles.section}>
                 <div className={styles.sectionTitle}>{t('settings.language.title')}</div>
-                <div className={styles.langBtns}>
-                  {LANG_OPTIONS.map(l => (
-                    <button
-                      key={l.code}
-                      className={`${styles.langBtn} ${i18n.language === l.code ? styles.langActive : ''}`}
-                      onClick={() => handleLang(l.code)}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
+                <LanguageSwitcher />
               </div>
               <div className={styles.section}>
                 <label className={styles.label}>{t('settings.language.timezone')}</label>

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Login.module.css'
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
   const { t } = useTranslation()
@@ -110,6 +110,10 @@ export default function Login() {
             {t('login.submit')}
           </button>
         </form>
+        <div className={styles.registerRow}>
+          Pas encore de compte ?{' '}
+          <Link to="/register" className={styles.registerLink}>S'inscrire</Link>
+        </div>
       </div>
       {response && response.access && (
         <pre>Connecté !</pre>
