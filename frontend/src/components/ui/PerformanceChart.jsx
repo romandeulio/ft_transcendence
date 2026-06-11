@@ -112,9 +112,11 @@ export default function PerformanceChart() {
         </div>
       </div>
 
-      <div className={styles.emptyChart}>
-        {t('performance.selectPlayer')}
-      </div>
+      {selected.length === 0 && players.length > 0 && (
+        <div className={styles.emptyChart}>
+          {t('performance.selectPlayer')}
+        </div>
+      )}
     </div>
   )
 }

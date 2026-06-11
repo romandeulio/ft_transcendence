@@ -148,6 +148,33 @@
 
 .noMatch { font-size: 12px; color: var(--ink3); padding: 8px 0; }
 
+.colorToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.colorToggleLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink3);
+  white-space: nowrap;
+}
+.colorBtn {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink);
+}
+.colorBtnBlueActive { background: #4068DB; border-color: #4068DB; color: #fff; }
+.colorBtnRedActive  { background: #CD3122; border-color: #CD3122; color: #fff; }
+
 .lockedPlayer {
   display: flex;
   align-items: center;

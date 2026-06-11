@@ -328,32 +328,18 @@
   white-space: nowrap;
 }
 
-.addTeammate {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1.5px dashed var(--beige-dark);
-}
-.addInput {
-  flex: 1;
-  padding: 7px 10px;
-  border-radius: 7px;
-  border: 1.5px solid var(--beige);
-  background: var(--white);
-  font-family: inherit;
-  font-size: 12px;
-}
-.addInput:focus { outline: none; border-color: var(--orange-light); }
-.addBtn {
-  padding: 7px 12px;
-  border-radius: 7px;
-  background: #CD3122;
-  border: none;
-  color: #FFFFFF;
-  font-size: 12px;
+.rankBadge {
+  font-size: 11px;
   font-weight: 700;
-  cursor: pointer;
+  color: var(--ink3);
+  min-width: 20px;
+  text-align: right;
+}
+
+.gamesCount {
+  font-size: 11px;
+  color: var(--ink3);
+  white-space: nowrap;
 }
 
 /* Match picker */

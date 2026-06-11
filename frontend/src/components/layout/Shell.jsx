@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Footer from './Footer'
+import InviteLayer from '../ui/InviteLayer'
 import styles from './Shell.module.css'
 
 export default function Shell({ children }) {
@@ -25,6 +26,7 @@ export default function Shell({ children }) {
         </main>
         <div className={styles.rightGutter} />
       </div>
+      <InviteLayer />
       <Footer />
     </div>
   )

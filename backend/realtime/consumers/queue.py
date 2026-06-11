@@ -16,13 +16,24 @@ def _identity_from_scope(scope, channel_name):
     return f"chan:{channel_name}"
 
 
+def _username_from_scope(scope):
+    user = scope.get("user")
+    if user is not None and getattr(user, "is_authenticated", False):
+        return getattr(user, "username", "") or ""
+    return scope.get("ws_username") or ""
+
+
 class QueueConsumer(AsyncWebsocketConsumer):
     group_name = "queue"
 
     async def connect(self):
         self.user_id = _identity_from_scope(self.scope, self.channel_name)
+        self.username = _username_from_scope(self.scope)
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
+        # Personal group for direct messages (invites, responses)
+        if self.username:
+            await self.channel_layer.group_add(f"user_{self.username}", self.channel_name)
         await self.accept()
         await self.send(text_data=json.dumps({
             "type": "queue_state",
@@ -33,6 +44,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
         global queue
         queue = [s for s in queue if s.get("ownerId") != self.user_id]
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if self.username:
+            await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
         await self.channel_layer.group_send(
             self.group_name,
             {"type": "queue_update", "queue": queue},
@@ -98,19 +111,66 @@ class QueueConsumer(AsyncWebsocketConsumer):
 
         elif action == "game_end":
             game_id = data.get("gameId")
+            winner = None
             if game_id and game_id in games:
+                g = games[game_id]
+                # player1 = équipe bleue, player2 = équipe rouge
+                if g.get("scoreBlue", 0) > g.get("scoreRed", 0):
+                    winner = g.get("player1")
+                elif g.get("scoreRed", 0) > g.get("scoreBlue", 0):
+                    winner = g.get("player2")
                 del games[game_id]
-            # Remove the matching queue slot so every client sees it disappear
+            # Supprime le créneau terminé
             if game_id:
                 queue = [s for s in queue if s.get("id") != game_id]
+            # Met à jour les créneaux takeWin qui attendaient ce gagnant
+            if winner:
+                for slot in queue:
+                    if slot.get("takeWin") and not slot.get("p2"):
+                        slot["p2"] = winner
             await self.channel_layer.group_send(
                 self.group_name,
-                {"type": "game_ended_msg", "gameId": game_id},
+                {"type": "game_ended_msg", "gameId": game_id, "winner": winner},
             )
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "queue_update", "queue": queue},
             )
+            return
+
+        # ── Invitations ────────────────────────────────────────────────────────
+
+        elif action == "invite":
+            target    = data.get("target")   # username of J2
+            invite_id = data.get("inviteId") or str(uuid.uuid4())
+            slot      = data.get("slot") or {}
+            if target:
+                await self.channel_layer.group_send(
+                    f"user_{target}",
+                    {
+                        "type": "invite_msg",
+                        "inviteId": invite_id,
+                        "from": self.username,
+                        "slot": slot,
+                    },
+                )
+            return
+
+        elif action == "invite_response":
+            invite_id = data.get("inviteId")
+            accepted  = data.get("accepted", False)
+            from_user = data.get("from")    # J1's username
+
+            if from_user:
+                await self.channel_layer.group_send(
+                    f"user_{from_user}",
+                    {
+                        "type": "invite_response_msg",
+                        "inviteId": invite_id,
+                        "accepted": accepted,
+                        "from": from_user,
+                    },
+                )
             return
 
         else:
@@ -137,4 +197,20 @@ class QueueConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "game_ended",
             "gameId": event["gameId"],
+            "winner": event.get("winner"),
+        }))
+
+    async def invite_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "invite_received",
+            "inviteId": event["inviteId"],
+            "from": event["from"],
+            "slot": event["slot"],
+        }))
+
+    async def invite_response_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "invite_response",
+            "inviteId": event["inviteId"],
+            "accepted": event["accepted"],
         }))

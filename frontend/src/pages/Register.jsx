@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Register.module.css'
 
 export default function Register() {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -21,7 +24,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.password2) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError(t('register.passwordMismatch'));
       return;
     }
     try {
@@ -38,16 +41,19 @@ export default function Register() {
         setError(data.detail || JSON.stringify(data));
       }
     } catch (err) {
-      setError("Erreur réseau, réessaie plus tard.");
+      setError(t('register.networkError'));
     }
   };
 
   return (
     <div className={styles.page}>
+      <div className={styles.langBar}>
+        <LanguageSwitcher />
+      </div>
       <div className={styles.card}>
         <div className={styles.logo}>⚽</div>
-        <h1 className={styles.title}>BABYFOOT 42</h1>
-        <p className={styles.sub}>Crée ton compte pour rejoindre la plateforme</p>
+        <h1 className={styles.title}>{t('register.title')}</h1>
+        <p className={styles.sub}>{t('register.subtitle')}</p>
 
         {response?.message ? (
           <div className={styles.successMsg}>
@@ -58,7 +64,7 @@ export default function Register() {
           <form onSubmit={handleSubmit} className={styles.form}>
             <input
               className={styles.input}
-              placeholder="Login 42"
+              placeholder={t('register.login42')}
               type="text"
               name="username"
               value={form.username}
@@ -67,7 +73,7 @@ export default function Register() {
             />
             <input
               className={styles.input}
-              placeholder="Email"
+              placeholder={t('register.email')}
               type="email"
               name="email"
               value={form.email}
@@ -76,7 +82,7 @@ export default function Register() {
             />
             <input
               className={styles.input}
-              placeholder="Mot de passe"
+              placeholder={t('register.password')}
               type="password"
               name="password"
               value={form.password}
@@ -85,7 +91,7 @@ export default function Register() {
             />
             <input
               className={styles.input}
-              placeholder="Confirmer le mot de passe"
+              placeholder={t('register.confirmPassword')}
               type="password"
               name="password2"
               value={form.password2}
@@ -94,14 +100,14 @@ export default function Register() {
             />
             {error && <div className={styles.errorMsg}>{error}</div>}
             <button className={styles.btnRegister} type="submit">
-              Créer mon compte
+              {t('register.submit')}
             </button>
           </form>
         )}
 
         <div className={styles.loginRow}>
-          Déjà un compte ?{' '}
-          <Link to="/login" className={styles.loginLink}>Se connecter</Link>
+          {t('register.alreadyAccount')}{' '}
+          <Link to="/login" className={styles.loginLink}>{t('register.loginLink')}</Link>
         </div>
       </div>
     </div>

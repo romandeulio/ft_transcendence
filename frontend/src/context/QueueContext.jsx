@@ -21,6 +21,12 @@ export function QueueProvider({ children }) {
   const [activeGame, setActiveGame] = useState(null)
   const [completedGameIds, setCompletedGameIds] = useState(() => new Set())
   const [lastGameEndedId, setLastGameEndedId] = useState(null)
+
+  // Invite state
+  const [pendingInvites, setPendingInvites] = useState([])   // received invites (J2 side)
+  const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (J1 side)
+  const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
+
   const prevConnected = useRef(false)
 
   const wsUrl = user?.username
@@ -41,19 +47,59 @@ export function QueueProvider({ children }) {
       setActiveGame(prev => prev?.gameId === data.gameId ? null : prev)
       setLastGameEndedId(data.gameId)
       setMySlots(prev => {
-        const next = prev.filter(s => s._localId !== data.gameId)
-        if (next.length !== prev.length)
-          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+        let next = prev.filter(s => s._localId !== data.gameId)
+        if (data.winner) {
+          next = next.map(s =>
+            s.takeWin && !s.p2 ? { ...s, p2: data.winner, player2: data.winner } : s
+          )
+        }
+        localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
+
+    } else if (data.type === 'invite_received') {
+      // J2 receives an invite from J1
+      setPendingInvites(prev => {
+        if (prev.find(i => i.inviteId === data.inviteId)) return prev
+        return [...prev, { inviteId: data.inviteId, from: data.from, slot: data.slot }]
+      })
+
+    } else if (data.type === 'invite_response') {
+      // J1 receives J2's accept/decline
+      const { inviteId, accepted } = data
+      const invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+
+      if (accepted && invite) {
+        // Transition slot from pending_invite → taken, then officially join the queue
+        setMySlots(prev => {
+          const next = prev.map(s =>
+            s._localId === inviteId ? { ...s, type: 'taken' } : s
+          )
+          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+          return next
+        })
+        send({ action: 'join', slot: { ...invite.slot, type: 'taken' } })
+      } else if (!accepted && invite) {
+        // Remove pending slot
+        setMySlots(prev => {
+          const next = prev.filter(s => s._localId !== inviteId)
+          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+          return next
+        })
+      }
+
+      if (invite) {
+        setInviteResults(prev => [...prev, { inviteId, accepted, target: invite.target }])
+      }
+      invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
     }
   }, [data, user?.username])
 
-  // Re-join our slots after a reconnect (skip already-completed slots)
+  // Re-join our slots after a reconnect (skip pending_invite and already-completed slots)
   useEffect(() => {
     if (connected && !prevConnected.current && mySlots.length > 0) {
       mySlots
-        .filter(s => !completedGameIds.has(s._localId))
+        .filter(s => !completedGameIds.has(s._localId) && s.type !== 'pending_invite')
         .forEach(slot => send({ action: 'join', slot }))
     }
     prevConnected.current = connected
@@ -65,6 +111,9 @@ export function QueueProvider({ children }) {
       setMySlots([])
       localStorage.removeItem('myQueueSlots')
       setQueue([])
+      setPendingInvites([])
+      setInviteResults([])
+      invitesSentRef.current = []
     }
   }, [user?.username])
 
@@ -79,7 +128,6 @@ export function QueueProvider({ children }) {
   }
 
   const leaveQueue = (localId) => {
-    // _localId is used as the server-side slot id (see backend join handler)
     send({ action: 'leave', slotId: localId })
     setMySlots(prev => {
       const next = prev.filter(s => s._localId !== localId)
@@ -114,16 +162,39 @@ export function QueueProvider({ children }) {
   const closeGame = (gameId) => {
     if (gameId) {
       send({ action: 'game_end', gameId })
-      // Mark as completed so UI filters it even if the WS broadcast is delayed
       setCompletedGameIds(prev => new Set([...prev, gameId]))
     }
     setActiveGame(null)
   }
 
-  // Envoie uniquement le signal WS game_end sans modifier l'état local.
-  // Utilisé pour prévenir l'autre joueur immédiatement, avant les appels API.
   const signalGameEnd = (gameId) => {
     if (gameId) send({ action: 'game_end', gameId })
+  }
+
+  // ── Invite API ──────────────────────────────────────────────────────────────
+
+  const sendInvite = (target, slot) => {
+    const inviteId = slot._localId || crypto.randomUUID()
+    const localSlot = { ...slot, _localId: inviteId, type: 'pending_invite' }
+    invitesSentRef.current = [...invitesSentRef.current, { inviteId, target, slot: localSlot }]
+    send({ action: 'invite', target, inviteId, slot: localSlot })
+    // Add slot locally as pending so J1 can see it in their "upcoming"
+    setMySlots(prev => {
+      const next = [...prev, localSlot]
+      localStorage.setItem('myQueueSlots', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const respondToInvite = (inviteId, accepted, slot, fromUser) => {
+    send({ action: 'invite_response', inviteId, accepted, from: fromUser })
+    // J2 does NOT add to mySlots — invitedUpcoming in Accueil already shows the slot
+    // once J1's joinQueue fires and the slot appears in the global queue with p2=J2.
+    setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
+  }
+
+  const dismissInviteResult = (inviteId) => {
+    setInviteResults(prev => prev.filter(i => i.inviteId !== inviteId))
   }
 
   return (
@@ -134,6 +205,8 @@ export function QueueProvider({ children }) {
       activeGame,
       completedGameIds,
       lastGameEndedId,
+      pendingInvites,
+      inviteResults,
       joinQueue,
       leaveQueue,
       updateSlot,
@@ -141,6 +214,9 @@ export function QueueProvider({ children }) {
       updateScore,
       closeGame,
       signalGameEnd,
+      sendInvite,
+      respondToInvite,
+      dismissInviteResult,
       connected,
     }}>
       {children}

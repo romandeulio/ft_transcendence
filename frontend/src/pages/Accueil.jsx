@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
@@ -19,7 +19,7 @@ const MATCHES_PER_PAGE = 3
 export default function Accueil() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd } = useQueue()
+  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite } = useQueue()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
@@ -30,42 +30,37 @@ export default function Accueil() {
   const [matchSearch,    setMatchSearch]    = useState('')
   const [matchPage,      setMatchPage]      = useState(0)
 
-  const [teammates,      setTeammates]      = useState([])
-  const [newTeammate,    setNewTeammate]    = useState('')
   const [matchError,     setMatchError]     = useState(null)
+  const [initialOpponent, setInitialOpponent] = useState(null)
 
   // Matchs que j'ai initiés (persistant via localStorage)
   const myUpcoming = mySlots
     .filter(s => !completedGameIds.has(s._localId))
     .map(s => ({
       id:     s._localId,
-      vs:     s.p2 || '?',
+      vs:     s.p2 || (s.takeWin ? '...' : '?'),
+      format: s.format || '1v1',
+      mode:   s.is_ranked ? 'Compétition' : 'Chill',
+      label:  s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
+      _slot:  s,
+    }))
+
+  // Matchs créés par d'autres où l'utilisateur est participant (pas spectateur)
+  const invitedUpcoming = queue
+    .filter(s => {
+      if (s.p1 === user?.username) return false
+      if (completedGameIds.has(s._localId) || completedGameIds.has(s.id)) return false
+      const u = user?.username
+      return u && (s.p2 === u || s.team1?.includes(u) || s.team2?.includes(u))
+    })
+    .map(s => ({
+      id:     s.id || s._localId,
+      vs:     s.p1 || '?',
       format: s.format || '1v1',
       mode:   s.is_ranked ? 'Compétition' : 'Chill',
       label:  'En attente',
       _slot:  s,
     }))
-
-  // Tous les matchs en attente créés par d'autres (visibles par tous)
-  const invitedUpcoming = queue
-    .filter(s =>
-      s.p1 !== user?.username &&
-      !completedGameIds.has(s._localId) &&
-      !completedGameIds.has(s.id)
-    )
-    .map(s => {
-      const u = user?.username
-      const isInMatch = s.p1 === u || s.p2 === u ||
-        s.team1?.includes(u) || s.team2?.includes(u)
-      return {
-        id:        s.id || s._localId,
-        vs:        s.p1 || '?',
-        format:    s.format || '1v1',
-        mode:      s.is_ranked ? 'Compétition' : 'Chill',
-        label:     isInMatch ? 'En attente' : 'Spectateur',
-        _slot:     s,
-      }
-    })
 
   const upcomingMatches = [...myUpcoming, ...invitedUpcoming]
 
@@ -81,47 +76,63 @@ export default function Accueil() {
   // C'est lui qui détermine qui a le droit de jouer maintenant
   const firstGlobalSlot = queue.find(s =>
     !completedGameIds.has(s._localId) && !completedGameIds.has(s.id)
-  ) || mySlots.find(s => !completedGameIds.has(s._localId)) || null
+  ) || mySlots.find(s => !completedGameIds.has(s._localId) && s.type !== 'pending_invite') || null
 
   const matchToPlay = selectedMatch || (upcomingMatches.length > 0 ? upcomingMatches[0] : null)
   const canPlay = firstGlobalSlot ? isParticipant({ _slot: firstGlobalSlot }) : false
 
-  const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers }) => {
+  const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     setMatchError(null)
     const isRanked  = mode === 'compet'
     const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
+    // bluePlayers[0] = côté bleu (player1), redPlayers[0] = côté rouge (player2)
+    // (déjà swappé par handleConfirm selon myColor)
     const body = {
       match_type:       matchType,
       is_ranked:        isRanked,
-      player1:          user?.username,
+      player1:          bluePlayers[0] || user?.username,
       player2:          redPlayers[0]  || null,
       ...(matchType === 'TEAM' ? {
         player1_teammate: bluePlayers[1] || null,
         player2_teammate: redPlayers[1]  || null,
       } : {}),
     }
+    // p1/p2 = affichage (owner vs adversaire), indépendant de la couleur choisie
+    const opponent = bluePlayers[0] === user?.username
+      ? (redPlayers[0] || null)
+      : (bluePlayers[0] || null)
+
+    const baseSlot = {
+      p1:               user?.username,
+      p2:               opponent,
+      player1:          body.player1,
+      player2:          body.player2 || null,
+      player1_teammate: body.player1_teammate || null,
+      player2_teammate: body.player2_teammate || null,
+      match_type:       matchType,
+      is_ranked:        isRanked,
+      format:           format === '2v2' ? '2v2' : '1v1',
+      takeWin:          takeWin || false,
+      ...(matchType === 'TEAM' ? {
+        team1: [body.player1, body.player1_teammate].filter(Boolean),
+        team2: [body.player2, body.player2_teammate].filter(Boolean),
+      } : {}),
+    }
 
     try {
-      // Essaie d'abord de réserver directement (baby libre)
+      // Adversaire connu sans takeWin → toujours passer par l'invitation
+      if (opponent && !takeWin) {
+        const localSlot = { ...baseSlot, _localId: crypto.randomUUID() }
+        sendInvite(opponent, localSlot)
+        setMatchError(t('invite.sent', { player: opponent }))
+        return
+      }
+
+      // Pas d'adversaire ou takeWin → essayer de réserver directement
       const resv = await authFetch('/api/planning/reservation/', {
         method: 'POST',
         body: JSON.stringify(body),
       })
-      const baseSlot = {
-        p1:              body.player1,
-        p2:              body.player2 || null,
-        player1:         body.player1,
-        player2:         body.player2 || null,
-        player1_teammate: body.player1_teammate || null,
-        player2_teammate: body.player2_teammate || null,
-        match_type:      matchType,
-        is_ranked:       isRanked,
-        format:          format === '2v2' ? '2v2' : '1v1',
-        ...(matchType === 'TEAM' ? {
-          team1: [body.player1, body.player1_teammate].filter(Boolean),
-          team2: [body.player2, body.player2_teammate].filter(Boolean),
-        } : {}),
-      }
 
       if (resv.ok) {
         const resvData = await resv.json().catch(() => ({}))
@@ -137,7 +148,6 @@ export default function Accueil() {
         return
       }
 
-      // Baby occupé → rejoindre la file d'attente
       const queueRes = await authFetch('/api/planning/queue/join/', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -147,7 +157,14 @@ export default function Accueil() {
         joinQueue({ ...baseSlot, type: 'waiting' })
       } else {
         const err = await queueRes.json().catch(() => ({}))
-        setMatchError(Object.values(err).flat().join(' ') || 'Erreur inconnue')
+        const errMsg = Object.values(err).flat().join(' ') || ''
+        const alreadyQueued = errMsg.toLowerCase().includes('déjà') || errMsg.toLowerCase().includes('already')
+        if (alreadyQueued) {
+          setMatchError('✅ Ajouté à la file d\'attente !')
+          joinQueue({ ...baseSlot, type: 'waiting' })
+        } else {
+          setMatchError(errMsg || 'Erreur inconnue')
+        }
       }
     } catch (err) {
       console.error(err)
@@ -171,16 +188,25 @@ export default function Accueil() {
 
   }, [user?.username])
 
-  const addTeammate = () => {
-    if (newTeammate.trim() && teammates.length < 5) {
-      setTeammates(prev => [...prev, { login: newTeammate, name: newTeammate }])
-      setNewTeammate('')
-    }
-  }
+  const topOpponents = useMemo(() => {
+    const counts = {}
+    matches.forEach(m => {
+      m.vs.split(' & ').forEach(p => {
+        const player = p.trim()
+        if (player && player !== '?') counts[player] = (counts[player] || 0) + 1
+      })
+    })
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([login, count]) => ({ login, count }))
+  }, [matches])
 
   const handleMatchComplete = async (scoreRed, scoreBlue) => {
     setJouerOpen(false)
-    const slot = selectedMatch?._slot
+    const rawSlot = selectedMatch?._slot
+    // Relire le slot depuis mySlots pour obtenir player2 à jour (cas takeWin)
+    const slot = mySlots.find(s => s._localId === rawSlot?._localId) || rawSlot
 
     // Prévenir l'autre joueur immédiatement via WS (avant les appels API)
     // sans modifier l'état local — évite que l'autre soumette aussi le score
@@ -193,7 +219,10 @@ export default function Accueil() {
       setSelectedMatch(null)
     }
 
-    if (!slot?.player1 || !slot?.player2) {
+    // For takeWin slots, player2 may arrive via p2 before player2 is updated
+    const effectivePlayer2 = slot?.player2 || (slot?.takeWin && slot?.p2 ? slot.p2 : null)
+
+    if (!slot?.player1 || !effectivePlayer2) {
       doCleanup()
       return
     }
@@ -203,7 +232,7 @@ export default function Accueil() {
         match_type:      slot.match_type || 'SOLO',
         is_ranked:       slot.is_ranked  ?? false,
         player1:         slot.player1,
-        player2:         slot.player2,
+        player2:         effectivePlayer2,
         score_player1:   scoreBlue,
         score_player2:   scoreRed,
         ...(slot.player1_teammate ? { player1_teammate: slot.player1_teammate } : {}),
@@ -411,33 +440,27 @@ export default function Accueil() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <span>{t('home.favFriends')}</span>
-              <span className={styles.counter}>{t('home.counter', { count: teammates.length })}</span>
+              <span className={styles.counter}>{topOpponents.length} / 5</span>
             </div>
             <div className={styles.cardBody}>
-              <div className={styles.teamNote}>Ajoutés selon le nombre de parties ensemble</div>
-              {teammates.map(t => (
-                <div key={t.login} className={styles.teammateRow}>
-                  <Avatar initials={t.name} size={32} bg="var(--beige)" round />
-                  <span className={styles.teammateName}>{t.name}</span>
+              <div className={styles.teamNote}>{t('home.favFriendsNote')}</div>
+              {topOpponents.length === 0 && (
+                <div className={styles.noMatch}>{t('home.noFavFriends')}</div>
+              )}
+              {topOpponents.map((tm, i) => (
+                <div key={tm.login} className={styles.teammateRow}>
+                  <span className={styles.rankBadge}>#{i + 1}</span>
+                  <Avatar initials={tm.login.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round />
+                  <span className={styles.teammateName}>{tm.login}</span>
+                  <span className={styles.gamesCount}>{tm.count}p</span>
                   <button
                     className={styles.queueBtn}
-                    onClick={() => setJoinOpen(true)}
+                    onClick={() => { setInitialOpponent(tm.login); setJoinOpen(true) }}
                   >
                     {t('home.addQueue')}
                   </button>
                 </div>
               ))}
-              {teammates.length < 5 && (
-                <div className={styles.addTeammate}>
-                  <LoginInput
-                    value={newTeammate}
-                    onChange={setNewTeammate}
-                    placeholder={t('home.loginPlayer')}
-                    className={styles.addInput}
-                  />
-                  <button className={styles.addBtn} onClick={addTeammate}>{t('home.addPlayer')}</button>
-                </div>
-              )}
             </div>
           </div>
 
@@ -481,9 +504,10 @@ export default function Accueil() {
 
       <AddMatchModal
         open={joinOpen}
-        onClose={() => { setJoinOpen(false); setMatchError(null) }}
+        onClose={() => { setJoinOpen(false); setMatchError(null); setInitialOpponent(null) }}
         onConfirm={handleAddMatch}
         user={user}
+        initialOpponent={initialOpponent}
         prevTeam={firstGlobalSlot ? {
           p1:     firstGlobalSlot.p1 || '?',
           p2:     firstGlobalSlot.p2 || '?',

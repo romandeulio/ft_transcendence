@@ -32,7 +32,11 @@
     "or": "o",
     "email": "Correo electrónico",
     "password": "Contraseña",
-    "submit": "Iniciar sesión"
+    "submit": "Iniciar sesión",
+    "error": "Correo o contraseña incorrectos.",
+    "networkError": "Error de red, inténtalo de nuevo.",
+    "noAccount": "¿Aún no tienes cuenta?",
+    "registerLink": "Registrarse"
   },
   "home": {
     "scheduledMatch": "📋 Partido programado",
@@ -42,16 +46,19 @@
     "notParticipant": "No eres participante de este partido",
     "myMatches": "Mis partidos",
     "favFriends": "Amigos favoritos",
+    "favFriendsNote": "Top 5 jugadores con los que más has jugado",
+    "noFavFriends": "Juega algunos partidos para ver tu clasificación aquí.",
     "searchLogin": "Buscar un login...",
     "noMatch": "No se encontró ningún partido",
-    "addQueue": "Agregar a la cola",
+    "addQueue": "Invitar a jugar",
     "addPlayer": "+ Agregar",
     "loginPlayer": "Login del jugador...",
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mis partidos programados",
     "noScheduled": "Ningún partido programado. Únete a la cola.",
     "deselect": "✕ Deseleccionar",
-    "or": "O"
+    "or": "O",
+    "waiting": "En espera"
   },
   "ranking": {
     "currentSeason": "Temporada actual",
@@ -129,7 +136,8 @@
     "betOn2": "Apostar en",
     "betAmount": "Cantidad de la apuesta",
     "confirmBet": "Confirmar — {{amount}} fichas",
-    "loginPlaceholder": "Login..."
+    "loginPlaceholder": "Login...",
+    "waitingWinner": "Esperando al ganador..."
   },
   "tournaments": {
     "bdeAccess": "Acceso BDE",
@@ -292,6 +300,15 @@
       ]
     }
   },
+  "invite": {
+    "received": "te invita a un partido {{format}} · {{mode}}",
+    "accept": "Aceptar ✓",
+    "decline": "Rechazar",
+    "accepted": "{{player}} aceptó tu invitación ✓",
+    "declined": "{{player}} rechazó tu invitación",
+    "sent": "✅ Invitación enviada a {{player}}",
+    "pendingLabel": "Esperando aceptación"
+  },
   "addMatch": {
     "title": "Agregar un partido",
     "step1": "Paso 1 / 4 — Modo de juego",
@@ -319,8 +336,13 @@
     "yes": "Sí ✓",
     "prevSlot": "Espacio anterior",
     "noPrevSlot": "Ningún espacio anterior disponible",
+    "alreadyParticipant": "Ya eres participante en este partido",
     "confirm": "Confirmar ✓",
-    "you": "Tú"
+    "you": "Tú",
+    "yourColor": "Tu color:",
+    "step3Win": "Paso 3 / 4 — ¿Tomar la victoria?",
+    "step4Players": "Paso 4 / 4 — Jugadores",
+    "opponentLocked": "Adversario: ganador del partido siguiente"
   },
   "game": {
     "red": "Rojo",
@@ -388,5 +410,18 @@
     "status": "Estado",
     "rgpd": "RGPD",
     "copyright": "© {{year}} ft_transcendence — Todos los derechos reservados"
+  },
+  "register": {
+    "title": "BABYFOOT 42",
+    "subtitle": "Crea tu cuenta para unirte a la plataforma",
+    "login42": "Login 42",
+    "email": "Email",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "submit": "Crear cuenta",
+    "alreadyAccount": "¿Ya tienes cuenta?",
+    "loginLink": "Iniciar sesión",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "networkError": "Error de red, inténtalo de nuevo."
   }
 }

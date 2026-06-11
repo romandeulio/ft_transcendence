@@ -286,6 +286,17 @@
   cursor: pointer;
   white-space: nowrap;
 }
+.removeBtn {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid #ccc;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1;
+}
+.removeBtn:hover { background: #fee; border-color: #CD3122; color: #CD3122; }
 
 .addTeammate {
   display: flex;

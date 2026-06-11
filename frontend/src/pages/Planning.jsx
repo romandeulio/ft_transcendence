@@ -16,10 +16,11 @@ const MAX_TOKENS = 1412
 
 export default function Planning() {
   const { addBet } = useBets()
-  const { queue, joinQueue, leaveQueue, updateSlot, connected } = useQueue()
+  const { queue, joinQueue, leaveQueue, updateSlot, connected, sendInvite } = useQueue()
   const { user } = useAuth()
   const { t } = useTranslation()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
+  const [inviteMsg,   setInviteMsg]   = useState(null)
 
   const [betSlot,   setBetSlot]   = useState(null)
   const [betAmount, setBetAmount] = useState(50)
@@ -32,17 +33,30 @@ export default function Planning() {
   const [editP1,          setEditP1]          = useState('')
   const [editP2,          setEditP2]          = useState('')
 
-  const handleJoinConfirm = ({ format, redPlayers, bluePlayers }) => {
+  const handleJoinConfirm = ({ format, redPlayers, bluePlayers, takeWin }) => {
     if (format === 'Seul') return
+    const opponent = bluePlayers[0] === user?.username
+      ? (redPlayers[0] || null)
+      : (bluePlayers[0] || null)
     const newSlot = {
-      p1: bluePlayers[0],
-      p2: redPlayers[0],
+      p1:      user?.username,
+      p2:      opponent,
+      player1: bluePlayers[0] || user?.username,
+      player2: redPlayers[0]  || null,
       format,
-      team1: format === '2v2' ? bluePlayers : undefined,
-      team2: format === '2v2' ? redPlayers : undefined,
-      type: 'taken',
+      team1:   format === '2v2' ? bluePlayers : undefined,
+      team2:   format === '2v2' ? redPlayers  : undefined,
+      takeWin: takeWin || false,
+      type:    'taken',
     }
-    joinQueue(newSlot)
+    if (opponent && !takeWin) {
+      const localSlot = { ...newSlot, _localId: crypto.randomUUID() }
+      sendInvite(opponent, localSlot)
+      setInviteMsg(t('invite.sent', { player: opponent }))
+      setTimeout(() => setInviteMsg(null), 4000)
+    } else {
+      joinQueue(newSlot)
+    }
   }
 
   const handleBet = () => {
@@ -140,7 +154,7 @@ export default function Planning() {
                         <div className={styles.slotNames}>
                           {slot.format === '2v2' && slot.team1
                             ? <>{slot.team1.join(' & ')}<br />vs<br />{slot.team2.join(' & ')}</>
-                            : <>{slot.p1}<br />vs<br />{slot.p2}</>
+                            : <>{slot.p1}<br />vs<br />{slot.p2 || (slot.takeWin ? '...' : '?')}</>
                           }
                         </div>
                       )}
@@ -189,7 +203,7 @@ export default function Planning() {
                 <div className={styles.myMatchInfo}>
                   <Avatar initials={mySlot.p2?.substring(0, 2).toUpperCase() || "?"} size={34} bg="var(--beige)" round />
                   <div>
-                    <div className={styles.myMatchVs}>vs <strong>{mySlot.p2}</strong></div>
+                    <div className={styles.myMatchVs}>vs <strong>{mySlot.p2 || (mySlot.takeWin ? t('queue.waitingWinner') : '?')}</strong></div>
                     <div className={styles.myMatchSub}>{mySlot.format} · {mySlot.type === 'live' ? 'En cours' : 'Compétition'}</div>
                   </div>
                 </div>
@@ -297,6 +311,12 @@ export default function Planning() {
           <button className={styles.confirmBtn} onClick={saveEditPlayers}>{t('queue.save')}</button>
         </div>
       </Modal>
+
+      {inviteMsg && (
+        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:'#22aa55', color:'#fff', padding:'10px 20px', borderRadius:8, zIndex:9999 }}>
+          {inviteMsg}
+        </div>
+      )}
     </Shell>
   )
 }

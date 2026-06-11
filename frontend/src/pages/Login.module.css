@@ -137,3 +137,15 @@
 }
 
 .registerLink:hover { text-decoration: underline; }
+
+.error {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff0f0;
+  border: 1.5px solid #e55;
+  color: #c00;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 2px;
+}

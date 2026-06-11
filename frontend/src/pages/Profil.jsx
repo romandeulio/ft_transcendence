@@ -21,11 +21,22 @@ export default function Profil() {
   const { t } = useTranslation()
 
   const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null })
-  const [teammates_,    setTeammates]    = useState([])
+  const [teammates_,    setTeammates]    = useState(() => {
+    try { return JSON.parse(localStorage.getItem('favTeammates')) || [] } catch { return [] }
+  })
   const [opponents,     setOpponents]    = useState([])
   const [feared,        setFeared]       = useState([])
   const [recentMatches, setRecentMatches] = useState([])
   const [seasons,       setSeasons]      = useState([])
+  const [allPlayers,    setAllPlayers]   = useState([])
+
+  useEffect(() => {
+    if (!user?.username) return
+    authFetch('/api/auth/users/')
+      .then(r => r.json())
+      .then(data => setAllPlayers(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [user?.username])
 
   useEffect(() => {
     if (!user?.username) return
@@ -70,6 +81,30 @@ export default function Profil() {
       .catch(console.error)
   }, [user?.username])
 
+  useEffect(() => {
+    if (!recentMatches.length) return
+    const stats = {}
+    recentMatches.forEach(m => {
+      const opp = m.vs.split(' & ')[0]
+      if (!stats[opp]) stats[opp] = { wins: 0, total: 0 }
+      stats[opp].total++
+      if (m.result === 'Victoire') stats[opp].wins++
+    })
+    const entries = Object.entries(stats)
+    setOpponents(
+      entries
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 3)
+        .map(([name, s]) => ({ login: name, name, winrate: Math.round(s.wins / s.total * 100) }))
+    )
+    setFeared(
+      entries
+        .sort((a, b) => (a[1].wins / a[1].total) - (b[1].wins / b[1].total))
+        .slice(0, 3)
+        .map(([name, s]) => ({ login: name, name, lossrate: Math.round((s.total - s.wins) / s.total * 100) }))
+    )
+  }, [recentMatches])
+
   const [newPartner,  setNewPartner]  = useState('')
   const [matchSearch, setMatchSearch] = useState('')
   const [matchPage,   setMatchPage]   = useState(0)
@@ -92,9 +127,17 @@ export default function Profil() {
 
   const addTeammate = () => {
     if (newPartner.trim() && teammates_.length < 5) {
-      setTeammates(prev => [...prev, { login: newPartner, name: newPartner }])
+      const next = [...teammates_, { login: newPartner.trim(), name: newPartner.trim() }]
+      setTeammates(next)
+      localStorage.setItem('favTeammates', JSON.stringify(next))
       setNewPartner('')
     }
+  }
+
+  const removeTeammate = (login) => {
+    const next = teammates_.filter(tm => tm.login !== login)
+    setTeammates(next)
+    localStorage.setItem('favTeammates', JSON.stringify(next))
   }
 
   const myLogin = user?.username ?? '—'
@@ -187,11 +230,12 @@ export default function Profil() {
               {teammates_.length === 0 && (
                 <div className={styles.noMatch}>{t('profile.noTeammate')}</div>
               )}
-              {teammates_.map(t => (
-                <div key={t.login} className={styles.teammateRow}>
-                  <Avatar initials={t.name} size={30} bg="var(--beige)" />
-                  <span className={styles.teammateName}>{t.name}</span>
+              {teammates_.map(tm => (
+                <div key={tm.login} className={styles.teammateRow}>
+                  <Avatar initials={tm.name} size={30} bg="var(--beige)" />
+                  <span className={styles.teammateName}>{tm.name}</span>
                   <button className={styles.planBtn}>{t('profile.planGame')}</button>
+                  <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
                 </div>
               ))}
               {teammates_.length < 5 && (
@@ -200,6 +244,7 @@ export default function Profil() {
                     value={newPartner}
                     onChange={setNewPartner}
                     placeholder={t('profile.loginPlayerPlaceholder')}
+                    players={allPlayers.filter(p => !teammates_.some(tm => tm.login === p.login))}
                   />
                   <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
                 </div>

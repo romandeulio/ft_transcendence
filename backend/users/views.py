@@ -144,3 +144,11 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class UserListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        users = User.objects.filter(is_active=True).exclude(pk=request.user.pk).values_list('username', flat=True)
+        return Response([{'login': u, 'name': u} for u in users])

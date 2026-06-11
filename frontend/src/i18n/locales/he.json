@@ -32,7 +32,11 @@
     "or": "או",
     "email": "אימייל",
     "password": "סיסמה",
-    "submit": "כניסה"
+    "submit": "כניסה",
+    "error": "אימייל או סיסמה שגויים.",
+    "networkError": "שגיאת רשת, נסה שוב.",
+    "noAccount": "עדיין אין לך חשבון?",
+    "registerLink": "הירשם"
   },
   "home": {
     "scheduledMatch": "📋 משחק מתוכנן",
@@ -42,16 +46,19 @@
     "notParticipant": "אינך משתתף במשחק זה",
     "myMatches": "המשחקים שלי",
     "favFriends": "חברים מועדפים",
+    "favFriendsNote": "5 השחקנים שאיתם שיחקת הכי הרבה",
+    "noFavFriends": "שחק כמה משחקים כדי לראות את הדירוג שלך כאן.",
     "searchLogin": "חפש לוגין...",
     "noMatch": "לא נמצא משחק",
-    "addQueue": "הוסף לתור",
+    "addQueue": "הזמן לשחק",
     "addPlayer": "+ הוסף",
     "loginPlayer": "לוגין שחקן...",
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "המשחקים המתוכננים שלי",
     "noScheduled": "אין משחק מתוכנן. הצטרף לתור.",
     "deselect": "✕ בטל בחירה",
-    "or": "או"
+    "or": "או",
+    "waiting": "ממתין"
   },
   "ranking": {
     "currentSeason": "עונה נוכחית",
@@ -129,7 +136,8 @@
     "betOn2": "הימר על",
     "betAmount": "סכום ההימור",
     "confirmBet": "אשר — {{amount}} אסימונים",
-    "loginPlaceholder": "לוגין..."
+    "loginPlaceholder": "לוגין...",
+    "waitingWinner": "ממתין לזוכה..."
   },
   "tournaments": {
     "bdeAccess": "גישה BDE",
@@ -292,6 +300,15 @@
       ]
     }
   },
+  "invite": {
+    "received": "מזמין אותך למשחק {{format}} · {{mode}}",
+    "accept": "קבל ✓",
+    "decline": "דחה",
+    "accepted": "{{player}} קיבל את ההזמנה שלך ✓",
+    "declined": "{{player}} דחה את ההזמנה שלך",
+    "sent": "✅ הזמנה נשלחה ל-{{player}}",
+    "pendingLabel": "ממתין לאישור"
+  },
   "addMatch": {
     "title": "הוסף משחק",
     "step1": "שלב 1 / 4 — מצב משחק",
@@ -319,8 +336,13 @@
     "yes": "כן ✓",
     "prevSlot": "חריץ קודם",
     "noPrevSlot": "אין חריץ קודם זמין",
+    "alreadyParticipant": "אתה כבר משתתף במשחק זה",
     "confirm": "אשר ✓",
-    "you": "אתה"
+    "you": "אתה",
+    "yourColor": "הצבע שלך:",
+    "step3Win": "שלב 3 / 4 — לקחת את הניצחון?",
+    "step4Players": "שלב 4 / 4 — שחקנים",
+    "opponentLocked": "יריב: מנצח המשחק שלהלן"
   },
   "game": {
     "red": "אדום",
@@ -388,5 +410,18 @@
     "status": "סטטוס",
     "rgpd": "GDPR",
     "copyright": "© {{year}} ft_transcendence — כל הזכויות שמורות"
+  },
+  "register": {
+    "title": "BABYFOOT 42",
+    "subtitle": "צור חשבון כדי להצטרף לפלטפורמה",
+    "login42": "כניסה עם 42",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "confirmPassword": "אשר סיסמה",
+    "submit": "צור חשבון",
+    "alreadyAccount": "כבר יש לך חשבון?",
+    "loginLink": "התחבר",
+    "passwordMismatch": "הסיסמאות אינן תואמות.",
+    "networkError": "שגיאת רשת, נסה שוב."
   }
 }
