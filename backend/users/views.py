@@ -1,4 +1,5 @@
 import requests
+import os
 from django.conf import settings
 
 from .models import User
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
@@ -95,13 +97,28 @@ class OAuth42CallbackView(APIView):
             profile = requests.get('https://api.intra.42.fr/v2/me', headers={
                 'Authorization': f'Bearer {access_token}'
             }).json()
+            avatar_link = profile.get("image", {}).get("link")
+            avatar_url = None
 
+            if avatar_link:
+                response = requests.get(avatar_link)
+
+                if response.status_code == 200:
+                    filename = f"avatars/{profile['id']}.jpg"
+                    filepath = os.path.join(settings.MEDIA_ROOT, filename)
+
+                    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+                    with open(filepath, "wb") as f:
+                        f.write(response.content)
+
+                    avatar_url = f"/media/{filename}"
             user, _ = User.objects.get_or_create(
                 oauth_42_id=str(profile['id']),
                 defaults={
                     'email':      profile.get('email', f"{profile['login']}@42.fr"),
                     'username':   profile['login'],
-                    'avatar_url': profile.get('image', {}).get('link', ''),
+                    'avatar_url': avatar_url,
                     'is_active':  True,
                 }
             )
@@ -116,6 +133,9 @@ class OAuth42CallbackView(APIView):
             )
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise e
             return django_redirect(f'https://localhost/login?error=oauth_failed')
 
 # 2FA
@@ -163,3 +183,53 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+class AvatarUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes     = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file = request.FILES.get('avatar')
+        if not file:
+            return Response({'error': 'Aucun fichier'}, status=400)
+
+        # Vérifier que c'est bien une image
+        if not file.content_type.startswith('image/'):
+            return Response({'error': 'Fichier invalide'}, status=400)
+
+        # Vérifier la taille (max 2 Mo)
+        if file.size > 2 * 1024 * 1024:
+            return Response({'error': 'Image trop lourde (max 2 Mo)'}, status=400)
+
+        user = request.user
+        # Supprimer l'ancienne photo si elle existe
+        if user.avatar_url and 'media/' in user.avatar_url:
+            old_path = os.path.join(settings.MEDIA_ROOT, user.avatar_url.split('/media/')[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        # Sauvegarder le fichier
+        ext       = file.name.split('.')[-1].lower()
+        filename  = f"avatars/{user.id}.{ext}"
+        filepath  = os.path.join(settings.MEDIA_ROOT, filename)
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, 'wb+') as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        # Mettre à jour l'URL dans la BDD
+        user.avatar_url = f"/media/{filename}"
+        user.save(update_fields=['avatar_url'])
+
+        return Response({'avatar_url': user.avatar_url})
+
+    def delete(self, request):
+        user = request.user
+        if user.avatar_url and 'media/' in user.avatar_url:
+            path = os.path.join(settings.MEDIA_ROOT, user.avatar_url.split('/media/')[-1])
+            if os.path.exists(path):
+                os.remove(path)
+        user.avatar_url = None
+        user.save(update_fields=['avatar_url'])
+        return Response({'avatar_url': None})

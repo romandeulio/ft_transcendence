@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import requests
 import json
+import os
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -86,6 +87,27 @@ class RegisterSerializer(serializers.ModelSerializer):
         user_42 = self.get_42_user(validated_data["username"])
         validated_data.pop("password2")
         user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password'])
+        avatar_link = user_42.get("image", {}).get("link")
+
+        if avatar_link:
+            response = requests.get(avatar_link)
+
+            if response.status_code == 200:
+                ext = avatar_link.split(".")[-1].split("?")[0]
+                if ext not in ["jpg", "jpeg", "png", "webp"]:
+                    ext = "jpg"
+
+                filename = f"avatars/{user.id}.{ext}"
+                filepath = os.path.join(settings.MEDIA_ROOT, filename)
+
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+
+                user.avatar_url = f"/media/{filename}"
+                user.save(update_fields=["avatar_url"])
+
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
