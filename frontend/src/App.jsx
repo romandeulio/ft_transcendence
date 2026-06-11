@@ -15,6 +15,7 @@ import Login       from './pages/Login'
 import Admin       from './pages/Admin'
 import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
+import LoginSuccess from './pages/LoginSuccess'
 
 //function PrivateRoute({ element }) { return element }
 function isTokenValid(token) {
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
                 <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
                 <Route path="/login"         element={<Login />} />
+                <Route path="/login-success" element={<LoginSuccess />} />
                 <Route path="/register"      element={<Register />} />
                 <Route path="/admin"         element={<Admin />} />
                 <Route path="/ticket"        element={<Ticket />} />

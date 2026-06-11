@@ -25,6 +25,7 @@ class User(AbstractBaseUser):
     # -------------------------------------------------------------------------
     class Meta:
         db_table = 'users'
+        managed   = False
     elo_solo = models.IntegerField(
         default=1000,
         help_text="ELO individuel 1v1. Mis à jour à chaque match SOLO classé validé.",

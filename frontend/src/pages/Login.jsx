@@ -85,11 +85,9 @@ export default function Login() {
         <div className={styles.logo}>⚽</div>
         <h1 className={styles.title}>{t('login.title')}</h1>
         <p className={styles.sub}>{t('login.subtitle')}</p>
-        <a href="https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-29dcfe906e0f8b18e2511684727174672ce9648b697ddb278b04095f22bdebae&redirect_uri=https%3A%2F%2Flocalhost%2Fapi%2Fauth%2Foauth%2F42%2Fcallback%2F&response_type=code">
-          <button className={styles.btn42}>
-            {t('login.loginWith42')}
-          </button>
-        </a>
+        <button className={styles.btn42} onClick={() => {window.location.href = "/api/auth/oauth/42/login/";}}>
+          {t('login.loginWith42')}
+        </button>
         <div className={styles.divider}>{t('login.or')}</div>
         <form onSubmit={handleSubmit}>
           <input

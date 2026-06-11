@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
+from django.shortcuts import redirect as django_redirect
 
 def get_tokens(user):
     refresh = RefreshToken.for_user(user)
@@ -59,6 +59,19 @@ class LoginView(APIView):
         
         return Response(get_tokens(user))
 
+class OAuth42LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Redirige le navigateur vers la page de login 42
+        url = (
+            f"https://api.intra.42.fr/oauth/authorize"
+            f"?client_id={settings.OAUTH_42_CLIENT_ID}"
+            f"&redirect_uri={settings.OAUTH_42_REDIRECT_URI}"
+            f"&response_type=code"
+        )
+        return django_redirect(url)
+
 # --- OAuth 42 ---
 class OAuth42CallbackView(APIView):
     permission_classes = [AllowAny]
@@ -66,38 +79,44 @@ class OAuth42CallbackView(APIView):
     def get(self, request):
         code = request.query_params.get('code')
         if not code:
-            return Response({'error': 'Code manquant'}, status=400)
+            return django_redirect('https://localhost/login?error=no_code')
 
-        # Échange du code contre un token 42
-        token_res = requests.post('https://api.intra.42.fr/oauth/token', data={
-            'grant_type': 'authorization_code',
-            'client_id': settings.OAUTH_42_CLIENT_ID,
-            'client_secret': settings.OAUTH_42_CLIENT_SECRET,
-            'code': code,
-            'redirect_uri': settings.OAUTH_42_REDIRECT_URI,
-        })
-        access_token = token_res.json().get('access_token')
+        try:
+            token_res = requests.post('https://api.intra.42.fr/oauth/token', data={
+                'grant_type':    'authorization_code',
+                'client_id':     settings.OAUTH_42_CLIENT_ID,
+                'client_secret': settings.OAUTH_42_CLIENT_SECRET,
+                'code':          code,
+                'redirect_uri':  settings.OAUTH_42_REDIRECT_URI,
+            })
+            token_res.raise_for_status()
+            access_token = token_res.json().get('access_token')
 
-        # Récupération du profil 42
-        profile = requests.get('https://api.intra.42.fr/v2/me', headers={
-            'Authorization': f'Bearer {access_token}'
-        }).json()
-        avatar = profile.get('image', {}).get('link')
-        user, created = User.objects.get_or_create(
-            oauth_42_id=str(profile['id']),
-            defaults={
-                'email': profile.get('email', f"{profile['login']}@42.fr"),
-                'username': profile['login'],
-                'avatar_url': avatar,
-            }
-        )
-        if avatar and user.avatar_url != avatar:
-            user.avatar_url = avatar
-            user.save(update_fields=['avatar_url'])
-        tokens = get_tokens(user)
-        return redirect(
-            f"https://localhost/login-success?access={tokens['access']}&refresh={tokens['refresh']}"
-        )
+            profile = requests.get('https://api.intra.42.fr/v2/me', headers={
+                'Authorization': f'Bearer {access_token}'
+            }).json()
+
+            user, _ = User.objects.get_or_create(
+                oauth_42_id=str(profile['id']),
+                defaults={
+                    'email':      profile.get('email', f"{profile['login']}@42.fr"),
+                    'username':   profile['login'],
+                    'avatar_url': profile.get('image', {}).get('link', ''),
+                    'is_active':  True,
+                }
+            )
+
+            tokens = get_tokens(user)
+
+            # Rediriger vers React avec les tokens
+            return django_redirect(
+                f"https://localhost/login-success"
+                f"?access={tokens['access']}"
+                f"&refresh={tokens['refresh']}"
+            )
+
+        except Exception as e:
+            return django_redirect(f'https://localhost/login?error=oauth_failed')
 
 # 2FA
 class Enable2FAView(APIView):
