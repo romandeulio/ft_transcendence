@@ -45,8 +45,8 @@
     "selectToPlay": "Selecciona un partido para activar",
     "notParticipant": "No eres participante de este partido",
     "myMatches": "Mis partidos",
-    "favFriends": "Amigos favoritos",
-    "favFriendsNote": "Top 5 jugadores con los que más has jugado",
+    "favFriends": "Adversarios favoritos",
+    "favFriendsNote": "Top 5 adversarios contra los que más has jugado",
     "noFavFriends": "Juega algunos partidos para ver tu clasificación aquí.",
     "searchLogin": "Buscar un login...",
     "noMatch": "No se encontró ningún partido",
@@ -56,6 +56,7 @@
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mis partidos programados",
     "noScheduled": "Ningún partido programado. Únete a la cola.",
+    "cancelMatch": "Cancelar este partido",
     "deselect": "✕ Deseleccionar",
     "or": "O",
     "waiting": "En espera"
@@ -305,9 +306,11 @@
     "accept": "Aceptar ✓",
     "decline": "Rechazar",
     "accepted": "{{player}} aceptó tu invitación ✓",
+    "acceptedPartial": "{{player}} aceptó · {{count}}/{{total}} confirmado(s)",
     "declined": "{{player}} rechazó tu invitación",
     "sent": "✅ Invitación enviada a {{player}}",
-    "pendingLabel": "Esperando aceptación"
+    "pendingLabel": "Esperando aceptación",
+    "matchCancelled": "{{player}} canceló el partido"
   },
   "addMatch": {
     "title": "Agregar un partido",
@@ -342,7 +345,9 @@
     "yourColor": "Tu color:",
     "step3Win": "Paso 3 / 4 — ¿Tomar la victoria?",
     "step4Players": "Paso 4 / 4 — Jugadores",
-    "opponentLocked": "Adversario: ganador del partido siguiente"
+    "opponentLocked": "Adversario: ganador del partido siguiente",
+    "missingPlayers": "Todos los jugadores deben estar completados.",
+    "duplicatePlayer": "Un jugador solo puede aparecer una vez."
   },
   "game": {
     "red": "Rojo",

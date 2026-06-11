@@ -19,7 +19,7 @@ const MATCHES_PER_PAGE = 3
 export default function Accueil() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite } = useQueue()
+  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite, cancelInvite, cancelAsP2 } = useQueue()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
@@ -36,14 +36,26 @@ export default function Accueil() {
   // Matchs que j'ai initiés (persistant via localStorage)
   const myUpcoming = mySlots
     .filter(s => !completedGameIds.has(s._localId))
-    .map(s => ({
-      id:     s._localId,
-      vs:     s.p2 || (s.takeWin ? '...' : '?'),
-      format: s.format || '1v1',
-      mode:   s.is_ranked ? 'Compétition' : 'Chill',
-      label:  s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
-      _slot:  s,
-    }))
+    .map(s => {
+      let vs
+      if (s.format === '2v2' || s.match_type === 'TEAM') {
+        const opp = (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
+        vs = opp.length ? opp.join(' & ') : (s.takeWin ? '...' : '?')
+      } else {
+        vs = s.p2 || (s.takeWin ? '...' : '?')
+      }
+      return {
+        id:       s._localId,
+        vs,
+        format:   s.format || '1v1',
+        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        label:    s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
+        cancelFn: s.type === 'pending_invite'
+          ? () => cancelInvite(s._localId)
+          : () => leaveQueue(s._localId),
+        _slot:    s,
+      }
+    })
 
   // Matchs créés par d'autres où l'utilisateur est participant (pas spectateur)
   const invitedUpcoming = queue
@@ -53,14 +65,24 @@ export default function Accueil() {
       const u = user?.username
       return u && (s.p2 === u || s.team1?.includes(u) || s.team2?.includes(u))
     })
-    .map(s => ({
-      id:     s.id || s._localId,
-      vs:     s.p1 || '?',
-      format: s.format || '1v1',
-      mode:   s.is_ranked ? 'Compétition' : 'Chill',
-      label:  'En attente',
-      _slot:  s,
-    }))
+    .map(s => {
+      let vs
+      if (s.format === '2v2' || s.match_type === 'TEAM') {
+        const opp = (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
+        vs = opp.length ? opp.join(' & ') : '?'
+      } else {
+        vs = s.p1 || '?'
+      }
+      return {
+        id:       s.id || s._localId,
+        vs,
+        format:   s.format || '1v1',
+        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        label:    t('home.waiting'),
+        cancelFn: () => cancelAsP2(s.id || s._localId),
+        _slot:    s,
+      }
+    })
 
   const upcomingMatches = [...myUpcoming, ...invitedUpcoming]
 
@@ -83,6 +105,27 @@ export default function Accueil() {
 
   const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     setMatchError(null)
+
+    // Vérification existence des logins via API
+    if (!takeWin && format !== 'Seul') {
+      const toCheck = [...bluePlayers, ...redPlayers]
+        .filter(p => p && p !== user?.username)
+      if (toCheck.length > 0) {
+        try {
+          const resp = await authFetch('/api/auth/users/')
+          if (resp.ok) {
+            const users = await resp.json()
+            const known = new Set((Array.isArray(users) ? users : (users.results ?? [])).map(u => u.login || u.username))
+            const invalid = toCheck.filter(p => !known.has(p))
+            if (invalid.length > 0) {
+              setMatchError(`Joueur(s) introuvable(s) : ${invalid.join(', ')}`)
+              return
+            }
+          }
+        } catch { /* si l'API échoue, on laisse passer */ }
+      }
+    }
+
     const isRanked  = mode === 'compet'
     const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
     // bluePlayers[0] = côté bleu (player1), redPlayers[0] = côté rouge (player2)
@@ -123,8 +166,12 @@ export default function Accueil() {
       // Adversaire connu sans takeWin → toujours passer par l'invitation
       if (opponent && !takeWin) {
         const localSlot = { ...baseSlot, _localId: crypto.randomUUID() }
-        sendInvite(opponent, localSlot)
-        setMatchError(t('invite.sent', { player: opponent }))
+        // 2v2 : inviter les 3 autres joueurs ; 1v1 : juste l'adversaire
+        const inviteTargets = format === '2v2'
+          ? [...bluePlayers, ...redPlayers].filter(p => p && p !== user?.username)
+          : [opponent]
+        sendInvite(inviteTargets, localSlot)
+        setMatchError(t('invite.sent', { player: inviteTargets.join(', ') }))
         return
       }
 
@@ -473,16 +520,33 @@ export default function Accueil() {
       {/* ── Popup : choisir un match prévu ── */}
       <Modal open={matchPickOpen} onClose={() => setMatchPickOpen(false)} title={t('home.scheduledMatchesTitle')}>
         <div className={styles.matchPickList}>
-          {upcomingMatches.map(m => (
-            <button
-              key={m.id}
-              className={`${styles.matchPickItem} ${selectedMatch?.id === m.id ? styles.matchPickSelected : ''}`}
-              onClick={() => { setSelectedMatch(m); setMatchPickOpen(false) }}
-            >
-              <div className={styles.matchPickVs}>vs <strong>{m.vs}</strong></div>
-              <div className={styles.matchPickSub}>{m.format} · {m.mode} · {m.label}</div>
-            </button>
-          ))}
+          {upcomingMatches.map(m => {
+            const slotId = m._slot?._localId || m._slot?.id
+            const isLive = activeGame?.gameId === slotId
+            return (
+              <div key={m.id} className={styles.matchPickRow}>
+                <button
+                  className={`${styles.matchPickItem} ${selectedMatch?.id === m.id ? styles.matchPickSelected : ''}`}
+                  onClick={() => { setSelectedMatch(m); setMatchPickOpen(false) }}
+                >
+                  <div className={styles.matchPickVs}>vs <strong>{m.vs}</strong></div>
+                  <div className={styles.matchPickSub}>{m.format} · {m.mode} · {m.label}</div>
+                </button>
+                {!isLive && (
+                  <button
+                    className={styles.cancelMatchBtn}
+                    title={t('home.cancelMatch')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      m.cancelFn?.()
+                      if (selectedMatch?.id === m.id) setSelectedMatch(null)
+                      setMatchPickOpen(false)
+                    }}
+                  >✕</button>
+                )}
+              </div>
+            )
+          })}
           {upcomingMatches.length === 0 && (
             <div className={styles.noMatch}>{t('home.noScheduled')}</div>
           )}
@@ -512,6 +576,8 @@ export default function Accueil() {
           p1:     firstGlobalSlot.p1 || '?',
           p2:     firstGlobalSlot.p2 || '?',
           format: firstGlobalSlot.format || '1v1',
+          team1:  firstGlobalSlot.team1 || null,
+          team2:  firstGlobalSlot.team2 || null,
         } : null}
       />
     </Shell>

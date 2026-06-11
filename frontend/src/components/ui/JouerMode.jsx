@@ -4,6 +4,16 @@ import styles from './JouerMode.module.css'
 
 export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
   const { t } = useTranslation()
+
+  const slot    = match?._slot
+  const is2v2   = slot?.format === '2v2' || slot?.match_type === 'TEAM'
+  // team1 = côté bleu (player1), team2 = côté rouge (player2)
+  const labelBlue = is2v2 && slot?.team1?.filter(Boolean).length
+    ? slot.team1.filter(Boolean).join(' & ')
+    : t('game.blue')
+  const labelRed  = is2v2 && slot?.team2?.filter(Boolean).length
+    ? slot.team2.filter(Boolean).join(' & ')
+    : t('game.red')
   const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
   const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
   const [elapsed,   setElapsed]   = useState(0)
@@ -52,7 +62,7 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
   }
   const removeRed = () => {
     if (ended) return
-    const next = Math.max(0, scoreRed - 1)
+    const next = scoreRed - 1
     localUpdate.current = true
     setScoreRed(next)
     onScoreChange?.(next, scoreBlue)
@@ -60,7 +70,7 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
   }
   const removeBlue = () => {
     if (ended) return
-    const next = Math.max(0, scoreBlue - 1)
+    const next = scoreBlue - 1
     localUpdate.current = true
     setScoreBlue(next)
     onScoreChange?.(scoreRed, next)
@@ -74,7 +84,7 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
   if (ended) {
     const isTie = scoreRed === scoreBlue
     const winColor = scoreRed > scoreBlue ? '#CD3122' : scoreBlue > scoreRed ? '#4068DB' : '#7A9BB5'
-    const winnerLabel = isTie ? t('game.tie') : t('game.wins', { color: scoreRed > scoreBlue ? t('game.red') : t('game.blue') })
+    const winnerLabel = isTie ? t('game.tie') : t('game.wins', { color: scoreRed > scoreBlue ? labelRed : labelBlue })
     return (
       <div className={styles.overlay}>
         <div className={styles.endScreen}>
@@ -111,7 +121,7 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
 
         {/* Côté rouge (gauche) */}
         <button className={styles.sideRed} onClick={addRed}>
-          <div className={styles.sideLabel}>{t('game.red')}</div>
+          <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelRed}</div>
           <div className={styles.sideScore}>{scoreRed}</div>
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
@@ -141,7 +151,7 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
 
         {/* Côté bleu (droite) */}
         <button className={styles.sideBlue} onClick={addBlue}>
-          <div className={styles.sideLabel}>{t('game.blue')}</div>
+          <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelBlue}</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>

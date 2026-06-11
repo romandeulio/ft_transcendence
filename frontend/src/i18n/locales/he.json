@@ -45,8 +45,8 @@
     "selectToPlay": "בחר משחק כדי להפעיל",
     "notParticipant": "אינך משתתף במשחק זה",
     "myMatches": "המשחקים שלי",
-    "favFriends": "חברים מועדפים",
-    "favFriendsNote": "5 השחקנים שאיתם שיחקת הכי הרבה",
+    "favFriends": "יריבים מועדפים",
+    "favFriendsNote": "5 היריבים שנגדם שיחקת הכי הרבה",
     "noFavFriends": "שחק כמה משחקים כדי לראות את הדירוג שלך כאן.",
     "searchLogin": "חפש לוגין...",
     "noMatch": "לא נמצא משחק",
@@ -56,6 +56,7 @@
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "המשחקים המתוכננים שלי",
     "noScheduled": "אין משחק מתוכנן. הצטרף לתור.",
+    "cancelMatch": "בטל משחק זה",
     "deselect": "✕ בטל בחירה",
     "or": "או",
     "waiting": "ממתין"
@@ -305,9 +306,11 @@
     "accept": "קבל ✓",
     "decline": "דחה",
     "accepted": "{{player}} קיבל את ההזמנה שלך ✓",
+    "acceptedPartial": "{{player}} קיבל · {{count}}/{{total}} אושר",
     "declined": "{{player}} דחה את ההזמנה שלך",
     "sent": "✅ הזמנה נשלחה ל-{{player}}",
-    "pendingLabel": "ממתין לאישור"
+    "pendingLabel": "ממתין לאישור",
+    "matchCancelled": "{{player}} ביטל את המשחק"
   },
   "addMatch": {
     "title": "הוסף משחק",
@@ -342,7 +345,9 @@
     "yourColor": "הצבע שלך:",
     "step3Win": "שלב 3 / 4 — לקחת את הניצחון?",
     "step4Players": "שלב 4 / 4 — שחקנים",
-    "opponentLocked": "יריב: מנצח המשחק שלהלן"
+    "opponentLocked": "יריב: מנצח המשחק שלהלן",
+    "missingPlayers": "כל השחקנים חייבים להיות מלאים.",
+    "duplicatePlayer": "שחקן יכול להופיע רק פעם אחת."
   },
   "game": {
     "red": "אדום",

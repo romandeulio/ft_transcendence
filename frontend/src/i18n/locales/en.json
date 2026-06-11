@@ -45,8 +45,8 @@
     "selectToPlay": "Select a match to enable",
     "notParticipant": "You are not a participant in this match",
     "myMatches": "My matches",
-    "favFriends": "Favourite friends",
-    "favFriendsNote": "Top 5 players you've played the most games with",
+    "favFriends": "Favourite opponents",
+    "favFriendsNote": "Top 5 opponents you've played the most games against",
     "noFavFriends": "Play some matches to see your ranking here.",
     "searchLogin": "Search a login...",
     "noMatch": "No match found",
@@ -56,6 +56,7 @@
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "My scheduled matches",
     "noScheduled": "No scheduled match. Join the queue.",
+    "cancelMatch": "Cancel this match",
     "deselect": "✕ Deselect",
     "or": "OR",
     "waiting": "Waiting"
@@ -305,9 +306,11 @@
     "accept": "Accept ✓",
     "decline": "Decline",
     "accepted": "{{player}} accepted your invitation ✓",
+    "acceptedPartial": "{{player}} accepted · {{count}}/{{total}} confirmed",
     "declined": "{{player}} declined your invitation",
     "sent": "✅ Invitation sent to {{player}}",
-    "pendingLabel": "Awaiting acceptance"
+    "pendingLabel": "Awaiting acceptance",
+    "matchCancelled": "{{player}} cancelled the match"
   },
   "addMatch": {
     "title": "Add a match",
@@ -342,7 +345,9 @@
     "yourColor": "Your color:",
     "step3Win": "Step 3 / 4 — Take the win?",
     "step4Players": "Step 4 / 4 — Players",
-    "opponentLocked": "Opponent: winner of the match below"
+    "opponentLocked": "Opponent: winner of the match below",
+    "missingPlayers": "All players must be filled in.",
+    "duplicatePlayer": "A player can only appear once."
   },
   "game": {
     "red": "Red",

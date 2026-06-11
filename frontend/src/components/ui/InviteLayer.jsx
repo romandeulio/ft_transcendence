@@ -19,6 +19,13 @@ export default function InviteLayer() {
               mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
             })}
           </div>
+          {(inv.slot?.format === '2v2' || inv.slot?.match_type === 'TEAM') && (
+            <div className={styles.inviteTeams}>
+              {(inv.slot.team1 || []).filter(Boolean).join(' & ')}
+              {' vs '}
+              {(inv.slot.team2 || []).filter(Boolean).join(' & ')}
+            </div>
+          )}
           <div className={styles.inviteActions}>
             <button
               className={styles.acceptBtn}
@@ -36,15 +43,19 @@ export default function InviteLayer() {
         </div>
       ))}
 
-      {inviteResults.map(res => (
+      {inviteResults.map((res, i) => (
         <div
-          key={res.inviteId}
+          key={`${res.inviteId}-${i}`}
           className={`${styles.resultCard} ${res.accepted ? styles.resultAccepted : styles.resultDeclined}`}
         >
           <span>
-            {res.accepted
-              ? t('invite.accepted', { player: res.target })
-              : t('invite.declined', { player: res.target })}
+            {res.cancelled
+              ? t('invite.matchCancelled', { player: res.target })
+              : !res.accepted
+                ? t('invite.declined', { player: res.target })
+                : res.partial
+                  ? t('invite.acceptedPartial', { player: res.target, count: res.count, total: res.total })
+                  : t('invite.accepted', { player: res.target })}
           </span>
           <button className={styles.dismissBtn} onClick={() => dismissInviteResult(res.inviteId)}>✕</button>
         </div>

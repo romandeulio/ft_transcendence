@@ -70,10 +70,29 @@ class QueueConsumer(AsyncWebsocketConsumer):
 
         elif action == "leave":
             slot_id = data.get("slotId")
+            leaving_slot = next(
+                (s for s in queue if s.get("id") == slot_id and s.get("ownerId") == self.user_id),
+                None,
+            )
             queue = [
                 s for s in queue
                 if not (s.get("id") == slot_id and s.get("ownerId") == self.user_id)
             ]
+            if leaving_slot:
+                participants = set()
+                for field in ["p2", "player1_teammate", "player2_teammate"]:
+                    val = leaving_slot.get(field)
+                    if val and val != self.username:
+                        participants.add(val)
+                for team_key in ["team1", "team2"]:
+                    for p in (leaving_slot.get(team_key) or []):
+                        if p and p != self.username:
+                            participants.add(p)
+                for participant in participants:
+                    await self.channel_layer.group_send(
+                        f"user_{participant}",
+                        {"type": "match_cancelled_msg", "cancelledBy": self.username},
+                    )
 
         elif action == "update":
             slot_id = data.get("slotId")
@@ -87,9 +106,18 @@ class QueueConsumer(AsyncWebsocketConsumer):
             game_id  = data.get("gameId")
             player1  = data.get("player1")
             player2  = data.get("player2")
+            p1_tm    = data.get("player1_teammate")
+            p2_tm    = data.get("player2_teammate")
             if game_id and player1 and player2:
                 if game_id not in games:
-                    games[game_id] = {"player1": player1, "player2": player2, "scoreRed": 0, "scoreBlue": 0}
+                    games[game_id] = {
+                        "player1": player1,
+                        "player2": player2,
+                        "player1_teammate": p1_tm,
+                        "player2_teammate": p2_tm,
+                        "scoreRed": 0,
+                        "scoreBlue": 0,
+                    }
                 await self.channel_layer.group_send(
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
@@ -112,13 +140,16 @@ class QueueConsumer(AsyncWebsocketConsumer):
         elif action == "game_end":
             game_id = data.get("gameId")
             winner = None
+            winner_teammate = None
             if game_id and game_id in games:
                 g = games[game_id]
                 # player1 = équipe bleue, player2 = équipe rouge
                 if g.get("scoreBlue", 0) > g.get("scoreRed", 0):
                     winner = g.get("player1")
+                    winner_teammate = g.get("player1_teammate")
                 elif g.get("scoreRed", 0) > g.get("scoreBlue", 0):
                     winner = g.get("player2")
+                    winner_teammate = g.get("player2_teammate")
                 del games[game_id]
             # Supprime le créneau terminé
             if game_id:
@@ -128,9 +159,12 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 for slot in queue:
                     if slot.get("takeWin") and not slot.get("p2"):
                         slot["p2"] = winner
+                        slot["player2"] = winner
+                        if winner_teammate:
+                            slot["player2_teammate"] = winner_teammate
             await self.channel_layer.group_send(
                 self.group_name,
-                {"type": "game_ended_msg", "gameId": game_id, "winner": winner},
+                {"type": "game_ended_msg", "gameId": game_id, "winner": winner, "winner_teammate": winner_teammate},
             )
             await self.channel_layer.group_send(
                 self.group_name,
@@ -168,9 +202,50 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         "type": "invite_response_msg",
                         "inviteId": invite_id,
                         "accepted": accepted,
-                        "from": from_user,
+                        "responder": self.username,  # who responded (J2/J3/J4)
                     },
                 )
+            return
+
+        elif action == "cancel_invite":
+            target    = data.get("target")
+            invite_id = data.get("inviteId")
+            if target:
+                await self.channel_layer.group_send(
+                    f"user_{target}",
+                    {"type": "cancel_invite_msg", "inviteId": invite_id},
+                )
+            return
+
+        elif action == "leave_as_p2":
+            slot_id = data.get("slotId")
+            target_slot = next((s for s in queue if s.get("id") == slot_id), None)
+            queue = [s for s in queue if s.get("id") != slot_id]
+            if target_slot:
+                owner_username = target_slot.get("p1")
+                if owner_username:
+                    await self.channel_layer.group_send(
+                        f"user_{owner_username}",
+                        {"type": "p2_left_msg", "slotId": slot_id},
+                    )
+                other_participants = set()
+                for field in ["player1_teammate", "p2", "player2_teammate"]:
+                    val = target_slot.get(field)
+                    if val and val != self.username and val != owner_username:
+                        other_participants.add(val)
+                for team_key in ["team1", "team2"]:
+                    for p in (target_slot.get(team_key) or []):
+                        if p and p != self.username and p != owner_username:
+                            other_participants.add(p)
+                for participant in other_participants:
+                    await self.channel_layer.group_send(
+                        f"user_{participant}",
+                        {"type": "match_cancelled_msg", "cancelledBy": self.username},
+                    )
+            await self.channel_layer.group_send(
+                self.group_name,
+                {"type": "queue_update", "queue": queue},
+            )
             return
 
         else:
@@ -198,6 +273,13 @@ class QueueConsumer(AsyncWebsocketConsumer):
             "type": "game_ended",
             "gameId": event["gameId"],
             "winner": event.get("winner"),
+            "winner_teammate": event.get("winner_teammate"),
+        }))
+
+    async def match_cancelled_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "match_cancelled",
+            "cancelledBy": event["cancelledBy"],
         }))
 
     async def invite_msg(self, event):
@@ -213,4 +295,17 @@ class QueueConsumer(AsyncWebsocketConsumer):
             "type": "invite_response",
             "inviteId": event["inviteId"],
             "accepted": event["accepted"],
+            "responder": event.get("responder"),
+        }))
+
+    async def cancel_invite_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "invite_cancelled",
+            "inviteId": event["inviteId"],
+        }))
+
+    async def p2_left_msg(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "p2_left",
+            "slotId": event["slotId"],
         }))

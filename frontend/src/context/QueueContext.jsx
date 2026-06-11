@@ -40,7 +40,9 @@ export function QueueProvider({ children }) {
       setQueue(data.queue)
     } else if (data.type === 'game_state' && data.game) {
       const g = data.game
-      if (g.player1 === user?.username || g.player2 === user?.username) {
+      const u = user?.username
+      if (u && (g.player1 === u || g.player2 === u ||
+                g.player1_teammate === u || g.player2_teammate === u)) {
         setActiveGame(prev => ({ ...prev, ...g }))
       }
     } else if (data.type === 'game_ended' && data.gameId) {
@@ -50,7 +52,12 @@ export function QueueProvider({ children }) {
         let next = prev.filter(s => s._localId !== data.gameId)
         if (data.winner) {
           next = next.map(s =>
-            s.takeWin && !s.p2 ? { ...s, p2: data.winner, player2: data.winner } : s
+            s.takeWin && !s.p2 ? {
+              ...s,
+              p2: data.winner,
+              player2: data.winner,
+              ...(data.winner_teammate ? { player2_teammate: data.winner_teammate } : {}),
+            } : s
           )
         }
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
@@ -64,13 +71,59 @@ export function QueueProvider({ children }) {
         return [...prev, { inviteId: data.inviteId, from: data.from, slot: data.slot }]
       })
 
-    } else if (data.type === 'invite_response') {
-      // J1 receives J2's accept/decline
-      const { inviteId, accepted } = data
-      const invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+    } else if (data.type === 'invite_cancelled') {
+      // J1 annulé → J2 retire l'invite de sa liste
+      setPendingInvites(prev => prev.filter(i => i.inviteId !== data.inviteId))
 
-      if (accepted && invite) {
-        // Transition slot from pending_invite → taken, then officially join the queue
+    } else if (data.type === 'p2_left') {
+      // J2 a annulé le match accepté → J1 retire le slot de mySlots
+      setMySlots(prev => {
+        const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
+        localStorage.setItem('myQueueSlots', JSON.stringify(next))
+        return next
+      })
+
+    } else if (data.type === 'match_cancelled') {
+      setInviteResults(prev => [...prev, {
+        inviteId: `cancel-${Date.now()}-${Math.random()}`,
+        accepted: false,
+        target: data.cancelledBy,
+        cancelled: true,
+      }])
+
+    } else if (data.type === 'invite_response') {
+      // J1 receives a response from one of the invited players
+      const { inviteId, accepted, responder } = data
+      const invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+      if (!invite) return
+
+      const cancelAll = () => {
+        invite.targets.forEach(t => send({ action: 'cancel_invite', inviteId, target: t }))
+        setMySlots(prev => {
+          const next = prev.filter(s => s._localId !== inviteId)
+          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+          return next
+        })
+        invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
+      }
+
+      if (!accepted) {
+        // Any decline → cancel everything for everyone
+        cancelAll()
+        setInviteResults(prev => [...prev, { inviteId, accepted: false, target: responder }])
+        return
+      }
+
+      // Track this acceptance
+      const alreadyAccepted = invite.accepted || []
+      if (alreadyAccepted.includes(responder)) return  // duplicate, ignore
+      const nowAccepted = [...alreadyAccepted, responder]
+      invitesSentRef.current = invitesSentRef.current.map(i =>
+        i.inviteId === inviteId ? { ...i, accepted: nowAccepted } : i
+      )
+
+      if (nowAccepted.length >= invite.targets.length) {
+        // All accepted → enter queue
         setMySlots(prev => {
           const next = prev.map(s =>
             s._localId === inviteId ? { ...s, type: 'taken' } : s
@@ -79,19 +132,15 @@ export function QueueProvider({ children }) {
           return next
         })
         send({ action: 'join', slot: { ...invite.slot, type: 'taken' } })
-      } else if (!accepted && invite) {
-        // Remove pending slot
-        setMySlots(prev => {
-          const next = prev.filter(s => s._localId !== inviteId)
-          localStorage.setItem('myQueueSlots', JSON.stringify(next))
-          return next
-        })
+        setInviteResults(prev => [...prev, { inviteId, accepted: true, target: nowAccepted.join(', ') }])
+        invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
+      } else {
+        // Partial — show intermediate notification (e.g. "2/3 accepté")
+        setInviteResults(prev => [...prev, {
+          inviteId, accepted: true, target: responder,
+          partial: true, count: nowAccepted.length, total: invite.targets.length,
+        }])
       }
-
-      if (invite) {
-        setInviteResults(prev => [...prev, { inviteId, accepted, target: invite.target }])
-      }
-      invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
     }
   }, [data, user?.username])
 
@@ -151,7 +200,14 @@ export function QueueProvider({ children }) {
     const p1 = slot.player1 || slot.p1
     const p2 = slot.player2 || slot.p2
     if (!activeGame || activeGame.gameId !== gameId) {
-      send({ action: 'game_open', gameId, player1: p1, player2: p2 })
+      send({
+        action: 'game_open',
+        gameId,
+        player1: p1,
+        player2: p2,
+        player1_teammate: slot.player1_teammate || null,
+        player2_teammate: slot.player2_teammate || null,
+      })
     }
   }
 
@@ -173,17 +229,35 @@ export function QueueProvider({ children }) {
 
   // ── Invite API ──────────────────────────────────────────────────────────────
 
-  const sendInvite = (target, slot) => {
-    const inviteId = slot._localId || crypto.randomUUID()
-    const localSlot = { ...slot, _localId: inviteId, type: 'pending_invite' }
-    invitesSentRef.current = [...invitesSentRef.current, { inviteId, target, slot: localSlot }]
-    send({ action: 'invite', target, inviteId, slot: localSlot })
-    // Add slot locally as pending so J1 can see it in their "upcoming"
+  const sendInvite = (targets, slot) => {
+    const targetList = Array.isArray(targets) ? targets : [targets]
+    const inviteId   = slot._localId || crypto.randomUUID()
+    const localSlot  = { ...slot, _localId: inviteId, type: 'pending_invite', _targets: targetList }
+    invitesSentRef.current = [...invitesSentRef.current, { inviteId, targets: targetList, slot: localSlot }]
+    targetList.forEach(t => send({ action: 'invite', target: t, inviteId, slot: localSlot }))
     setMySlots(prev => {
       const next = [...prev, localSlot]
       localStorage.setItem('myQueueSlots', JSON.stringify(next))
       return next
     })
+  }
+
+  const cancelInvite = (inviteId) => {
+    // Lookup targets from ref (current session) or from slot (after refresh via _targets)
+    const invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+    const targets = invite?.targets || []
+    targets.forEach(t => send({ action: 'cancel_invite', inviteId, target: t }))
+    invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
+    setMySlots(prev => {
+      const next = prev.filter(s => s._localId !== inviteId)
+      localStorage.setItem('myQueueSlots', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const cancelAsP2 = (slotId) => {
+    send({ action: 'leave_as_p2', slotId })
+    // La queue_state broadcast côté serveur mettra à jour invitedUpcoming automatiquement
   }
 
   const respondToInvite = (inviteId, accepted, slot, fromUser) => {
@@ -215,6 +289,8 @@ export function QueueProvider({ children }) {
       closeGame,
       signalGameEnd,
       sendInvite,
+      cancelInvite,
+      cancelAsP2,
       respondToInvite,
       dismissInviteResult,
       connected,

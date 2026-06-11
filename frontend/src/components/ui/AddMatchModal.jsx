@@ -15,13 +15,14 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     prevTeam.team2?.includes(u)
   ))
   const canTakeWin = !!prevTeam && !userIsInPrevTeam
-  const [step,        setStep]        = useState(1)
-  const [joinMode,    setJoinMode]    = useState('compet')
-  const [joinFormat,  setJoinFormat]  = useState('1v1')
-  const [redPlayers,  setRedPlayers]  = useState(['', ''])
-  const [bluePlayers, setBluePlayers] = useState(['', ''])
-  const [takeWin,     setTakeWin]     = useState(null)
-  const [myColor,     setMyColor]     = useState('blue')
+  const [step,            setStep]            = useState(1)
+  const [joinMode,        setJoinMode]        = useState('compet')
+  const [joinFormat,      setJoinFormat]      = useState('1v1')
+  const [redPlayers,      setRedPlayers]      = useState(['', ''])
+  const [bluePlayers,     setBluePlayers]     = useState(['', ''])
+  const [takeWin,         setTakeWin]         = useState(null)
+  const [myColor,         setMyColor]         = useState('blue')
+  const [validationError, setValidationError] = useState(null)
 
   useEffect(() => {
     if (!open) return
@@ -40,11 +41,29 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
   const reset = () => {
     setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
     setRedPlayers(['', '']); setBluePlayers(['', '']); setTakeWin(null); setMyColor('blue')
+    setValidationError(null)
   }
 
   const handleClose = () => { reset(); onClose() }
 
   const handleConfirm = () => {
+    // Validation : champs requis et doublons
+    if (!takeWin && joinFormat !== 'Seul') {
+      const others = joinFormat === '2v2'
+        ? [bluePlayers[1], redPlayers[0], redPlayers[1]]
+        : [redPlayers[0]]
+      if (others.some(p => !p?.trim())) {
+        setValidationError(t('addMatch.missingPlayers'))
+        return
+      }
+      const all = [user?.username, ...others].filter(Boolean)
+      if (new Set(all).size < all.length) {
+        setValidationError(t('addMatch.duplicatePlayer'))
+        return
+      }
+    }
+    setValidationError(null)
+
     // Quand takeWin=true : l'adversaire sera le gagnant du match précédent (pas saisi)
     let finalBlue, finalRed
     if (takeWin === true) {
@@ -110,7 +129,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         <div>
           <div className={styles.stepLabel}>{t('addMatch.step2')}</div>
           <div className={styles.formatBtns}>
-            {['1v1', '2v2', 'Seul'].map(f => (
+            {['1v1', '2v2', 'Seul'].filter(f => !initialOpponent || f !== 'Seul').map(f => (
               <button key={f} className={`${styles.modeBtn} ${joinFormat === f ? styles.modeBtnCompet : ''}`} onClick={() => setJoinFormat(f)}>
                 {f === '1v1' ? '⚔️ 1v1' : f === '2v2' ? '👥 2v2' : t('addMatch.solo')}
               </button>
@@ -281,6 +300,9 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             </div>
           </div>
 
+          {validationError && (
+            <div className={styles.validationError}>{validationError}</div>
+          )}
           <div className={styles.stepActions}>
             <button className={styles.backBtn} onClick={() => setStep(3)}>{t('addMatch.back')}</button>
             <button className={styles.confirmBtn} onClick={handleConfirm}>{t('addMatch.confirm')}</button>

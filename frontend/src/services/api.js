@@ -15,23 +15,27 @@ export function authFetch(url, options = {}) {
 
 // Transforme un match API en ligne affichable pour Profil / Accueil
 export function matchToRow(m, username) {
-  const isP1 = m.player1 === username
-  let vs = isP1 ? m.player2 : m.player1
+  // Detect team membership — player1_teammate is on team1, not team2
+  const onTeam1 = m.player1 === username || m.player1_teammate === username
+  let vs
   if (m.match_type === 'TEAM') {
-    const tm = isP1 ? m.player2_teammate : m.player1_teammate
-    if (tm) vs = `${vs} & ${tm}`
+    vs = onTeam1
+      ? [m.player2, m.player2_teammate].filter(Boolean).join(' & ')
+      : [m.player1, m.player1_teammate].filter(Boolean).join(' & ')
+  } else {
+    vs = onTeam1 ? m.player2 : m.player1
   }
-  const myScore    = isP1 ? m.score_player1 : m.score_player2
-  const theirScore = isP1 ? m.score_player2 : m.score_player1
-  const isWin = (isP1 && m.winner === 'player1_side') || (!isP1 && m.winner === 'player2_side')
+  const myScore    = onTeam1 ? m.score_player1 : m.score_player2
+  const theirScore = onTeam1 ? m.score_player2 : m.score_player1
+  const isWin = (onTeam1 && m.winner === 'player1_side') || (!onTeam1 && m.winner === 'player2_side')
 
   let eloDelta = null
   if (m.is_ranked) {
     const [before, after] = m.match_type === 'SOLO'
-      ? [isP1 ? m.elo_solo_player1_before : m.elo_solo_player2_before,
-         isP1 ? m.elo_solo_player1_after  : m.elo_solo_player2_after]
-      : [isP1 ? m.elo_team_p1_before : m.elo_team_p2_before,
-         isP1 ? m.elo_team_p1_after  : m.elo_team_p2_after]
+      ? [onTeam1 ? m.elo_solo_player1_before : m.elo_solo_player2_before,
+         onTeam1 ? m.elo_solo_player1_after  : m.elo_solo_player2_after]
+      : [onTeam1 ? m.elo_team_p1_before : m.elo_team_p2_before,
+         onTeam1 ? m.elo_team_p1_after  : m.elo_team_p2_after]
     if (before != null && after != null) eloDelta = after - before
   }
   const eloStr = eloDelta != null ? (eloDelta >= 0 ? `+${eloDelta}` : `${eloDelta}`) : '—'

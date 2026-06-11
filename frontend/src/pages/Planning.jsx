@@ -33,26 +33,34 @@ export default function Planning() {
   const [editP1,          setEditP1]          = useState('')
   const [editP2,          setEditP2]          = useState('')
 
-  const handleJoinConfirm = ({ format, redPlayers, bluePlayers, takeWin }) => {
+  const handleJoinConfirm = ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     if (format === 'Seul') return
     const opponent = bluePlayers[0] === user?.username
       ? (redPlayers[0] || null)
       : (bluePlayers[0] || null)
+    const isTeam = format === '2v2'
     const newSlot = {
-      p1:      user?.username,
-      p2:      opponent,
-      player1: bluePlayers[0] || user?.username,
-      player2: redPlayers[0]  || null,
+      p1:               user?.username,
+      p2:               opponent,
+      player1:          bluePlayers[0] || user?.username,
+      player2:          redPlayers[0]  || null,
+      player1_teammate: isTeam ? (bluePlayers[1] || null) : undefined,
+      player2_teammate: isTeam ? (redPlayers[1]  || null) : undefined,
+      match_type:       isTeam ? 'TEAM' : 'SOLO',
+      is_ranked:        mode === 'compet',
       format,
-      team1:   format === '2v2' ? bluePlayers : undefined,
-      team2:   format === '2v2' ? redPlayers  : undefined,
-      takeWin: takeWin || false,
-      type:    'taken',
+      team1:            isTeam ? bluePlayers.filter(Boolean) : undefined,
+      team2:            isTeam ? redPlayers.filter(Boolean)  : undefined,
+      takeWin:          takeWin || false,
+      type:             'taken',
     }
     if (opponent && !takeWin) {
       const localSlot = { ...newSlot, _localId: crypto.randomUUID() }
-      sendInvite(opponent, localSlot)
-      setInviteMsg(t('invite.sent', { player: opponent }))
+      const inviteTargets = isTeam
+        ? [...bluePlayers, ...redPlayers].filter(p => p && p !== user?.username)
+        : [opponent]
+      sendInvite(inviteTargets, localSlot)
+      setInviteMsg(t('invite.sent', { player: inviteTargets.join(', ') }))
       setTimeout(() => setInviteMsg(null), 4000)
     } else {
       joinQueue(newSlot)

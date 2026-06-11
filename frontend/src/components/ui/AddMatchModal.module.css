@@ -33,6 +33,7 @@
   margin-bottom: 14px;
 }
 
+.validationError { color: #ff4444; font-size: 0.85rem; margin-top: 8px; text-align: center; }
 .stepActions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
 
 .backBtn {

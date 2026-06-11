@@ -36,6 +36,13 @@
   color: var(--ink3);
 }
 
+.inviteTeams {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 3px 0;
+}
+
 .inviteActions {
   display: flex;
   gap: 8px;

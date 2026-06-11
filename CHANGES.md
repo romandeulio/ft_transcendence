@@ -1,5 +1,81 @@
 # Changelog — Session du 11 juin 2026
 
+---
+
+## Patch 2 — Corrections post-merge (même session)
+
+> Depuis le commit `94df8f7` — *feat: merge front back db 1 - matchs 1v1 ok !*
+
+### 1. Notifications d'annulation de match
+
+Quand J1 supprime un match (via `leaveQueue`) ou qu'un participant le quitte (`cancelAsP2`), tous les autres participants reçoivent désormais une notification toast "{{player}} a annulé le match" via leur groupe WS personnel.
+
+- `backend/realtime/consumers/queue.py` : action `leave` notifie J2/J3/J4 via `match_cancelled_msg` ; action `leave_as_p2` notifie J1 via `p2_left` (inchangé) + notifie J3/J4 via `match_cancelled_msg`.
+- `QueueContext.jsx` : gère le type `match_cancelled` → injecte dans `inviteResults`.
+- `InviteLayer.jsx` : affiche `invite.matchCancelled` dans les toasts.
+
+---
+
+### 2. Validation des logins (AddMatchModal)
+
+- **Champs vides** : le bouton Confirmer est bloqué si un joueur requis est absent — message inline rouge.
+- **Doublons** : bloque si le même login apparaît deux fois (même équipe ou équipes adverses).
+- **Login inexistant** : `handleAddMatch` dans Accueil appelle `/api/auth/users/` avant d'envoyer l'invitation et affiche un toast d'erreur pour tout login introuvable.
+
+- `AddMatchModal.jsx` : état `validationError`, vérification sync avant `onConfirm`.
+- `AddMatchModal.module.css` : style `.validationError`.
+- `Accueil.jsx` : validation async d'existence en tête de `handleAddMatch`.
+
+---
+
+### 3. "Reprendre la gagne" — vérification coéquipier 2v2
+
+`prevTeam` passé à `AddMatchModal` incluait seulement `p1`/`p2` ; il inclut maintenant `team1` et `team2`. Le check `userIsInPrevTeam` (qui testait déjà `team1?.includes(u)`) fonctionne donc correctement pour les binômes.
+
+---
+
+### 4. Affichage des matchs prévus en 2v2
+
+`myUpcoming.vs` et `invitedUpcoming.vs` dans `Accueil.jsx` affichaient seulement le capitaine adverse. Ils affichent désormais toute l'équipe : `"J3 & J4"` pour un slot 2v2.
+
+---
+
+### 5. Correction "player2_teammate_id requis pour TEAM" (takeWin 2v2)
+
+Quand un slot `takeWin` attend le gagnant d'un match 2v2, le coéquipier du gagnant n'était pas propagé.
+
+- `queue.py` : `game_end` calcule `winner_teammate` et l'injecte dans le slot takeWin (`slot["player2_teammate"]`) ainsi que dans `game_ended_msg`.
+- `QueueContext.jsx` : le handler `game_ended` met à jour le slot local avec `player2_teammate`.
+- `Accueil.jsx` : `handleMatchComplete` incluait déjà `slot.player2_teammate` dans le corps de la requête — ça fonctionne maintenant car la donnée est présente.
+
+---
+
+### Nouvelles clés i18n (4 langues)
+
+| Clé | Exemple (fr) |
+|---|---|
+| `invite.matchCancelled` | "{{player}} a annulé le match" |
+| `addMatch.missingPlayers` | "Tous les joueurs doivent être renseignés." |
+| `addMatch.duplicatePlayer` | "Un joueur ne peut apparaître qu'une seule fois." |
+
+---
+
+### Fichiers modifiés (patch 2)
+
+```
+backend/realtime/consumers/queue.py
+frontend/src/
+  context/QueueContext.jsx
+  components/ui/
+    AddMatchModal.jsx
+    AddMatchModal.module.css
+    InviteLayer.jsx
+  pages/Accueil.jsx
+  i18n/locales/fr.json / en.json / es.json / he.json
+```
+
+---
+
 > Commit : `5e028ee` — *fix(front/ws/db/back): match 1v1 + friends ok*  
 > Branche : `main`  
 > Fichiers modifiés : **23** · +992 / −311 lignes

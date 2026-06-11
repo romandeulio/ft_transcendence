@@ -45,8 +45,8 @@
     "selectToPlay": "Sélectionne un match pour activer",
     "notParticipant": "Tu n'es pas participant de ce match",
     "myMatches": "Mes matchs",
-    "favFriends": "Amis favoris",
-    "favFriendsNote": "Top 5 des joueurs avec lesquels tu as le plus joué",
+    "favFriends": "Adversaires favoris",
+    "favFriendsNote": "Top 5 des adversaires contre lesquels tu as le plus joué",
     "noFavFriends": "Joue des matchs pour voir ton classement ici.",
     "searchLogin": "Rechercher un login...",
     "noMatch": "Aucun match trouvé",
@@ -56,6 +56,7 @@
     "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mes matchs prévus",
     "noScheduled": "Aucun match prévu. Ajoute-toi à la file d'attente.",
+    "cancelMatch": "Annuler ce match",
     "deselect": "✕ Désélectionner",
     "or": "OU",
     "waiting": "En attente"
@@ -305,9 +306,11 @@
     "accept": "Accepter ✓",
     "decline": "Refuser",
     "accepted": "{{player}} a accepté ton invitation ✓",
+    "acceptedPartial": "{{player}} a accepté · {{count}}/{{total}} confirmé(s)",
     "declined": "{{player}} a refusé ton invitation",
     "sent": "✅ Invitation envoyée à {{player}}",
-    "pendingLabel": "En attente d'acceptation"
+    "pendingLabel": "En attente d'acceptation",
+    "matchCancelled": "{{player}} a annulé le match"
   },
   "addMatch": {
     "title": "Ajouter un match",
@@ -342,7 +345,9 @@
     "yourColor": "Votre couleur :",
     "step3Win": "Étape 3 / 4 — Reprendre la gagne ?",
     "step4Players": "Étape 4 / 4 — Joueurs",
-    "opponentLocked": "Adversaire : gagnant du match ci-dessous"
+    "opponentLocked": "Adversaire : gagnant du match ci-dessous",
+    "missingPlayers": "Tous les joueurs doivent être renseignés.",
+    "duplicatePlayer": "Un joueur ne peut apparaître qu'une seule fois."
   },
   "game": {
     "red": "Rouge",
