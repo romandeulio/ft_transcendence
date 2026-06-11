@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 import { AuthProvider }  from './context/AuthContext'
 import { NotifProvider } from './context/NotifContext'
 import { BetsProvider }  from './context/BetsContext'
@@ -17,7 +18,6 @@ import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
 import LoginSuccess from './pages/LoginSuccess'
 
-//function PrivateRoute({ element }) { return element }
 function isTokenValid(token) {
   if (!token) return false;
   try {
@@ -29,13 +29,8 @@ function isTokenValid(token) {
 }
 
 function PrivateRoute({ element }) {
-  const token = localStorage.getItem("token");
-  if (!isTokenValid(token)) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    return <Navigate to="/login" replace />;
-  }
-  return element;
+    const { user } = useAuth()
+    return user ? element : <Navigate to="/login" replace />
 }
 
 export default function App() {
