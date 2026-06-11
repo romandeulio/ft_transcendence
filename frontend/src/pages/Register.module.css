@@ -5,18 +5,6 @@
   justify-content: center;
   background: var(--bg3);
   padding: 20px;
-  position: relative;
-}
-
-.langBar {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-}
-
-[dir="rtl"] .langBar {
-  right: auto;
-  left: 20px;
 }
 
 .card {
@@ -53,39 +41,12 @@
   margin-bottom: 4px;
 }
 
-.btn42 {
+.form {
   width: 100%;
-  padding: 12px;
-  background: var(--ink);
-  color: white;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-
-.btn42:hover { background: #2A1510; }
-
-.divider {
-  width: 100%;
-  text-align: center;
-  font-size: 12px;
-  color: var(--ink3);
-  position: relative;
-}
-
-.divider::before, .divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: var(--beige);
-}
-
-.divider::before { left: 0; }
-.divider::after  { right: 0; }
 
 .input {
   width: 100%;
@@ -96,6 +57,7 @@
   color: var(--ink);
   font-family: inherit;
   font-size: 13px;
+  box-sizing: border-box;
 }
 
 .input::placeholder {
@@ -108,7 +70,7 @@
   border-color: var(--orange-light);
 }
 
-.btnLogin {
+.btnRegister {
   width: 100%;
   padding: 12px;
   background: var(--orange);
@@ -121,19 +83,45 @@
   margin-top: 4px;
 }
 
-.btnLogin:hover { background: #A02830; }
+.btnRegister:hover { background: #A02830; }
 
-.registerRow {
+.errorMsg {
+  font-size: 12px;
+  color: var(--orange);
+  text-align: center;
+  padding: 6px 10px;
+  background: var(--red-pale);
+  border-radius: 7px;
+}
+
+.successMsg {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 16px;
+  background: var(--green-pale);
+  border-radius: 9px;
+  line-height: 1.6;
+}
+
+.successSub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink3);
+}
+
+.loginRow {
   font-size: 13px;
   color: var(--ink3);
   text-align: center;
   margin-top: 4px;
 }
 
-.registerLink {
+.loginLink {
   color: var(--orange);
   font-weight: 700;
   text-decoration: none;
 }
 
-.registerLink:hover { text-decoration: underline; }
+.loginLink:hover { text-decoration: underline; }

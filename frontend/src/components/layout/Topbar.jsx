@@ -16,6 +16,7 @@ export default function Topbar({ title, right, titleSize = 18 }) {
 
 	return (
 		<div className={styles.topbar}>
+			<div className={styles.left} />
 			<h1 className={styles.title} style={{ fontSize: titleSize }}>
 				{title}
 			</h1>
