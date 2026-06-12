@@ -86,7 +86,34 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_42 = self.get_42_user(validated_data["username"])
         validated_data.pop("password2")
+        has_piscine = any(
+            c["cursus"]["name"] == "C Piscine"
+            for c in user_42.get("cursus_users", [])
+        )
+
+        has_42cursus = any(
+            c["cursus"]["name"] == "42cursus"
+            for c in user_42.get("cursus_users", [])
+        )
+
+        if user_42.get("staff?"):
+            role = "bocalien"
+        elif user_42.get("alumni?"):
+            role = "alumnni"
+        elif has_piscine and not has_42cursus:
+            role = "piscineux"
+        elif has_42cursus:
+            role = "stud"
+        else:
+            role = "user"
+        if role != "bocalien":
+            for group in user_42.get("groups", []):
+                name = group.get("name", "").lower()
+                if "bde" in name:
+                    role = "bde"
         user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password'])
+        user.role = role
+        user.save(update_fields=["role"])
         avatar_link = user_42.get("image", {}).get("link")
 
         if avatar_link:
@@ -122,7 +149,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             recipient_list=[user.email],
             fail_silently=False,
         )
-
+        print("role = ", user.role)
         return user
 
 # serializers.py — remplacer UserSerializer

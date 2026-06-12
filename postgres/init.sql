@@ -161,7 +161,8 @@ CREATE TABLE bets (
     amount           INTEGER NOT NULL CHECK (amount > 0),
     predicted_winner UUID REFERENCES users(id),
     result           VARCHAR(10) CHECK (result IN ('won', 'lost', 'refunded')),
-    payout           INTEGER
+    payout           INTEGER,
+    created_at       TIMESTAMP DEFAULT NOW()
 );
 
 CREATE OR REPLACE FUNCTION check_no_self_bet()
