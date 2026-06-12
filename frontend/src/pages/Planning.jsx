@@ -16,7 +16,7 @@ const MAX_TOKENS = 1412
 
 export default function Planning() {
   const { addBet } = useBets()
-  const { queue, joinQueue, leaveQueue, updateSlot, connected, sendInvite } = useQueue()
+  const { queue, mySlots, completedGameIds, joinQueue, leaveQueue, updateSlot, connected, sendInvite } = useQueue()
   const { user } = useAuth()
   const { t } = useTranslation()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
@@ -33,26 +33,59 @@ export default function Planning() {
   const [editP1,          setEditP1]          = useState('')
   const [editP2,          setEditP2]          = useState('')
 
+  const userPendingCount = () => {
+    const u = user?.username
+    const mine = mySlots.filter(s => !completedGameIds.has(s._localId)).length
+    const invited = queue.filter(s => u && s.p1 !== u && (s.p2 === u || s.team1?.includes(u) || s.team2?.includes(u))).length
+    return mine + invited
+  }
+
   const handleJoinConfirm = ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     if (format === 'Seul') return
+    if (userPendingCount() >= 3) return t('home.maxMatches')
+
+    // Vérification max 3 matchs en attente pour les cibles invitées
+    if (!takeWin) {
+      const targets = [...(bluePlayers || []), ...(redPlayers || [])].filter(p => p && p !== user?.username)
+      const overloaded = targets.filter(p => {
+        const count = queue.filter(s =>
+          s.p1 === p || s.p2 === p ||
+          s.team1?.includes(p) || s.team2?.includes(p)
+        ).length
+        return count >= 3
+      })
+      if (overloaded.length > 0) return t('home.targetMaxMatches', { player: overloaded.join(', ') })
+    }
+
     const opponent = bluePlayers[0] === user?.username
       ? (redPlayers[0] || null)
       : (bluePlayers[0] || null)
     const isTeam = format === '2v2'
+    const matchType = isTeam ? 'TEAM' : 'SOLO'
+    const parentSlotId = takeWin
+      ? (queue.filter(s => s.match_type === matchType && !completedGameIds.has(s.id) && !completedGameIds.has(s._localId)).at(-1)?.id || null)
+      : null
+    const userOnBlue = takeWin ? bluePlayers[0] === user?.username : true
     const newSlot = {
       p1:               user?.username,
       p2:               opponent,
-      player1:          bluePlayers[0] || user?.username,
-      player2:          redPlayers[0]  || null,
-      player1_teammate: isTeam ? (bluePlayers[1] || null) : undefined,
-      player2_teammate: isTeam ? (redPlayers[1]  || null) : undefined,
-      match_type:       isTeam ? 'TEAM' : 'SOLO',
+      player1:          takeWin ? (userOnBlue ? user?.username : null) : (bluePlayers[0] || user?.username),
+      player2:          takeWin ? (userOnBlue ? null : user?.username) : (redPlayers[0] || null),
+      player1_teammate: isTeam
+        ? (takeWin ? (userOnBlue ? (bluePlayers[1] || null) : null) : (bluePlayers[1] || null))
+        : undefined,
+      player2_teammate: isTeam
+        ? (takeWin ? (userOnBlue ? null : (redPlayers[1] || null)) : (redPlayers[1] || null))
+        : undefined,
+      match_type:       matchType,
       is_ranked:        mode === 'compet',
       format,
+      createdAt:        Date.now(),
       team1:            isTeam ? bluePlayers.filter(Boolean) : undefined,
       team2:            isTeam ? redPlayers.filter(Boolean)  : undefined,
       takeWin:          takeWin || false,
       type:             'taken',
+      ...(parentSlotId ? { parentSlotId } : {}),
     }
     if (opponent && !takeWin) {
       const localSlot = { ...newSlot, _localId: crypto.randomUUID() }
@@ -160,10 +193,22 @@ export default function Planning() {
                     >
                       {slot.p1 && (
                         <div className={styles.slotNames}>
-                          {slot.format === '2v2' && slot.team1
-                            ? <>{slot.team1.join(' & ')}<br />vs<br />{slot.team2.join(' & ')}</>
-                            : <>{slot.p1}<br />vs<br />{slot.p2 || (slot.takeWin ? '...' : '?')}</>
-                          }
+                          {slot.format === '2v2' && Array.isArray(slot.team1) && slot.team1.length ? (
+                            <>
+                              <span className={styles.dotBlue} />{slot.team1.join(' & ')}
+                              <br />vs<br />
+                              <span className={styles.dotRed} />{Array.isArray(slot.team2) && slot.team2.length ? slot.team2.join(' & ') : '...'}
+                            </>
+                          ) : (() => {
+                            const p1Blue = !slot.player1 || slot.player1 === slot.p1
+                            return (
+                              <>
+                                <span className={p1Blue ? styles.dotBlue : styles.dotRed} />{slot.p1}
+                                <br />vs<br />
+                                <span className={p1Blue ? styles.dotRed : styles.dotBlue} />{slot.p2 || (slot.takeWin ? '...' : '?')}
+                              </>
+                            )
+                          })()}
                         </div>
                       )}
                       {slot.format && <div className={styles.slotFormat}>{slot.format}</div>}

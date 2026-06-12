@@ -44,6 +44,7 @@
     "play": "Jugar",
     "selectToPlay": "Selecciona un partido para activar",
     "notParticipant": "No eres participante de este partido",
+    "awaitingConfirmation": "Esperando confirmación de los otros jugadores",
     "myMatches": "Mis partidos",
     "favFriends": "Adversarios favoritos",
     "favFriendsNote": "Top 5 adversarios contra los que más has jugado",
@@ -59,7 +60,11 @@
     "cancelMatch": "Cancelar este partido",
     "deselect": "✕ Deseleccionar",
     "or": "O",
-    "waiting": "En espera"
+    "waiting": "En espera",
+    "maxMatches": "Ya tienes 3 partidos pendientes, cancela uno antes de crear uno nuevo.",
+    "targetMaxMatches": "{{player}} ya tiene 3 partidos pendientes y no puede ser invitado/a.",
+    "pendingInvites": "Invitaciones pendientes",
+    "noPendingInvites": "Sin invitaciones pendientes"
   },
   "ranking": {
     "currentSeason": "Temporada actual",
@@ -310,7 +315,12 @@
     "declined": "{{player}} rechazó tu invitación",
     "sent": "✅ Invitación enviada a {{player}}",
     "pendingLabel": "Esperando aceptación",
-    "matchCancelled": "{{player}} canceló el partido"
+    "matchCancelled": "{{player}} canceló el partido",
+    "offline": "{{player}} no está conectado/a, invitación cancelada",
+    "winClaimReceived": "{{player}} te invita a llevar tu victoria a su próximo partido",
+    "winClaimDeclined": "Un ganador rechazó continuar — el partido ha sido cancelado",
+    "inviteCancelled": "{{player}} canceló su invitación",
+    "chainCancelled": "Un partido de la cadena fue cancelado — tu plaza ha sido eliminada"
   },
   "addMatch": {
     "title": "Agregar un partido",
@@ -342,12 +352,14 @@
     "alreadyParticipant": "Ya eres participante en este partido",
     "confirm": "Confirmar ✓",
     "you": "Tú",
+    "opponent": "Rival",
     "yourColor": "Tu color:",
     "step3Win": "Paso 3 / 4 — ¿Tomar la victoria?",
     "step4Players": "Paso 4 / 4 — Jugadores",
     "opponentLocked": "Adversario: ganador del partido siguiente",
     "missingPlayers": "Todos los jugadores deben estar completados.",
-    "duplicatePlayer": "Un jugador solo puede aparecer una vez."
+    "duplicatePlayer": "Un jugador solo puede aparecer una vez.",
+    "takeWinWarning": "⚠️ Atención: si el/los ganador(es) no aceptan tu invitación, el partido será cancelado."
   },
   "game": {
     "red": "Rojo",
@@ -358,6 +370,7 @@
     "removeRed": "−1 Rojo",
     "removeBlue": "−1 Azul",
     "tie": "¡Empate!",
+    "tieCancelWarning": "Este partido será cancelado — las cadenas de reprise serán eliminadas.",
     "wins": "¡{{color}} gana!",
     "duration": "Duración: {{time}}",
     "close": "Terminar y cerrar"

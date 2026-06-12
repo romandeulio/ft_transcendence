@@ -19,7 +19,7 @@ const MATCHES_PER_PAGE = 3
 export default function Accueil() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite, cancelInvite, cancelAsP2 } = useQueue()
+  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite, cancelInvite, cancelAsP2, pendingInvites, respondToInvite } = useQueue()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
@@ -37,16 +37,23 @@ export default function Accueil() {
   const myUpcoming = mySlots
     .filter(s => !completedGameIds.has(s._localId))
     .map(s => {
-      let vs
+      const u = user?.username
+      let vs, vsColor
+      const userIsBlue = s.player1 === u || s.team1?.includes(u)
       if (s.format === '2v2' || s.match_type === 'TEAM') {
-        const opp = (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
+        const opp = userIsBlue
+          ? (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
+          : (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
         vs = opp.length ? opp.join(' & ') : (s.takeWin ? '...' : '?')
+        vsColor = opp.length ? (userIsBlue ? 'red' : 'blue') : null
       } else {
         vs = s.p2 || (s.takeWin ? '...' : '?')
+        vsColor = s.p2 ? (userIsBlue ? 'red' : 'blue') : null
       }
       return {
         id:       s._localId,
         vs,
+        vsColor,
         format:   s.format || '1v1',
         mode:     s.is_ranked ? 'Compétition' : 'Chill',
         label:    s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
@@ -66,20 +73,23 @@ export default function Accueil() {
       return u && (s.p2 === u || s.team1?.includes(u) || s.team2?.includes(u))
     })
     .map(s => {
-      let vs
+      const u = user?.username
+      const userIsBlue = s.player1 === u || s.team1?.includes(u)
+      let vs, vsColor
       if (s.format === '2v2' || s.match_type === 'TEAM') {
-        const u = user?.username
-        const inTeam2 = s.team2?.includes(u) || s.p2 === u
-        const opp = inTeam2
-          ? (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
-          : (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
+        const opp = userIsBlue
+          ? (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
+          : (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
         vs = opp.length ? opp.join(' & ') : '?'
+        vsColor = userIsBlue ? 'red' : 'blue'
       } else {
-        vs = s.p1 || '?'
+        vs = userIsBlue ? (s.p2 || s.player2 || '?') : (s.p1 || '?')
+        vsColor = userIsBlue ? 'red' : 'blue'
       }
       return {
         id:       s.id || s._localId,
         vs,
+        vsColor,
         format:   s.format || '1v1',
         mode:     s.is_ranked ? 'Compétition' : 'Chill',
         label:    t('home.waiting'),
@@ -89,6 +99,11 @@ export default function Accueil() {
     })
 
   const upcomingMatches = [...myUpcoming, ...invitedUpcoming]
+
+  // Dernier slot de la file = match précédent pour "prendre la gagne"
+  const lastQueueSlot = [...queue]
+    .filter(s => !completedGameIds.has(s._localId) && !completedGameIds.has(s.id))
+    .at(-1) || null
 
   const isParticipant = (m) => {
     const slot = m?._slot
@@ -109,6 +124,25 @@ export default function Accueil() {
 
   const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     setMatchError(null)
+
+    if (upcomingMatches.length >= 3) {
+      return t('home.maxMatches')
+    }
+
+    // Vérification max 3 matchs en attente pour les cibles invitées
+    if (!takeWin && format !== 'Seul') {
+      const targets = [...(bluePlayers || []), ...(redPlayers || [])].filter(p => p && p !== user?.username)
+      const overloaded = targets.filter(p => {
+        const count = queue.filter(s =>
+          s.p1 === p || s.p2 === p ||
+          s.team1?.includes(p) || s.team2?.includes(p)
+        ).length
+        return count >= 3
+      })
+      if (overloaded.length > 0) {
+        return t('home.targetMaxMatches', { player: overloaded.join(', ') })
+      }
+    }
 
     // Vérification existence des logins via API
     const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
@@ -134,20 +168,28 @@ export default function Accueil() {
     const isRanked  = mode === 'compet'
     // bluePlayers[0] = côté bleu (player1), redPlayers[0] = côté rouge (player2)
     // (déjà swappé par handleConfirm selon myColor)
+    // Pour takeWin : le côté vide = TBD (gagnant du match précédent)
+    const userOnBlue = takeWin ? bluePlayers[0] === user?.username : true
     const body = {
       match_type:       matchType,
       is_ranked:        isRanked,
-      player1:          bluePlayers[0] || user?.username,
-      player2:          redPlayers[0]  || null,
+      player1:          takeWin ? (userOnBlue ? user?.username : null) : (bluePlayers[0] || user?.username),
+      player2:          takeWin ? (userOnBlue ? null : user?.username) : (redPlayers[0] || null),
       ...(matchType === 'TEAM' ? {
-        player1_teammate: bluePlayers[1] || null,
-        player2_teammate: redPlayers[1]  || null,
+        player1_teammate: takeWin ? (userOnBlue ? (bluePlayers[1] || null) : null) : (bluePlayers[1] || null),
+        player2_teammate: takeWin ? (userOnBlue ? null : (redPlayers[1] || null)) : (redPlayers[1] || null),
       } : {}),
     }
     // p1/p2 = affichage (owner vs adversaire), indépendant de la couleur choisie
-    const opponent = bluePlayers[0] === user?.username
-      ? (redPlayers[0] || null)
-      : (bluePlayers[0] || null)
+    const opponent = takeWin ? null : (
+      bluePlayers[0] === user?.username
+        ? (redPlayers[0] || null)
+        : (bluePlayers[0] || null)
+    )
+
+    const parentSlotId = takeWin
+      ? (queue.filter(s => s.match_type === matchType && !completedGameIds.has(s.id) && !completedGameIds.has(s._localId)).at(-1)?.id || null)
+      : null
 
     const baseSlot = {
       p1:               user?.username,
@@ -160,6 +202,8 @@ export default function Accueil() {
       is_ranked:        isRanked,
       format:           format === '2v2' ? '2v2' : '1v1',
       takeWin:          takeWin || false,
+      createdAt:        Date.now(),
+      ...(parentSlotId ? { parentSlotId } : {}),
       ...(matchType === 'TEAM' ? {
         team1: [body.player1, body.player1_teammate].filter(Boolean),
         team2: [body.player2, body.player2_teammate].filter(Boolean),
@@ -190,7 +234,14 @@ export default function Accueil() {
         }
       }
 
-      // Pas d'adversaire ou takeWin → essayer de réserver directement
+      // takeWin 1v1 (ou 2v2 sans coéquipier) → rejoindre la file directement, pas de réservation API
+      // (le slot est incomplet côté joueurs jusqu'à ce que le gagnant accepte)
+      if (takeWin) {
+        joinQueue(baseSlot)
+        return
+      }
+
+      // Pas d'adversaire → essayer de réserver directement
       const resv = await authFetch('/api/planning/reservation/', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -273,7 +324,17 @@ export default function Accueil() {
     // Prévenir l'autre joueur immédiatement via WS (avant les appels API)
     // sans modifier l'état local — évite que l'autre soumette aussi le score
     const gameId = slot?._localId || activeGame?.gameId
-    signalGameEnd(gameId)
+    // Déterminer le gagnant dès maintenant (player1 = bleu, player2 = rouge)
+    let winner = null
+    let winnerTeammate = null
+    if (scoreBlue > scoreRed) {
+      winner = slot?.player1
+      winnerTeammate = slot?.player1_teammate || null
+    } else if (scoreRed > scoreBlue) {
+      winner = slot?.player2 || (slot?.takeWin && slot?.p2 ? slot.p2 : null)
+      winnerTeammate = slot?.player2_teammate || null
+    }
+    signalGameEnd(gameId, winner, winnerTeammate, slot?.match_type || 'SOLO')
 
     const doCleanup = () => {
       if (slot?._localId) leaveQueue(slot._localId)
@@ -352,6 +413,16 @@ export default function Accueil() {
     }
   }
 
+  const handleTieCancel = () => {
+    const rawSlot = selectedMatch?._slot
+    const slot = mySlots.find(s => s._localId === rawSlot?._localId) || rawSlot
+    const gameId = slot?._localId || activeGame?.gameId
+    if (slot?._localId) leaveQueue(slot._localId)
+    closeGame(gameId)
+    setSelectedMatch(null)
+    setJouerOpen(false)
+  }
+
   // Auto-close JouerMode when the other player ends the game
   useEffect(() => {
     if (!lastGameEndedId || !jouerOpen) return
@@ -379,6 +450,7 @@ export default function Accueil() {
           onClose={() => { closeGame(activeGame?.gameId); setJouerOpen(false) }}
           match={selectedMatch}
           onComplete={handleMatchComplete}
+          onTieCancel={handleTieCancel}
           scoreRed={activeGame?.scoreRed}
           scoreBlue={activeGame?.scoreBlue}
           onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
@@ -452,12 +524,6 @@ export default function Accueil() {
               <span className={styles.jouerIcon}>▶</span>
               {t('home.play')}
             </button>
-            {upcomingMatches.length === 0 && (
-              <div className={styles.jouerHint}>{t('home.selectToPlay')}</div>
-            )}
-            {upcomingMatches.length > 0 && !canPlay && (
-              <div className={styles.jouerHint}>{t('home.notParticipant')}</div>
-            )}
           </div>
         </div>
 
@@ -528,6 +594,44 @@ export default function Accueil() {
 
         </div>
 
+        {/* ── Invitations en cours ── */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span>{t('home.pendingInvites')}</span>
+            <span className={styles.counter}>{pendingInvites.length}</span>
+          </div>
+          <div className={styles.cardBody}>
+            {pendingInvites.length === 0 && (
+              <div className={styles.noMatch}>{t('home.noPendingInvites')}</div>
+            )}
+            {pendingInvites.map(inv => (
+              <div key={inv.inviteId} className={styles.inviteRow}>
+                <div className={styles.inviteRowInfo}>
+                  <span className={styles.inviteRowFrom}>{inv.from}</span>
+                  <span className={styles.inviteRowDetail}>
+                    {inv.isWinClaim
+                      ? t('invite.winClaimReceived', { player: inv.from })
+                      : t('invite.received', {
+                          format: inv.slot?.format || '1v1',
+                          mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
+                        })}
+                  </span>
+                </div>
+                <div className={styles.inviteRowActions}>
+                  <button
+                    className={styles.acceptSmallBtn}
+                    onClick={() => respondToInvite(inv.inviteId, true, inv.slot, inv.from, inv.isWinClaim, inv.slotId)}
+                  >{t('invite.accept')}</button>
+                  <button
+                    className={styles.declineSmallBtn}
+                    onClick={() => respondToInvite(inv.inviteId, false, inv.slot, inv.from, inv.isWinClaim, inv.slotId)}
+                  >{t('invite.decline')}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <PerformanceChart />
 
       </div>
@@ -544,7 +648,11 @@ export default function Accueil() {
                   className={`${styles.matchPickItem} ${selectedMatch?.id === m.id ? styles.matchPickSelected : ''}`}
                   onClick={() => { setSelectedMatch(m); setMatchPickOpen(false) }}
                 >
-                  <div className={styles.matchPickVs}>vs <strong>{m.vs}</strong></div>
+                  <div className={styles.matchPickVs}>
+                    vs{' '}
+                    {m.vsColor && <span className={m.vsColor === 'blue' ? styles.dotBlue : styles.dotRed} />}
+                    <strong>{m.vs}</strong>
+                  </div>
                   <div className={styles.matchPickSub}>{m.format} · {m.mode} · {m.label}</div>
                 </button>
                 {!isLive && (
@@ -588,12 +696,13 @@ export default function Accueil() {
         onConfirm={handleAddMatch}
         user={user}
         initialOpponent={initialOpponent}
-        prevTeam={firstGlobalSlot ? {
-          p1:     firstGlobalSlot.p1 || '?',
-          p2:     firstGlobalSlot.p2 || '?',
-          format: firstGlobalSlot.format || '1v1',
-          team1:  firstGlobalSlot.team1 || null,
-          team2:  firstGlobalSlot.team2 || null,
+        prevTeam={lastQueueSlot ? {
+          p1:        lastQueueSlot.p1 || '?',
+          p2:        lastQueueSlot.p2 || '?',
+          format:    lastQueueSlot.format || '1v1',
+          team1:     lastQueueSlot.team1 || null,
+          team2:     lastQueueSlot.team2 || null,
+          is_ranked: lastQueueSlot.is_ranked,
         } : null}
       />
     </Shell>

@@ -13,10 +13,24 @@ import { useTranslation } from 'react-i18next'
 import { authFetch, matchToRow } from '../services/api'
 import styles from './Profil.module.css'
 
+async function uploadAvatar(file, user, login) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
+  const res = await fetch('/api/auth/avatar/', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erreur upload')
+  login({ ...user, avatar_url: data.avatar_url + '?v=' + Date.now() })
+}
+
 const MATCHES_PER_PAGE = 3
 
 export default function Profil() {
-  const { user, logout } = useAuth()
+  const { user, logout, login } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
 
@@ -108,15 +122,19 @@ export default function Profil() {
   const [newPartner,  setNewPartner]  = useState('')
   const [matchSearch, setMatchSearch] = useState('')
   const [matchPage,   setMatchPage]   = useState(0)
-  const [photoUrl,         setPhotoUrl]         = useState(null)
   const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
+  const [photoError,       setPhotoError]       = useState(null)
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => { setPhotoUrl(ev.target.result); setPhotoUploadOpen(false) }
-    reader.readAsDataURL(file)
+    setPhotoError(null)
+    try {
+      await uploadAvatar(file, user, login)
+      setPhotoUploadOpen(false)
+    } catch (err) {
+      setPhotoError(err.message)
+    }
   }
 
   const filteredMatches = recentMatches.filter(m =>
@@ -158,14 +176,12 @@ export default function Profil() {
               <span className={styles.photoDropIcon}>📷</span>
               <span>{t('profile.clickToChoose')}</span>
             </label>
-            {photoUrl && (
+            {user?.avatar_url && (
               <div className={styles.photoPreviewRow}>
-                <img src={photoUrl} className={styles.photoPreview} alt="preview" />
-                <button className={styles.photoRemoveBtn} onClick={() => { setPhotoUrl(null); setPhotoUploadOpen(false) }}>
-                  {t('profile.removePhoto')}
-                </button>
+                <img src={user.avatar_url} className={styles.photoPreview} alt="preview" />
               </div>
             )}
+            {photoError && <div style={{ color: '#ef4444', fontSize: 13, marginTop: 8 }}>{photoError}</div>}
             <div className={styles.photoDialogFooter}>
               <button className={styles.photoCloseBtn} onClick={() => setPhotoUploadOpen(false)}>{t('profile.close')}</button>
             </div>

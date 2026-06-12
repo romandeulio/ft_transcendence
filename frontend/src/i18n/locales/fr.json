@@ -44,6 +44,7 @@
     "play": "Jouer",
     "selectToPlay": "Sélectionne un match pour activer",
     "notParticipant": "Tu n'es pas participant de ce match",
+    "awaitingConfirmation": "En attente de confirmation des autres joueurs",
     "myMatches": "Mes matchs",
     "favFriends": "Adversaires favoris",
     "favFriendsNote": "Top 5 des adversaires contre lesquels tu as le plus joué",
@@ -59,7 +60,11 @@
     "cancelMatch": "Annuler ce match",
     "deselect": "✕ Désélectionner",
     "or": "OU",
-    "waiting": "En attente"
+    "waiting": "En attente",
+    "maxMatches": "Tu as déjà 3 matchs en attente, annules-en un avant d'en créer un nouveau.",
+    "targetMaxMatches": "{{player}} a déjà 3 matchs en attente et ne peut pas être invité(e).",
+    "pendingInvites": "Invitations en cours",
+    "noPendingInvites": "Aucune invitation en attente"
   },
   "ranking": {
     "currentSeason": "Saison actuelle",
@@ -310,7 +315,12 @@
     "declined": "{{player}} a refusé ton invitation",
     "sent": "✅ Invitation envoyée à {{player}}",
     "pendingLabel": "En attente d'acceptation",
-    "matchCancelled": "{{player}} a annulé le match"
+    "matchCancelled": "{{player}} a annulé le match",
+    "offline": "{{player}} n'est pas connecté(e), invitation annulée",
+    "winClaimReceived": "{{player}} t'invite à reprendre ta gagne dans son prochain match",
+    "winClaimDeclined": "Un gagnant a refusé de reprendre la gagne — le match a été annulé",
+    "inviteCancelled": "{{player}} a annulé son invitation",
+    "chainCancelled": "Un match de la chaîne a été annulé — ton créneau a été supprimé"
   },
   "addMatch": {
     "title": "Ajouter un match",
@@ -342,12 +352,14 @@
     "alreadyParticipant": "Tu participes déjà à ce match",
     "confirm": "Confirmer ✓",
     "you": "Vous",
+    "opponent": "Adversaire",
     "yourColor": "Votre couleur :",
     "step3Win": "Étape 3 / 4 — Reprendre la gagne ?",
     "step4Players": "Étape 4 / 4 — Joueurs",
     "opponentLocked": "Adversaire : gagnant du match ci-dessous",
     "missingPlayers": "Tous les joueurs doivent être renseignés.",
-    "duplicatePlayer": "Un joueur ne peut apparaître qu'une seule fois."
+    "duplicatePlayer": "Un joueur ne peut apparaître qu'une seule fois.",
+    "takeWinWarning": "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé."
   },
   "game": {
     "red": "Rouge",
@@ -358,6 +370,7 @@
     "removeRed": "−1 Rouge",
     "removeBlue": "−1 Bleu",
     "tie": "Égalité !",
+    "tieCancelWarning": "Ce match va être annulé — les reprises de gagne associées seront supprimées.",
     "wins": "{{color}} gagne !",
     "duration": "Durée : {{time}}",
     "close": "Terminer et fermer"

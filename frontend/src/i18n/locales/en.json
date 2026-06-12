@@ -44,6 +44,7 @@
     "play": "Play",
     "selectToPlay": "Select a match to enable",
     "notParticipant": "You are not a participant in this match",
+    "awaitingConfirmation": "Waiting for other players to confirm",
     "myMatches": "My matches",
     "favFriends": "Favourite opponents",
     "favFriendsNote": "Top 5 opponents you've played the most games against",
@@ -59,7 +60,11 @@
     "cancelMatch": "Cancel this match",
     "deselect": "✕ Deselect",
     "or": "OR",
-    "waiting": "Waiting"
+    "waiting": "Waiting",
+    "maxMatches": "You already have 3 pending matches, cancel one before creating a new one.",
+    "targetMaxMatches": "{{player}} already has 3 pending matches and cannot be invited.",
+    "pendingInvites": "Pending invitations",
+    "noPendingInvites": "No pending invitations"
   },
   "ranking": {
     "currentSeason": "Current season",
@@ -310,7 +315,12 @@
     "declined": "{{player}} declined your invitation",
     "sent": "✅ Invitation sent to {{player}}",
     "pendingLabel": "Awaiting acceptance",
-    "matchCancelled": "{{player}} cancelled the match"
+    "matchCancelled": "{{player}} cancelled the match",
+    "offline": "{{player}} is not connected, invitation cancelled",
+    "winClaimReceived": "{{player}} invites you to carry your win into their next match",
+    "winClaimDeclined": "A winner declined to carry the win — the match has been cancelled",
+    "inviteCancelled": "{{player}} cancelled their invitation",
+    "chainCancelled": "A match in the chain was cancelled — your slot has been removed"
   },
   "addMatch": {
     "title": "Add a match",
@@ -342,12 +352,14 @@
     "alreadyParticipant": "You are already a participant in this match",
     "confirm": "Confirm ✓",
     "you": "You",
+    "opponent": "Opponent",
     "yourColor": "Your color:",
     "step3Win": "Step 3 / 4 — Take the win?",
     "step4Players": "Step 4 / 4 — Players",
     "opponentLocked": "Opponent: winner of the match below",
     "missingPlayers": "All players must be filled in.",
-    "duplicatePlayer": "A player can only appear once."
+    "duplicatePlayer": "A player can only appear once.",
+    "takeWinWarning": "⚠️ Warning: if the winner(s) don't accept your invitation, the match will be cancelled."
   },
   "game": {
     "red": "Red",
@@ -358,6 +370,7 @@
     "removeRed": "−1 Red",
     "removeBlue": "−1 Blue",
     "tie": "Draw!",
+    "tieCancelWarning": "This match will be cancelled — any takeWin chains will be removed.",
     "wins": "{{color}} wins!",
     "duration": "Duration: {{time}}",
     "close": "Finish and close"

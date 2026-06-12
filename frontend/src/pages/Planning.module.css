@@ -741,3 +741,16 @@
     padding: 24px 20px;
   }
 }
+
+.dotBlue,
+.dotRed {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.dotBlue { background: #4068DB; }
+.dotRed  { background: #CD3122; }

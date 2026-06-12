@@ -26,7 +26,10 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
       <Link to="/profil" className={styles.userBlock} onClick={onClose}>
         <div className={styles.avatarWrap}>
-          <Avatar initials={user?.username?.substring(0, 2).toUpperCase() ?? '?'} size={44} bg="rgba(255,255,255,0.15)" round />
+          {user?.avatar_url
+            ? <img src={user.avatar_url} alt={user?.username ?? ''} className={styles.avatarImg} />
+            : <Avatar initials={user?.username?.substring(0, 2).toUpperCase() ?? '?'} size={44} bg="rgba(255,255,255,0.15)" round />
+          }
         </div>
         <div className={styles.userInfo}>
           <div className={styles.userName}>{user?.username ?? ''}</div>

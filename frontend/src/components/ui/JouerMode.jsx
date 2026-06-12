@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './JouerMode.module.css'
 
-export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
+export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
   const { t } = useTranslation()
 
   const slot    = match?._slot
@@ -10,10 +10,10 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
   // team1 = côté bleu (player1), team2 = côté rouge (player2)
   const labelBlue = is2v2 && slot?.team1?.filter(Boolean).length
     ? slot.team1.filter(Boolean).join(' & ')
-    : t('game.blue')
+    : slot?.player1 || t('game.blue')
   const labelRed  = is2v2 && slot?.team2?.filter(Boolean).length
     ? slot.team2.filter(Boolean).join(' & ')
-    : t('game.red')
+    : slot?.player2 || slot?.p2 || t('game.red')
   const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
   const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
   const [elapsed,   setElapsed]   = useState(0)
@@ -97,9 +97,17 @@ export default function JouerMode({ onClose, match, onComplete, scoreRed: extRed
             <span style={{ color: '#4068DB' }}>{scoreBlue}</span>
           </div>
           <div className={styles.endTime}>{t('game.duration', { time: fmt(elapsed) })}</div>
+          {isTie && (
+            <div className={styles.tieCancelWarning}>{t('game.tieCancelWarning')}</div>
+          )}
           <button className={styles.endCloseBtn} onClick={() => {
-            if (onComplete) onComplete(scoreRed, scoreBlue)
-            else onClose()
+            if (isTie) {
+              if (onTieCancel) onTieCancel()
+              else onClose()
+            } else {
+              if (onComplete) onComplete(scoreRed, scoreBlue)
+              else onClose()
+            }
           }}>
             {t('game.close')}
           </button>

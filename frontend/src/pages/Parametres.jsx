@@ -69,7 +69,7 @@ export default function Parametres() {
       formData.append('avatar', file)
 
       try {
-          const token = localStorage.getItem('access_token')
+          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
           const res   = await fetch('/api/auth/avatar/', {
               method:  'POST',
               headers: { Authorization: `Bearer ${token}` },
@@ -80,7 +80,7 @@ export default function Parametres() {
           if (!res.ok) throw new Error(data.error || 'Erreur upload')
 
           // Mettre à jour le user dans le contexte et localStorage
-          const updated = { ...user, avatar_url: data.avatar_url }
+          const updated = { ...user, avatar_url: data.avatar_url + '?v=' + Date.now() }
           login(updated)
 
       } catch (err) {
@@ -96,7 +96,7 @@ export default function Parametres() {
       setAvatarLoading(true)
       setAvatarError('')
       try {
-          const token = localStorage.getItem('access_token')
+          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
           const res   = await fetch('/api/auth/avatar/', {
               method:  'DELETE',
               headers: { Authorization: `Bearer ${token}` },

@@ -44,6 +44,7 @@
     "play": "שחק",
     "selectToPlay": "בחר משחק כדי להפעיל",
     "notParticipant": "אינך משתתף במשחק זה",
+    "awaitingConfirmation": "ממתין לאישור שחקנים אחרים",
     "myMatches": "המשחקים שלי",
     "favFriends": "יריבים מועדפים",
     "favFriendsNote": "5 היריבים שנגדם שיחקת הכי הרבה",
@@ -59,7 +60,11 @@
     "cancelMatch": "בטל משחק זה",
     "deselect": "✕ בטל בחירה",
     "or": "או",
-    "waiting": "ממתין"
+    "waiting": "ממתין",
+    "maxMatches": "כבר יש לך 3 משחקים בהמתנה, בטל אחד לפני יצירת חדש.",
+    "targetMaxMatches": "ל-{{player}} כבר יש 3 משחקים בהמתנה ולא ניתן להזמין אותו/ה.",
+    "pendingInvites": "הזמנות בהמתנה",
+    "noPendingInvites": "אין הזמנות בהמתנה"
   },
   "ranking": {
     "currentSeason": "עונה נוכחית",
@@ -310,7 +315,12 @@
     "declined": "{{player}} דחה את ההזמנה שלך",
     "sent": "✅ הזמנה נשלחה ל-{{player}}",
     "pendingLabel": "ממתין לאישור",
-    "matchCancelled": "{{player}} ביטל את המשחק"
+    "matchCancelled": "{{player}} ביטל את המשחק",
+    "offline": "{{player}} אינו מחובר, ההזמנה בוטלה",
+    "winClaimReceived": "{{player}} מזמין אותך לשאת את הניצחון שלך למשחק הבא שלו",
+    "winClaimDeclined": "מנצח סירב להעביר את הניצחון — המשחק בוטל",
+    "inviteCancelled": "{{player}} ביטל את ההזמנה",
+    "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר"
   },
   "addMatch": {
     "title": "הוסף משחק",
@@ -342,12 +352,14 @@
     "alreadyParticipant": "אתה כבר משתתף במשחק זה",
     "confirm": "אשר ✓",
     "you": "אתה",
+    "opponent": "יריב",
     "yourColor": "הצבע שלך:",
     "step3Win": "שלב 3 / 4 — לקחת את הניצחון?",
     "step4Players": "שלב 4 / 4 — שחקנים",
     "opponentLocked": "יריב: מנצח המשחק שלהלן",
     "missingPlayers": "כל השחקנים חייבים להיות מלאים.",
-    "duplicatePlayer": "שחקן יכול להופיע רק פעם אחת."
+    "duplicatePlayer": "שחקן יכול להופיע רק פעם אחת.",
+    "takeWinWarning": "⚠️ שים לב: אם המנצח(ים) לא יקבלו את ההזמנה שלך, המשחק יבוטל."
   },
   "game": {
     "red": "אדום",
@@ -358,6 +370,7 @@
     "removeRed": "−1 אדום",
     "removeBlue": "−1 כחול",
     "tie": "!תיקו",
+    "tieCancelWarning": "משחק זה יבוטל — שרשראות הרפיזה הקשורות יוסרו.",
     "wins": "!{{color}} מנצח",
     "duration": "משך: {{time}}",
     "close": "סיים וסגור"

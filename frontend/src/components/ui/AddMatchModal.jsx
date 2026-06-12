@@ -14,7 +14,6 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     prevTeam.team1?.includes(u) ||
     prevTeam.team2?.includes(u)
   ))
-  const canTakeWin = !!prevTeam && !userIsInPrevTeam && prevTeam.format === joinFormat
   const [step,            setStep]            = useState(1)
   const [joinMode,        setJoinMode]        = useState('compet')
   const [joinFormat,      setJoinFormat]      = useState('1v1')
@@ -23,6 +22,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
   const [takeWin,         setTakeWin]         = useState(null)
   const [myColor,         setMyColor]         = useState('blue')
   const [validationError, setValidationError] = useState(null)
+  const canTakeWin = !!prevTeam && !userIsInPrevTeam && prevTeam.format === joinFormat && prevTeam.is_ranked !== false
 
   useEffect(() => {
     if (!open) return
@@ -86,6 +86,31 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
 
     setValidationError(null)
 
+    // Vérifier l'existence des joueurs saisis (opponents + coéquipier)
+    const playersToVerify = [...new Set(
+      [...bluePlayers, ...redPlayers].filter(p => p?.trim() && p.trim() !== user?.username)
+    )]
+    if (playersToVerify.length > 0) {
+      try {
+        const token = localStorage.getItem('token')
+        const resp = await fetch('/api/auth/users/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (resp.ok) {
+          const knownUsers = await resp.json()
+          const known = new Set(
+            (Array.isArray(knownUsers) ? knownUsers : (knownUsers.results ?? []))
+              .map(u => u.username || u.login)
+          )
+          const invalid = playersToVerify.filter(p => !known.has(p))
+          if (invalid.length > 0) {
+            setValidationError(`Joueur(s) introuvable(s) : ${invalid.join(', ')}`)
+            return
+          }
+        }
+      } catch { /* si l'API échoue, on laisse passer */ }
+    }
+
     // Quand takeWin=true : l'adversaire sera le gagnant du match précédent (pas saisi)
     let finalBlue, finalRed
     if (takeWin === true) {
@@ -117,7 +142,11 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     const onKeyDown = (e) => {
       if (e.key !== 'Enter') return
       if (step === 1) setStep(2)
-      else if (step === 2) setStep(initialOpponent ? 4 : 3)
+      else if (step === 2) {
+        const skip = joinMode === 'chill' || !!initialOpponent
+        if (skip) setTakeWin(false)
+        setStep(skip ? 4 : 3)
+      }
       else if (step === 3 && joinFormat === 'Seul') confirmRef.current()
       else if (step === 3 && takeWin !== null) {
         // 1v1 + prendre la gagne → pas besoin de choisir l'adversaire
@@ -128,7 +157,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, step, joinFormat, takeWin])
+  }, [open, step, joinFormat, takeWin, joinMode, initialOpponent])
 
   return (
     <Modal open={open} onClose={handleClose} title={t('addMatch.title')}>
@@ -155,7 +184,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         <div>
           <div className={styles.stepLabel}>{t('addMatch.step2')}</div>
           <div className={styles.formatBtns}>
-            {['1v1', '2v2', 'Seul'].filter(f => !initialOpponent || f !== 'Seul').map(f => (
+            {['1v1', '2v2'].filter(f => !initialOpponent || f !== 'Seul').map(f => (
               <button key={f} className={`${styles.modeBtn} ${joinFormat === f ? styles.modeBtnCompet : ''}`} onClick={() => setJoinFormat(f)}>
                 {f === '1v1' ? '⚔️ 1v1' : f === '2v2' ? '👥 2v2' : t('addMatch.solo')}
               </button>
@@ -163,7 +192,11 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
           </div>
           <div className={styles.stepActions}>
             <button className={styles.backBtn} onClick={() => setStep(1)}>{t('addMatch.back')}</button>
-            <button className={styles.nextBtn} onClick={() => setStep(initialOpponent ? 4 : 3)}>{t('addMatch.next')}</button>
+            <button className={styles.nextBtn} onClick={() => {
+              const skip = joinMode === 'chill' || !!initialOpponent
+              if (skip) setTakeWin(false)
+              setStep(skip ? 4 : 3)
+            }}>{t('addMatch.next')}</button>
           </div>
         </div>
       )}
@@ -227,6 +260,24 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             </>
           )}
 
+          {takeWin === true && (
+            <div className={styles.takeWinWarning}>{t('addMatch.takeWinWarning')}</div>
+          )}
+
+          {takeWin === true && joinFormat === '1v1' && (
+            <div className={styles.colorToggle} style={{ marginTop: 12 }}>
+              <span className={styles.colorToggleLabel}>{t('addMatch.yourColor')}</span>
+              <button
+                className={`${styles.colorBtn} ${myColor === 'blue' ? styles.colorBtnBlueActive : ''}`}
+                onClick={() => setMyColor('blue')}
+              >{t('addMatch.blueTeam')}</button>
+              <button
+                className={`${styles.colorBtn} ${myColor === 'red' ? styles.colorBtnRedActive : ''}`}
+                onClick={() => setMyColor('red')}
+              >{t('addMatch.redTeam')}</button>
+            </div>
+          )}
+
           <div className={styles.stepActions}>
             <button className={styles.backBtn} onClick={() => setStep(2)}>{t('addMatch.back')}</button>
             {joinFormat === 'Seul' ? (
@@ -253,7 +304,6 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         <div>
           <div className={styles.stepLabel}>{t('addMatch.step4Players')}</div>
 
-          {/* Choix de couleur (toujours affiché) */}
           <div className={styles.colorToggle}>
             <span className={styles.colorToggleLabel}>{t('addMatch.yourColor')}</span>
             <button
@@ -270,7 +320,37 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             {/* Équipe rouge */}
             <div className={styles.teamRed}>
               <div className={styles.teamLabel}>{t('addMatch.redTeam')}</div>
-              {myColor === 'red' ? (
+              {initialOpponent && myColor === 'red' ? (
+                // initialOpponent, user rouge : utilisateur verrouillé + coéquipier libre (2v2)
+                <>
+                  <div className={styles.lockedPlayer}>
+                    <span>{user?.username}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.you')}</span>
+                  </div>
+                  {joinFormat === '2v2' && (
+                    <LoginInput
+                      value={bluePlayers[1] || ''}
+                      onChange={v => setBluePlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                      placeholder={t('addMatch.redPlayer2v2', { num: 2 })}
+                    />
+                  )}
+                </>
+              ) : initialOpponent ? (
+                // initialOpponent, user bleu : adversaire verrouillé rouge + coéquipier libre (2v2)
+                <>
+                  <div className={styles.lockedPlayer}>
+                    <span>{initialOpponent}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.opponent')}</span>
+                  </div>
+                  {joinFormat === '2v2' && (
+                    <LoginInput
+                      value={redPlayers[1] || ''}
+                      onChange={v => setRedPlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                      placeholder={t('addMatch.redPlayer2v2', { num: 2 })}
+                    />
+                  )}
+                </>
+              ) : myColor === 'red' ? (
                 // Utilisateur = rouge
                 <>
                   <div className={styles.lockedPlayer}>
@@ -306,7 +386,37 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             {/* Équipe bleue */}
             <div className={styles.teamBlue}>
               <div className={styles.teamLabel}>{t('addMatch.blueTeam')}</div>
-              {myColor === 'blue' ? (
+              {initialOpponent && myColor === 'red' ? (
+                // initialOpponent, user rouge : adversaire verrouillé bleu + coéquipier libre (2v2)
+                <>
+                  <div className={styles.lockedPlayer}>
+                    <span>{initialOpponent}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.opponent')}</span>
+                  </div>
+                  {joinFormat === '2v2' && (
+                    <LoginInput
+                      value={redPlayers[1] || ''}
+                      onChange={v => setRedPlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                      placeholder={t('addMatch.bluePlayer2v2', { num: 2 })}
+                    />
+                  )}
+                </>
+              ) : initialOpponent ? (
+                // initialOpponent, user bleu : utilisateur verrouillé bleu + coéquipier libre (2v2)
+                <>
+                  <div className={styles.lockedPlayer}>
+                    <span>{user?.username}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.you')}</span>
+                  </div>
+                  {joinFormat === '2v2' && (
+                    <LoginInput
+                      value={bluePlayers[1] || ''}
+                      onChange={v => setBluePlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                      placeholder={t('addMatch.bluePlayer2v2', { num: 2 })}
+                    />
+                  )}
+                </>
+              ) : myColor === 'blue' ? (
                 // Utilisateur = bleu
                 <>
                   <div className={styles.lockedPlayer}>
@@ -344,7 +454,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             <div className={styles.validationError}>{validationError}</div>
           )}
           <div className={styles.stepActions}>
-            <button className={styles.backBtn} onClick={() => setStep(3)}>{t('addMatch.back')}</button>
+            <button className={styles.backBtn} onClick={() => setStep(joinMode === 'chill' || initialOpponent ? 2 : 3)}>{t('addMatch.back')}</button>
             <button className={styles.confirmBtn} onClick={handleConfirm}>{t('addMatch.confirm')}</button>
           </div>
         </div>

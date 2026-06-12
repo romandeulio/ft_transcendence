@@ -342,6 +342,54 @@
   white-space: nowrap;
 }
 
+/* Invitations en cours */
+.inviteRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+.inviteRow:last-child { border-bottom: none; }
+
+.inviteRowInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.inviteRowFrom { font-size: 13px; font-weight: 700; color: var(--ink); }
+.inviteRowDetail { font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.inviteRowActions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.acceptSmallBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--green);
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.acceptSmallBtn:hover { opacity: 0.88; }
+
+.declineSmallBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  color: var(--ink2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.declineSmallBtn:hover { background: #fee2e2; border-color: #CD3122; color: #CD3122; }
+
 /* Match picker */
 .matchPickList { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 
@@ -578,6 +626,19 @@
 }
 .confirmBtn:hover { opacity: 0.88; }
 .confirmBtn:hover { background: #A82215; }
+
+.dotBlue,
+.dotRed {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.dotBlue { background: #4068DB; }
+.dotRed  { background: #CD3122; }
 
 /* ── Mobile ── */
 @media (max-width: 768px) {

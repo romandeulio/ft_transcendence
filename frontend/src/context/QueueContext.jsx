@@ -26,8 +26,13 @@ export function QueueProvider({ children }) {
   const [pendingInvites, setPendingInvites] = useState([])   // received invites (J2 side)
   const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (J1 side)
   const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
+  const pendingInvitesRef = useRef([])                       // mirror of pendingInvites for non-stale reads in effects
+  const acceptedInviteFromsRef = useRef({})                  // inviteId → from, for 2v2 partial-accept tracking
 
   const prevConnected = useRef(false)
+
+  // Keep ref in sync so effect handlers can read latest pendingInvites without stale closure
+  useEffect(() => { pendingInvitesRef.current = pendingInvites }, [pendingInvites])
 
   const wsUrl = user?.username
     ? `/ws/queue/?username=${encodeURIComponent(user.username)}`
@@ -38,6 +43,27 @@ export function QueueProvider({ children }) {
     if (!data) return
     if (data.type === 'queue_state' && data.queue) {
       setQueue(data.queue)
+      // Sync winner into takeWin slots (handles missed game_ended on reconnect)
+      setMySlots(prev => {
+        let changed = false
+        const next = prev.map(s => {
+          if (!s.takeWin || s.p2) return s
+          const qs = data.queue.find(q => q._localId === s._localId || q.id === s._localId)
+          if (qs?.p2) {
+            changed = true
+            return {
+              ...s, p2: qs.p2,
+              player1: qs.player1 || s.player1,
+              player2: qs.player2 || s.player2,
+              ...(qs.player1_teammate ? { player1_teammate: qs.player1_teammate } : {}),
+              ...(qs.player2_teammate ? { player2_teammate: qs.player2_teammate } : {}),
+            }
+          }
+          return s
+        })
+        if (changed) localStorage.setItem('myQueueSlots', JSON.stringify(next))
+        return changed ? next : prev
+      })
     } else if (data.type === 'game_state' && data.game) {
       const g = data.game
       const u = user?.username
@@ -51,18 +77,52 @@ export function QueueProvider({ children }) {
       setMySlots(prev => {
         let next = prev.filter(s => s._localId !== data.gameId)
         if (data.winner) {
-          next = next.map(s =>
-            s.takeWin && !s.p2 ? {
+          next = next.map(s => {
+            if (!s.takeWin || s.p2) return s
+            const fillBlue = s.player1 == null
+            return {
               ...s,
               p2: data.winner,
-              player2: data.winner,
-              ...(data.winner_teammate ? { player2_teammate: data.winner_teammate } : {}),
-            } : s
-          )
+              ...(fillBlue ? {
+                player1: data.winner,
+                ...(data.winner_teammate ? { player1_teammate: data.winner_teammate } : {}),
+              } : {
+                player2: data.winner,
+                ...(data.winner_teammate ? { player2_teammate: data.winner_teammate } : {}),
+              }),
+            }
+          })
         }
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
+
+    } else if (data.type === 'win_invite') {
+      // Winner receives invite to confirm participation in the next takeWin match
+      setPendingInvites(prev => {
+        if (prev.find(i => i.inviteId === data.inviteId)) return prev
+        return [...prev, {
+          inviteId:   data.inviteId,
+          from:       data.from,
+          slot:       data.slot,
+          isWinClaim: true,
+          slotId:     data.slotId,
+        }]
+      })
+
+    } else if (data.type === 'win_claim_declined') {
+      // Winner declined → remove our takeWin slot from mySlots
+      setMySlots(prev => {
+        const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
+        localStorage.setItem('myQueueSlots', JSON.stringify(next))
+        return next
+      })
+      setInviteResults(prev => [...prev, {
+        inviteId: `wcd-${Date.now()}`,
+        accepted: false,
+        target: '?',
+        winClaimDeclined: true,
+      }])
 
     } else if (data.type === 'invite_received') {
       // J2 receives an invite from J1
@@ -72,8 +132,22 @@ export function QueueProvider({ children }) {
       })
 
     } else if (data.type === 'invite_cancelled') {
-      // J1 annulé → J2 retire l'invite de sa liste
-      setPendingInvites(prev => prev.filter(i => i.inviteId !== data.inviteId))
+      // J1 cancelled → remove invite + show notification
+      // Read from ref to avoid stale closure; also check acceptedInviteFromsRef for 2v2 partial accepts
+      const inviteId = data.inviteId
+      const inv = pendingInvitesRef.current.find(i => i.inviteId === inviteId)
+      const fromAccepted = acceptedInviteFromsRef.current[inviteId]
+      const from = inv?.from ?? fromAccepted
+      if (from) {
+        setInviteResults(r => [...r, {
+          inviteId: `ic-${inviteId}`,
+          accepted: false,
+          target: from,
+          inviteCancelled: true,
+        }])
+        delete acceptedInviteFromsRef.current[inviteId]
+      }
+      setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
 
     } else if (data.type === 'p2_left') {
       // J2 a annulé le match accepté → J1 retire le slot de mySlots
@@ -84,11 +158,19 @@ export function QueueProvider({ children }) {
       })
 
     } else if (data.type === 'match_cancelled') {
+      if (data.slotId) {
+        setMySlots(prev => {
+          const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
+          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+          return next
+        })
+      }
       setInviteResults(prev => [...prev, {
         inviteId: `cancel-${Date.now()}-${Math.random()}`,
         accepted: false,
-        target: data.cancelledBy,
+        target: data.cancelledBy || '',
         cancelled: true,
+        chain: data.chain || false,
       }])
 
     } else if (data.type === 'invite_response') {
@@ -224,8 +306,8 @@ export function QueueProvider({ children }) {
     setActiveGame(null)
   }
 
-  const signalGameEnd = (gameId) => {
-    if (gameId) send({ action: 'game_end', gameId })
+  const signalGameEnd = (gameId, winner, winnerTeammate, matchType) => {
+    if (gameId) send({ action: 'game_end', gameId, winner: winner || null, winner_teammate: winnerTeammate || null, match_type: matchType || 'SOLO', completed: true })
   }
 
   // ── Invite API ──────────────────────────────────────────────────────────────
@@ -261,10 +343,16 @@ export function QueueProvider({ children }) {
     // La queue_state broadcast côté serveur mettra à jour invitedUpcoming automatiquement
   }
 
-  const respondToInvite = (inviteId, accepted, slot, fromUser) => {
-    send({ action: 'invite_response', inviteId, accepted, from: fromUser })
-    // J2 does NOT add to mySlots — invitedUpcoming in Accueil already shows the slot
-    // once J1's joinQueue fires and the slot appears in the global queue with p2=J2.
+  const respondToInvite = (inviteId, accepted, slot, fromUser, isWinClaim, slotId) => {
+    if (isWinClaim) {
+      send({ action: 'win_claim_response', inviteId, accepted })
+    } else {
+      send({ action: 'invite_response', inviteId, accepted, from: fromUser })
+      if (accepted && fromUser) {
+        // Track accepted invite so we can notify if J1 later cancels (2v2 partial-accept case)
+        acceptedInviteFromsRef.current[inviteId] = fromUser
+      }
+    }
     setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
   }
 

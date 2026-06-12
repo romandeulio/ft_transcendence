@@ -1,3 +1,124 @@
+# Changelog — Session du 12 juin 2026
+
+---
+
+## Patch 3 — takeWin par invitation, offline delivery, corrections UI
+
+> Depuis le commit `5946643` — *fix: 2v2 bugs, takeWin invites, login redirect, seed users*
+
+### 1. "Reprendre la gagne" — flux par invitation obligatoire
+
+Le créneau `takeWin` n'affecte plus automatiquement le gagnant comme adversaire. À la fin d'un match, le gagnant reçoit une **invitation WS `win_invite`** qu'il doit accepter ou refuser.
+
+- **Refus** : le créneau takeWin est annulé, le propriétaire reçoit `win_claim_declined`, les créneaux en aval sont supprimés en cascade.
+- **Acceptation** : le slot est rempli avec le gagnant (côté bleu ou rouge selon qui est absent).
+- `queue.py` : nouvelles structures `win_invites`, `online_users`, `pending_invites` ; nouvelle action `win_claim_response` ; `game_end` supporte `winner`, `winner_teammate`, `match_type`, `completed=True`.
+- `QueueContext.jsx` : handlers `win_invite` et `win_claim_declined` ; `signalGameEnd` transmet le gagnant dès la fin du match.
+- `InviteLayer.jsx` : carte d'invitation différente pour les win claims.
+
+---
+
+### 2. Livraison des invitations hors-ligne
+
+Quand un utilisateur est déconnecté au moment où on lui envoie une invitation (match ou win claim), le message est stocké dans `pending_invites` et livré dès sa reconnexion.
+
+- `queue.py` : `connect()` consomme `pending_invites` à la connexion ; `invite` et `win_invite` vérifient `online_users` avant d'envoyer.
+- `cancel_invite` nettoie aussi le stockage offline.
+
+---
+
+### 3. Annulation en cascade des créneaux takeWin (`parentSlotId`)
+
+Chaque créneau takeWin enregistre maintenant `parentSlotId` (l'id du match dont il dépend). Quand un match est annulé ou qu'une égalité est déclarée, `_cascade_cancel_takewins` remonte la chaîne et supprime récursivement tous les créneaux dépendants.
+
+- `queue.py` : méthode `_cascade_cancel_takewins` ; `leave` et `leave_as_p2` l'appellent.
+- `QueueContext.jsx` : `match_cancelled` retire maintenant le slot concerné de `mySlots` + flag `chain`.
+- `Accueil.jsx` / `Planning.jsx` : `parentSlotId` et `createdAt` ajoutés à la construction du slot.
+
+---
+
+### 4. Limite de 3 matchs en attente
+
+Un utilisateur ne peut pas avoir plus de 3 matchs en attente simultanément (ni être invité dans un match si la cible dépasse déjà 3).
+
+- `Accueil.jsx` et `Planning.jsx` : vérification `userPendingCount() >= 3` + vérification des cibles invitées.
+- Nouvelles clés i18n `home.maxMatches` / `home.targetMaxMatches`.
+
+---
+
+### 5. Égalité → annulation automatique
+
+Quand un match se termine sur une égalité, `JouerMode` affiche un avertissement et appelle `onTieCancel` au lieu de `onComplete`. Le slot est retiré de la file et les créneaux en aval sont annulés.
+
+- `JouerMode.jsx` : prop `onTieCancel`, warning `.tieCancelWarning`, noms de joueurs affichés à la place des labels "Bleu / Rouge".
+- `Accueil.jsx` : `handleTieCancel` déclenche `leaveQueue` + `closeGame`.
+
+---
+
+### 6. Corrections UI — matchs prévus, modale, planning
+
+- **`vsColor`** : indicateurs bleu/rouge (`.dotBlue` / `.dotRed`) dans la liste des matchs (`Accueil`) et sur les cartes du planning (`Planning`).
+- **`prevTeam`** utilise désormais le dernier slot de la file (`lastQueueSlot`) et transmet `is_ranked` — le bouton "Reprendre la gagne" est désactivé si le mode diffère.
+- **`AddMatchModal`** : mode Chill saute l'étape takeWin ; format "Seul" retiré en mode `initialOpponent` ; sélecteur de couleur visible dès l'étape 3 si `takeWin=true` ; message d'avertissement `takeWinWarning` ; retour étape 4 → étape 2 pour Chill/initialOpponent.
+- **`InviteLayer`** : auto-dismiss résultats après 60 s ; cartes d'invitation masquées après 60 s (persistent dans la section Accueil) ; nouveaux types de notification (`winClaimDeclined`, `inviteCancelled`, `chainCancelled`).
+- **Carte "Invitations en cours"** ajoutée dans `Accueil` avec boutons Accepter / Refuser inline.
+- **Avatar dans la Sidebar** : affiche la photo si `user.avatar_url` est défini.
+- **`Profil.jsx`** : upload avatar appelle directement l'API (synchrone) avec cache-buster `?v=`.
+- **`Parametres.jsx`** : fallback `localStorage.getItem('token')` pour le token d'avatar.
+- Suppression `django-ratelimit` de `requirements.txt`.
+
+---
+
+### Nouvelles clés i18n (4 langues)
+
+| Clé | Exemple (fr) |
+|---|---|
+| `home.awaitingConfirmation` | "En attente de confirmation des autres joueurs" |
+| `home.maxMatches` | "Tu as déjà 3 matchs en attente, annules-en un avant d'en créer un nouveau." |
+| `home.targetMaxMatches` | "{{player}} a déjà 3 matchs en attente et ne peut pas être invité(e)." |
+| `home.pendingInvites` / `home.noPendingInvites` | "Invitations en cours" / "Aucune invitation en attente" |
+| `invite.offline` | "{{player}} n'est pas connecté(e), invitation annulée" |
+| `invite.winClaimReceived` | "{{player}} t'invite à reprendre ta gagne dans son prochain match" |
+| `invite.winClaimDeclined` | "Un gagnant a refusé de reprendre la gagne — le match a été annulé" |
+| `invite.inviteCancelled` | "{{player}} a annulé son invitation" |
+| `invite.chainCancelled` | "Un match de la chaîne a été annulé — ton créneau a été supprimé" |
+| `addMatch.opponent` | "Adversaire" |
+| `addMatch.takeWinWarning` | "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé." |
+| `game.tieCancelWarning` | "Ce match va être annulé — les reprises de gagne associées seront supprimées." |
+
+---
+
+### Fichiers modifiés (patch 3)
+
+```
+backend/
+  realtime/consumers/queue.py    ← win_invites, offline delivery, cascade cancel
+  requirements.txt               ← suppression django-ratelimit
+
+frontend/src/
+  components/
+    layout/Sidebar.jsx           ← avatar image si avatar_url
+    layout/Sidebar.module.css    ← .avatarImg
+    ui/AddMatchModal.jsx         ← chill skip, takeWinWarning, locked opponent
+    ui/AddMatchModal.module.css  ← .takeWinWarning
+    ui/InviteLayer.jsx           ← auto-dismiss, win claim, nouvelles notifs
+    ui/JouerMode.jsx             ← onTieCancel, noms joueurs, warning égalité
+    ui/JouerMode.module.css      ← .tieCancelWarning
+  context/
+    QueueContext.jsx             ← win_invite, offline, cascade, signalGameEnd
+  i18n/locales/
+    fr.json / en.json / es.json / he.json
+  pages/
+    Accueil.jsx                  ← vsColor, lastQueueSlot, limite 3, tie cancel, carte invitations
+    Accueil.module.css           ← .dotBlue/.dotRed, .inviteRow*
+    Parametres.jsx               ← fallback token, cache-buster avatar
+    Planning.jsx                 ← limite 3, parentSlotId, dotBlue/dotRed
+    Planning.module.css          ← .dotBlue/.dotRed
+    Profil.jsx                   ← upload avatar direct API
+```
+
+---
+
 # Changelog — Session du 11 juin 2026
 
 ---
