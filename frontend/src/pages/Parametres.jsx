@@ -112,6 +112,53 @@ export default function Parametres() {
           setAvatarLoading(false)
       }
   }
+
+  const handleExport = async () => {
+    const token = localStorage.getItem("access_token")
+
+    const res = await fetch("/api/auth/gdpr/export/?format=json", {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+
+    if (!res.ok) {
+        alert("Erreur export")
+        return
+    }
+
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "my_data.json"
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Supprimer définitivement votre compte ?"))
+        return
+
+    const token = localStorage.getItem("access_token")
+
+    const res = await fetch("/api/auth/gdpr/delete/", {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+
+    if (!res.ok) {
+        alert("Erreur suppression")
+        return
+    }
+
+    logout()
+    navigate("/login")
+  }
   return (
     <Shell>
       <Topbar title={t('topbar.settings')} titleSize={30} />
@@ -247,7 +294,7 @@ export default function Parametres() {
           {activeTab === 'account' && (
             <div>
               <div className={styles.section}>
-                <button className={styles.btnSecondary}>{t('settings.account.export')}</button>
+                <button className={styles.btnSecondary} onClick={handleExport}>{t('settings.account.export')}</button>
               </div>
               <div className={styles.section}>
                 <a href="#" className={styles.link}>{t('settings.account.privacy')}</a>
@@ -266,7 +313,7 @@ export default function Parametres() {
                     <div className={styles.dangerLabel}>{t('settings.account.deleteAccount')}</div>
                     <div className={styles.dangerSub}>{t('settings.account.deleteAccountSub')}</div>
                   </div>
-                  <button className={styles.btnDangerFill}>{t('settings.account.delete')}</button>
+                  <button className={styles.btnDangerFill} onClick={handleDeleteAccount}>{t('settings.account.delete')}</button>
                 </div>
               </div>
             </div>

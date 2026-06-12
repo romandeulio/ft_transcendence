@@ -1,7 +1,10 @@
-import csv, json
+import csv, json, os, uuid
 from django.http import HttpResponse
+from django.conf import settings
+from .models import User
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 class GDPRExportView(APIView):
     permission_classes = [IsAuthenticated]
@@ -16,14 +19,28 @@ class GDPRExportView(APIView):
                 'email': user.email,
                 'created_at': str(user.created_at),
             },
-            'ranking_history': list(
-                user.rankinghistory_set.values(
-                    'mode', 'scope', 'score_before', 'score_after', 'score_delta', 'recorded_at'
+            "rankings": list(
+                user.rankings.values(
+                    "mode",
+                    "scope",
+                    "score",
+                    "wins",
+                    "losses",
                 )
             ),
-            'bets': list(
-                user.bet_set.values('amount', 'result', 'payout', 'created_at')
+            'ranking_history': list(
+                user.ranking_history.values(
+                    'mode',
+                    'scope',
+                    'score_before',
+                    'score_after',
+                    'score_delta',
+                    'recorded_at'
+                )
             ),
+            #'bets': list(
+            #    user.bets.values('amount', 'result', 'payout')#, 'created_at')
+            #),
         }
 
         if fmt == 'csv':
@@ -41,14 +58,32 @@ class GDPRDeleteView(APIView):
 
     def delete(self, request):
         user = request.user
-        # anonyme pas delete
-        user.email = f'deleted_{user.id}@deleted.invalid'
-        user.username = f'deleted_{user.id}'
-        user.password_hash = ''
+
+        # Supprimer l'avatar local
+        if user.avatar_url:
+            path = os.path.join(settings.MEDIA_ROOT, user.avatar_url.replace("/media/", ""))
+            if os.path.exists(path):
+                os.remove(path)
+
+        # Anonymisation
+        user.username = f"del{str(user.id)[:5]}"
+        user.email = f"{uuid.uuid4()}@deleted.invalid"
+        user.set_unusable_password()
+        if user.avatar_url:
+            path = os.path.join(
+                settings.MEDIA_ROOT,
+                user.avatar_url.replace("/media/", "")
+            )
+            if os.path.exists(path):
+                os.remove(path)
         user.avatar_url = None
         user.oauth_42_id = None
         user.totp_secret = None
+        user.is_2fa_enabled = False
+
         user.is_active = False
         user.gdpr_deleted = True
+
         user.save()
-        return Response({'status': 'Compte supprimé'})
+
+        return Response({"status": "Compte anonymisé"})
