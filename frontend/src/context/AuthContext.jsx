@@ -14,7 +14,8 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('token')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
   }
 

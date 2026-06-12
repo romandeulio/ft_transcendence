@@ -178,12 +178,27 @@ export default function Profil() {
           <div className={styles.heroLeft}>
             <div className={styles.avatarWrap}>
               <div className={styles.avatarStack}>
-                {photoUrl
-                  ? <img src={photoUrl} className={styles.avatarPhoto} alt="avatar" onClick={() => setPhotoUploadOpen(true)} />
-                  : <div onClick={() => setPhotoUploadOpen(true)} style={{ cursor: 'pointer' }}>
-                      <Avatar initials={myLogin[0]?.toUpperCase() ?? '?'} size={66} bg="var(--color-primary)" color="#fff" round />
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      className={styles.avatarPhoto}
+                      alt="avatar"
+                      onClick={() => setPhotoUploadOpen(true)}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => setPhotoUploadOpen(true)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Avatar
+                        initials={myLogin[0]?.toUpperCase() ?? '?'}
+                        size={66}
+                        bg="var(--color-primary)"
+                        color="#fff"
+                        round
+                      />
                     </div>
-                }
+                  )}
                 <button className={styles.photoUploadBtn} onClick={() => setPhotoUploadOpen(true)}>{t('profile.photo')}</button>
               </div>
             </div>

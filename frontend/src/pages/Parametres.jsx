@@ -18,7 +18,7 @@ const LANG_OPTIONS = [
 ]
 
 export default function Parametres() {
-  const { user, logout } = useAuth()
+  const { user, logout, login } = useAuth()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const [searchParams] = useSearchParams()
@@ -55,6 +55,63 @@ export default function Parametres() {
 
   const noticeSections = t('settings.notice.sections', { returnObjects: true })
 
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const [avatarError,   setAvatarError]   = useState('')
+
+  const handleAvatarUpload = async (e) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      setAvatarLoading(true)
+      setAvatarError('')
+
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      try {
+          const token = localStorage.getItem('access_token')
+          const res   = await fetch('/api/auth/avatar/', {
+              method:  'POST',
+              headers: { Authorization: `Bearer ${token}` },
+              body:    formData,
+              // Ne pas mettre Content-Type — le navigateur le gère avec le boundary
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Erreur upload')
+
+          // Mettre à jour le user dans le contexte et localStorage
+          const updated = { ...user, avatar_url: data.avatar_url }
+          login(updated)
+
+      } catch (err) {
+          setAvatarError(err.message)
+      } finally {
+          setAvatarLoading(false)
+          // Reset l'input pour permettre de re-uploader le même fichier
+          document.getElementById('avatar-input').value = ''
+      }
+  }
+
+  const handleAvatarDelete = async () => {
+      setAvatarLoading(true)
+      setAvatarError('')
+      try {
+          const token = localStorage.getItem('access_token')
+          const res   = await fetch('/api/auth/avatar/', {
+              method:  'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+          })
+          if (!res.ok) throw new Error('Erreur suppression')
+
+          const updated = { ...user, avatar_url: null }
+          login(updated)
+
+      } catch (err) {
+          setAvatarError(err.message)
+      } finally {
+          setAvatarLoading(false)
+      }
+  }
   return (
     <Shell>
       <Topbar title={t('topbar.settings')} titleSize={30} />
@@ -80,27 +137,61 @@ export default function Parametres() {
 
         <div className={styles.panel}>
           {activeTab === 'profile' && (
-            <div>
-              <div className={styles.section}>
-                <div className={styles.sectionTitle}>{t('settings.profile.photo')}</div>
-                <div className={styles.avatarRow}>
-                  <div className={styles.avatarPreview}>LT</div>
-                  <div className={styles.avatarBtns}>
-                    <button className={styles.btnSecondary}>{t('settings.profile.edit')}</button>
-                    <button className={styles.btnDanger}>{t('settings.profile.delete')}</button>
+              <div>
+                  <div className={styles.section}>
+                      <div className={styles.sectionTitle}>{t('settings.profile.photo')}</div>
+                      <div className={styles.avatarRow}>
+
+                          {/* Affichage de la photo */}
+                          <div className={styles.avatarPreview}>
+                              {user?.avatar_url
+                                  ? <img
+                                      src={user.avatar_url}
+                                      alt="avatar"
+                                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                    />
+                                  : (user?.username?.[0]?.toUpperCase() ?? '?')
+                              }
+                          </div>
+
+                          <div className={styles.avatarBtns}>
+                              {/* Input file caché */}
+                              <input
+                                  id="avatar-input"
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: 'none' }}
+                                  onChange={handleAvatarUpload}
+                              />
+                              <button
+                                  className={styles.btnSecondary}
+                                  onClick={() => document.getElementById('avatar-input').click()}
+                                  disabled={avatarLoading}
+                              >
+                                  {avatarLoading ? 'Upload...' : t('settings.profile.edit')}
+                              </button>
+                              <button
+                                  className={styles.btnDanger}
+                                  onClick={handleAvatarDelete}
+                                  disabled={!user?.avatar_url || avatarLoading}
+                              >
+                                  {t('settings.profile.delete')}
+                              </button>
+                          </div>
+                      </div>
+                      {avatarError && <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px' }}>{avatarError}</p>}
                   </div>
-                </div>
+
+                  <div className={styles.section}>
+                      <label className={styles.label}>{t('settings.profile.login42')}</label>
+                      <input className={styles.inputLocked} value={user?.login ?? ''} readOnly />
+                  </div>
+                  <div className={styles.section}>
+                      <label className={styles.label}>{t('settings.profile.email')}</label>
+                      <input className={styles.input} value={email} onChange={e => setEmail(e.target.value)} />
+                  </div>
+                  <button className={styles.btnPrimary}>{t('settings.profile.save')}</button>
               </div>
-              <div className={styles.section}>
-                <label className={styles.label}>{t('settings.profile.login42')}</label>
-                <input className={styles.inputLocked} value={user?.login ?? ''} readOnly />
-              </div>
-              <div className={styles.section}>
-                <label className={styles.label}>{t('settings.profile.email')}</label>
-                <input className={styles.input} value={email} onChange={e => setEmail(e.target.value)} />
-              </div>
-              <button className={styles.btnPrimary}>{t('settings.profile.save')}</button>
-            </div>
           )}
 
           {activeTab === 'security' && (

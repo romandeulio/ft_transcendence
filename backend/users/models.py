@@ -25,6 +25,7 @@ class User(AbstractBaseUser):
     # -------------------------------------------------------------------------
     class Meta:
         db_table = 'users'
+        managed   = False
     elo_solo = models.IntegerField(
         default=1000,
         help_text="ELO individuel 1v1. Mis à jour à chaque match SOLO classé validé.",
@@ -54,7 +55,11 @@ class User(AbstractBaseUser):
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
-    avatar_url = models.CharField(max_length=500, blank=True, null=True)
+    avatar_url = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
     objects = UserManager()

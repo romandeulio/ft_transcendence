@@ -4,7 +4,7 @@ Django settings for ft_transcendence
 
 from pathlib import Path
 from decouple import config
-
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -231,3 +231,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "babyfoot42nice@gmail.com"  # ton vrai email
 EMAIL_HOST_PASSWORD = "***REMOVED***"   # mot de passe de ton compte ou mot de passe d'application
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
