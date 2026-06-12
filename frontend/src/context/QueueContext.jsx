@@ -207,6 +207,7 @@ export function QueueProvider({ children }) {
         player2: p2,
         player1_teammate: slot.player1_teammate || null,
         player2_teammate: slot.player2_teammate || null,
+        match_type: slot.match_type || 'SOLO',
       })
     }
   }

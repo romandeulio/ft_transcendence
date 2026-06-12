@@ -68,7 +68,11 @@ export default function Accueil() {
     .map(s => {
       let vs
       if (s.format === '2v2' || s.match_type === 'TEAM') {
-        const opp = (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
+        const u = user?.username
+        const inTeam2 = s.team2?.includes(u) || s.p2 === u
+        const opp = inTeam2
+          ? (s.team1?.filter(Boolean).length ? s.team1.filter(Boolean) : [s.p1, s.player1_teammate].filter(Boolean))
+          : (s.team2?.filter(Boolean).length ? s.team2.filter(Boolean) : [s.p2, s.player2_teammate].filter(Boolean))
         vs = opp.length ? opp.join(' & ') : '?'
       } else {
         vs = s.p1 || '?'
@@ -107,27 +111,27 @@ export default function Accueil() {
     setMatchError(null)
 
     // Vérification existence des logins via API
-    if (!takeWin && format !== 'Seul') {
-      const toCheck = [...bluePlayers, ...redPlayers]
-        .filter(p => p && p !== user?.username)
-      if (toCheck.length > 0) {
-        try {
-          const resp = await authFetch('/api/auth/users/')
-          if (resp.ok) {
-            const users = await resp.json()
-            const known = new Set((Array.isArray(users) ? users : (users.results ?? [])).map(u => u.login || u.username))
-            const invalid = toCheck.filter(p => !known.has(p))
-            if (invalid.length > 0) {
-              setMatchError(`Joueur(s) introuvable(s) : ${invalid.join(', ')}`)
-              return
-            }
+    const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
+    const toCheck = takeWin && matchType === 'TEAM'
+      ? [...bluePlayers, ...redPlayers].filter(p => p && p !== user?.username)
+      : (!takeWin && format !== 'Seul')
+        ? [...bluePlayers, ...redPlayers].filter(p => p && p !== user?.username)
+        : []
+    if (toCheck.length > 0) {
+      try {
+        const resp = await authFetch('/api/auth/users/')
+        if (resp.ok) {
+          const knownUsers = await resp.json()
+          const known = new Set((Array.isArray(knownUsers) ? knownUsers : (knownUsers.results ?? [])).map(u => u.login || u.username))
+          const invalid = toCheck.filter(p => !known.has(p))
+          if (invalid.length > 0) {
+            return `Joueur(s) introuvable(s) : ${invalid.join(', ')}`
           }
-        } catch { /* si l'API échoue, on laisse passer */ }
-      }
+        }
+      } catch { /* si l'API échoue, on laisse passer */ }
     }
 
     const isRanked  = mode === 'compet'
-    const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
     // bluePlayers[0] = côté bleu (player1), redPlayers[0] = côté rouge (player2)
     // (déjà swappé par handleConfirm selon myColor)
     const body = {
@@ -173,6 +177,17 @@ export default function Accueil() {
         sendInvite(inviteTargets, localSlot)
         setMatchError(t('invite.sent', { player: inviteTargets.join(', ') }))
         return
+      }
+
+      // takeWin + TEAM → inviter uniquement le coéquipier (l'adversaire sera le gagnant du match précédent)
+      if (takeWin && matchType === 'TEAM') {
+        const teammate = body.player1_teammate || body.player2_teammate
+        if (teammate) {
+          const localSlot = { ...baseSlot, _localId: crypto.randomUUID() }
+          sendInvite([teammate], localSlot)
+          setMatchError(t('invite.sent', { player: teammate }))
+          return
+        }
       }
 
       // Pas d'adversaire ou takeWin → essayer de réserver directement
@@ -561,8 +576,9 @@ export default function Accueil() {
       </Modal>
 
       {matchError && (
-        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background: matchError.startsWith('✅') ? '#22aa55' : '#ff4444', color:'#fff', padding:'10px 20px', borderRadius:8, zIndex:9999 }}>
-          {matchError}
+        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background: matchError.startsWith('✅') ? '#22aa55' : '#ff4444', color:'#fff', padding:'10px 20px', borderRadius:8, zIndex:9999, display:'flex', alignItems:'center', gap:12 }}>
+          <span>{matchError}</span>
+          <button onClick={() => setMatchError(null)} style={{ background:'none', border:'none', color:'#fff', cursor:'pointer', fontSize:18, lineHeight:1, padding:0, opacity:0.8 }}>×</button>
         </div>
       )}
 

@@ -14,7 +14,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     prevTeam.team1?.includes(u) ||
     prevTeam.team2?.includes(u)
   ))
-  const canTakeWin = !!prevTeam && !userIsInPrevTeam
+  const canTakeWin = !!prevTeam && !userIsInPrevTeam && prevTeam.format === joinFormat
   const [step,            setStep]            = useState(1)
   const [joinMode,        setJoinMode]        = useState('compet')
   const [joinFormat,      setJoinFormat]      = useState('1v1')
@@ -46,7 +46,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
 
   const handleClose = () => { reset(); onClose() }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // Validation : champs requis et doublons
     if (!takeWin && joinFormat !== 'Seul') {
       const others = joinFormat === '2v2'
@@ -62,6 +62,28 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         return
       }
     }
+
+    // Validation takeWin 2v2 : coéquipier obligatoire, pas de doublon, pas dans le match précédent
+    if (takeWin === true && joinFormat === '2v2') {
+      const teammate = bluePlayers[1]?.trim()
+      if (!teammate) {
+        setValidationError(t('addMatch.missingPlayers'))
+        return
+      }
+      if (teammate === user?.username) {
+        setValidationError(t('addMatch.duplicatePlayer'))
+        return
+      }
+      const prevPlayers = [
+        ...(prevTeam?.team1?.filter(Boolean) || []),
+        ...(prevTeam?.team2?.filter(Boolean) || []),
+      ]
+      if (prevPlayers.includes(teammate)) {
+        setValidationError('Ce joueur fait déjà partie du match précédent.')
+        return
+      }
+    }
+
     setValidationError(null)
 
     // Quand takeWin=true : l'adversaire sera le gagnant du match précédent (pas saisi)
@@ -77,7 +99,11 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         ? [redPlayers[0], redPlayers[1]]
         : [user?.username, bluePlayers[1]]
     }
-    onConfirm?.({ mode: joinMode, format: joinFormat, redPlayers: finalRed, bluePlayers: finalBlue, takeWin })
+    const blockingError = await onConfirm?.({ mode: joinMode, format: joinFormat, redPlayers: finalRed, bluePlayers: finalBlue, takeWin })
+    if (blockingError) {
+      setValidationError(blockingError)
+      return
+    }
     reset()
     onClose()
   }
@@ -175,9 +201,23 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
               <div className={styles.prevSlotCard}>
                 {prevTeam ? (
                   <div className={styles.prevSlotDuel}>
-                    <span className={styles.prevSlotName}>{prevTeam.p1}</span>
-                    <span className={styles.prevSlotVs}>{t('common.vs')}</span>
-                    <span className={styles.prevSlotName}>{prevTeam.p2}</span>
+                    {prevTeam.format === '2v2' ? (
+                      <>
+                        <span className={styles.prevSlotName}>
+                          {(prevTeam.team1?.filter(Boolean) || [prevTeam.p1]).join(' & ')}
+                        </span>
+                        <span className={styles.prevSlotVs}>{t('common.vs')}</span>
+                        <span className={styles.prevSlotName}>
+                          {(prevTeam.team2?.filter(Boolean) || [prevTeam.p2]).join(' & ')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.prevSlotName}>{prevTeam.p1}</span>
+                        <span className={styles.prevSlotVs}>{t('common.vs')}</span>
+                        <span className={styles.prevSlotName}>{prevTeam.p2}</span>
+                      </>
+                    )}
                     {prevTeam.format && <span className={styles.prevSlotMeta}>{prevTeam.format}</span>}
                   </div>
                 ) : (

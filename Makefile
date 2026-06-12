@@ -46,4 +46,11 @@ ps:
 backup:
 	docker exec transcendence_backup /backup.sh
 
-.PHONY: all up down restart clean fclean re logs exec-backend exec-frontend exec-db ps backup
+# Joueurs de test (à supprimer quand plus besoin)
+seed:
+	docker exec transcendence_backend python manage.py seed_users
+
+unseed:
+	docker exec transcendence_backend python manage.py seed_users --clean
+
+.PHONY: all up down restart clean fclean re logs exec-backend exec-frontend exec-db ps backup seed unseed

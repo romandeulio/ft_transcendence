@@ -73,7 +73,7 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError(
 				"player1_teammate_id est requis pour TEAM et TWO_V_ONE."
 			)
-		if match_type == 'TEAM' and not p2_tm:
+		if match_type == 'TEAM' and p2 and not p2_tm:
 			raise serializers.ValidationError(
 				"player2_teammate_id est requis pour TEAM."
 			)
@@ -158,7 +158,7 @@ class QueueEntryCreateSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError(
 				"player1_teammate_id est requis pour TEAM et TWO_V_ONE."
 			)
-		if match_type == 'TEAM' and not p2_tm:
+		if match_type == 'TEAM' and p2 and not p2_tm:
 			raise serializers.ValidationError(
 				"player2_teammate_id est requis pour TEAM."
 			)

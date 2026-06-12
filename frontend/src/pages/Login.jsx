@@ -38,7 +38,7 @@ export default function Login() {
         })
         const user = await me.json()
         login(user)
-        navigate('/profil')
+        navigate('/accueil')
       }
     } catch {
       setError(t('login.networkError'))

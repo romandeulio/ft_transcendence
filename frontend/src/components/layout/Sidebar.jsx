@@ -26,11 +26,11 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
       <Link to="/profil" className={styles.userBlock} onClick={onClose}>
         <div className={styles.avatarWrap}>
-          <Avatar initials={user?.login?.[0]?.toUpperCase() ?? '?'} size={44} bg="rgba(255,255,255,0.15)" round />
+          <Avatar initials={user?.username?.substring(0, 2).toUpperCase() ?? '?'} size={44} bg="rgba(255,255,255,0.15)" round />
         </div>
         <div className={styles.userInfo}>
-          <div className={styles.userName}>{user?.name ?? user?.login ?? ''}</div>
-          <div className={styles.userTokens}>{user?.tokens != null ? t('sidebar.tokens', { count: user.tokens }) : ''}</div>
+          <div className={styles.userName}>{user?.username ?? ''}</div>
+          <div className={styles.userTokens}>{user?.wallet_tokens != null ? t('sidebar.tokens', { count: user.wallet_tokens }) : ''}</div>
         </div>
       </Link>
 

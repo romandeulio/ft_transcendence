@@ -103,11 +103,12 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     break
 
         elif action == "game_open":
-            game_id  = data.get("gameId")
-            player1  = data.get("player1")
-            player2  = data.get("player2")
-            p1_tm    = data.get("player1_teammate")
-            p2_tm    = data.get("player2_teammate")
+            game_id    = data.get("gameId")
+            player1    = data.get("player1")
+            player2    = data.get("player2")
+            p1_tm      = data.get("player1_teammate")
+            p2_tm      = data.get("player2_teammate")
+            match_type = data.get("match_type", "SOLO")
             if game_id and player1 and player2:
                 if game_id not in games:
                     games[game_id] = {
@@ -115,6 +116,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         "player2": player2,
                         "player1_teammate": p1_tm,
                         "player2_teammate": p2_tm,
+                        "match_type": match_type,
                         "scoreRed": 0,
                         "scoreBlue": 0,
                     }
@@ -156,8 +158,10 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 queue = [s for s in queue if s.get("id") != game_id]
             # Met à jour les créneaux takeWin qui attendaient ce gagnant
             if winner:
+                ended_match_type = g.get("match_type", "SOLO")
                 for slot in queue:
-                    if slot.get("takeWin") and not slot.get("p2"):
+                    if (slot.get("takeWin") and not slot.get("p2")
+                            and slot.get("match_type", "SOLO") == ended_match_type):
                         slot["p2"] = winner
                         slot["player2"] = winner
                         if winner_teammate:
