@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useAuth } from '../hooks/useAuth'
+import { authFetch } from '../services/api'
 
 const QueueContext = createContext(null)
 
@@ -12,6 +13,37 @@ function loadMySlots() {
       .filter(s => !s.p1 || s.p1 === u?.username)
       .map(s => s._localId ? s : { ...s, _localId: crypto.randomUUID() })
   } catch { return [] }
+}
+
+function mapPersistedQueueEntry(entry) {
+  const team1 = [entry.player1, entry.player1_teammate].filter(Boolean)
+  const team2 = [entry.player2, entry.player2_teammate].filter(Boolean)
+  const isTeam = entry.match_type === 'TEAM'
+
+  return {
+    id: entry.id,
+    _localId: entry.id,
+    p1: entry.player1,
+    p2: entry.player2,
+    player1: entry.player1,
+    player1_teammate: entry.player1_teammate,
+    player2: entry.player2,
+    player2_teammate: entry.player2_teammate,
+    match_type: entry.match_type,
+    is_ranked: entry.is_ranked,
+    format: isTeam ? '2v2' : entry.match_type === 'TWO_V_ONE' ? '2v1' : '1v1',
+    team1: isTeam ? team1 : undefined,
+    team2: isTeam ? team2 : undefined,
+    type: 'taken',
+    source: 'db',
+    createdAt: entry.joined_at ? new Date(entry.joined_at).getTime() : Date.now(),
+  }
+}
+
+function mergeQueueState(liveQueue, persistedQueue) {
+  const seen = new Set(liveQueue.map(slot => String(slot.id || slot._localId)))
+  const missingPersisted = persistedQueue.filter(slot => !seen.has(String(slot.id || slot._localId)))
+  return [...liveQueue, ...missingPersisted].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
 }
 
 export function QueueProvider({ children }) {
@@ -28,6 +60,7 @@ export function QueueProvider({ children }) {
   const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
   const pendingInvitesRef = useRef([])                       // mirror of pendingInvites for non-stale reads in effects
   const acceptedInviteFromsRef = useRef({})                  // inviteId → from, for 2v2 partial-accept tracking
+  const persistedQueueRef = useRef([])
 
   const prevConnected = useRef(false)
 
@@ -42,7 +75,7 @@ export function QueueProvider({ children }) {
   useEffect(() => {
     if (!data) return
     if (data.type === 'queue_state' && data.queue) {
-      setQueue(data.queue)
+      setQueue(mergeQueueState(data.queue, persistedQueueRef.current))
       // Sync winner into takeWin slots (handles missed game_ended on reconnect)
       setMySlots(prev => {
         let changed = false
@@ -205,7 +238,7 @@ export function QueueProvider({ children }) {
       )
 
       if (nowAccepted.length >= invite.targets.length) {
-        // All accepted → enter queue
+        // All accepted → enter queue (skip for tournament_teammate invites)
         setMySlots(prev => {
           const next = prev.map(s =>
             s._localId === inviteId ? { ...s, type: 'taken' } : s
@@ -213,7 +246,9 @@ export function QueueProvider({ children }) {
           localStorage.setItem('myQueueSlots', JSON.stringify(next))
           return next
         })
-        send({ action: 'join', slot: { ...invite.slot, type: 'taken' } })
+        if (invite.slot?.type !== 'tournament_teammate') {
+          send({ action: 'join', slot: { ...invite.slot, type: 'taken' } })
+        }
         setInviteResults(prev => [...prev, { inviteId, accepted: true, target: nowAccepted.join(', ') }])
         invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
       } else {
@@ -225,6 +260,39 @@ export function QueueProvider({ children }) {
       }
     }
   }, [data, user?.username])
+
+  useEffect(() => {
+    if (!user?.username) {
+      persistedQueueRef.current = []
+      return undefined
+    }
+
+    let cancelled = false
+    const refreshPersistedQueue = async () => {
+      try {
+        const res = await authFetch('/api/planning/queue/')
+        if (!res.ok) return
+        const data = await res.json()
+        const entries = Array.isArray(data) ? data : data.results || []
+        const persistedQueue = entries.map(mapPersistedQueueEntry)
+        if (cancelled) return
+        persistedQueueRef.current = persistedQueue
+        setQueue(prev => mergeQueueState(
+          prev.filter(slot => slot.source !== 'db'),
+          persistedQueue,
+        ))
+      } catch {
+        // WebSocket remains the realtime fallback if the REST queue is temporarily unavailable.
+      }
+    }
+
+    refreshPersistedQueue()
+    const intervalId = setInterval(refreshPersistedQueue, 10000)
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [user?.username])
 
   // Re-join our slots after a reconnect (skip pending_invite and already-completed slots)
   useEffect(() => {
@@ -241,6 +309,7 @@ export function QueueProvider({ children }) {
     if (!user?.username) {
       setMySlots([])
       localStorage.removeItem('myQueueSlots')
+      persistedQueueRef.current = []
       setQueue([])
       setPendingInvites([])
       setInviteResults([])

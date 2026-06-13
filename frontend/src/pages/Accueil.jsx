@@ -611,16 +611,28 @@ export default function Accueil() {
                   <span className={styles.inviteRowDetail}>
                     {inv.isWinClaim
                       ? t('invite.winClaimReceived', { player: inv.from })
-                      : t('invite.received', {
-                          format: inv.slot?.format || '1v1',
-                          mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
-                        })}
+                      : inv.slot?.type === 'tournament_teammate'
+                        ? t('invite.tournamentTeammate', { player: inv.from })
+                        : t('invite.received', {
+                            format: inv.slot?.format || '1v1',
+                            mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
+                          })}
                   </span>
                 </div>
                 <div className={styles.inviteRowActions}>
                   <button
                     className={styles.acceptSmallBtn}
-                    onClick={() => respondToInvite(inv.inviteId, true, inv.slot, inv.from, inv.isWinClaim, inv.slotId)}
+                    onClick={async () => {
+                      if (inv.slot?.type === 'tournament_teammate' && inv.slot?.tournamentId) {
+                        try {
+                          await authFetch(`/api/tournaments/${inv.slot.tournamentId}/accept-invite/`, {
+                            method: 'POST',
+                            body: JSON.stringify({ inviter: inv.from }),
+                          })
+                        } catch {}
+                      }
+                      respondToInvite(inv.inviteId, true, inv.slot, inv.from, inv.isWinClaim, inv.slotId)
+                    }}
                   >{t('invite.accept')}</button>
                   <button
                     className={styles.declineSmallBtn}

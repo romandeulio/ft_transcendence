@@ -1,5 +1,6 @@
 import requests
 import os
+from urllib.parse import urlencode
 from django.conf import settings
 
 from .models import User
@@ -10,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
@@ -19,6 +21,38 @@ from django.shortcuts import redirect as django_redirect
 def get_tokens(user):
     refresh = RefreshToken.for_user(user)
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
+
+def set_auth_cookies(response, tokens):
+    access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+    refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+    cookie_options = {
+        'httponly': True,
+        'secure': settings.JWT_COOKIE_SECURE,
+        'samesite': settings.JWT_COOKIE_SAMESITE,
+        'path': '/',
+    }
+    response.set_cookie(
+        settings.JWT_ACCESS_COOKIE_NAME,
+        tokens['access'],
+        max_age=access_max_age,
+        **cookie_options,
+    )
+    response.set_cookie(
+        settings.JWT_REFRESH_COOKIE_NAME,
+        tokens['refresh'],
+        max_age=refresh_max_age,
+        **cookie_options,
+    )
+    return response
+
+def delete_auth_cookies(response):
+    cookie_options = {
+        'samesite': settings.JWT_COOKIE_SAMESITE,
+        'path': '/',
+    }
+    response.delete_cookie(settings.JWT_ACCESS_COOKIE_NAME, **cookie_options)
+    response.delete_cookie(settings.JWT_REFRESH_COOKIE_NAME, **cookie_options)
+    return response
 
 #register
 class  RegisterView(APIView):
@@ -59,19 +93,20 @@ class LoginView(APIView):
             if not user.verify_totp(totp_code):
                 return Response({'error': 'Code 2FA invalide'}, status=401)
         
-        return Response(get_tokens(user))
+        response = Response({'detail': 'Login successful'})
+        return set_auth_cookies(response, get_tokens(user))
 
 class OAuth42LoginView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         # Redirige le navigateur vers la page de login 42
-        url = (
-            f"https://api.intra.42.fr/oauth/authorize"
-            f"?client_id={settings.OAUTH_42_CLIENT_ID}"
-            f"&redirect_uri={settings.OAUTH_42_REDIRECT_URI}"
-            f"&response_type=code"
-        )
+        query = urlencode({
+            "client_id": settings.OAUTH_42_CLIENT_ID,
+            "redirect_uri": settings.OAUTH_42_REDIRECT_URI,
+            "response_type": "code",
+        })
+        url = f"https://api.intra.42.fr/oauth/authorize?{query}"
         return django_redirect(url)
 
 # --- OAuth 42 ---
@@ -81,7 +116,7 @@ class OAuth42CallbackView(APIView):
     def get(self, request):
         code = request.query_params.get('code')
         if not code:
-            return django_redirect('https://localhost/login?error=no_code')
+            return django_redirect(f'{settings.SITE_URL}/login?error=no_code')
 
         try:
             token_res = requests.post('https://api.intra.42.fr/oauth/token', data={
@@ -123,20 +158,45 @@ class OAuth42CallbackView(APIView):
                 }
             )
 
-            tokens = get_tokens(user)
-
-            # Rediriger vers React avec les tokens
-            return django_redirect(
-                f"https://localhost/login-success"
-                f"?access={tokens['access']}"
-                f"&refresh={tokens['refresh']}"
-            )
+            response = django_redirect(f"{settings.SITE_URL}/login-success")
+            return set_auth_cookies(response, get_tokens(user))
 
         except Exception as e:
             import traceback
             traceback.print_exc()
-            raise e
-            return django_redirect(f'https://localhost/login?error=oauth_failed')
+            return django_redirect(f'{settings.SITE_URL}/login?error=oauth_failed')
+
+class CookieTokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        raw_refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
+        if not raw_refresh:
+            return Response({'detail': 'Refresh token missing'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            refresh = RefreshToken(raw_refresh)
+            access = str(refresh.access_token)
+        except TokenError:
+            return Response({'detail': 'Refresh token invalid'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        response = Response({'detail': 'Token refreshed'})
+        response.set_cookie(
+            settings.JWT_ACCESS_COOKIE_NAME,
+            access,
+            max_age=int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()),
+            httponly=True,
+            secure=settings.JWT_COOKIE_SECURE,
+            samesite=settings.JWT_COOKIE_SAMESITE,
+            path='/',
+        )
+        return response
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        return delete_auth_cookies(Response({'detail': 'Logged out'}))
 
 # 2FA
 class Enable2FAView(APIView):

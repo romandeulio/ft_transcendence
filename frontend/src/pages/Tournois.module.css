@@ -17,8 +17,12 @@
   font-weight: 700;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 .bdeBtn:hover { opacity: 0.85; }
+
+.bdeBtnText { display: inline; }
+.bdeBtnIcon { display: none; }
 
 .tournamentCard {
   background: var(--white);
@@ -51,10 +55,111 @@
   margin-top: 3px;
 }
 
+.tcDateLabel {
+  font-weight: 700;
+  color: var(--ink2);
+}
+
 .tcMeta {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.bdeActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.adminPanel {
+  background: var(--white);
+  border: 1.5px solid var(--beige);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.adminTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adminSub {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 3px;
+}
+
+.adminActions,
+.forceTeamForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.forceTeamForm {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.forceTeamForm .input {
+  max-width: 180px;
+}
+
+.btnSecondary {
+  padding: 9px 16px;
+  background: var(--bg2);
+  color: var(--ink);
+  border: 1.5px solid var(--beige);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  background: var(--beige);
+}
+
+.btnDanger {
+  padding: 9px 16px;
+  background: var(--red);
+  color: white;
+  border: 1.5px solid var(--red);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btnDanger:hover {
+  opacity: 0.88;
+}
+
+.btnDanger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.inlineDanger {
+  border: 0;
+  border-radius: 7px;
+  background: var(--red);
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
 }
 
 .participants {
@@ -328,7 +433,7 @@
 
 /* ── Panneau recrutement coéquipier ── */
 .recruitPanel {
-  background: var(--white);
+  background: var(--bg2);
   border: 2px solid var(--beige);
   border-radius: 12px;
   padding: 18px 20px;
@@ -367,10 +472,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--bg2);
+  padding: 10px 12px;
+  background: var(--white);
+  border-radius: 8px;
+  margin-top: 6px;
 }
-.recruitRow:last-child { border-bottom: none; }
+.recruitRow:first-of-type { margin-top: 4px; }
 
 .recruitAvatar {
   width: 36px; height: 36px;
@@ -408,7 +515,14 @@
 
 /* ── Liste d'attente ── */
 .waitingListBox {
-  background: var(--white);
+  background: var(--bg2);
+  border: 1.5px solid var(--beige);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.confirmedTeamsBox {
+  background: var(--bg2);
   border: 1.5px solid var(--beige);
   border-radius: 14px;
   padding: 16px 20px;
@@ -440,17 +554,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--beige);
+  padding: 8px 12px;
+  background: var(--white);
+  border-radius: 8px;
   font-size: 12px;
+  margin-bottom: 6px;
 }
-.waitingListItem:last-child { border-bottom: none; }
+.waitingListItem:last-child { margin-bottom: 0; }
 
-.waitingRank {
-  font-weight: 800;
-  color: var(--yellow);
-  min-width: 24px;
-  font-family: var(--font-display);
+.waitingBall {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .waitingPlayers {
@@ -502,4 +616,10 @@
   .bracketWrap {
     overflow-x: auto;
   }
+}
+
+@media (max-width: 540px) {
+  .bdeBtnText { display: none; }
+  .bdeBtnIcon { display: inline; font-size: 16px; }
+  .bdeBtn { padding: 8px 10px; }
 }

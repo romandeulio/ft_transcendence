@@ -6,6 +6,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    hmr: {
+      protocol: 'wss',
+      host: 'transcendance.maagosti.fr',
+      clientPort: 443,
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -16,6 +21,7 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
       },
-    }
+    },
+    allowedHosts: ['localhost', 'transcendance.maagosti.fr'],
   }
 })

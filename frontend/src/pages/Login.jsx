@@ -4,6 +4,7 @@ import styles from './Login.module.css'
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { authFetch } from '../services/api'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -24,6 +25,7 @@ export default function Login() {
       const res = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -31,15 +33,11 @@ export default function Login() {
         setError(data.detail || data.non_field_errors?.[0] || t('login.error'))
         return
       }
-      if (data.access) {
-        localStorage.setItem('access_token', data.access)
-        const me = await fetch('/api/auth/profile/', {
-          headers: { Authorization: `Bearer ${data.access}` },
-        })
-        const user = await me.json()
-        login(user)
-        navigate('/accueil')
-      }
+      const me = await authFetch('/api/auth/profile/')
+      if (!me.ok) throw new Error('Profile unavailable')
+      const user = await me.json()
+      login(user)
+      navigate('/accueil')
     } catch {
       setError(t('login.networkError'))
     }

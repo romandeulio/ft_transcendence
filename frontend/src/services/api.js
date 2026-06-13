@@ -1,15 +1,45 @@
-const BASE = '/api'
+const BASE = '/api/auth'
 
-// Fetch authentifié — ajoute automatiquement le header Bearer
-export function authFetch(url, options = {}) {
-  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-  return fetch(url, {
+let refreshPromise = null
+
+function buildFetchOptions(options = {}) {
+  const headers = { ...(options.headers || {}) }
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  return {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+    credentials: 'same-origin',
+    headers,
+  }
+}
+
+async function refreshAuthCookie() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${BASE}/token/refresh/`, buildFetchOptions({ method: 'POST' }))
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  const res = await refreshPromise
+  if (!res.ok) throw new Error('Session expired')
+}
+
+// Fetch authentifié — les JWT HttpOnly sont envoyés via cookies same-origin.
+export function authFetch(url, options = {}) {
+  return fetch(url, buildFetchOptions(options)).then(async res => {
+    if (res.status !== 401 || url === `${BASE}/token/refresh/`) {
+      return res
+    }
+
+    try {
+      await refreshAuthCookie()
+      return fetch(url, buildFetchOptions(options))
+    } catch {
+      return res
+    }
   })
 }
 
@@ -64,6 +94,7 @@ export async function apiLogin({ email, password, totp_code }) {
   const res = await fetch(`${BASE}/login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify(body),
   })
   const data = await res.json()
@@ -72,12 +103,10 @@ export async function apiLogin({ email, password, totp_code }) {
 }
 
 export async function apiRefresh() {
-  const refresh = localStorage.getItem('refresh_token')
-  if (!refresh) throw new Error('Pas de refresh token')
   const res = await fetch(`${BASE}/token/refresh/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh }),
+    credentials: 'same-origin',
   })
   const data = await res.json()
   if (!res.ok) throw data

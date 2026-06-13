@@ -16,7 +16,12 @@ SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='transcendance.maagosti.fr').split(',')
+
+SITE_URL = config(
+	'SITE_URL',
+	default=config('CORS_ALLOWED_ORIGINS', default='https://transcendance.maagosti.fr').split(',')[0],
+).rstrip('/')
 
 # ===========================================================================
 # APPLICATIONS
@@ -127,7 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': (
-		'rest_framework_simplejwt.authentication.JWTAuthentication',
+		'users.authentication.CookieJWTAuthentication',
 	),
 	'DEFAULT_PERMISSION_CLASSES': (
 		'rest_framework.permissions.IsAuthenticated',
@@ -153,12 +158,17 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-	'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+	'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+	'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 	'ROTATE_REFRESH_TOKENS': True,
 	'BLACKLIST_AFTER_ROTATION': True,
 	'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
+JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
+JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
+JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================
 # CORS
@@ -167,10 +177,15 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = config(
 	'CORS_ALLOWED_ORIGINS',
-	default='http://localhost:3000,http://127.0.0.1:3000'
+	default='https://transcendance.maagosti.fr'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = config(
+	'CSRF_TRUSTED_ORIGINS',
+	default=SITE_URL,
+).split(',')
 
 # ===========================================================================
 # CHANNELS (WebSockets — Roman)

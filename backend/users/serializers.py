@@ -139,7 +139,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         token = default_token_generator.make_token(user)
 
         activation_link = (
-            f"https://localhost/api/auth/activate/{uid}/{token}/"
+            f"{settings.SITE_URL}/api/auth/activate/{uid}/{token}/"
         )
 
         send_mail(

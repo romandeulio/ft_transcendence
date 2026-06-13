@@ -16,10 +16,8 @@ import styles from './Profil.module.css'
 async function uploadAvatar(file, user, login) {
   const formData = new FormData()
   formData.append('avatar', file)
-  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-  const res = await fetch('/api/auth/avatar/', {
+  const res = await authFetch('/api/auth/avatar/', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   })
   const data = await res.json()
