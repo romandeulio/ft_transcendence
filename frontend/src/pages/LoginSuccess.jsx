@@ -12,8 +12,8 @@ export default function LoginSuccess() {
         done.current = true
 
         const params  = new URLSearchParams(window.location.search)
-        const access  = params.get('access')
-        const refresh = params.get('refresh')
+        const access  = params.get('access_token')
+        const refresh = params.get('refresh_token')
 
         if (!access) {
             navigate('/login')

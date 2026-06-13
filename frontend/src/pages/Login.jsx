@@ -31,12 +31,14 @@ export default function Login() {
         setError(data.detail || data.non_field_errors?.[0] || t('login.error'))
         return
       }
-      if (data.access) {
-        localStorage.setItem('token', data.access)
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token)
+        localStorage.setItem('refresh_token', data.refresh_token)
         const me = await fetch('/api/auth/profile/', {
-          headers: { Authorization: `Bearer ${data.access}` },
+          headers: { Authorization: `Bearer ${data.access_token}` },
         })
         const user = await me.json()
+        localStorage.setItem("user", JSON.stringify(user))
         login(user)
         navigate('/accueil')
       }

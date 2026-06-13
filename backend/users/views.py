@@ -18,7 +18,7 @@ from django.shortcuts import redirect as django_redirect
 
 def get_tokens(user):
     refresh = RefreshToken.for_user(user)
-    return {'access': str(refresh.access_token), 'refresh': str(refresh)}
+    return {'access_token': str(refresh.access_token), 'refresh_token': str(refresh)}
 
 #register
 class  RegisterView(APIView):
@@ -128,8 +128,8 @@ class OAuth42CallbackView(APIView):
             # Rediriger vers React avec les tokens
             return django_redirect(
                 f"https://localhost/login-success"
-                f"?access={tokens['access']}"
-                f"&refresh={tokens['refresh']}"
+                f"?access_token={tokens['access_token']}"
+                f"&refresh_token={tokens['refresh_token']}"
             )
 
         except Exception as e:
