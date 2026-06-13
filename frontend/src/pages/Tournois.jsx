@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Modal from '../components/ui/Modal'
 import Pill from '../components/ui/Pill'
 import BracketTree from '../components/bracket/BracketTree'
+import { authFetch } from '../services/api'
 import { useTranslation } from 'react-i18next'
 import styles from './Tournois.module.css'
 
@@ -27,23 +28,51 @@ function splitCountdown(ms) {
   }
 }
 
+function mapTournament(data) {
+  return {
+    id:          data.id,
+    name:        data.name,
+    startDate:   data.start_date,
+    dateLabel:   data.date_label,
+    deadline:    data.deadline_label,
+    prize:       data.prize || null,
+    registered:  data.registered,
+    maxPlayers:  data.max_players,
+    status:      data.status,
+  }
+}
+
 export default function Tournois() {
   const { user } = useAuth()
   const { t } = useTranslation()
 
-  const [bdeOpen,      setBdeOpen]      = useState(false)
-  const [bdeInput,     setBdeInput]     = useState('')
-  const [bdeUnlocked,  setBdeUnlocked]  = useState(false)
-  const [bdeError,     setBdeError]     = useState(false)
-  const [bdeLoading,   setBdeLoading]   = useState(false)
-  const [createOpen,   setCreateOpen]   = useState(false)
-  const [maxPlayers,   setMaxPlayers]   = useState('16')
-  const [registerOpen, setRegisterOpen] = useState(false)
-  const [registered,   setRegistered]   = useState(false)
-  const [partner,      setPartner]      = useState('')
-  const [showRecruit,  setShowRecruit]  = useState(false)
-  const [invitedSet,   setInvitedSet]   = useState(new Set())
+  // ── BDE modal ──
+  const [bdeOpen,    setBdeOpen]    = useState(false)
+  const [bdeInput,   setBdeInput]   = useState('')
+  const [bdeUnlocked, setBdeUnlocked] = useState(false)
+  const [bdeError,   setBdeError]   = useState('')
+  const [bdeLoading, setBdeLoading] = useState(false)
 
+  // ── Créer tournoi modal ──
+  const [createOpen,     setCreateOpen]     = useState(false)
+  const [createName,     setCreateName]     = useState('')
+  const [createStart,    setCreateStart]    = useState('')
+  const [createDeadline, setCreateDeadline] = useState('')
+  const [createPrize,    setCreatePrize]    = useState('')
+  const [maxPlayers,     setMaxPlayers]     = useState('16')
+  const [createLoading,  setCreateLoading]  = useState(false)
+  const [createError,    setCreateError]    = useState('')
+
+  // ── Inscription modal ──
+  const [registerOpen,  setRegisterOpen]  = useState(false)
+  const [registered,    setRegistered]    = useState(false)
+  const [partner,       setPartner]       = useState('')
+  const [registerError, setRegisterError] = useState('')
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [showRecruit,   setShowRecruit]   = useState(false)
+  const [invitedSet,    setInvitedSet]    = useState(new Set())
+
+  // ── Données backend ──
   const [tournament,  setTournament]  = useState(null)
   const [waitingList, setWaitingList] = useState([])
   const [soloWaiting, setSoloWaiting] = useState([])
@@ -52,26 +81,140 @@ export default function Tournois() {
   const countdown  = useCountdown(tournamentStart)
   const hasStarted = countdown === 0
 
+  // ── Chargement de la liste d'attente ──
+  const fetchWaitingList = useCallback(async (id) => {
+    const res = await authFetch(`/api/tournaments/${id}/registrations/`)
+    if (!res.ok) return
+    const data = await res.json()
+    setWaitingList(data.map(r => ({
+      id:           r.id,
+      player1:      r.player1,
+      player2:      r.player2 ?? '?',
+      registeredAt: new Date(r.registered_at).toLocaleDateString('fr-FR'),
+    })))
+  }, [])
+
+  // ── Chargement des solo en attente ──
+  const fetchSoloWaiting = useCallback(async (id) => {
+    const res = await authFetch(`/api/tournaments/${id}/solo/`)
+    if (!res.ok) return
+    const data = await res.json()
+    setSoloWaiting(data)
+  }, [])
+
+  // ── Vérification de mon inscription ──
+  const checkMyRegistration = useCallback(async (id) => {
+    const res = await authFetch(`/api/tournaments/${id}/my-registration/`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (data) {
+      setRegistered(true)
+      if (!data.player2) setShowRecruit(true)
+    }
+  }, [])
+
+  // ── Chargement initial ──
+  useEffect(() => {
+    const load = async () => {
+      const res = await authFetch('/api/tournaments/')
+      if (!res.ok) return
+      const data = await res.json()
+      if (data) {
+        const t = mapTournament(data)
+        setTournament(t)
+        fetchWaitingList(t.id)
+        fetchSoloWaiting(t.id)
+        checkMyRegistration(t.id)
+      }
+    }
+    load()
+  }, [fetchWaitingList, fetchSoloWaiting, checkMyRegistration])
+
+  // ── Vérification mot de passe BDE ──
   const handleBdeSubmit = async () => {
     setBdeLoading(true)
-    setBdeError(false)
+    setBdeError('')
     try {
-      const res = await fetch('/api/bde/unlock', {
+      const res = await authFetch('/api/tournaments/bde-unlock/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: bdeInput }),
+        body:   JSON.stringify({ password: bdeInput }),
       })
       if (res.ok) {
         setBdeUnlocked(true)
         setBdeOpen(false)
         setCreateOpen(true)
+      } else if (res.status === 401) {
+        setBdeError('Session expirée — reconnecte-toi.')
       } else {
-        setBdeError(true)
+        setBdeError(t('tournaments.incorrectPwd'))
       }
     } catch {
-      setBdeError(true)
+      setBdeError('Erreur réseau.')
     } finally {
       setBdeLoading(false)
+    }
+  }
+
+  // ── Création d'un tournoi ──
+  const handleCreateSubmit = async () => {
+    setCreateLoading(true)
+    setCreateError('')
+    try {
+      const res = await authFetch('/api/tournaments/', {
+        method: 'POST',
+        body:   JSON.stringify({
+          bde_password: bdeInput,
+          name:         createName,
+          start_date:   createStart,
+          deadline:     createDeadline || null,
+          max_players:  parseInt(maxPlayers, 10),
+          prize:        createPrize,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setTournament(mapTournament(data))
+        setCreateOpen(false)
+        setCreateName('')
+        setCreateStart('')
+        setCreateDeadline('')
+        setCreatePrize('')
+      } else {
+        setCreateError(data.detail || data.name?.[0] || 'Erreur lors de la création.')
+      }
+    } catch {
+      setCreateError('Erreur réseau.')
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
+  // ── Inscription au tournoi ──
+  const handleRegisterSubmit = async () => {
+    if (!tournament) return
+    setRegisterLoading(true)
+    setRegisterError('')
+    try {
+      const res = await authFetch(`/api/tournaments/${tournament.id}/register/`, {
+        method: 'POST',
+        body:   JSON.stringify({ partner: partner.trim() || null }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setRegistered(true)
+        setRegisterOpen(false)
+        if (!partner.trim()) setShowRecruit(true)
+        fetchWaitingList(tournament.id)
+        fetchSoloWaiting(tournament.id)
+        // Refresh counter
+        setTournament(prev => prev ? { ...prev, registered: (prev.registered ?? 0) + 1 } : prev)
+      } else {
+        setRegisterError(data.detail || 'Erreur lors de l\'inscription.')
+      }
+    } catch {
+      setRegisterError('Erreur réseau.')
+    } finally {
+      setRegisterLoading(false)
     }
   }
 
@@ -112,7 +255,7 @@ export default function Tournois() {
           </div>
         )}
 
-        {!registered && (
+        {tournament && !registered && (
           <div className={styles.registerBanner}>
             <span>{t('tournaments.notRegistered')}</span>
             <button className={styles.registerBtn} onClick={() => setRegisterOpen(true)}>
@@ -227,7 +370,7 @@ export default function Tournois() {
       </div>
 
       {/* ── Modal Accès BDE ── */}
-      <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError(false) }} title={t('tournaments.bdeAccess')}>
+      <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError('') }} title={t('tournaments.bdeAccess')}>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.bdePwd')}</label>
           <input
@@ -235,10 +378,10 @@ export default function Tournois() {
             type="password"
             placeholder="••••••••"
             value={bdeInput}
-            onChange={e => { setBdeInput(e.target.value); setBdeError(false) }}
+            onChange={e => { setBdeInput(e.target.value); setBdeError('') }}
             onKeyDown={e => e.key === 'Enter' && handleBdeSubmit()}
           />
-          {bdeError && <div className={styles.bdeError}>{t('tournaments.incorrectPwd')}</div>}
+          {bdeError && <div className={styles.bdeError}>{bdeError}</div>}
         </div>
         <div className={styles.modalFooter}>
           <button className={styles.confirmBtn} onClick={handleBdeSubmit} disabled={bdeLoading}>
@@ -251,15 +394,30 @@ export default function Tournois() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('tournaments.createTournament')}>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.tournamentName')}</label>
-          <input className={styles.input} placeholder={t('tournaments.tournamentNamePlaceholder')} />
+          <input
+            className={styles.input}
+            placeholder={t('tournaments.tournamentNamePlaceholder')}
+            value={createName}
+            onChange={e => setCreateName(e.target.value)}
+          />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.dateTime')}</label>
-          <input className={styles.input} type="datetime-local" />
+          <input
+            className={styles.input}
+            type="datetime-local"
+            value={createStart}
+            onChange={e => setCreateStart(e.target.value)}
+          />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.registrationDeadline')}</label>
-          <input className={styles.input} type="datetime-local" />
+          <input
+            className={styles.input}
+            type="datetime-local"
+            value={createDeadline}
+            onChange={e => setCreateDeadline(e.target.value)}
+          />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.maxPlayers')}</label>
@@ -273,16 +431,28 @@ export default function Tournois() {
             ))}
           </select>
         </div>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Prix (optionnel)</label>
+          <input
+            className={styles.input}
+            placeholder="ex: Couverture offerte"
+            value={createPrize}
+            onChange={e => setCreatePrize(e.target.value)}
+          />
+        </div>
+        {createError && <div className={styles.bdeError}>{createError}</div>}
         <div className={styles.modalFooter}>
-          <button className={styles.confirmBtn} onClick={() => setCreateOpen(false)}>{t('tournaments.createBtn')}</button>
+          <button className={styles.confirmBtn} onClick={handleCreateSubmit} disabled={createLoading || !createName || !createStart}>
+            {createLoading ? 'Création...' : t('tournaments.createBtn')}
+          </button>
         </div>
       </Modal>
 
       {/* ── Modal S'inscrire ── */}
-      <Modal open={registerOpen} onClose={() => setRegisterOpen(false)} title={t('tournaments.registerTitle')}>
+      <Modal open={registerOpen} onClose={() => { setRegisterOpen(false); setRegisterError('') }} title={t('tournaments.registerTitle')}>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.myLogin')}</label>
-          <input className={styles.meInput} value={user?.login ?? ''} readOnly />
+          <input className={styles.meInput} value={user?.username ?? ''} readOnly />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.partner')}</label>
@@ -290,7 +460,7 @@ export default function Tournois() {
             className={styles.input}
             placeholder={t('tournaments.partnerPlaceholder')}
             value={partner}
-            onChange={e => setPartner(e.target.value)}
+            onChange={e => { setPartner(e.target.value); setRegisterError('') }}
           />
           <div className={styles.partnerNote}>
             {partner.trim()
@@ -304,16 +474,14 @@ export default function Tournois() {
             {t('tournaments.soloNote')}
           </div>
         )}
+        {registerError && <div className={styles.bdeError}>{registerError}</div>}
         <div className={styles.modalFooter}>
           <button
             className={styles.confirmBtn}
-            onClick={() => {
-              setRegistered(true)
-              setRegisterOpen(false)
-              if (!partner.trim()) setShowRecruit(true)
-            }}
+            onClick={handleRegisterSubmit}
+            disabled={registerLoading}
           >
-            {t('tournaments.confirmRegister')}
+            {registerLoading ? 'Inscription...' : t('tournaments.confirmRegister')}
           </button>
         </div>
       </Modal>

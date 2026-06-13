@@ -45,6 +45,7 @@ LOCAL_APPS_SYDNEY = [
 	'seasons',
 	'organizations',
 	'public_api',
+	'tournaments',
 ]
 
 # Apps autres
@@ -234,3 +235,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# BDE — mot de passe partagé pour créer un tournoi
+BDE_PASSWORD = config('BDE_PASSWORD', default='bde42')

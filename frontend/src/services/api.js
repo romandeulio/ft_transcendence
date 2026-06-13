@@ -2,7 +2,7 @@ const BASE = '/api'
 
 // Fetch authentifié — ajoute automatiquement le header Bearer
 export function authFetch(url, options = {}) {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token')
   return fetch(url, {
     ...options,
     headers: {

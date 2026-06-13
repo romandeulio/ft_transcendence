@@ -32,7 +32,7 @@ export default function Login() {
         return
       }
       if (data.access) {
-        localStorage.setItem('token', data.access)
+        localStorage.setItem('access_token', data.access)
         const me = await fetch('/api/auth/profile/', {
           headers: { Authorization: `Bearer ${data.access}` },
         })
