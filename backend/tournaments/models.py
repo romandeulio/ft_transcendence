@@ -27,6 +27,8 @@ class Tournament(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        managed  = False
+        db_table = 'tournaments'
         ordering = ['-created_at']
 
     def __str__(self):
@@ -49,7 +51,9 @@ class TournamentRegistration(models.Model):
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['registered_at']
+        managed      = False
+        db_table     = 'tournament_registrations'
+        ordering     = ['registered_at']
         unique_together = [('tournament', 'player1')]
 
     def __str__(self):
@@ -78,6 +82,8 @@ class TournamentTeam(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        managed  = False
+        db_table = 'tournament_teams'
         ordering = ['seed']
         unique_together = [
             ('tournament', 'seed'),
@@ -128,6 +134,8 @@ class TournamentMatch(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed  = False
+        db_table = 'tournament_matches'
         ordering = ['round_number', 'bracket_position']
         unique_together = [('tournament', 'round_number', 'bracket_position')]
 

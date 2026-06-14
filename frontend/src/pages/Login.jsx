@@ -33,12 +33,12 @@ export default function Login() {
         setError(data.detail || data.non_field_errors?.[0] || t('login.error'))
         return
       }
-      //const me = await authFetch('/api/auth/profile/')
-      //if (!me.ok) throw new Error('Profile unavailable')
-      //const user = await me.json()
-      //login(user)
-      //navigate('/accueil')
-      if (data.access_token) {
+      const me = await authFetch('/api/auth/profile/')
+      if (!me.ok) throw new Error('Profile unavailable')
+      const user = await me.json()
+      login(user)
+      navigate('/accueil')
+      /*if (data.access_token) {
         localStorage.setItem('access_token', data.access_token)
         localStorage.setItem('refresh_token', data.refresh_token)
         const me = await fetch('/api/auth/profile/', {
@@ -48,7 +48,7 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(user))
         login(user)
         navigate('/accueil')
-      }
+      }*/
     } catch {
       setError(t('login.networkError'))
     }
