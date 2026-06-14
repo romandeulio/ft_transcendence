@@ -17,4 +17,5 @@ urlpatterns = [
     path('avatar/', views.AvatarUploadView.as_view()),
     path('gdpr/export/',      RGPD.GDPRExportView.as_view()),
     path('gdpr/delete/',      RGPD.GDPRDeleteView.as_view()),
+    path("profile/update/", views.UpdateProfileView.as_view()),
 ]

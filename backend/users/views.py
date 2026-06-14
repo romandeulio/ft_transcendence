@@ -1,5 +1,6 @@
 import requests
 import os
+import uuid
 from django.conf import settings
 
 from .models import User
@@ -241,3 +242,53 @@ class AvatarUploadView(APIView):
         user.avatar_url = None
         user.save(update_fields=['avatar_url'])
         return Response({'avatar_url': None})
+
+class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes     = [MultiPartParser, FormParser]
+
+    def put(self, request):
+        user = request.user
+
+        # Mise à jour email
+        if request.data.get('email'):
+            user.email = request.data['email']
+
+        # Suppression avatar
+        if request.data.get('delete_avatar') == 'true':
+            if user.avatar_url and '/media/' in user.avatar_url:
+                old_path = os.path.join(
+                    settings.MEDIA_ROOT,
+                    user.avatar_url.split('/media/')[-1]
+                )
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            user.avatar_url = None
+
+        # Nouvel avatar
+        elif 'avatar' in request.FILES:
+            file = request.FILES['avatar']
+            ext  = file.name.split('.')[-1].lower()
+
+            # Supprimer l'ancienne image
+            if user.avatar_url and '/media/' in (user.avatar_url or ''):
+                old_path = os.path.join(
+                    settings.MEDIA_ROOT,
+                    user.avatar_url.split('/media/')[-1]
+                )
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+            # Nom unique pour casser le cache navigateur
+            filename = f"avatars/{user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+            filepath = os.path.join(settings.MEDIA_ROOT, filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+            with open(filepath, 'wb+') as f:
+                for chunk in file.chunks():
+                    f.write(chunk)
+
+            user.avatar_url = f"/media/{filename}"
+
+        user.save()
+        return Response(UserSerializer(user).data)

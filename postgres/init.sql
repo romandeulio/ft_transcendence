@@ -165,6 +165,60 @@ CREATE TABLE bets (
     created_at       TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE tournaments (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name        VARCHAR(100) NOT NULL,
+    start_date  TIMESTAMP NOT NULL,
+    deadline    TIMESTAMP,
+    max_players INTEGER NOT NULL DEFAULT 16
+                CHECK (max_players IN (16, 32)),
+    prize       VARCHAR(200) NOT NULL DEFAULT '',
+    status      VARCHAR(15) NOT NULL DEFAULT 'OPEN'
+                CHECK (status IN ('OPEN', 'ONGOING', 'DONE', 'CANCELLED')),
+    created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE tournament_registrations (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+    player1_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    player2_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+    registered_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (tournament_id, player1_id)
+);
+
+CREATE TABLE tournament_teams (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id   UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+    registration_id UUID NOT NULL UNIQUE REFERENCES tournament_registrations(id) ON DELETE CASCADE,
+    player1_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    player2_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    seed            INTEGER NOT NULL CHECK (seed > 0),
+    created_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (tournament_id, seed),
+    UNIQUE (tournament_id, player1_id),
+    UNIQUE (tournament_id, player2_id)
+);
+
+CREATE TABLE tournament_matches (
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id    UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+    round_number     INTEGER NOT NULL CHECK (round_number > 0),
+    bracket_position INTEGER NOT NULL CHECK (bracket_position > 0),
+    team1_id         UUID REFERENCES tournament_teams(id) ON DELETE SET NULL,
+    team2_id         UUID REFERENCES tournament_teams(id) ON DELETE SET NULL,
+    winner_id        UUID REFERENCES tournament_teams(id) ON DELETE SET NULL,
+    score_team1      INTEGER CHECK (score_team1 >= 0),
+    score_team2      INTEGER CHECK (score_team2 >= 0),
+    status           VARCHAR(10) NOT NULL DEFAULT 'PENDING'
+                     CHECK (status IN ('PENDING', 'DONE')),
+    queue_entry_id   UUID UNIQUE REFERENCES queue(id) ON DELETE SET NULL,
+    created_at       TIMESTAMP DEFAULT NOW(),
+    updated_at       TIMESTAMP DEFAULT NOW(),
+    UNIQUE (tournament_id, round_number, bracket_position)
+);
+
 CREATE OR REPLACE FUNCTION check_no_self_bet()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -197,6 +251,18 @@ CREATE TRIGGER trigger_fun_not_ranked
 BEFORE INSERT OR UPDATE ON matches
 FOR EACH ROW EXECUTE FUNCTION check_fun_not_ranked();
 
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_tournament_matches_updated_at
+BEFORE UPDATE ON tournament_matches
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 CREATE INDEX idx_rankings_scope   ON rankings(scope, mode, score DESC);
 CREATE INDEX idx_history_user     ON ranking_history(user_id, recorded_at DESC);
 CREATE INDEX idx_bets_match       ON bets(match_id);
@@ -204,3 +270,8 @@ CREATE INDEX idx_users_oauth      ON users(oauth_42_id);
 CREATE INDEX idx_queue_status      ON queue(status, joined_at);
 CREATE INDEX idx_matches_players   ON matches(player1_id, player2_id);
 CREATE INDEX idx_reservations_status ON reservations(status);
+CREATE INDEX idx_tournaments_status        ON tournaments(status);
+CREATE INDEX idx_registrations_tournament  ON tournament_registrations(tournament_id);
+CREATE INDEX idx_teams_tournament          ON tournament_teams(tournament_id, seed);
+CREATE INDEX idx_bracket_tournament_round  ON tournament_matches(tournament_id, round_number);
+CREATE INDEX idx_bracket_status            ON tournament_matches(status);

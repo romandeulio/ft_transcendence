@@ -44,7 +44,8 @@ export default function Parametres() {
   const [tfa,   setTfa]   = useState(false)
   const [oauth, setOauth] = useState(true)
   const [notifs, setNotifs] = useState({ turn: true, bet: true, tourney: false, season: true, invite: true })
-  const [email, setEmail]   = useState('')
+  //const [email, setEmail]   = useState('')
+  const [email, setEmail] = useState(user.email)
 
   const toggleNotif = (id) => setNotifs(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -55,62 +56,24 @@ export default function Parametres() {
 
   const noticeSections = t('settings.notice.sections', { returnObjects: true })
 
-  const [avatarLoading, setAvatarLoading] = useState(false)
-  const [avatarError,   setAvatarError]   = useState('')
+  const [avatarPreview,  setAvatarPreview]  = useState(user?.avatar_url ?? null)
+  const [avatarFile,     setAvatarFile]     = useState(null)
+  const [avatarDeleted,  setAvatarDeleted]  = useState(false)
+  const [avatarLoading,  setAvatarLoading]  = useState(false)
+  const [avatarError,    setAvatarError]    = useState('')
 
-  const handleAvatarUpload = async (e) => {
+  const handleAvatarChange = (e) => {
       const file = e.target.files?.[0]
       if (!file) return
-
-      setAvatarLoading(true)
-      setAvatarError('')
-
-      const formData = new FormData()
-      formData.append('avatar', file)
-
-      try {
-          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-          const res   = await fetch('/api/auth/avatar/', {
-              method:  'POST',
-              headers: { Authorization: `Bearer ${token}` },
-              body:    formData,
-              // Ne pas mettre Content-Type — le navigateur le gère avec le boundary
-          })
-          const data = await res.json()
-          if (!res.ok) throw new Error(data.error || 'Erreur upload')
-
-          // Mettre à jour le user dans le contexte et localStorage
-          const updated = { ...user, avatar_url: data.avatar_url + '?v=' + Date.now() }
-          login(updated)
-
-      } catch (err) {
-          setAvatarError(err.message)
-      } finally {
-          setAvatarLoading(false)
-          // Reset l'input pour permettre de re-uploader le même fichier
-          document.getElementById('avatar-input').value = ''
-      }
+      setAvatarFile(file)
+      setAvatarPreview(URL.createObjectURL(file))
+      setAvatarDeleted(false)
   }
 
-  const handleAvatarDelete = async () => {
-      setAvatarLoading(true)
-      setAvatarError('')
-      try {
-          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-          const res   = await fetch('/api/auth/avatar/', {
-              method:  'DELETE',
-              headers: { Authorization: `Bearer ${token}` },
-          })
-          if (!res.ok) throw new Error('Erreur suppression')
-
-          const updated = { ...user, avatar_url: null }
-          login(updated)
-
-      } catch (err) {
-          setAvatarError(err.message)
-      } finally {
-          setAvatarLoading(false)
-      }
+  const handleDeleteAvatar = () => {
+      setAvatarPreview(null)
+      setAvatarFile(null)
+      setAvatarDeleted(true)
   }
 
   const handleExport = async () => {
@@ -159,6 +122,53 @@ export default function Parametres() {
     logout()
     navigate("/login")
   }
+
+const handleSave = async () => {
+    const token = localStorage.getItem('access_token')
+
+    try {
+        setAvatarLoading(true)
+        setAvatarError('')
+
+        const profileData = new FormData()
+        profileData.append('email', email)
+
+        // Avatar supprimé → signaler au back
+        if (avatarDeleted) {
+            profileData.append('delete_avatar', 'true')
+        }
+
+        // Nouvel avatar → l'envoyer directement dans le même PUT
+        if (avatarFile) {
+            profileData.append('avatar', avatarFile)
+        }
+
+        const res = await fetch('/api/auth/profile/update/', {
+            method:  'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+            body:    profileData,
+        })
+        if (!res.ok) throw new Error('Erreur mise à jour profil')
+
+        const updated = await res.json()
+
+        login({
+            ...user,
+            email:      updated.email,
+            avatar_url: updated.avatar_url,
+        })
+
+        setAvatarPreview(updated.avatar_url ?? null)
+        setAvatarFile(null)
+        setAvatarDeleted(false)
+
+    } catch (err) {
+        setAvatarError(err.message)
+        console.error(err)
+    } finally {
+        setAvatarLoading(false)
+    }
+  }
   return (
     <Shell>
       <Topbar title={t('topbar.settings')} titleSize={30} />
@@ -191,9 +201,9 @@ export default function Parametres() {
 
                           {/* Affichage de la photo */}
                           <div className={styles.avatarPreview}>
-                              {user?.avatar_url
+                              {avatarPreview
                                   ? <img
-                                      src={user.avatar_url}
+                                      src={avatarPreview}
                                       alt="avatar"
                                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                     />
@@ -208,7 +218,7 @@ export default function Parametres() {
                                   type="file"
                                   accept="image/*"
                                   style={{ display: 'none' }}
-                                  onChange={handleAvatarUpload}
+                                  onChange={handleAvatarChange}
                               />
                               <button
                                   className={styles.btnSecondary}
@@ -219,8 +229,8 @@ export default function Parametres() {
                               </button>
                               <button
                                   className={styles.btnDanger}
-                                  onClick={handleAvatarDelete}
-                                  disabled={!user?.avatar_url || avatarLoading}
+                                  onClick={handleDeleteAvatar}
+                                  disabled={!avatarPreview || avatarLoading}
                               >
                                   {t('settings.profile.delete')}
                               </button>
@@ -237,7 +247,7 @@ export default function Parametres() {
                       <label className={styles.label}>{t('settings.profile.email')}</label>
                       <input className={styles.input} value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
-                  <button className={styles.btnPrimary}>{t('settings.profile.save')}</button>
+                  <button className={styles.btnPrimary} onClick={handleSave}>{t('settings.profile.save')}</button>
               </div>
           )}
 
@@ -300,14 +310,14 @@ export default function Parametres() {
                 <a href="#" className={styles.link}>{t('settings.account.privacy')}</a>
               </div>
               <div className={styles.dangerZone}>
-                <div className={styles.dangerTitle}>{t('settings.account.dangerZone')}</div>
+                {/*<div className={styles.dangerTitle}>{t('settings.account.dangerZone')}</div>
                 <div className={styles.dangerRow}>
                   <div>
                     <div className={styles.dangerLabel}>{t('settings.account.resetStats')}</div>
                     <div className={styles.dangerSub}>{t('settings.account.resetStatsSub')}</div>
                   </div>
                   <button className={styles.btnDanger}>{t('settings.account.reset')}</button>
-                </div>
+                </div>*/}
                 <div className={styles.dangerRow}>
                   <div>
                     <div className={styles.dangerLabel}>{t('settings.account.deleteAccount')}</div>
