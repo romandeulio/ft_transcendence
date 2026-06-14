@@ -57,7 +57,7 @@ function mapTournament(data) {
 export default function Tournois() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { sendInvite } = useQueue()
+  const { notifyTournamentTeammate } = useQueue()
 
   // ── BDE modal ──
   const [bdeOpen,    setBdeOpen]    = useState(false)
@@ -501,12 +501,12 @@ export default function Tournois() {
                     <span className={styles.tcDateLabel}>Date de l'évènement :</span> {tournament.dateLabel}
                   </div>
                 )}
+                {tournament.prize && (
+                  <div className={styles.tcDate}>
+                    <span className={styles.tcDateLabel}>🏆 Récompenses :</span> {tournament.prize}
+                  </div>
+                )}
               </div>
-              {tournament.prize && (
-                <div className={styles.tcDate}>
-                  <span className={styles.tcDateLabel}>🏆 Récompenses :</span> {tournament.prize}
-                </div>
-              )}
             </div>
             <div className={styles.tcMeta}>
               {tournament.deadline && <Pill label={`Inscriptions jusqu'au ${tournament.deadline}`} type="live" />}
@@ -572,13 +572,11 @@ export default function Tournois() {
                     className={styles.inviteBtn}
                     onClick={() => {
                       setInvitedSet(prev => new Set([...prev, p.login]))
-                      sendInvite([p.login], {
-                        _localId: crypto.randomUUID(),
-                        type: 'tournament_teammate',
-                        tournamentId: tournament?.id,
+                      notifyTournamentTeammate(p.login, {
+                        tournamentId:   tournament?.id,
                         tournamentName: tournament?.name,
-                        format: '1v1',
-                        is_ranked: false,
+                        format:         '1v1',
+                        is_ranked:      false,
                       })
                     }}
                   >

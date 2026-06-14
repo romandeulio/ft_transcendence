@@ -43,8 +43,35 @@ export default function Login() {
     }
   }
 
+  const bgItems = [
+    { icon: '⚽', top: '8%',  left: '5%',  size: 28, delay: 0 },
+    { icon: '🥅', top: '15%', left: '88%', size: 32, delay: 1.2 },
+    { icon: '🏆', top: '70%', left: '7%',  size: 26, delay: 2.1 },
+    { icon: '⚽', top: '80%', left: '85%', size: 30, delay: 0.7 },
+    { icon: '🥅', top: '45%', left: '92%', size: 24, delay: 1.8 },
+    { icon: '⚽', top: '55%', left: '2%',  size: 22, delay: 3.0 },
+    { icon: '🏆', top: '30%', left: '91%', size: 28, delay: 0.4 },
+    { icon: '⚽', top: '90%', left: '40%', size: 20, delay: 2.5 },
+    { icon: '🥅', top: '5%',  left: '55%', size: 26, delay: 1.5 },
+    { icon: '🏆', top: '88%', left: '62%', size: 22, delay: 3.3 },
+  ]
+
   return (
     <div className={styles.page}>
+      {bgItems.map((item, i) => (
+        <span
+          key={i}
+          className={styles.bgItem}
+          style={{
+            top: item.top,
+            left: item.left,
+            fontSize: item.size,
+            animationDelay: `${item.delay}s`,
+          }}
+        >
+          {item.icon}
+        </span>
+      ))}
       <div className={styles.langBar}>
         <LanguageSwitcher />
       </div>

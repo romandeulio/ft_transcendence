@@ -268,9 +268,15 @@ export function QueueProvider({ children }) {
     }
 
     let cancelled = false
+    let authFailed = false
     const refreshPersistedQueue = async () => {
+      if (authFailed) return
       try {
         const res = await authFetch('/api/planning/queue/')
+        if (res.status === 401 || res.status === 403) {
+          authFailed = true
+          return
+        }
         if (!res.ok) return
         const data = await res.json()
         const entries = Array.isArray(data) ? data : data.results || []
@@ -379,6 +385,12 @@ export function QueueProvider({ children }) {
     if (gameId) send({ action: 'game_end', gameId, winner: winner || null, winner_teammate: winnerTeammate || null, match_type: matchType || 'SOLO', completed: true })
   }
 
+  // ── Notification tournoi (sans toucher à la queue) ──────────────────────────
+  const notifyTournamentTeammate = (target, slot) => {
+    const inviteId = crypto.randomUUID()
+    send({ action: 'invite', target, inviteId, slot: { ...slot, type: 'tournament_teammate' } })
+  }
+
   // ── Invite API ──────────────────────────────────────────────────────────────
 
   const sendInvite = (targets, slot) => {
@@ -446,6 +458,7 @@ export function QueueProvider({ children }) {
       updateScore,
       closeGame,
       signalGameEnd,
+      notifyTournamentTeammate,
       sendInvite,
       cancelInvite,
       cancelAsP2,

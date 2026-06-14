@@ -17,8 +17,8 @@ export default function Shell({ children }) {
         <main className={styles.main}>
           <button
             className={styles.hamburger}
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Ouvrir le menu"
+            onClick={() => setSidebarOpen(prev => !prev)}
+            aria-label="Ouvrir/fermer le menu"
           >
             <span /><span /><span />
           </button>
