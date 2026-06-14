@@ -1,6 +1,8 @@
 import json
 import uuid
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from planning.models import QueueEntry
 
 queue = []
 games = {}         # gameId -> { player1, player2, scoreRed, scoreBlue }
@@ -29,6 +31,55 @@ def _username_from_scope(scope):
 class QueueConsumer(AsyncWebsocketConsumer):
     group_name = "queue"
 
+    @database_sync_to_async
+    def _persisted_queue_slots(self):
+        entries = (
+            QueueEntry.objects
+            .filter(status=QueueEntry.Status.WAITING)
+            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
+            .order_by("joined_at")
+        )
+        slots = []
+        for entry in entries:
+            player1 = getattr(entry.player1, "username", None)
+            player1_teammate = getattr(entry.player1_teammate, "username", None)
+            player2 = getattr(entry.player2, "username", None)
+            player2_teammate = getattr(entry.player2_teammate, "username", None)
+            is_team = entry.match_type == "TEAM"
+            team1 = [p for p in [player1, player1_teammate] if p]
+            team2 = [p for p in [player2, player2_teammate] if p]
+            slot_id = str(entry.id)
+
+            slots.append({
+                "id": slot_id,
+                "_localId": slot_id,
+                "p1": player1,
+                "p2": player2,
+                "player1": player1,
+                "player1_teammate": player1_teammate,
+                "player2": player2,
+                "player2_teammate": player2_teammate,
+                "match_type": entry.match_type,
+                "is_ranked": entry.is_ranked,
+                "format": "2v2" if is_team else "2v1" if entry.match_type == "TWO_V_ONE" else "1v1",
+                "team1": team1 if is_team else None,
+                "team2": team2 if is_team else None,
+                "type": "taken",
+                "source": "db",
+                "createdAt": int(entry.joined_at.timestamp() * 1000),
+            })
+        return slots
+
+    async def _queue_payload(self, live_queue=None):
+        live_queue = live_queue if live_queue is not None else queue
+        persisted_queue = await self._persisted_queue_slots()
+        seen = {str(slot.get("id") or slot.get("_localId")) for slot in live_queue}
+        merged = list(live_queue) + [
+            slot for slot in persisted_queue
+            if str(slot.get("id") or slot.get("_localId")) not in seen
+        ]
+        return sorted(merged, key=lambda slot: slot.get("createdAt") or 0)
+
     async def connect(self):
         self.user_id = _identity_from_scope(self.scope, self.channel_name)
         self.username = _username_from_scope(self.scope)
@@ -41,7 +92,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         await self.accept()
         await self.send(text_data=json.dumps({
             "type": "queue_state",
-            "queue": queue,
+            "queue": await self._queue_payload(queue),
         }))
         # Deliver messages that were sent while this user was offline
         if self.username and self.username in pending_invites:
@@ -460,7 +511,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
     async def queue_update(self, event):
         await self.send(text_data=json.dumps({
             "type": "queue_state",
-            "queue": event["queue"],
+            "queue": await self._queue_payload(event["queue"]),
         }))
 
     async def game_state_msg(self, event):

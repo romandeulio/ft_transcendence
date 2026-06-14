@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authFetch } from '../services/api'
 
 export default function LoginSuccess() {
     const navigate = useNavigate()
@@ -11,6 +12,7 @@ export default function LoginSuccess() {
         if (done.current) return
         done.current = true
 
+        //a partir d'ici
         const params  = new URLSearchParams(window.location.search)
         const access  = params.get('access_token')
         const refresh = params.get('refresh_token')
@@ -26,6 +28,7 @@ export default function LoginSuccess() {
         fetch('/api/auth/profile/', {
             headers: { Authorization: `Bearer ${access}` }
         })
+        //ou authFetch('/api/auth/profile/')
             .then(res => {
                 if (!res.ok) throw new Error('Profil inaccessible')
                 return res.json()

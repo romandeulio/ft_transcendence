@@ -7,6 +7,7 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import Toggle from '../components/ui/Toggle'
+import { authFetch } from '../services/api'
 import styles from './Parametres.module.css'
 
 const NOTIF_IDS = ['turn', 'bet', 'tourney', 'season', 'invite']
@@ -77,13 +78,7 @@ export default function Parametres() {
   }
 
   const handleExport = async () => {
-    const token = localStorage.getItem("access_token")
-
-    const res = await fetch("/api/auth/gdpr/export/?format=json", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    })
+    const res = await authFetch("/api/auth/gdpr/export/?format=json")
 
     if (!res.ok) {
         alert("Erreur export")
@@ -105,13 +100,8 @@ export default function Parametres() {
     if (!window.confirm("Supprimer définitivement votre compte ?"))
         return
 
-    const token = localStorage.getItem("access_token")
-
-    const res = await fetch("/api/auth/gdpr/delete/", {
+    const res = await authFetch("/api/auth/gdpr/delete/", {
         method: "DELETE",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
     })
 
     if (!res.ok) {

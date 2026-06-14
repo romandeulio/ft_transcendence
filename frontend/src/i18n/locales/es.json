@@ -173,6 +173,7 @@
     "verifying": "Verificando…",
     "access": "Acceder",
     "createTournament": "Crear un torneo",
+    "planNextTournament": "Planificar un nuevo torneo",
     "tournamentName": "Nombre del torneo",
     "tournamentNamePlaceholder": "Ej: Torneo del jueves #5",
     "dateTime": "Fecha y hora",
@@ -411,6 +412,7 @@
     }
   },
   "bracket": {
+    "eighths": "Octavos de final",
     "quarters": "Cuartos de final",
     "semis": "Semifinales",
     "final": "Final",

@@ -13,9 +13,11 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
+    fetch('/api/auth/logout/', {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).catch(() => {})
     setUser(null)
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
   }
 
