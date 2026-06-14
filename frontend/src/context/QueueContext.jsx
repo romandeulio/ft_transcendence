@@ -150,12 +150,18 @@ export function QueueProvider({ children }) {
       setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
 
     } else if (data.type === 'p2_left') {
-      // J2 a annulé le match accepté → J1 retire le slot de mySlots
+      // J2 a annulé le match accepté → J1 retire le slot de mySlots + notification
       setMySlots(prev => {
         const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
+      setInviteResults(prev => [...prev, {
+        inviteId: `p2left-${Date.now()}-${Math.random()}`,
+        accepted: false,
+        target: data.cancelledBy || '?',
+        cancelled: true,
+      }])
 
     } else if (data.type === 'match_cancelled') {
       if (data.slotId) {

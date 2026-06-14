@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './JouerMode.module.css'
 
-export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
+export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange, startTime }) {
   const { t } = useTranslation()
 
   const slot    = match?._slot
@@ -16,7 +16,9 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     : slot?.player2 || slot?.p2 || t('game.red')
   const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
   const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
-  const [elapsed,   setElapsed]   = useState(0)
+  const [elapsed,   setElapsed]   = useState(() =>
+    startTime ? Math.max(0, Math.floor((Date.now() - startTime) / 1000)) : 0
+  )
   const [fois,      setFois]      = useState(0)
   const [ended,     setEnded]     = useState(false)
   const intervalRef = useRef(null)

@@ -1,4 +1,5 @@
 import json
+import time
 import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -163,6 +164,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         "match_type": match_type,
                         "scoreRed": 0,
                         "scoreBlue": 0,
+                        "startTime": int(time.time() * 1000),
                     }
                 await self.channel_layer.group_send(
                     self.group_name,
@@ -382,7 +384,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 if owner_username:
                     await self.channel_layer.group_send(
                         f"user_{owner_username}",
-                        {"type": "p2_left_msg", "slotId": slot_id},
+                        {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
                     )
                 other_participants = set()
                 for field in ["player1_teammate", "p2", "player2_teammate"]:
@@ -511,6 +513,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "p2_left",
             "slotId": event["slotId"],
+            "cancelledBy": event.get("cancelledBy", ""),
         }))
 
     async def win_invite_msg(self, event):

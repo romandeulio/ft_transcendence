@@ -200,7 +200,7 @@ export default function Planning() {
                               <span className={styles.dotRed} />{Array.isArray(slot.team2) && slot.team2.length ? slot.team2.join(' & ') : '...'}
                             </>
                           ) : (() => {
-                            const p1Blue = !slot.player1 || slot.player1 === slot.p1
+                            const p1Blue = slot.player2 !== slot.p1 && (!slot.player1 || slot.player1 === slot.p1)
                             return (
                               <>
                                 <span className={p1Blue ? styles.dotBlue : styles.dotRed} />{slot.p1}

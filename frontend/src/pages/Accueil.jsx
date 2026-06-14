@@ -32,6 +32,7 @@ export default function Accueil() {
 
   const [matchError,     setMatchError]     = useState(null)
   const [initialOpponent, setInitialOpponent] = useState(null)
+  const [userAvatars,    setUserAvatars]    = useState({})
 
   // Matchs que j'ai initiés (persistant via localStorage)
   const myUpcoming = mySlots
@@ -83,7 +84,7 @@ export default function Accueil() {
         vs = opp.length ? opp.join(' & ') : '?'
         vsColor = userIsBlue ? 'red' : 'blue'
       } else {
-        vs = userIsBlue ? (s.p2 || s.player2 || '?') : (s.p1 || '?')
+        vs = userIsBlue ? (s.player2 || s.p1 || '?') : (s.player1 || s.p2 || '?')
         vsColor = userIsBlue ? 'red' : 'blue'
       }
       return {
@@ -286,6 +287,18 @@ export default function Accueil() {
   }
 
   useEffect(() => {
+    authFetch('/api/auth/users/')
+      .then(r => r.json())
+      .then(data => {
+        const users = Array.isArray(data) ? data : (data?.results ?? [])
+        const map = {}
+        users.forEach(u => { if (u.login && u.avatar_url) map[u.login] = u.avatar_url })
+        setUserAvatars(map)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (!user?.username) return
 
     // Matchs validés (historique)
@@ -454,6 +467,7 @@ export default function Accueil() {
           scoreRed={activeGame?.scoreRed}
           scoreBlue={activeGame?.scoreBlue}
           onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
+          startTime={activeGame?.startTime}
         />
       )}
 
@@ -578,7 +592,7 @@ export default function Accueil() {
               {topOpponents.map((tm, i) => (
                 <div key={tm.login} className={styles.teammateRow}>
                   <span className={styles.rankBadge}>#{i + 1}</span>
-                  <Avatar initials={tm.login.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round />
+                  <Avatar initials={tm.login.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round src={userAvatars[tm.login] || null} />
                   <span className={styles.teammateName}>{tm.login}</span>
                   <span className={styles.gamesCount}>{tm.count}p</span>
                   <button
