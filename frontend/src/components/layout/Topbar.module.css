@@ -21,6 +21,10 @@
   text-transform: uppercase;
   text-align: center;
   line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .right {
@@ -50,9 +54,12 @@
 
 @media (max-width: 768px) {
   .topbar {
-    grid-template-columns: 0 1fr auto;
+    display: flex;
+    align-items: center;
     padding: 0 12px 0 52px;
     height: 56px !important;
+    position: relative;
+    z-index: 105;
   }
 
   .left {
@@ -60,10 +67,18 @@
   }
 
   .title {
+    flex: 1;
+    min-width: 0;
     font-size: 15px !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
+    padding: 0 6px;
+  }
+
+  .right {
+    flex-shrink: 0;
   }
 }
 

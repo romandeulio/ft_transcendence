@@ -2,7 +2,9 @@ from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.conf import settings
 from rest_framework_simplejwt.tokens import AccessToken
+from http.cookies import SimpleCookie
 from urllib.parse import parse_qs
 
 User = get_user_model()
@@ -24,6 +26,11 @@ class JWTAuthMiddleware(BaseMiddleware):
         query_params = parse_qs(scope["query_string"].decode())
 
         token = (query_params.get("token") or [None])[0]
+        if not token:
+            cookie_header = dict(scope.get("headers", [])).get(b"cookie", b"").decode()
+            cookies = SimpleCookie(cookie_header)
+            token_cookie = cookies.get(settings.JWT_ACCESS_COOKIE_NAME)
+            token = token_cookie.value if token_cookie else None
         if token:
             try:
                 access_token = AccessToken(token)

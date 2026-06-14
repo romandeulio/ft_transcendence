@@ -1,16 +1,42 @@
 /* ── Layout ── */
 .tree {
-  display: flex;
-  align-items: flex-start;
+  --round-count: 3;
+  --max-matches: 4;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--round-count), minmax(150px, 1fr));
+  column-gap: clamp(28px, 5vw, 96px);
+  align-items: stretch;
+  width: 100%;
+  min-width: calc(var(--round-count) * 170px);
   overflow-x: auto;
-  padding: 16px 0;
+  padding: 22px 4px 18px;
+}
+
+.connectorLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.connectorPath {
+  fill: none;
+  stroke: var(--beige);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .round {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  min-width: 160px;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
 .roundLabel {
@@ -29,6 +55,10 @@
 .slots {
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
+  gap: 16px;
+  min-height: calc(var(--max-matches) * 78px);
+  height: 100%;
 }
 
 /* Fixed-height slots — must match SVG coordinate system (4×80=320) */
@@ -51,6 +81,12 @@
   display: flex;
   align-items: center;
   padding: 4px 0;
+}
+
+.slotDynamic {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
 }
 
 /* ── Match block ── */
@@ -76,6 +112,35 @@
 .sep {
   height: 1px;
   background: var(--beige);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-top: 1px solid var(--beige);
+  background: var(--beige);
+}
+
+.actions button {
+  border: 0;
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions button:hover {
+  background: var(--bg2);
+}
+
+.actions .postpone {
+  grid-column: 1 / -1;
 }
 
 /* ── Connectors ── */

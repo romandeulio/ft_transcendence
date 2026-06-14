@@ -7,6 +7,7 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import Toggle from '../components/ui/Toggle'
+import { authFetch } from '../services/api'
 import styles from './Parametres.module.css'
 
 const NOTIF_IDS = ['turn', 'bet', 'tourney', 'season', 'invite']
@@ -69,10 +70,8 @@ export default function Parametres() {
       formData.append('avatar', file)
 
       try {
-          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-          const res   = await fetch('/api/auth/avatar/', {
+          const res   = await authFetch('/api/auth/avatar/', {
               method:  'POST',
-              headers: { Authorization: `Bearer ${token}` },
               body:    formData,
               // Ne pas mettre Content-Type — le navigateur le gère avec le boundary
           })
@@ -96,10 +95,8 @@ export default function Parametres() {
       setAvatarLoading(true)
       setAvatarError('')
       try {
-          const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-          const res   = await fetch('/api/auth/avatar/', {
+          const res   = await authFetch('/api/auth/avatar/', {
               method:  'DELETE',
-              headers: { Authorization: `Bearer ${token}` },
           })
           if (!res.ok) throw new Error('Erreur suppression')
 
@@ -114,13 +111,7 @@ export default function Parametres() {
   }
 
   const handleExport = async () => {
-    const token = localStorage.getItem("access_token")
-
-    const res = await fetch("/api/auth/gdpr/export/?format=json", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    })
+    const res = await authFetch("/api/auth/gdpr/export/?format=json")
 
     if (!res.ok) {
         alert("Erreur export")
@@ -142,13 +133,8 @@ export default function Parametres() {
     if (!window.confirm("Supprimer définitivement votre compte ?"))
         return
 
-    const token = localStorage.getItem("access_token")
-
-    const res = await fetch("/api/auth/gdpr/delete/", {
+    const res = await authFetch("/api/auth/gdpr/delete/", {
         method: "DELETE",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
     })
 
     if (!res.ok) {
