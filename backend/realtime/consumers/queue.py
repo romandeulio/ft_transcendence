@@ -96,6 +96,10 @@ class QueueConsumer(AsyncWebsocketConsumer):
         return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
 
     async def connect(self):
+        if not self.scope["user"].is_authenticated:
+            await self.close()
+            return
+
         self.user_id = _identity_from_scope(self.scope, self.channel_name)
         self.username = _username_from_scope(self.scope)
 

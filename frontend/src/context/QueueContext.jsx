@@ -71,9 +71,7 @@ export function QueueProvider({ children }) {
   // Keep ref in sync so effect handlers can read latest pendingInvites without stale closure
   useEffect(() => { pendingInvitesRef.current = pendingInvites }, [pendingInvites])
 
-  const wsUrl = user?.username
-    ? `/ws/queue/?username=${encodeURIComponent(user.username)}`
-    : null
+  const wsUrl = user?.username ? `/ws/queue/` : null
   const { data, connected, send } = useWebSocket(wsUrl)
 
   useEffect(() => {
