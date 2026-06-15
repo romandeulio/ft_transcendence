@@ -22,7 +22,9 @@ export default function Ticket() {
   const [login,       setLogin]       = useState('')
   const [description, setDescription] = useState('')
   const [pages,       setPages]       = useState(new Set())
-  const [photos,      setPhotos]      = useState([])
+  const [photos,      setPhotos]      = useState([])   // { name, url, file }
+  const [error,       setError]       = useState(null)
+  const [sending,     setSending]     = useState(false)
   const [sent,        setSent]        = useState(false)
 
   const togglePage = (page) => {
@@ -35,7 +37,7 @@ export default function Ticket() {
 
   const handleFiles = (e) => {
     const files = Array.from(e.target.files)
-    const previews = files.map(f => ({ name: f.name, url: URL.createObjectURL(f) }))
+    const previews = files.map(f => ({ name: f.name, url: URL.createObjectURL(f), file: f }))
     setPhotos(prev => [...prev, ...previews])
   }
 
@@ -43,10 +45,36 @@ export default function Ticket() {
     setPhotos(prev => prev.filter((_, idx) => idx !== i))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!login.trim() || !description.trim()) return
-    setSent(true)
+    setError(null)
+    setSending(true)
+
+    const fd = new FormData()
+    fd.append('login', login.trim())
+    fd.append('description', description.trim())
+    if (pages.size > 0) fd.append('pages', [...pages].join(', '))
+    photos.forEach((p, i) => {
+      if (p.file) fd.append(`photo_${i}`, p.file)
+    })
+
+    try {
+      const res = await fetch('/api/auth/ticket/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd,
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Erreur serveur')
+      }
+      setSent(true)
+    } catch (err) {
+      setError(err.message || 'Erreur réseau')
+    } finally {
+      setSending(false)
+    }
   }
 
   if (sent) {
@@ -125,7 +153,7 @@ export default function Ticket() {
                 onDrop={e => {
                   e.preventDefault()
                   const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-                  setPhotos(prev => [...prev, ...files.map(f => ({ name: f.name, url: URL.createObjectURL(f) }))])
+                  setPhotos(prev => [...prev, ...files.map(f => ({ name: f.name, url: URL.createObjectURL(f), file: f }))])
                 }}
               >
                 <span className={styles.dropIcon}>📎</span>
@@ -157,14 +185,16 @@ export default function Ticket() {
               )}
             </div>
 
+            {error && <div className={styles.errorMsg}>{error}</div>}
+
             <div className={styles.formActions}>
               <button type="button" className={styles.cancelBtn} onClick={() => navigate(-1)}>Annuler</button>
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={!login.trim() || !description.trim()}
+                disabled={!login.trim() || !description.trim() || sending}
               >
-                Envoyer le ticket →
+                {sending ? 'Envoi en cours…' : 'Envoyer le ticket →'}
               </button>
             </div>
 

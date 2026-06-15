@@ -38,9 +38,12 @@ class GDPRExportView(APIView):
                     'recorded_at'
                 )
             ),
-            #'bets': list(
-            #    user.bets.values('amount', 'result', 'payout')#, 'created_at')
-            #),
+            'bets': list(
+                user.bets.values('amount', 'result', 'payout', 'odds', 'created_at')
+            ),
+            'wallet_transactions': list(
+                user.wallet_transactions.values('type', 'amount', 'created_at')
+            ),
         }
 
         if fmt == 'csv':

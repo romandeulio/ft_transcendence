@@ -58,7 +58,7 @@ LOCAL_APPS_TEAM = [
     'users',       # AUTH_USER_MODEL
     'realtime',    # WebSockets
     'performance', # Stats joueur
-#    'bets',        # paris & wallet
+    'bets',        # paris & wallet
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS_SYDNEY + LOCAL_APPS_TEAM
@@ -221,6 +221,10 @@ CACHES = {
     }
 }
 
+# Sessions stockées dans Redis (pas besoin de table django_session)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
 # ===========================================================================
 # INTERNATIONALISATION
 # ===========================================================================
@@ -258,3 +262,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # BDE — mot de passe partagé pour créer un tournoi
 BDE_PASSWORD = config('BDE_PASSWORD', default='bde42')
+
+# Admin dashboard
+ADMIN_LOGIN = config('ADMIN_LOGIN', default='admin')
+ADMIN_PASSWORD = config('ADMIN_PASSWORD', default='admin42')

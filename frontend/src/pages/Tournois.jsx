@@ -57,7 +57,7 @@ function mapTournament(data) {
 export default function Tournois() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { notifyTournamentTeammate } = useQueue()
+  const { notifyTournamentTeammate } =useQueue ()
 
   // ── BDE modal ──
   const [bdeOpen,    setBdeOpen]    = useState(false)
