@@ -4,7 +4,6 @@ import Topbar from '../components/layout/Topbar'
 import Modal from '../components/ui/Modal'
 import Pill from '../components/ui/Pill'
 import Avatar from '../components/ui/Avatar'
-import LoginInput from '../components/ui/LoginInput'
 import AddMatchModal from '../components/ui/AddMatchModal'
 import { useBets } from '../context/BetsContext'
 import { useQueue } from '../context/QueueContext'
@@ -16,7 +15,7 @@ const MAX_TOKENS = 1412
 
 export default function Planning() {
   const { addBet } = useBets()
-  const { queue, mySlots, completedGameIds, joinQueue, leaveQueue, updateSlot, connected, sendInvite } = useQueue()
+  const { queue, mySlots, activeGame, completedGameIds, joinQueue, leaveQueue, cancelAsP2, connected, sendInvite, pendingInvites, cancelInvite, liveGames } = useQueue()
   const { user } = useAuth()
   const { t } = useTranslation()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
@@ -28,10 +27,8 @@ export default function Planning() {
 
   const [joinOpen, setJoinOpen] = useState(false)
 
-  const [editOpen,        setEditOpen]        = useState(false)
-  const [editPlayersOpen, setEditPlayersOpen] = useState(false)
-  const [editP1,          setEditP1]          = useState('')
-  const [editP2,          setEditP2]          = useState('')
+  const [editOpen, setEditOpen] = useState(false)
+  const [cancelTargetSlot, setCancelTargetSlot] = useState(null)
 
   const userPendingCount = () => {
     const u = user?.username
@@ -116,32 +113,56 @@ export default function Planning() {
   }
 
 
+  const u = user?.username
+
   const cancelSlot = () => {
-    const mySlot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
-    if (mySlot) {
-      leaveQueue(mySlot.id)
-    }
+    const target = cancelTargetSlot
+    setCancelTargetSlot(null)
     setEditOpen(false)
-  }
-
-  const openEditPlayers = () => {
-    const slot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
-    if (slot) { setEditP1(slot.p1 || ''); setEditP2(slot.p2 || '') }
-    setEditOpen(false)
-    setEditPlayersOpen(true)
-  }
-
-  const saveEditPlayers = () => {
-    const mySlot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
-    if (mySlot) {
-      updateSlot(mySlot.id, { p1: editP1, p2: editP2 })
+    if (!target) return
+    const slotId = target._localId || target.id
+    if (target.p1 === u) {
+      // Owner: leaveQueue removes from mySlots + sends 'leave' to backend
+      leaveQueue(slotId)
+    } else {
+      // Non-owner participant (J2 / teammate): sends 'leave_as_p2'
+      cancelAsP2(slotId)
     }
-    setEditPlayersOpen(false)
   }
 
-  const mySlot = queue.find(s => s.ownerId === user?.id || s.type === 'mine')
-  const liveSlots = queue.filter(s => s.type === 'live')
-  const displaySlots = queue.filter(s => s.type !== 'free' && s.type !== 'live')
+
+  const invitedSlot = queue.find(s => {
+    const sid = s.id || s._localId
+    if (sid && completedGameIds.has(sid)) return false
+    if (s.live) return false
+    return s.p1 !== u && u && (s.p2 === u || (s.team1 || []).includes(u) || (s.team2 || []).includes(u))
+  }) || null
+  const mySlot = mySlots.find(s =>
+    !completedGameIds.has(s._localId) &&
+    s.type !== 'pending_invite' &&
+    s._localId !== activeGame?.gameId
+  ) || invitedSlot || null
+  const pendingInviteSlots = mySlots.filter(s => s.type === 'pending_invite' && !completedGameIds.has(s._localId))
+  const liveSlots = (() => {
+    const fromQueue = queue.filter(s => s.live)
+    if (!activeGame) return fromQueue
+    const alreadyIn = fromQueue.some(s => (s.id || s._localId) === activeGame.gameId)
+    if (alreadyIn) return fromQueue
+    return [...fromQueue, {
+      id: activeGame.gameId,
+      _localId: activeGame.gameId,
+      p1: activeGame.player1,
+      p2: activeGame.player2,
+      player1: activeGame.player1,
+      player2: activeGame.player2,
+      player1_teammate: activeGame.player1_teammate || null,
+      player2_teammate: activeGame.player2_teammate || null,
+      match_type: activeGame.match_type || 'SOLO',
+      format: activeGame.match_type === 'TEAM' ? '2v2' : '1v1',
+      live: true,
+    }]
+  })()
+  const displaySlots = queue.filter(s => s.type !== 'free')
   const prevTeam = displaySlots.length > 0 ? displaySlots[displaySlots.length - 1] : null
 
   return (
@@ -166,9 +187,10 @@ export default function Planning() {
           <div className={styles.timelineOuter}>
             <div className={styles.timeline}>
               {displaySlots.map((slot, i) => {
-                const isMe    = slot.ownerId === user?.id || slot.type === 'mine'
-                const isLive  = slot.type === 'live'
-                const isTaken = slot.type === 'taken'
+                const isMe          = slot.p1 === u
+                const isParticipant = isMe || !!(u && (slot.p2 === u || slot.team1?.includes(u) || slot.team2?.includes(u)))
+                const isLive  = !!slot.live
+                const isTaken = slot.type === 'taken' && !slot.live
                 const hovered = hoveredIdx === i
 
                 return (
@@ -179,16 +201,16 @@ export default function Planning() {
                     onMouseLeave={() => setHoveredIdx(null)}
                   >
                     <div className={styles.slotLabel}>
-                      {isLive && <span className={styles.liveLabelText}>{t('queue.live')}</span>}
-                      {isMe   && <span className={styles.mineLabelText}>{t('queue.myMatch')}</span>}
+                      {isLive        && <span className={styles.liveLabelText}>{t('queue.live')}</span>}
+                      {isParticipant && <span className={styles.mineLabelText}>{t('queue.myMatch')}</span>}
                     </div>
 
                     <div
                       className={[
                         styles.slot,
-                        isLive  ? styles.slotLive  : '',
-                        isMe    ? styles.slotMine  : '',
-                        isTaken ? styles.slotTaken : '',
+                        isLive        ? styles.slotLive  : '',
+                        isParticipant ? styles.slotMine  : '',
+                        isTaken       ? styles.slotTaken : '',
                       ].join(' ')}
                     >
                       {slot.p1 && (
@@ -213,12 +235,11 @@ export default function Planning() {
                       )}
                       {slot.format && <div className={styles.slotFormat}>{slot.format}</div>}
 
-                      {isMe && (
+                      {!isLive && isParticipant && (
                         <button
                           className={styles.editSlotBtn}
-                          onClick={e => { e.stopPropagation(); setEditOpen(true) }}
-                          title={t('queue.editSlot')}
-                        >✏️</button>
+                          onClick={e => { e.stopPropagation(); setCancelTargetSlot(slot); setEditOpen(true) }}
+                        >✕</button>
                       )}
 
                       {(isLive || isTaken) && hovered && (
@@ -252,15 +273,29 @@ export default function Planning() {
           <div className={styles.infoCard}>
             <div className={styles.infoCardHeader}>{t('queue.nextMatch')}</div>
             <div className={styles.infoCardBody}>
-              {mySlot ? (
-                <div className={styles.myMatchInfo}>
-                  <Avatar initials={mySlot.p2?.substring(0, 2).toUpperCase() || "?"} size={34} bg="var(--beige)" round />
-                  <div>
-                    <div className={styles.myMatchVs}>vs <strong>{mySlot.p2 || (mySlot.takeWin ? t('queue.waitingWinner') : '?')}</strong></div>
-                    <div className={styles.myMatchSub}>{mySlot.format} · {mySlot.type === 'live' ? 'En cours' : 'Compétition'}</div>
+              {mySlot ? (() => {
+                const isTeam = mySlot.format === '2v2'
+                const iAmP1 = mySlot.p1 === u || (Array.isArray(mySlot.team1) && mySlot.team1.includes(u))
+                let opponentLabel
+                if (isTeam) {
+                  const oppTeam = iAmP1 ? mySlot.team2 : mySlot.team1
+                  opponentLabel = Array.isArray(oppTeam) && oppTeam.filter(Boolean).length
+                    ? oppTeam.filter(Boolean).join(' & ')
+                    : (iAmP1 ? mySlot.p2 : mySlot.p1) || '?'
+                } else {
+                  const opp = iAmP1 ? mySlot.p2 : mySlot.p1
+                  opponentLabel = opp || (mySlot.takeWin ? t('queue.waitingWinner') : '?')
+                }
+                return (
+                  <div className={styles.myMatchInfo}>
+                    <Avatar initials={opponentLabel.substring(0, 2).toUpperCase()} size={34} bg="var(--beige)" round />
+                    <div>
+                      <div className={styles.myMatchVs}>vs <strong>{opponentLabel}</strong></div>
+                      <div className={styles.myMatchSub}>{mySlot.format} · {mySlot.is_ranked ? t('addMatch.competition') : t('addMatch.chill')}</div>
+                    </div>
                   </div>
-                </div>
-              ) : (
+                )
+              })() : (
                 <div className={styles.noMatch}>{t('queue.noMatch')}</div>
               )}
             </div>
@@ -269,16 +304,79 @@ export default function Planning() {
           <div className={styles.infoCard}>
             <div className={styles.infoCardHeader}>{t('queue.currentMatch')}</div>
             <div className={styles.infoCardBody}>
-              {liveSlots.map((s, i) => (
-                <div key={i} className={styles.liveMatchRow}>
-                  <Pill label="LIVE" type="live" />
-                  <span className={styles.liveMatchNames}>{s.p1} vs {s.p2}</span>
-                </div>
-              ))}
               {liveSlots.length === 0 && (
                 <div className={styles.noMatch}>{t('queue.noLive')}</div>
               )}
+              {liveSlots.map((s) => {
+                const slotId = s.id || s._localId
+                const game = liveGames[slotId] ?? (s.scoreBlue !== undefined ? { scoreBlue: s.scoreBlue, scoreRed: s.scoreRed } : null)
+                const blueLabel = s.format === '2v2' && s.team1?.length
+                  ? s.team1.filter(Boolean).join(' & ')
+                  : s.player1 || s.p1 || '?'
+                const redLabel = s.format === '2v2' && s.team2?.length
+                  ? s.team2.filter(Boolean).join(' & ')
+                  : s.player2 || s.p2 || '?'
+                return (
+                  <div key={slotId} className={styles.liveMatchRow}>
+                    <Pill label="LIVE" type="live" />
+                    <div className={styles.liveMatchContent}>
+                      <div className={styles.liveMatchNames}>
+                        <span className={styles.dotBlue} />{blueLabel}
+                        {' vs '}
+                        <span className={styles.dotRed} />{redLabel}
+                      </div>
+                      {game && (
+                        <div className={styles.liveScore}>
+                          <span className={styles.liveScoreBlue}>{game.scoreBlue ?? 0}</span>
+                          <span className={styles.liveScoreSep}>–</span>
+                          <span className={styles.liveScoreRed}>{game.scoreRed ?? 0}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
+          </div>
+        </div>
+
+        <div className={styles.infoCard}>
+          <div className={styles.infoCardHeader}>{t('queue.pendingAccept')}</div>
+          <div className={styles.infoCardBody}>
+            {pendingInviteSlots.length === 0 && pendingInvites.length === 0 ? (
+              <div className={styles.noMatch}>{t('queue.noPending')}</div>
+            ) : (
+              <div className={styles.pendingList}>
+                {pendingInviteSlots.map(s => (
+                  <div key={s._localId} className={styles.pendingRow}>
+                    <div className={styles.pendingInfo}>
+                      <span className={styles.pendingVs}>
+                        {s.p2
+                          ? t('queue.pendingVs', { opponent: s.p2 })
+                          : (s._targets?.join(', ') || '?')}
+                      </span>
+                      <span className={styles.pendingFormat}>{s.format} · {t('invite.pendingLabel')}</span>
+                    </div>
+                    <button
+                      className={styles.pendingCancelBtn}
+                      onClick={() => cancelInvite(s._localId)}
+                    >
+                      {t('queue.cancelInvite')}
+                    </button>
+                  </div>
+                ))}
+                {pendingInvites.map(inv => (
+                  <div key={inv.inviteId} className={styles.pendingRow}>
+                    <div className={styles.pendingInfo}>
+                      <span className={styles.pendingVs}>{inv.from}</span>
+                      <span className={styles.pendingFormat}>
+                        {inv.slot?.format || '1v1'} · {inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill')} · {t('invite.pendingLabel')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -342,26 +440,9 @@ export default function Planning() {
       />
 
       {/* ── Modal modifier créneau ── */}
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('queue.mySlotTitle')}>
+      <Modal open={editOpen} onClose={() => { setEditOpen(false); setCancelTargetSlot(null) }} title={t('queue.mySlotTitle')}>
         <div className={styles.editOptions}>
           <button className={styles.editCancelBtn} onClick={cancelSlot}>{t('queue.cancelSlot')}</button>
-          <button className={styles.editModifyBtn} onClick={openEditPlayers}>{t('queue.modifyPlayers')}</button>
-        </div>
-      </Modal>
-
-      <Modal open={editPlayersOpen} onClose={() => setEditPlayersOpen(false)} title={t('queue.modifyPlayers')}>
-        <div className={styles.teamsGrid}>
-          <div className={styles.teamBlue}>
-            <div className={styles.teamLabel}>{t('queue.me')}</div>
-            <input className={styles.meInput} value={editP1} onChange={e => setEditP1(e.target.value)} />
-          </div>
-          <div className={styles.teamRed}>
-            <div className={styles.teamLabel}>{t('queue.opponent')}</div>
-            <LoginInput value={editP2} onChange={setEditP2} placeholder={t('queue.loginPlaceholder')} className={styles.partnerInput} />
-          </div>
-        </div>
-        <div className={styles.modalActions}>
-          <button className={styles.confirmBtn} onClick={saveEditPlayers}>{t('queue.save')}</button>
         </div>
       </Modal>
 

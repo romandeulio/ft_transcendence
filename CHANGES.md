@@ -1,3 +1,147 @@
+
+# Changelog — Session du 14 juin 2026
+
+---
+
+## Patch 4 — Déconnexion/reconnexion robuste, file zombie, "Mon match" pour tous les participants
+
+> Depuis le commit `02d785a` — *Merge branch 'frontend-tournois'*
+
+---
+
+### 1. Reconnexion — slots préservés et état de jeu restauré
+
+Quand un joueur se reconnecte (sans refresh), ses créneaux et sa partie en cours sont désormais restaurés proprement.
+
+**Backend `queue.py`**
+- `disconnect()` ne supprime plus les créneaux qui ont un adversaire accepté (`p2` renseigné), une partie active (`id` dans `games`) ou un créneau takeWin en attente — le slot reste visible dans la file pendant la déco.
+- `connect()` envoie un message `game_state` si l'utilisateur était participant d'une partie active, permettant au frontend de resynchroniser les scores et le timer.
+- `join` (upsert) : quand un client reconnecté envoie `join` pour son slot, les champs serveur déjà renseignés (`p2`, `player2`, coéquipiers, etc.) sont préservés — évite d'écraser des données arrivées pendant la déco.
+
+**Frontend `QueueContext.jsx`**
+- Au reconnect, le slot correspondant à la partie active (`activeGame?.gameId`) n'est pas re-soumis au backend via `join` — la partie est déjà trackée côté serveur.
+- La restauration de `invitesSentRef` depuis `mySlots` (slots `pending_invite`) permet à J1 de continuer à traiter les réponses d'invitation après une déco/reco.
+
+---
+
+### 2. Livraison offline complète (5 types de notifications)
+
+Tous les messages importants sont maintenant stockés dans `pending_invites` quand le destinataire est hors-ligne, et livrés à la reconnexion.
+
+| Type | Stocké offline | Comportement à la reco |
+|---|---|---|
+| `match_cancelled` | ✓ | consommé (ONE_SHOT) |
+| `win_claim_declined` | ✓ | consommé (ONE_SHOT) |
+| `invite_response` | ✓ | consommé (ONE_SHOT) |
+| `p2_left` | ✓ | consommé (ONE_SHOT) |
+| `game_ended` | ✓ | consommé (ONE_SHOT) |
+| invitation régulière | ✓ | persistante (survit plusieurs déco/reco) |
+| `win_invite` | ✓ | persistante |
+
+- Les ONE_SHOT sont retirés de `pending_invites` à la première livraison.
+- `cancel_invite` nettoie le `pending_invites` de la cible.
+- `leave` (annulation de slot) notifie les participants hors-ligne via `pending_invites`.
+
+---
+
+### 3. Scénario 5.2 — Fin de partie pendant déco de J1
+
+**Problème** : J1 et J2 jouent → J1 déco sans refresh → J2 termine la partie → J1 reconnecte → slot zombie apparaît dans la file, impossible à supprimer.
+
+**Causes** :
+1. Le slot mort revenait via `refreshPersistedQueue` (API REST → DB non mise à jour par le WS).
+2. JouerMode restait ouvert car l'auto-close attendait `game_ended` mais pouvait rater la fenêtre de timing.
+
+**Fixes `QueueContext.jsx`** :
+- `game_ended` handler : `setQueue(prev => prev.filter(...))` retire immédiatement le slot de la file React.
+- `completedGameIdsRef` : ref toujours à jour, utilisée dans `refreshPersistedQueue` pour filtrer les slots terminés avant de les injecter depuis la DB — le zombie ne revient plus.
+
+**Fixes `Accueil.jsx`** :
+- Nouvel effet `[connected]` : à la reconnexion WS (`connected` passe false→true), si JouerMode est ouvert, il est fermé immédiatement. Si la partie est encore vivante, `game_state` arrive et J1 peut re-cliquer Jouer.
+- Effet `[activeGame?.gameId]` (gardé) : auto-close via refs (`jouerOpenRef`, `selectedMatchRef`) quand `activeGame` passe de `gameId` → null — couvre le cas où J2 termine pendant que J1 est connecté.
+
+---
+
+### 4. Scores en direct dans le planning (`_queue_payload`)
+
+`_queue_payload` dans `queue.py` enrichit chaque slot actif avec `live: true`, `scoreBlue`, `scoreRed` depuis le dict `games`. La timeline dans `Planning.jsx` affiche les scores en temps réel pour les parties en cours.
+
+**Frontend `Planning.jsx`** : rendu des scores live avec `.liveScore`, `.liveScoreBlue`, `.liveScoreRed`.
+**Frontend `Planning.module.css`** : nouveaux styles `.liveMatchContent`, `.liveScore`, `.liveScoreBlue`, `.liveScoreRed`, `.liveScoreSep`.
+
+---
+
+### 5. "Mon match" pour tous les participants (pas seulement p1)
+
+Dans la timeline Planning, tous les participants d'un créneau (p1, p2, équipiers) voient maintenant :
+- Le badge **"Mon match"** (`.mineLabelText`).
+- Le slot surligné (`.slotMine`).
+- Le bouton **✕** pour annuler leur participation.
+
+Le bouton ✕ distingue owner et non-owner :
+- **Owner (p1)** → `leaveQueue(slotId)` (supprime le slot, notifie tout le monde).
+- **Non-owner (J2 / coéquipier)** → `cancelAsP2(slotId)` (envoie `leave_as_p2`, notifie J1 + les autres).
+
+`cancelAsP2` est maintenant exposé dans `useQueue()` et destructuré dans `Planning.jsx`.
+
+---
+
+### 6. `JouerMode` — resynchronisation du timer au reconnect
+
+Quand `startTime` arrive après le mount (reconnexion ou rejoindre une partie déjà démarrée), l'elapsed est recalculé depuis `startTime`. Évite que le chrono reparte à zéro après une déco.
+
+---
+
+### 7. Fix `CookieJWTAuthentication` — token valide mais utilisateur supprimé
+
+`get_user()` lançait `AuthenticationFailed` quand l'utilisateur n'existait plus en base (ex : après un `make re`). La méthode attrape maintenant cette exception et retourne `None`, ce qui laisse les vues `AllowAny` (login, register) accessibles même avec un cookie JWT périmé.
+
+---
+
+### Nouvelles clés i18n (4 langues)
+
+| Clé | Exemple (fr) |
+|---|---|
+| `queue.myMatch` | "Mon match" |
+| `queue.mySlotTitle` | "Mon créneau" |
+| `queue.pendingAccept` | "En cours d'acceptation" |
+| `queue.noPending` | "Aucune invitation en cours" |
+| `queue.pendingVs` | "vs {{opponent}}" |
+| `queue.cancelInvite` | "✕ Annuler" |
+
+---
+
+### Fichiers modifiés (patch 4)
+
+```
+backend/
+  realtime/consumers/queue.py    ← disconnect preserve, connect restore, offline delivery,
+                                    game_ended offline, upsert join, live scores
+  users/authentication.py        ← fix AuthenticationFailed sur user inexistant
+
+frontend/src/
+  components/ui/
+    JouerMode.jsx                ← resync timer au reconnect (startTime tardif)
+  context/
+    QueueContext.jsx             ← completedGameIdsRef, setQueue on game_ended,
+                                    filteredPersisted, skip activeGame slot au reconnect,
+                                    cancelAsP2 exposé, close-on-reconnect via connected
+  i18n/locales/
+    fr.json / en.json / es.json / he.json
+  pages/
+    Accueil.jsx                  ← jouerOpenRef/selectedMatchRef/prevConnectedRef,
+                                    effet [connected] close-on-reconnect,
+                                    effet [activeGame?.gameId] auto-close,
+                                    syntheticActiveMatch, isParticipantOfActiveGame
+    Planning.jsx                 ← isParticipant, badge "Mon match", slotMine,
+                                    bouton ✕ pour tous participants, cancelAsP2,
+                                    cancelTargetSlot, live scores affichés
+    Planning.module.css          ← .slotMine, .mineLabel, .mineLabelText, .editSlotBtn,
+                                    .liveScore, .liveScoreBlue/.Red/.Sep
+```
+
+---
+
 # Changelog — Session du 12 juin 2026
 
 ---

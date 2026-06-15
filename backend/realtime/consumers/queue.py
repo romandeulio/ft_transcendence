@@ -10,6 +10,7 @@ games = {}         # gameId -> { player1, player2, scoreRed, scoreBlue }
 win_invites = {}   # inviteId -> { slotId, targets, accepted, owner }
 online_users = set()           # usernames currently connected
 pending_invites = {}           # username -> list of stored invites for offline users
+completed_game_ids = set()     # gameIds that ended (to reject stale reconnect rejoins)
 
 
 def _identity_from_scope(scope, channel_name):
@@ -79,7 +80,20 @@ class QueueConsumer(AsyncWebsocketConsumer):
             slot for slot in persisted_queue
             if str(slot.get("id") or slot.get("_localId")) not in seen
         ]
-        return sorted(merged, key=lambda slot: slot.get("createdAt") or 0)
+        result = []
+        for slot in merged:
+            slot_id = str(slot.get("id") or slot.get("_localId") or "")
+            if slot_id in games:
+                g = games[slot_id]
+                result.append({
+                    **slot,
+                    "live":       True,
+                    "scoreBlue":  g.get("scoreBlue", 0),
+                    "scoreRed":   g.get("scoreRed",  0),
+                })
+            else:
+                result.append(slot)
+        return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
 
     async def connect(self):
         self.user_id = _identity_from_scope(self.scope, self.channel_name)
@@ -95,20 +109,64 @@ class QueueConsumer(AsyncWebsocketConsumer):
             "type": "queue_state",
             "queue": await self._queue_payload(queue),
         }))
-        # Deliver messages that were sent while this user was offline
+        # Restore game state for any active game this user is part of (reconnect / late join)
+        if self.username:
+            for game_id, g in games.items():
+                if self.username in (g.get("player1"), g.get("player2"),
+                                     g.get("player1_teammate"), g.get("player2_teammate")):
+                    await self.send(text_data=json.dumps({
+                        "type": "game_state",
+                        "game": {**g, "gameId": game_id},
+                    }))
+                    break
+
+        # Deliver messages that were sent while this user was offline.
+        # One-shot notifications (match_cancelled, win_claim_declined) are consumed on delivery.
+        # Pending invites (regular and win) are kept until the user responds or J1 cancels,
+        # so they survive multiple disconnect/reconnect cycles.
         if self.username and self.username in pending_invites:
-            for inv in pending_invites.pop(self.username):
+            to_deliver = list(pending_invites[self.username])
+            # One-shot notifications consumed on delivery; persistent invites kept until responded/cancelled
+            ONE_SHOT_KEYS = ("match_cancelled", "win_claim_declined", "invite_response", "p2_left", "game_ended")
+            pending_invites[self.username] = [
+                inv for inv in to_deliver
+                if not any(inv.get(k) for k in ONE_SHOT_KEYS)
+            ]
+            if not pending_invites[self.username]:
+                del pending_invites[self.username]
+            for inv in to_deliver:
                 if inv.get("match_cancelled"):
                     await self.send(text_data=json.dumps({
-                        "type": "match_cancelled",
+                        "type":        "match_cancelled",
                         "cancelledBy": inv.get("cancelledBy", ""),
                         "slotId":      inv.get("slotId"),
                         "chain":       inv.get("chain", False),
+                        "cancelId":    inv.get("cancelId"),
                     }))
                 elif inv.get("win_claim_declined"):
                     await self.send(text_data=json.dumps({
                         "type": "win_claim_declined",
                         "slotId": inv["slotId"],
+                    }))
+                elif inv.get("invite_response"):
+                    await self.send(text_data=json.dumps({
+                        "type":      "invite_response",
+                        "inviteId":  inv["inviteId"],
+                        "accepted":  inv["accepted"],
+                        "responder": inv["responder"],
+                    }))
+                elif inv.get("p2_left"):
+                    await self.send(text_data=json.dumps({
+                        "type":        "p2_left",
+                        "slotId":      inv["slotId"],
+                        "cancelledBy": inv["cancelledBy"],
+                    }))
+                elif inv.get("game_ended"):
+                    await self.send(text_data=json.dumps({
+                        "type":            "game_ended",
+                        "gameId":          inv["gameId"],
+                        "winner":          inv.get("winner"),
+                        "winner_teammate": inv.get("winner_teammate"),
                     }))
                 elif inv.get("win_invite"):
                     await self.send(text_data=json.dumps({
@@ -128,7 +186,19 @@ class QueueConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         global queue
-        queue = [s for s in queue if s.get("ownerId") != self.user_id]
+        # Keep slots that:
+        # - belong to another user
+        # - are tied to an active game
+        # - have a committed opponent (p2 set = J2 accepted the invite)
+        # - are takeWin slots waiting for the previous game to end (p2 still unknown)
+        active_game_slot_ids = set(games.keys())
+        queue = [
+            s for s in queue
+            if s.get("ownerId") != self.user_id
+            or s.get("id") in active_game_slot_ids
+            or bool(s.get("p2"))
+            or bool(s.get("takeWin"))
+        ]
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         if self.username:
             await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
@@ -151,8 +221,28 @@ class QueueConsumer(AsyncWebsocketConsumer):
             slot = data.get("slot") or {}
             # Use client-provided _localId as the server ID so leave/update can reference it
             slot["id"] = slot.get("_localId") or str(uuid.uuid4())
+
+            # Reject stale rejoins: J1 was offline when J2 ended the game; the reconnect
+            # effect fires before game_ended is processed, causing the slot to reappear.
+            if slot["id"] in completed_game_ids:
+                await self.send(text_data=json.dumps({
+                    "type": "game_ended",
+                    "gameId": slot["id"],
+                }))
+                return
+
             slot["ownerId"] = self.user_id
             slot["type"] = "taken"
+            # Upsert: if a slot with the same id already exists, preserve any server-side
+            # player fields that the reconnecting client might not have yet (e.g. p2 filled
+            # by a win_claim while J1 was offline).
+            existing = next((s for s in queue if s.get("id") == slot["id"]), None)
+            if existing:
+                for field in ("p2", "player1", "player2", "player1_teammate",
+                              "player2_teammate", "team1", "team2"):
+                    if existing.get(field) and not slot.get(field):
+                        slot[field] = existing[field]
+            queue = [s for s in queue if s.get("id") != slot["id"]]
             # Insert at correct position based on createdAt so invite-delayed slots
             # land before slots created later (FIFO by original creation time)
             created_at = slot.get("createdAt") or 0
@@ -183,11 +273,18 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     for p in (leaving_slot.get(team_key) or []):
                         if p and p != self.username:
                             participants.add(p)
+                cancel_id = str(uuid.uuid4())
                 for participant in participants:
-                    await self.channel_layer.group_send(
-                        f"user_{participant}",
-                        {"type": "match_cancelled_msg", "cancelledBy": self.username},
-                    )
+                    if participant in online_users:
+                        await self.channel_layer.group_send(
+                            f"user_{participant}",
+                            {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
+                        )
+                    else:
+                        pending_invites.setdefault(participant, []).append({
+                            "match_cancelled": True, "cancelledBy": self.username,
+                            "slotId": leaving_slot.get("id"), "cancelId": cancel_id,
+                        })
                 await self._cascade_cancel_takewins(leaving_slot.get("id"), leaving_slot.get("match_type", "SOLO"))
 
         elif action == "update":
@@ -221,6 +318,11 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
+                # Push live flag to all connected clients immediately
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {"type": "queue_update", "queue": queue},
+                )
             return
 
         elif action == "score_update":
@@ -253,10 +355,23 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     elif g.get("scoreRed", 0) > g.get("scoreBlue", 0):
                         winner          = g.get("player2")
                         winner_teammate = g.get("player2_teammate")
+                # Notify offline participants so their activeGame clears on reconnect
+                for pf in ("player1", "player2", "player1_teammate", "player2_teammate"):
+                    p = g.get(pf)
+                    if p and p not in online_users:
+                        pending_invites.setdefault(p, []).append({
+                            "game_ended": True,
+                            "gameId":          game_id,
+                            "winner":          winner,
+                            "winner_teammate": winner_teammate,
+                        })
                 del games[game_id]
             # Supprime le créneau terminé
             if game_id:
                 queue = [s for s in queue if s.get("id") != game_id]
+                completed_game_ids.add(game_id)
+                if len(completed_game_ids) > 10000:
+                    completed_game_ids.pop()
             # Invite le/les gagnant(s) — seulement si le match est officiellement terminé
             if winner and is_completed:
                 ended_match_type = data.get("match_type") or (g.get("match_type", "SOLO") if g else "SOLO")
@@ -279,14 +394,14 @@ class QueueConsumer(AsyncWebsocketConsumer):
                                 "slot":     slot,
                                 "slotId":   slot["id"],
                             }
+                            # Always persist for reconnect re-delivery
+                            pending_invites.setdefault(target, []).append(
+                                {"win_invite": True, **inv_payload}
+                            )
                             if target in online_users:
                                 await self.channel_layer.group_send(
                                     f"user_{target}",
                                     {"type": "win_invite_msg", **inv_payload},
-                                )
-                            else:
-                                pending_invites.setdefault(target, []).append(
-                                    {"win_invite": True, **inv_payload}
                                 )
             await self.channel_layer.group_send(
                 self.group_name,
@@ -305,14 +420,13 @@ class QueueConsumer(AsyncWebsocketConsumer):
             invite_id = data.get("inviteId") or str(uuid.uuid4())
             slot      = data.get("slot") or {}
             if target:
-                if target not in online_users:
-                    # Store for delivery when target comes online
-                    pending_invites.setdefault(target, []).append({
-                        "inviteId": invite_id,
-                        "from":     self.username,
-                        "slot":     slot,
-                    })
-                else:
+                # Always persist for reconnect re-delivery (removed on response or cancel)
+                pending_invites.setdefault(target, []).append({
+                    "inviteId": invite_id,
+                    "from":     self.username,
+                    "slot":     slot,
+                })
+                if target in online_users:
                     await self.channel_layer.group_send(
                         f"user_{target}",
                         {
@@ -329,16 +443,30 @@ class QueueConsumer(AsyncWebsocketConsumer):
             accepted  = data.get("accepted", False)
             from_user = data.get("from")    # J1's username
 
+            # Remove from pending storage so the invite isn't re-delivered on next reconnect
+            if self.username in pending_invites:
+                pending_invites[self.username] = [
+                    i for i in pending_invites[self.username]
+                    if i.get("inviteId") != invite_id
+                ]
+                if not pending_invites[self.username]:
+                    del pending_invites[self.username]
+
             if from_user:
-                await self.channel_layer.group_send(
-                    f"user_{from_user}",
-                    {
-                        "type": "invite_response_msg",
-                        "inviteId": invite_id,
-                        "accepted": accepted,
-                        "responder": self.username,  # who responded (J2/J3/J4)
-                    },
-                )
+                payload = {
+                    "inviteId":  invite_id,
+                    "accepted":  accepted,
+                    "responder": self.username,
+                }
+                if from_user in online_users:
+                    await self.channel_layer.group_send(
+                        f"user_{from_user}",
+                        {"type": "invite_response_msg", **payload},
+                    )
+                else:
+                    pending_invites.setdefault(from_user, []).append(
+                        {"invite_response": True, **payload}
+                    )
             return
 
         elif action == "cancel_invite":
@@ -367,6 +495,15 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 return
             slot_id = invite["slotId"]
 
+            # Remove win_invite from pending storage so it isn't re-delivered on reconnect
+            if self.username in pending_invites:
+                pending_invites[self.username] = [
+                    i for i in pending_invites[self.username]
+                    if i.get("inviteId") != invite_id
+                ]
+                if not pending_invites[self.username]:
+                    del pending_invites[self.username]
+
             if not accepted:
                 # Gagnant refuse → annuler le créneau takeWin
                 cancelled_slot = next((s for s in queue if s.get("id") == slot_id), None)
@@ -385,10 +522,13 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 # Annuler pour les autres co-gagnants éventuels
                 for t in invite["targets"]:
                     if t != self.username:
-                        await self.channel_layer.group_send(
-                            f"user_{t}",
-                            {"type": "cancel_invite_msg", "inviteId": invite_id},
-                        )
+                        # Their pending_invites entry was already removed when they responded,
+                        # so we only need to notify if they're online.
+                        if t in online_users:
+                            await self.channel_layer.group_send(
+                                f"user_{t}",
+                                {"type": "cancel_invite_msg", "inviteId": invite_id},
+                            )
                 # Cascade : annuler les takeWin qui dépendent de ce slot
                 await self._cascade_cancel_takewins(slot_id, cancelled_match_type)
                 await self.channel_layer.group_send(
@@ -433,10 +573,15 @@ class QueueConsumer(AsyncWebsocketConsumer):
             if target_slot:
                 owner_username = target_slot.get("p1")
                 if owner_username:
-                    await self.channel_layer.group_send(
-                        f"user_{owner_username}",
-                        {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
-                    )
+                    if owner_username in online_users:
+                        await self.channel_layer.group_send(
+                            f"user_{owner_username}",
+                            {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
+                        )
+                    else:
+                        pending_invites.setdefault(owner_username, []).append(
+                            {"p2_left": True, "slotId": slot_id, "cancelledBy": self.username}
+                        )
                 other_participants = set()
                 for field in ["player1_teammate", "p2", "player2_teammate"]:
                     val = target_slot.get(field)
@@ -446,11 +591,18 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     for p in (target_slot.get(team_key) or []):
                         if p and p != self.username and p != owner_username:
                             other_participants.add(p)
+                cancel_id = str(uuid.uuid4())
                 for participant in other_participants:
-                    await self.channel_layer.group_send(
-                        f"user_{participant}",
-                        {"type": "match_cancelled_msg", "cancelledBy": self.username},
-                    )
+                    if participant in online_users:
+                        await self.channel_layer.group_send(
+                            f"user_{participant}",
+                            {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
+                        )
+                    else:
+                        pending_invites.setdefault(participant, []).append({
+                            "match_cancelled": True, "cancelledBy": self.username,
+                            "slotId": slot_id, "cancelId": cancel_id,
+                        })
             if target_slot:
                 await self._cascade_cancel_takewins(target_slot.get("id"), target_slot.get("match_type", "SOLO"))
             await self.channel_layer.group_send(
@@ -492,21 +644,31 @@ class QueueConsumer(AsyncWebsocketConsumer):
             inv = win_invites.pop(inv_id, None)
             if inv:
                 for t in inv.get("targets", []):
-                    await self.channel_layer.group_send(
-                        f"user_{t}",
-                        {"type": "cancel_invite_msg", "inviteId": inv_id},
-                    )
+                    # Remove from offline storage so the stale win_invite isn't re-delivered
+                    if t in pending_invites:
+                        pending_invites[t] = [
+                            i for i in pending_invites[t]
+                            if not (i.get("win_invite") and i.get("inviteId") == inv_id)
+                        ]
+                        if not pending_invites[t]:
+                            del pending_invites[t]
+                    if t in online_users:
+                        await self.channel_layer.group_send(
+                            f"user_{t}",
+                            {"type": "cancel_invite_msg", "inviteId": inv_id},
+                        )
         # Notify each slot owner, then recurse into their dependents
         for slot in to_cancel:
             owner = slot.get("p1")
             slot_id = slot.get("id")
             if owner:
-                payload = {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True}
+                cancel_id = str(uuid.uuid4())
+                payload = {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id}
                 if owner in online_users:
                     await self.channel_layer.group_send(f"user_{owner}", payload)
                 else:
                     pending_invites.setdefault(owner, []).append(
-                        {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True}
+                        {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id}
                     )
             await self._cascade_cancel_takewins(slot_id, match_type)
 
@@ -536,6 +698,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
             msg["slotId"] = event["slotId"]
         if event.get("chain"):
             msg["chain"] = True
+        if event.get("cancelId"):
+            msg["cancelId"] = event["cancelId"]
         await self.send(text_data=json.dumps(msg))
 
     async def invite_msg(self, event):
@@ -581,3 +745,4 @@ class QueueConsumer(AsyncWebsocketConsumer):
             "type":   "win_claim_declined",
             "slotId": event["slotId"],
         }))
+

@@ -143,7 +143,11 @@
     "betAmount": "Cantidad de la apuesta",
     "confirmBet": "Confirmar — {{amount}} fichas",
     "loginPlaceholder": "Login...",
-    "waitingWinner": "Esperando al ganador..."
+    "waitingWinner": "Esperando al ganador...",
+    "pendingAccept": "Pendiente de aceptación",
+    "noPending": "Sin invitaciones pendientes",
+    "pendingVs": "vs {{opponent}}",
+    "cancelInvite": "✕ Cancelar"
   },
   "tournaments": {
     "bdeAccess": "Acceso BDE",
@@ -204,6 +208,8 @@
     "lossesSub": "esta temporada",
     "gamesPerMonth": "Partidos / mes",
     "gamesPerMonthSub": "promedio este mes",
+    "gamelles": "Gamelles 🪣",
+    "gamellesSub": "goles en gamelle",
     "favoriteTeammates": "Compañeros favoritos",
     "teammateNote": "(añadidos automáticamente según el número de partidos jugados juntos)",
     "noTeammate": "Ningún compañero registrado.",
@@ -370,6 +376,7 @@
     "half": "Mitad ×2",
     "removeRed": "−1 Rojo",
     "removeBlue": "−1 Azul",
+    "gamelle": "Gamelle",
     "tie": "¡Empate!",
     "tieCancelWarning": "Este partido será cancelado — las cadenas de reprise serán eliminadas.",
     "wins": "¡{{color}} gana!",

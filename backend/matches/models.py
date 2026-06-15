@@ -67,6 +67,10 @@ class Match(models.Model):
 	score_player1 = models.IntegerField(default=0)
 	score_player2 = models.IntegerField(default=0)
 
+	# --- Gamelles (buts marqués via le gardien adverse) ---
+	gamelles_player1 = models.IntegerField(default=0)
+	gamelles_player2 = models.IntegerField(default=0)
+
 	# --- ELO solo (1v1 classé uniquement) ---
 	elo_solo_player1_before = models.IntegerField(default=1000, db_column='elo_solo_p1_before')
 	elo_solo_player1_after  = models.IntegerField(default=1000, db_column='elo_solo_p1_after')
