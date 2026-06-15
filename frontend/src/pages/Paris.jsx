@@ -85,18 +85,24 @@ export default function Paris() {
   const [betChoices,   setBetChoices]   = useState({})
   const [histPage,     setHistPage]     = useState(0)
   const [chartYFilter, setChartYFilter] = useState('auto')
+  const [betError,     setBetError]     = useState(null)
 
-  const maxTokens = user?.tokens ?? 0
+  const maxTokens = user?.wallet_tokens ?? 0
 
   const getAmount = (id) => amounts[id] ?? 50
   const getChoice = (id) => betChoices[id] ?? null
 
-  const handleBet = (bet) => {
+  const handleBet = async (bet) => {
     const choice = getChoice(bet.id)
-    const player = choice === 'p1' ? bet.p1 : bet.p2
-    placeBet(bet.id, player, getAmount(bet.id))
-    setShowSlider(null)
-    setBetChoices(prev => { const n = { ...prev }; delete n[bet.id]; return n })
+    if (!choice) return
+    setBetError(null)
+    try {
+      await placeBet(bet.id, choice, getAmount(bet.id))
+      setShowSlider(null)
+      setBetChoices(prev => { const n = { ...prev }; delete n[bet.id]; return n })
+    } catch (e) {
+      setBetError({ id: bet.id, msg: e.message || 'Pari refusé.' })
+    }
   }
 
   const openMiser = (betId) => {
@@ -165,13 +171,16 @@ export default function Paris() {
                         {!isLive && hasBet && (
                           <button className={styles.cancelBtn} onClick={() => cancelBet(bet.id)}>{t('bets.cancel')}</button>
                         )}
-                        {!isLive && !hasBet && (
+                        {!isLive && !hasBet && bet.bettable && (
                           <button
                             className={`${styles.miserBtn} ${sliderOpen ? styles.miserBtnOpen : ''}`}
                             onClick={() => sliderOpen ? setShowSlider(null) : openMiser(bet.id)}
                           >
                             {sliderOpen ? '✕' : t('bets.bet')}
                           </button>
+                        )}
+                        {!isLive && !hasBet && !bet.bettable && (
+                          <span className={styles.betContext}>Vous jouez</span>
                         )}
                       </div>
                     </div>
@@ -229,6 +238,19 @@ export default function Paris() {
                             <div className={styles.sliderRange}>
                               <span>1</span><span>{maxTokens}</span>
                             </div>
+                            {(() => {
+                              const odds = choice === 'p1' ? bet.oddsP1 : bet.oddsP2
+                              return odds ? (
+                                <div className={styles.sliderLabel} style={{ marginTop: 6 }}>
+                                  Cote {odds} · gain potentiel {Math.round(amount * odds)} 🪙
+                                </div>
+                              ) : null
+                            })()}
+                            {betError?.id === bet.id && (
+                              <div className={styles.sliderLabel} style={{ marginTop: 6, color: '#CD3122' }}>
+                                {betError.msg}
+                              </div>
+                            )}
                             <button className={styles.confirmMiseBtn} onClick={() => handleBet(bet)}>
                               {t('bets.confirm', { amount })}
                             </button>

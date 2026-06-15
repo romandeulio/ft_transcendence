@@ -24,25 +24,16 @@ def _bet_side(target, predicted_winner_id):
     return 'p2'
 
 
-def serialize_available(reservation, user):
-    """Une partie ouverte aux paris, vue par `user`."""
+def market_payload(reservation):
+    """
+    Marché d'une partie, indépendant de l'utilisateur (cotes, probas, pools).
+    Sert au snapshot REST et aux broadcasts WebSocket de groupe.
+    """
     market = reservation_market(reservation)
     p1 = _side_label(reservation.player1, reservation.player1_teammate)
     p2 = _side_label(reservation.player2, reservation.player2_teammate)
     total = market['staked1'] + market['staked2']
     pct1 = round(100 * market['staked1'] / total) if total else 50
-
-    my_bet = None
-    mine = Bet.objects.filter(
-        user=user, reservation=reservation, result__isnull=True
-    ).first()
-    if mine:
-        my_bet = {
-            'id': str(mine.id),
-            'side': _bet_side(reservation, mine.predicted_winner_id),
-            'amount': mine.amount,
-            'odds': float(mine.odds) if mine.odds is not None else None,
-        }
 
     return {
         'reservation_id': str(reservation.id),
@@ -58,13 +49,32 @@ def serialize_available(reservation, user):
         'pct_bets_p1': pct1,
         'pool_p1': market['staked1'],
         'pool_p2': market['staked2'],
-        # bettable=False si l'utilisateur joue cette partie.
-        'bettable': user.pk not in (
-            reservation.player1_id, reservation.player2_id,
-            reservation.player1_teammate_id, reservation.player2_teammate_id,
-        ),
-        'my_bet': my_bet,
     }
+
+
+def serialize_available(reservation, user):
+    """Une partie ouverte aux paris, vue par `user` (marché + pari perso)."""
+    payload = market_payload(reservation)
+
+    my_bet = None
+    mine = Bet.objects.filter(
+        user=user, reservation=reservation, result__isnull=True
+    ).first()
+    if mine:
+        my_bet = {
+            'id': str(mine.id),
+            'side': _bet_side(reservation, mine.predicted_winner_id),
+            'amount': mine.amount,
+            'odds': float(mine.odds) if mine.odds is not None else None,
+        }
+
+    # bettable=False si l'utilisateur joue cette partie.
+    payload['bettable'] = user.pk not in (
+        reservation.player1_id, reservation.player2_id,
+        reservation.player1_teammate_id, reservation.player2_teammate_id,
+    )
+    payload['my_bet'] = my_bet
+    return payload
 
 
 def serialize_history(bet):

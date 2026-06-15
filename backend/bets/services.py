@@ -18,7 +18,7 @@ from django.db.models import Sum
 
 from planning.models import Reservation
 from .models import Bet, WalletTransaction
-from .odds import expected_score, blended_prob, prob_to_odds
+from .odds import expected_score, blended_prob, prob_to_odds, score_prob
 
 User = get_user_model()
 
@@ -84,12 +84,48 @@ def staked_per_side(reservation):
     return t1, t2
 
 
+def _uname(player):
+    return getattr(player, 'username', None)
+
+
+def _live_score(reservation):
+    """
+    (score_camp1, score_camp2) depuis l'état du jeu en mémoire (QueueConsumer),
+    apparié par l'ensemble des joueurs (baby mono-table). None si introuvable.
+    Dans le jeu : player1 = BLUE (scoreBlue), player2 = RED (scoreRed).
+    """
+    try:
+        from realtime.consumers.queue import games
+    except Exception:
+        return None
+    s1 = {_uname(reservation.player1), _uname(reservation.player1_teammate)} - {None}
+    s2 = {_uname(reservation.player2), _uname(reservation.player2_teammate)} - {None}
+    res_players = s1 | s2
+    if not res_players:
+        return None
+    for g in games.values():
+        gp = {
+            g.get('player1'), g.get('player1_teammate'),
+            g.get('player2'), g.get('player2_teammate'),
+        } - {None}
+        if gp != res_players:
+            continue
+        p1_score = g.get('scoreBlue', 0)  # score du "player1" du jeu
+        p2_score = g.get('scoreRed', 0)   # score du "player2" du jeu
+        if g.get('player1') in s1:
+            return p1_score, p2_score
+        return p2_score, p1_score
+    return None
+
+
 def reservation_market(reservation):
     """Proba dynamique du camp 1, cotes des deux camps, mises par camp."""
     e1, e2 = _side_elos(reservation)
     p_elo = expected_score(e1, e2)
     t1, t2 = staked_per_side(reservation)
-    prob1 = blended_prob(p_elo, t1, t2)
+    sc = _live_score(reservation)
+    p_score = score_prob(sc[0], sc[1]) if sc else None
+    prob1 = blended_prob(p_elo, t1, t2, p_score)
     return {
         'prob1': prob1,
         'odds1': prob_to_odds(prob1),
@@ -125,6 +161,24 @@ def _debit(user_id, amount, tx_type, reference_id):
     WalletTransaction.objects.create(
         user_id=user_id, type=tx_type, amount=amount, reference_id=reference_id,
     )
+
+
+# ---------------------------------------------------------------------------
+# Diffusion WebSocket (après commit ; import paresseux pour éviter le cycle)
+# ---------------------------------------------------------------------------
+
+def _broadcast_market(reservation):
+    def _do():
+        from .realtime import broadcast_market
+        broadcast_market(reservation)
+    transaction.on_commit(_do)
+
+
+def _broadcast_closed(reservation):
+    def _do():
+        from .realtime import broadcast_closed
+        broadcast_closed(reservation)
+    transaction.on_commit(_do)
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +228,7 @@ def place_bet(user, reservation, side, amount):
     except ValueError as exc:
         raise BetError(str(exc))  # rollback de la transaction (bet annulé)
 
+    _broadcast_market(reservation)
     return bet
 
 
@@ -187,8 +242,10 @@ def cancel_bet(user, bet):
     if bet.reservation is None or not is_open(bet.reservation):
         raise BetError("Les paris sont fermés : annulation impossible.")
 
+    reservation = bet.reservation
     _credit(bet.user_id, bet.amount, WalletTransaction.Type.REFUND, bet.id)
     bet.delete()
+    _broadcast_market(reservation)
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +321,7 @@ def resolve_for_match(match):
             bet.result = Bet.Result.LOST
             bet.payout = 0
         bet.save(update_fields=['match', 'result', 'payout'])
+    _broadcast_closed(reservation)
     return len(bets)
 
 
@@ -276,6 +334,7 @@ def refund_reservation(reservation):
     )
     for bet in bets:
         _refund(bet)
+    _broadcast_closed(reservation)
     return len(bets)
 
 

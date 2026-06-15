@@ -232,6 +232,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
+                # Le score live influe sur les cotes → re-broadcast le marché de paris.
+                await self._broadcast_bet_market(games[game_id])
             return
 
         elif action == "game_end":
@@ -507,6 +509,47 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True}
                     )
             await self._cascade_cancel_takewins(slot_id, match_type)
+
+    async def _broadcast_bet_market(self, game):
+        """Pousse la cote à jour du marché de paris correspondant à cette partie."""
+        try:
+            payload = await self._bet_market_payload(game)
+            if payload:
+                await self.channel_layer.group_send(
+                    "bets", {"type": "market_update_msg", "market": payload}
+                )
+        except Exception:
+            pass
+
+    @database_sync_to_async
+    def _bet_market_payload(self, game):
+        from planning.models import Reservation
+        from bets.serializers import market_payload
+        usernames = {
+            game.get("player1"), game.get("player1_teammate"),
+            game.get("player2"), game.get("player2_teammate"),
+        } - {None}
+        if not usernames:
+            return None
+        reservations = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .exclude(match_type="TWO_V_ONE")
+            .select_related(
+                "player1", "player1_teammate",
+                "player2", "player2_teammate",
+            )
+        )
+        for r in reservations:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == usernames:
+                return market_payload(r)
+        return None
 
     async def queue_update(self, event):
         await self.send(text_data=json.dumps({

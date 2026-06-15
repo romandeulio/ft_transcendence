@@ -66,6 +66,14 @@ def reservation_create(request):
 	serializer = ReservationCreateSerializer(data=request.data)
 	serializer.is_valid(raise_exception=True)
 	reservation = serializer.save(status=Reservation.Status.IN_PROGRESS)
+
+	# Nouvelle partie pariable → la diffuser aux clients qui regardent les paris.
+	try:
+		from bets.realtime import broadcast_market
+		broadcast_market(reservation)
+	except Exception:
+		logger.exception("Échec de la diffusion du marché pour la réservation %s", reservation.id)
+
 	return Response(
 		ReservationSerializer(reservation).data,
 		status=status.HTTP_201_CREATED,
@@ -96,6 +104,14 @@ def reservation_close(request, pk):
 	reservation.status   = Reservation.Status.DONE
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
+
+	# Partie terminée → fermer les paris (les paris ouverts seront résolus à la
+	# validation du match correspondant).
+	try:
+		from bets.realtime import broadcast_closed
+		broadcast_closed(reservation)
+	except Exception:
+		logger.exception("Échec de la diffusion de fermeture pour la réservation %s", reservation.id)
 
 	# Appeler le premier de la file d'attente
 	_call_next_in_queue()

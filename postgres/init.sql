@@ -139,7 +139,7 @@ CREATE TABLE bets (
     result           VARCHAR(10) CHECK (result IN ('won', 'lost', 'refunded')),
     payout           INTEGER,
     created_at       TIMESTAMP DEFAULT NOW(),
-    odds             NUMERIC(5,2) NOT NULL CHECK (odds >= 1.00),
+    odds             NUMERIC(5,2) NOT NULL CHECK (odds >= 1.00)
 );
 
 CREATE TABLE tournaments (
@@ -201,8 +201,8 @@ RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
         SELECT 1 FROM reservations
-        WHERE match_id = NEW.reservation_id
-        AND user_id = NEW.user_id IN (player1_id, player1_teammate_id, player2_id, player2_teammate_id)
+        WHERE id = NEW.reservation_id
+          AND NEW.user_id IN (player1_id, player1_teammate_id, player2_id, player2_teammate_id)
     ) THEN
         RAISE EXCEPTION 'Un joueur ne peut pas parier sur son propre match.';
     END IF;
