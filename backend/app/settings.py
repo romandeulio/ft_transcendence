@@ -137,6 +137,9 @@ REST_FRAMEWORK = {
 	'DEFAULT_PERMISSION_CLASSES': (
 		'rest_framework.permissions.IsAuthenticated',
 	),
+    #'DEFAULT_PERMISSION_CLASSES': (
+    #	'rest_framework.permissions.AllowAny',
+	#),
 	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 	'PAGE_SIZE': 20,
 	'DEFAULT_THROTTLE_CLASSES': [
@@ -168,6 +171,7 @@ SIMPLE_JWT = {
 JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
 JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
 JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
+#JWT_COOKIE_SECURE = False
 JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================

@@ -99,6 +99,7 @@ class Match(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		managed  = False
 		db_table = 'matches'
 		ordering = ['-played_at']
 

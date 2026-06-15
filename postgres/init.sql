@@ -47,6 +47,8 @@ CREATE TABLE matches (
     player2_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
     score_player1 INT DEFAULT 0,
     score_player2 INT DEFAULT 0,
+    gamelles_player1 INT DEFAULT 0,
+    gamelles_player2 INT DEFAULT 0,
     elo_solo_p1_before INT DEFAULT 1000,
     elo_solo_p1_after  INT DEFAULT 1000,
     elo_solo_p2_before INT DEFAULT 1000,
