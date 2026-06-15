@@ -13,6 +13,8 @@ CREATE TABLE users
     avatar_url TEXT,
     last_login TIMESTAMP,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
+    ban_permanent BOOLEAN DEFAULT FALSE,
+    banned_until  TIMESTAMPTZ,
     is_active BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10000,
     elo_solo INT DEFAULT 1000,
