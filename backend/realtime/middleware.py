@@ -1,13 +1,16 @@
-from channels.db import database_sync_to_async
-from channels.middleware import BaseMiddleware
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
-from django.conf import settings
-from rest_framework_simplejwt.tokens import AccessToken
+import logging
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs
 
+from channels.db import database_sync_to_async
+from channels.middleware import BaseMiddleware
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from rest_framework_simplejwt.tokens import AccessToken
+
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @database_sync_to_async
@@ -35,8 +38,8 @@ class JWTAuthMiddleware(BaseMiddleware):
             try:
                 access_token = AccessToken(token)
                 scope["user"] = await _get_user(access_token["user_id"])
-            except Exception as e:
-                print(f"JWT auth error: {e}")
+            except Exception as exc:
+                logger.debug("WS JWT auth failed: %s", exc)
 
         ws_username = (query_params.get("username") or [None])[0]
         if ws_username:

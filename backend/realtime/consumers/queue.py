@@ -1,121 +1,81 @@
+"""
+Consumer WebSocket du salon « file d'attente » (ws/queue/).
+
+Gère la file live, le cycle de vie des parties, les invitations (directes et
+« take-the-winner »), et la livraison différée aux joueurs hors-ligne.
+
+Organisation (l'état partagé est dans realtime/state.py, accédé via `state.*`) :
+  - QueueSerializeMixin : construction/diffusion du snapshot de la file
+  - QueueBetsMixin      : pont avec les paris (réservations + cotes)
+  - QueueHandlersMixin  : handlers `*_msg` (traduction event interne → JSON front)
+  - ce fichier          : connect/disconnect + dispatch `receive` → `_on_<action>`
+
+Chaque message du front {"action": "..."} est routé par la table ACTIONS vers la
+méthode `_on_<action>` correspondante.
+"""
 import json
 import time
 import uuid
-from channels.db import database_sync_to_async
+
 from channels.generic.websocket import AsyncWebsocketConsumer
-from planning.models import QueueEntry
 
-queue = []
-games = {}         # gameId -> { player1, player2, scoreRed, scoreBlue }
-win_invites = {}   # inviteId -> { slotId, targets, accepted, owner }
-online_users = set()           # usernames currently connected
-pending_invites = {}           # username -> list of stored invites for offline users
-completed_game_ids = set()     # gameIds that ended (to reject stale reconnect rejoins)
+from realtime import state
+from realtime.consumers._queue_serialize import QueueSerializeMixin
+from realtime.consumers._queue_bets import QueueBetsMixin
+from realtime.consumers._queue_handlers import QueueHandlersMixin
 
-
-def _identity_from_scope(scope, channel_name):
-    user = scope.get("user")
-    if user is not None and getattr(user, "is_authenticated", False):
-        return f"user:{user.id}"
-    ws_username = scope.get("ws_username")
-    if ws_username:
-        return f"guest:{ws_username}"
-    return f"chan:{channel_name}"
+# Re-export de compat : bets/services.py fait
+# `from realtime.consumers.queue import games`. Le dict est muté en place (jamais
+# réassigné) → cet import partage la même instance que state.games.
+from realtime.state import games  # noqa: F401
 
 
-def _username_from_scope(scope):
-    user = scope.get("user")
-    if user is not None and getattr(user, "is_authenticated", False):
-        return getattr(user, "username", "") or ""
-    return scope.get("ws_username") or ""
-
-
-class QueueConsumer(AsyncWebsocketConsumer):
+class QueueConsumer(
+    QueueSerializeMixin,
+    QueueBetsMixin,
+    QueueHandlersMixin,
+    AsyncWebsocketConsumer,
+):
     group_name = "queue"
 
-    @database_sync_to_async
-    def _persisted_queue_slots(self):
-        entries = (
-            QueueEntry.objects
-            .filter(status=QueueEntry.Status.WAITING)
-            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
-            .order_by("joined_at")
-        )
-        slots = []
-        for entry in entries:
-            player1 = getattr(entry.player1, "username", None)
-            player1_teammate = getattr(entry.player1_teammate, "username", None)
-            player2 = getattr(entry.player2, "username", None)
-            player2_teammate = getattr(entry.player2_teammate, "username", None)
-            is_team = entry.match_type == "TEAM"
-            team1 = [p for p in [player1, player1_teammate] if p]
-            team2 = [p for p in [player2, player2_teammate] if p]
-            slot_id = str(entry.id)
+    # action reçue du front -> méthode qui la traite
+    ACTIONS = {
+        "join":               "_on_join",
+        "leave":              "_on_leave",
+        "update":             "_on_update",
+        "game_open":          "_on_game_open",
+        "score_update":       "_on_score_update",
+        "game_end":           "_on_game_end",
+        "invite":             "_on_invite",
+        "invite_response":    "_on_invite_response",
+        "cancel_invite":      "_on_cancel_invite",
+        "win_claim_response": "_on_win_claim_response",
+        "leave_as_p2":        "_on_leave_as_p2",
+    }
 
-            slots.append({
-                "id": slot_id,
-                "_localId": slot_id,
-                "p1": player1,
-                "p2": player2,
-                "player1": player1,
-                "player1_teammate": player1_teammate,
-                "player2": player2,
-                "player2_teammate": player2_teammate,
-                "match_type": entry.match_type,
-                "is_ranked": entry.is_ranked,
-                "format": "2v2" if is_team else "2v1" if entry.match_type == "TWO_V_ONE" else "1v1",
-                "team1": team1 if is_team else None,
-                "team2": team2 if is_team else None,
-                "type": "taken",
-                "source": "db",
-                "createdAt": int(entry.joined_at.timestamp() * 1000),
-            })
-        return slots
-
-    async def _queue_payload(self, live_queue=None):
-        live_queue = live_queue if live_queue is not None else queue
-        persisted_queue = await self._persisted_queue_slots()
-        seen = {str(slot.get("id") or slot.get("_localId")) for slot in live_queue}
-        merged = list(live_queue) + [
-            slot for slot in persisted_queue
-            if str(slot.get("id") or slot.get("_localId")) not in seen
-        ]
-        result = []
-        for slot in merged:
-            slot_id = str(slot.get("id") or slot.get("_localId") or "")
-            if slot_id in games:
-                g = games[slot_id]
-                result.append({
-                    **slot,
-                    "live":       True,
-                    "scoreBlue":  g.get("scoreBlue", 0),
-                    "scoreRed":   g.get("scoreRed",  0),
-                })
-            else:
-                result.append(slot)
-        return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
+    # ── Cycle de vie ────────────────────────────────────────────────────────
 
     async def connect(self):
         if not self.scope["user"].is_authenticated:
             await self.close()
             return
 
-        self.user_id = _identity_from_scope(self.scope, self.channel_name)
-        self.username = _username_from_scope(self.scope)
+        self.user_id = state.identity_from_scope(self.scope, self.channel_name)
+        self.username = state.username_from_scope(self.scope)
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
-        # Personal group for direct messages (invites, responses)
+        # Groupe personnel pour les messages directs (invitations, réponses)
         if self.username:
             await self.channel_layer.group_add(f"user_{self.username}", self.channel_name)
-            online_users.add(self.username)
+            state.online_users.add(self.username)
         await self.accept()
         await self.send(text_data=json.dumps({
             "type": "queue_state",
-            "queue": await self._queue_payload(queue),
+            "queue": await self._queue_payload(state.queue),
         }))
-        # Restore game state for any active game this user is part of (reconnect / late join)
+        # Restaure l'état de partie si ce joueur est dans une partie active (reco / late join)
         if self.username:
-            for game_id, g in games.items():
+            for game_id, g in state.games.items():
                 if self.username in (g.get("player1"), g.get("player2"),
                                      g.get("player1_teammate"), g.get("player2_teammate")):
                     await self.send(text_data=json.dumps({
@@ -124,80 +84,84 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     }))
                     break
 
-        # Deliver messages that were sent while this user was offline.
-        # One-shot notifications (match_cancelled, win_claim_declined) are consumed on delivery.
-        # Pending invites (regular and win) are kept until the user responds or J1 cancels,
-        # so they survive multiple disconnect/reconnect cycles.
-        if self.username and self.username in pending_invites:
-            to_deliver = list(pending_invites[self.username])
-            # One-shot notifications consumed on delivery; persistent invites kept until responded/cancelled
-            ONE_SHOT_KEYS = ("match_cancelled", "win_claim_declined", "invite_response", "p2_left", "game_ended")
-            pending_invites[self.username] = [
-                inv for inv in to_deliver
-                if not any(inv.get(k) for k in ONE_SHOT_KEYS)
-            ]
-            if not pending_invites[self.username]:
-                del pending_invites[self.username]
-            for inv in to_deliver:
-                if inv.get("match_cancelled"):
-                    await self.send(text_data=json.dumps({
-                        "type":        "match_cancelled",
-                        "cancelledBy": inv.get("cancelledBy", ""),
-                        "slotId":      inv.get("slotId"),
-                        "chain":       inv.get("chain", False),
-                        "cancelId":    inv.get("cancelId"),
-                    }))
-                elif inv.get("win_claim_declined"):
-                    await self.send(text_data=json.dumps({
-                        "type": "win_claim_declined",
-                        "slotId": inv["slotId"],
-                    }))
-                elif inv.get("invite_response"):
-                    await self.send(text_data=json.dumps({
-                        "type":      "invite_response",
-                        "inviteId":  inv["inviteId"],
-                        "accepted":  inv["accepted"],
-                        "responder": inv["responder"],
-                    }))
-                elif inv.get("p2_left"):
-                    await self.send(text_data=json.dumps({
-                        "type":        "p2_left",
-                        "slotId":      inv["slotId"],
-                        "cancelledBy": inv["cancelledBy"],
-                    }))
-                elif inv.get("game_ended"):
-                    await self.send(text_data=json.dumps({
-                        "type":            "game_ended",
-                        "gameId":          inv["gameId"],
-                        "winner":          inv.get("winner"),
-                        "winner_teammate": inv.get("winner_teammate"),
-                    }))
-                elif inv.get("win_invite"):
-                    await self.send(text_data=json.dumps({
-                        "type": "win_invite",
-                        "inviteId": inv["inviteId"],
-                        "from":     inv["from"],
-                        "slot":     inv["slot"],
-                        "slotId":   inv["slotId"],
-                    }))
-                else:
-                    await self.send(text_data=json.dumps({
-                        "type": "invite_received",
-                        "inviteId": inv["inviteId"],
-                        "from":     inv["from"],
-                        "slot":     inv["slot"],
-                    }))
+        await self._deliver_pending()
+
+    async def _deliver_pending(self):
+        """Livre les messages stockés pendant que ce joueur était hors-ligne.
+
+        Les notifications one-shot (match_cancelled, win_claim_declined…) sont
+        consommées à la livraison ; les invitations (directe / win) sont gardées
+        jusqu'à réponse ou annulation (elles survivent à plusieurs reconnexions).
+        """
+        if not self.username or self.username not in state.pending_invites:
+            return
+        to_deliver = list(state.pending_invites[self.username])
+        ONE_SHOT_KEYS = ("match_cancelled", "win_claim_declined", "invite_response", "p2_left", "game_ended")
+        state.pending_invites[self.username] = [
+            inv for inv in to_deliver
+            if not any(inv.get(k) for k in ONE_SHOT_KEYS)
+        ]
+        if not state.pending_invites[self.username]:
+            del state.pending_invites[self.username]
+        for inv in to_deliver:
+            if inv.get("match_cancelled"):
+                await self.send(text_data=json.dumps({
+                    "type":        "match_cancelled",
+                    "cancelledBy": inv.get("cancelledBy", ""),
+                    "slotId":      inv.get("slotId"),
+                    "chain":       inv.get("chain", False),
+                    "cancelId":    inv.get("cancelId"),
+                }))
+            elif inv.get("win_claim_declined"):
+                await self.send(text_data=json.dumps({
+                    "type": "win_claim_declined",
+                    "slotId": inv["slotId"],
+                }))
+            elif inv.get("invite_response"):
+                await self.send(text_data=json.dumps({
+                    "type":      "invite_response",
+                    "inviteId":  inv["inviteId"],
+                    "accepted":  inv["accepted"],
+                    "responder": inv["responder"],
+                }))
+            elif inv.get("p2_left"):
+                await self.send(text_data=json.dumps({
+                    "type":        "p2_left",
+                    "slotId":      inv["slotId"],
+                    "cancelledBy": inv["cancelledBy"],
+                }))
+            elif inv.get("game_ended"):
+                await self.send(text_data=json.dumps({
+                    "type":            "game_ended",
+                    "gameId":          inv["gameId"],
+                    "winner":          inv.get("winner"),
+                    "winner_teammate": inv.get("winner_teammate"),
+                }))
+            elif inv.get("win_invite"):
+                await self.send(text_data=json.dumps({
+                    "type": "win_invite",
+                    "inviteId": inv["inviteId"],
+                    "from":     inv["from"],
+                    "slot":     inv["slot"],
+                    "slotId":   inv["slotId"],
+                }))
+            else:
+                await self.send(text_data=json.dumps({
+                    "type": "invite_received",
+                    "inviteId": inv["inviteId"],
+                    "from":     inv["from"],
+                    "slot":     inv["slot"],
+                }))
 
     async def disconnect(self, close_code):
-        global queue
-        # Keep slots that:
-        # - belong to another user
-        # - are tied to an active game
-        # - have a committed opponent (p2 set = J2 accepted the invite)
-        # - are takeWin slots waiting for the previous game to end (p2 still unknown)
-        active_game_slot_ids = set(games.keys())
-        queue = [
-            s for s in queue
+        # On garde les slots qui :
+        # - appartiennent à un autre user
+        # - sont liés à une partie active
+        # - ont un adversaire engagé (p2 défini = J2 a accepté l'invite)
+        # - sont des takeWin en attente de la fin de la partie précédente (p2 inconnu)
+        active_game_slot_ids = set(state.games.keys())
+        state.queue = [
+            s for s in state.queue
             if s.get("ownerId") != self.user_id
             or s.get("id") in active_game_slot_ids
             or bool(s.get("p2"))
@@ -206,454 +170,355 @@ class QueueConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         if self.username:
             await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
-            online_users.discard(self.username)
-        await self.channel_layer.group_send(
-            self.group_name,
-            {"type": "queue_update", "queue": queue},
-        )
+            state.online_users.discard(self.username)
+        await self._broadcast_queue()
 
     async def receive(self, text_data):
-        global queue
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:
             return
+        handler_name = self.ACTIONS.get(data.get("action"))
+        if handler_name:
+            await getattr(self, handler_name)(data)
 
-        action = data.get("action")
+    # ── Actions de la file ──────────────────────────────────────────────────
 
-        if action == "join":
-            slot = data.get("slot") or {}
-            # Use client-provided _localId as the server ID so leave/update can reference it
-            slot["id"] = slot.get("_localId") or str(uuid.uuid4())
+    async def _on_join(self, data):
+        slot = data.get("slot") or {}
+        # L'_localId fourni par le client devient l'ID serveur (référencé par leave/update)
+        slot["id"] = slot.get("_localId") or str(uuid.uuid4())
 
-            # Reject stale rejoins: J1 was offline when J2 ended the game; the reconnect
-            # effect fires before game_ended is processed, causing the slot to reappear.
-            if slot["id"] in completed_game_ids:
-                await self.send(text_data=json.dumps({
-                    "type": "game_ended",
-                    "gameId": slot["id"],
-                }))
-                return
+        # Rejet des rejoin obsolètes : J1 était hors-ligne quand J2 a fini la partie ;
+        # l'effet de reconnexion se déclenche avant le game_end → le slot réapparaît.
+        if slot["id"] in state.completed_game_ids:
+            await self.send(text_data=json.dumps({
+                "type": "game_ended",
+                "gameId": slot["id"],
+            }))
+            return
 
-            slot["ownerId"] = self.user_id
-            slot["type"] = "taken"
-            # Upsert: if a slot with the same id already exists, preserve any server-side
-            # player fields that the reconnecting client might not have yet (e.g. p2 filled
-            # by a win_claim while J1 was offline).
-            existing = next((s for s in queue if s.get("id") == slot["id"]), None)
-            if existing:
-                for field in ("p2", "player1", "player2", "player1_teammate",
-                              "player2_teammate", "team1", "team2"):
-                    if existing.get(field) and not slot.get(field):
-                        slot[field] = existing[field]
-            queue = [s for s in queue if s.get("id") != slot["id"]]
-            # Insert at correct position based on createdAt so invite-delayed slots
-            # land before slots created later (FIFO by original creation time)
-            created_at = slot.get("createdAt") or 0
-            insert_idx = len(queue)
-            for i, s in enumerate(queue):
-                if (s.get("createdAt") or 0) > created_at:
-                    insert_idx = i
-                    break
-            queue.insert(insert_idx, slot)
+        slot["ownerId"] = self.user_id
+        slot["type"] = "taken"
+        # Upsert : si un slot de même id existe déjà, on préserve les champs joueur
+        # côté serveur que le client reconnecté n'a peut-être pas encore (ex. p2
+        # rempli par un win_claim pendant que J1 était hors-ligne).
+        existing = next((s for s in state.queue if s.get("id") == slot["id"]), None)
+        if existing:
+            for field in ("p2", "player1", "player2", "player1_teammate",
+                          "player2_teammate", "team1", "team2"):
+                if existing.get(field) and not slot.get(field):
+                    slot[field] = existing[field]
+        state.queue = [s for s in state.queue if s.get("id") != slot["id"]]
+        # Insertion à la bonne place selon createdAt : les slots retardés par une
+        # invitation se replacent avant ceux créés plus tard (FIFO par date de création).
+        created_at = slot.get("createdAt") or 0
+        insert_idx = len(state.queue)
+        for i, s in enumerate(state.queue):
+            if (s.get("createdAt") or 0) > created_at:
+                insert_idx = i
+                break
+        state.queue.insert(insert_idx, slot)
 
-            g = self._slot_to_game(slot)
-            if g["player1"] and g["player2"]:
-                await self._ensure_reservation_for_game(g)
-                await self._broadcast_bet_market(g)
+        g = self._slot_to_game(slot)
+        if g["player1"] and g["player2"]:
+            await self._ensure_reservation_for_game(g)
+            await self._broadcast_bet_market(g)
+        await self._broadcast_queue()
 
-        elif action == "leave":
-            slot_id = data.get("slotId")
-            leaving_slot = next(
-                (s for s in queue if s.get("id") == slot_id and s.get("ownerId") == self.user_id),
-                None,
-            )
-            queue = [
-                s for s in queue
-                if not (s.get("id") == slot_id and s.get("ownerId") == self.user_id)
-            ]
-            if leaving_slot:
-                participants = set()
-                for field in ["p2", "player1_teammate", "player2_teammate"]:
-                    val = leaving_slot.get(field)
-                    if val and val != self.username:
-                        participants.add(val)
-                for team_key in ["team1", "team2"]:
-                    for p in (leaving_slot.get(team_key) or []):
-                        if p and p != self.username:
-                            participants.add(p)
-                cancel_id = str(uuid.uuid4())
-                for participant in participants:
-                    if participant in online_users:
-                        await self.channel_layer.group_send(
-                            f"user_{participant}",
-                            {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
-                        )
-                    else:
-                        pending_invites.setdefault(participant, []).append({
-                            "match_cancelled": True, "cancelledBy": self.username,
-                            "slotId": leaving_slot.get("id"), "cancelId": cancel_id,
-                        })
-                await self._cascade_cancel_takewins(leaving_slot.get("id"), leaving_slot.get("match_type", "SOLO"))
-                await self._close_bets_for_slot(leaving_slot)
-
-        elif action == "update":
-            slot_id = data.get("slotId")
-            updates = data.get("updates") or {}
-            for slot in queue:
-                if slot.get("id") == slot_id and slot.get("ownerId") == self.user_id:
-                    slot.update(updates)
-                    break
-
-        elif action == "game_open":
-            game_id    = data.get("gameId")
-            player1    = data.get("player1")
-            player2    = data.get("player2")
-            p1_tm      = data.get("player1_teammate")
-            p2_tm      = data.get("player2_teammate")
-            match_type = data.get("match_type", "SOLO")
-            if game_id and player1 and player2:
-                if game_id not in games:
-                    games[game_id] = {
-                        "player1": player1,
-                        "player2": player2,
-                        "player1_teammate": p1_tm,
-                        "player2_teammate": p2_tm,
-                        "match_type": match_type,
-                        "scoreRed": 0,
-                        "scoreBlue": 0,
-                        "startTime": int(time.time() * 1000),
-                    }
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
+    async def _on_leave(self, data):
+        slot_id = data.get("slotId")
+        leaving_slot = next(
+            (s for s in state.queue if s.get("id") == slot_id and s.get("ownerId") == self.user_id),
+            None,
+        )
+        state.queue = [
+            s for s in state.queue
+            if not (s.get("id") == slot_id and s.get("ownerId") == self.user_id)
+        ]
+        if leaving_slot:
+            cancel_id = str(uuid.uuid4())
+            for participant in self._slot_participants(leaving_slot, {self.username}):
+                await self._notify(
+                    participant,
+                    {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
+                    {"match_cancelled": True, "cancelledBy": self.username,
+                     "slotId": leaving_slot.get("id"), "cancelId": cancel_id},
                 )
-                # Push live flag to all connected clients immediately
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {"type": "queue_update", "queue": queue},
-                )
-                await self._ensure_reservation_for_game(games[game_id])
-                await self._broadcast_bet_market(games[game_id])
+            await self._cascade_cancel_takewins(leaving_slot.get("id"), leaving_slot.get("match_type", "SOLO"))
+            await self._close_bets_for_slot(leaving_slot)
+        await self._broadcast_queue()
+
+    async def _on_update(self, data):
+        slot_id = data.get("slotId")
+        updates = data.get("updates") or {}
+        for slot in state.queue:
+            if slot.get("id") == slot_id and slot.get("ownerId") == self.user_id:
+                slot.update(updates)
+                break
+        await self._broadcast_queue()
+
+    async def _on_game_open(self, data):
+        game_id    = data.get("gameId")
+        player1    = data.get("player1")
+        player2    = data.get("player2")
+        match_type = data.get("match_type", "SOLO")
+        if not (game_id and player1 and player2):
             return
-
-        elif action == "score_update":
-            game_id    = data.get("gameId")
-            score_red  = data.get("scoreRed", 0)
-            score_blue = data.get("scoreBlue", 0)
-            if game_id and game_id in games:
-                games[game_id]["scoreRed"]  = score_red
-                games[game_id]["scoreBlue"] = score_blue
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
-                )
-                await self._broadcast_bet_market(games[game_id])
-            return
-
-        elif action == "game_end":
-            game_id = data.get("gameId")
-            # completed=True uniquement quand envoyé par signalGameEnd (fin officielle de match)
-            # closeGame l'omet → évite d'inviter le leader d'un match en cours
-            is_completed    = data.get("completed", False)
-            winner          = data.get("winner") or None
-            winner_teammate = data.get("winner_teammate") or None
-            g = None
-            if game_id and game_id in games:
-                g = games[game_id]
-                if not winner:
-                    if g.get("scoreBlue", 0) > g.get("scoreRed", 0):
-                        winner          = g.get("player1")
-                        winner_teammate = g.get("player1_teammate")
-                    elif g.get("scoreRed", 0) > g.get("scoreBlue", 0):
-                        winner          = g.get("player2")
-                        winner_teammate = g.get("player2_teammate")
-                # Notify offline participants so their activeGame clears on reconnect
-                for pf in ("player1", "player2", "player1_teammate", "player2_teammate"):
-                    p = g.get(pf)
-                    if p and p not in online_users:
-                        pending_invites.setdefault(p, []).append({
-                            "game_ended": True,
-                            "gameId":          game_id,
-                            "winner":          winner,
-                            "winner_teammate": winner_teammate,
-                        })
-                del games[game_id]
-            # Supprime le créneau terminé
-            if game_id:
-                queue = [s for s in queue if s.get("id") != game_id]
-                completed_game_ids.add(game_id)
-                if len(completed_game_ids) > 10000:
-                    completed_game_ids.pop()
-            # Invite le/les gagnant(s) — seulement si le match est officiellement terminé
-            if winner and is_completed:
-                ended_match_type = data.get("match_type") or (g.get("match_type", "SOLO") if g else "SOLO")
-                for slot in queue:
-                    if (slot.get("takeWin") and not slot.get("p2")
-                            and slot.get("match_type", "SOLO") == ended_match_type
-                            and slot.get("parentSlotId") == game_id):
-                        invite_id = str(uuid.uuid4())
-                        win_targets = [t for t in [winner, winner_teammate] if t]
-                        win_invites[invite_id] = {
-                            "slotId":  slot["id"],
-                            "targets": win_targets,
-                            "accepted": [],
-                            "owner":   slot.get("p1"),
-                        }
-                        for target in win_targets:
-                            inv_payload = {
-                                "inviteId": invite_id,
-                                "from":     slot.get("p1"),
-                                "slot":     slot,
-                                "slotId":   slot["id"],
-                            }
-                            # Always persist for reconnect re-delivery
-                            pending_invites.setdefault(target, []).append(
-                                {"win_invite": True, **inv_payload}
-                            )
-                            if target in online_users:
-                                await self.channel_layer.group_send(
-                                    f"user_{target}",
-                                    {"type": "win_invite_msg", **inv_payload},
-                                )
-                            else:
-                                pending_invites.setdefault(target, []).append(
-                                    {"win_invite": True, **inv_payload}
-                                )
-            if g:
-                closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
-                if closed_id:
-                    await self.channel_layer.group_send(
-                        "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
-                    )
-            await self.channel_layer.group_send(
-                self.group_name,
-                {"type": "game_ended_msg", "gameId": game_id, "winner": winner, "winner_teammate": winner_teammate},
-            )
-            await self.channel_layer.group_send(
-                self.group_name,
-                {"type": "queue_update", "queue": queue},
-            )
-            return
-
-        # ── Invitations ────────────────────────────────────────────────────────
-
-        elif action == "invite":
-            target    = data.get("target")   # username of J2
-            invite_id = data.get("inviteId") or str(uuid.uuid4())
-            slot      = data.get("slot") or {}
-            if target:
-                # Always persist for reconnect re-delivery (removed on response or cancel)
-                pending_invites.setdefault(target, []).append({
-                    "inviteId": invite_id,
-                    "from":     self.username,
-                    "slot":     slot,
-                })
-                if target in online_users:
-                    await self.channel_layer.group_send(
-                        f"user_{target}",
-                        {
-                            "type": "invite_msg",
-                            "inviteId": invite_id,
-                            "from": self.username,
-                            "slot": slot,
-                        },
-                    )
-            return
-
-        elif action == "invite_response":
-            invite_id = data.get("inviteId")
-            accepted  = data.get("accepted", False)
-            from_user = data.get("from")    # J1's username
-
-            # Remove from pending storage so the invite isn't re-delivered on next reconnect
-            if self.username in pending_invites:
-                pending_invites[self.username] = [
-                    i for i in pending_invites[self.username]
-                    if i.get("inviteId") != invite_id
-                ]
-                if not pending_invites[self.username]:
-                    del pending_invites[self.username]
-
-            if from_user:
-                payload = {
-                    "inviteId":  invite_id,
-                    "accepted":  accepted,
-                    "responder": self.username,
-                }
-                if from_user in online_users:
-                    await self.channel_layer.group_send(
-                        f"user_{from_user}",
-                        {"type": "invite_response_msg", **payload},
-                    )
-                else:
-                    pending_invites.setdefault(from_user, []).append(
-                        {"invite_response": True, **payload}
-                    )
-            return
-
-        elif action == "cancel_invite":
-            target    = data.get("target")
-            invite_id = data.get("inviteId")
-            if target:
-                # Remove from offline storage if target hasn't connected yet
-                if target in pending_invites:
-                    pending_invites[target] = [
-                        i for i in pending_invites[target]
-                        if i.get("inviteId") != invite_id
-                    ]
-                    if not pending_invites[target]:
-                        del pending_invites[target]
-                await self.channel_layer.group_send(
-                    f"user_{target}",
-                    {"type": "cancel_invite_msg", "inviteId": invite_id},
-                )
-            return
-
-        elif action == "win_claim_response":
-            invite_id = data.get("inviteId")
-            accepted  = data.get("accepted", False)
-            invite    = win_invites.get(invite_id)
-            if not invite:
-                return
-            slot_id = invite["slotId"]
-
-            # Remove win_invite from pending storage so it isn't re-delivered on reconnect
-            if self.username in pending_invites:
-                pending_invites[self.username] = [
-                    i for i in pending_invites[self.username]
-                    if i.get("inviteId") != invite_id
-                ]
-                if not pending_invites[self.username]:
-                    del pending_invites[self.username]
-
-            if not accepted:
-                # Gagnant refuse → annuler le créneau takeWin
-                cancelled_slot = next((s for s in queue if s.get("id") == slot_id), None)
-                cancelled_match_type = (cancelled_slot.get("match_type", "SOLO") if cancelled_slot else "SOLO")
-                queue = [s for s in queue if s.get("id") != slot_id]
-                del win_invites[invite_id]
-                owner = invite["owner"]
-                declined_payload = {"win_claim_declined": True, "slotId": slot_id}
-                if owner in online_users:
-                    await self.channel_layer.group_send(
-                        f"user_{owner}",
-                        {"type": "win_claim_declined_msg", "slotId": slot_id},
-                    )
-                else:
-                    pending_invites.setdefault(owner, []).append(declined_payload)
-                # Annuler pour les autres co-gagnants éventuels
-                for t in invite["targets"]:
-                    if t != self.username:
-                        # Their pending_invites entry was already removed when they responded,
-                        # so we only need to notify if they're online.
-                        if t in online_users:
-                            await self.channel_layer.group_send(
-                                f"user_{t}",
-                                {"type": "cancel_invite_msg", "inviteId": invite_id},
-                            )
-                # Cascade : annuler les takeWin qui dépendent de ce slot
-                await self._cascade_cancel_takewins(slot_id, cancelled_match_type)
-                await self.channel_layer.group_send(
-                    self.group_name, {"type": "queue_update", "queue": queue}
-                )
-                return
-
-            # Accepté — enregistrer
-            if self.username not in invite["accepted"]:
-                invite["accepted"].append(self.username)
-
-            if len(invite["accepted"]) >= len(invite["targets"]):
-                # Tous ont accepté → remplir p2 dans le slot
-                target_slot = next((s for s in queue if s.get("id") == slot_id), None)
-                if target_slot:
-                    w    = invite["targets"][0]
-                    w_tm = invite["targets"][1] if len(invite["targets"]) > 1 else None
-                    target_slot["p2"] = w  # always set p2 as opponent for display
-                    fill_blue = target_slot.get("player1") is None
-                    if fill_blue:
-                        target_slot["player1"] = w
-                        if w_tm:
-                            target_slot["player1_teammate"] = w_tm
-                            if target_slot.get("match_type") == "TEAM":
-                                target_slot["team1"] = [w, w_tm]
-                    else:
-                        target_slot["player2"] = w
-                        if w_tm:
-                            target_slot["player2_teammate"] = w_tm
-                            if target_slot.get("match_type") == "TEAM":
-                                target_slot["team2"] = [w, w_tm]
-                del win_invites[invite_id]
-                await self.channel_layer.group_send(
-                    self.group_name, {"type": "queue_update", "queue": queue}
-                )
-            return
-
-        elif action == "leave_as_p2":
-            slot_id = data.get("slotId")
-            target_slot = next((s for s in queue if s.get("id") == slot_id), None)
-            queue = [s for s in queue if s.get("id") != slot_id]
-            if target_slot:
-                owner_username = target_slot.get("p1")
-                if owner_username:
-                    if owner_username in online_users:
-                        await self.channel_layer.group_send(
-                            f"user_{owner_username}",
-                            {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
-                        )
-                    else:
-                        pending_invites.setdefault(owner_username, []).append(
-                            {"p2_left": True, "slotId": slot_id, "cancelledBy": self.username}
-                        )
-                other_participants = set()
-                for field in ["player1_teammate", "p2", "player2_teammate"]:
-                    val = target_slot.get(field)
-                    if val and val != self.username and val != owner_username:
-                        other_participants.add(val)
-                for team_key in ["team1", "team2"]:
-                    for p in (target_slot.get(team_key) or []):
-                        if p and p != self.username and p != owner_username:
-                            other_participants.add(p)
-                cancel_id = str(uuid.uuid4())
-                for participant in other_participants:
-                    if participant in online_users:
-                        await self.channel_layer.group_send(
-                            f"user_{participant}",
-                            {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
-                        )
-                    else:
-                        pending_invites.setdefault(participant, []).append({
-                            "match_cancelled": True, "cancelledBy": self.username,
-                            "slotId": slot_id, "cancelId": cancel_id,
-                        })
-            if target_slot:
-                await self._cascade_cancel_takewins(target_slot.get("id"), target_slot.get("match_type", "SOLO"))
-                await self._close_bets_for_slot(target_slot)
-            await self.channel_layer.group_send(
-                self.group_name,
-                {"type": "queue_update", "queue": queue},
-            )
-            return
-
-        else:
-            return
-
+        if game_id not in state.games:
+            state.games[game_id] = {
+                "player1": player1,
+                "player2": player2,
+                "player1_teammate": data.get("player1_teammate"),
+                "player2_teammate": data.get("player2_teammate"),
+                "match_type": match_type,
+                "scoreRed": 0,
+                "scoreBlue": 0,
+                "startTime": int(time.time() * 1000),
+            }
         await self.channel_layer.group_send(
             self.group_name,
-            {"type": "queue_update", "queue": queue},
+            {"type": "game_state_msg", "game": {**state.games[game_id], "gameId": game_id}},
+        )
+        # Pousse le flag « live » à tous les clients immédiatement
+        await self._broadcast_queue()
+        await self._ensure_reservation_for_game(state.games[game_id])
+        await self._broadcast_bet_market(state.games[game_id])
+
+    async def _on_score_update(self, data):
+        game_id = data.get("gameId")
+        if not (game_id and game_id in state.games):
+            return
+        state.games[game_id]["scoreRed"]  = data.get("scoreRed", 0)
+        state.games[game_id]["scoreBlue"] = data.get("scoreBlue", 0)
+        await self.channel_layer.group_send(
+            self.group_name,
+            {"type": "game_state_msg", "game": {**state.games[game_id], "gameId": game_id}},
+        )
+        await self._broadcast_bet_market(state.games[game_id])
+
+    async def _on_game_end(self, data):
+        game_id = data.get("gameId")
+        # completed=True seulement via signalGameEnd (fin officielle de match).
+        # closeGame l'omet → évite d'inviter le leader d'un match en cours.
+        is_completed    = data.get("completed", False)
+        winner          = data.get("winner") or None
+        winner_teammate = data.get("winner_teammate") or None
+        g = None
+        if game_id and game_id in state.games:
+            g = state.games[game_id]
+            if not winner:
+                if g.get("scoreBlue", 0) > g.get("scoreRed", 0):
+                    winner          = g.get("player1")
+                    winner_teammate = g.get("player1_teammate")
+                elif g.get("scoreRed", 0) > g.get("scoreBlue", 0):
+                    winner          = g.get("player2")
+                    winner_teammate = g.get("player2_teammate")
+            # Prévient les participants hors-ligne pour qu'ils sortent de l'activeGame à la reco
+            for pf in ("player1", "player2", "player1_teammate", "player2_teammate"):
+                p = g.get(pf)
+                if p and p not in state.online_users:
+                    state.pending_invites.setdefault(p, []).append({
+                        "game_ended": True,
+                        "gameId":          game_id,
+                        "winner":          winner,
+                        "winner_teammate": winner_teammate,
+                    })
+            del state.games[game_id]
+        # Supprime le créneau terminé
+        if game_id:
+            state.queue = [s for s in state.queue if s.get("id") != game_id]
+            state.completed_game_ids.add(game_id)
+            if len(state.completed_game_ids) > 10000:
+                state.completed_game_ids.pop()
+        # Invite le/les gagnant(s) — seulement si le match est officiellement terminé
+        if winner and is_completed:
+            ended_match_type = data.get("match_type") or (g.get("match_type", "SOLO") if g else "SOLO")
+            for slot in state.queue:
+                if (slot.get("takeWin") and not slot.get("p2")
+                        and slot.get("match_type", "SOLO") == ended_match_type
+                        and slot.get("parentSlotId") == game_id):
+                    await self._send_win_invites(slot, winner, winner_teammate)
+        if g:
+            closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
+            if closed_id:
+                await self.channel_layer.group_send(
+                    "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                )
+        await self.channel_layer.group_send(
+            self.group_name,
+            {"type": "game_ended_msg", "gameId": game_id, "winner": winner, "winner_teammate": winner_teammate},
+        )
+        await self._broadcast_queue()
+
+    async def _send_win_invites(self, slot, winner, winner_teammate):
+        """Crée et envoie l'invitation « take-the-winner » au(x) gagnant(s) d'un slot."""
+        invite_id = str(uuid.uuid4())
+        win_targets = [t for t in [winner, winner_teammate] if t]
+        state.win_invites[invite_id] = {
+            "slotId":   slot["id"],
+            "targets":  win_targets,
+            "accepted": [],
+            "owner":    slot.get("p1"),
+        }
+        for target in win_targets:
+            inv_payload = {
+                "inviteId": invite_id,
+                "from":     slot.get("p1"),
+                "slot":     slot,
+                "slotId":   slot["id"],
+            }
+            # Toujours persisté pour re-livraison à la reconnexion ;
+            # en plus, livraison live si la cible est connectée.
+            state.pending_invites.setdefault(target, []).append(
+                {"win_invite": True, **inv_payload}
+            )
+            if target in state.online_users:
+                await self.channel_layer.group_send(
+                    f"user_{target}",
+                    {"type": "win_invite_msg", **inv_payload},
+                )
+
+    # ── Invitations ─────────────────────────────────────────────────────────
+
+    async def _on_invite(self, data):
+        target    = data.get("target")   # pseudo de J2
+        invite_id = data.get("inviteId") or str(uuid.uuid4())
+        slot      = data.get("slot") or {}
+        if not target:
+            return
+        # Toujours persisté pour re-livraison à la reco (retiré à la réponse/annulation)
+        state.pending_invites.setdefault(target, []).append({
+            "inviteId": invite_id,
+            "from":     self.username,
+            "slot":     slot,
+        })
+        if target in state.online_users:
+            await self.channel_layer.group_send(
+                f"user_{target}",
+                {"type": "invite_msg", "inviteId": invite_id, "from": self.username, "slot": slot},
+            )
+
+    async def _on_invite_response(self, data):
+        invite_id = data.get("inviteId")
+        accepted  = data.get("accepted", False)
+        from_user = data.get("from")    # pseudo de J1
+        # Retire de la file hors-ligne pour ne pas re-livrer à la prochaine reco
+        self._remove_pending(self.username, invite_id)
+        if from_user:
+            payload = {"inviteId": invite_id, "accepted": accepted, "responder": self.username}
+            await self._notify(
+                from_user,
+                {"type": "invite_response_msg", **payload},
+                {"invite_response": True, **payload},
+            )
+
+    async def _on_cancel_invite(self, data):
+        target    = data.get("target")
+        invite_id = data.get("inviteId")
+        if not target:
+            return
+        self._remove_pending(target, invite_id)
+        await self.channel_layer.group_send(
+            f"user_{target}",
+            {"type": "cancel_invite_msg", "inviteId": invite_id},
         )
 
-    async def _cascade_cancel_takewins(self, cancelled_slot_id, match_type):
-        """Cancel only the takeWin slots that depend directly on cancelled_slot_id
-        (parentSlotId == cancelled_slot_id), then recurse for each cancelled slot.
+    async def _on_win_claim_response(self, data):
+        invite_id = data.get("inviteId")
+        accepted  = data.get("accepted", False)
+        invite    = state.win_invites.get(invite_id)
+        if not invite:
+            return
+        slot_id = invite["slotId"]
+        self._remove_pending(self.username, invite_id)
 
-        This ensures that only downstream slots (Match 4+) are cancelled when
-        Match 3 is removed, without touching upstream slots (Match 2).
-        Works for both SOLO (1v1) and TEAM (2v2) chains.
+        if not accepted:
+            # Gagnant refuse → annuler le créneau takeWin
+            cancelled_slot = next((s for s in state.queue if s.get("id") == slot_id), None)
+            cancelled_match_type = (cancelled_slot.get("match_type", "SOLO") if cancelled_slot else "SOLO")
+            state.queue = [s for s in state.queue if s.get("id") != slot_id]
+            del state.win_invites[invite_id]
+            await self._notify(
+                invite["owner"],
+                {"type": "win_claim_declined_msg", "slotId": slot_id},
+                {"win_claim_declined": True, "slotId": slot_id},
+            )
+            # Annuler pour les autres co-gagnants en ligne (leur pending déjà retiré à leur réponse)
+            for t in invite["targets"]:
+                if t != self.username and t in state.online_users:
+                    await self.channel_layer.group_send(
+                        f"user_{t}",
+                        {"type": "cancel_invite_msg", "inviteId": invite_id},
+                    )
+            await self._cascade_cancel_takewins(slot_id, cancelled_match_type)
+            await self._broadcast_queue()
+            return
+
+        # Accepté — enregistrer
+        if self.username not in invite["accepted"]:
+            invite["accepted"].append(self.username)
+        if len(invite["accepted"]) >= len(invite["targets"]):
+            target_slot = next((s for s in state.queue if s.get("id") == slot_id), None)
+            if target_slot:
+                self._fill_winner_into_slot(target_slot, invite["targets"])
+            del state.win_invites[invite_id]
+            await self._broadcast_queue()
+
+    @staticmethod
+    def _fill_winner_into_slot(target_slot, targets):
+        """Place le(s) gagnant(s) accepté(s) dans le camp libre du créneau takeWin."""
+        w    = targets[0]
+        w_tm = targets[1] if len(targets) > 1 else None
+        target_slot["p2"] = w  # p2 = adversaire affiché
+        if target_slot.get("player1") is None:
+            target_slot["player1"] = w
+            if w_tm:
+                target_slot["player1_teammate"] = w_tm
+                if target_slot.get("match_type") == "TEAM":
+                    target_slot["team1"] = [w, w_tm]
+        else:
+            target_slot["player2"] = w
+            if w_tm:
+                target_slot["player2_teammate"] = w_tm
+                if target_slot.get("match_type") == "TEAM":
+                    target_slot["team2"] = [w, w_tm]
+
+    async def _on_leave_as_p2(self, data):
+        slot_id = data.get("slotId")
+        target_slot = next((s for s in state.queue if s.get("id") == slot_id), None)
+        state.queue = [s for s in state.queue if s.get("id") != slot_id]
+        if target_slot:
+            owner_username = target_slot.get("p1")
+            if owner_username:
+                await self._notify(
+                    owner_username,
+                    {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
+                    {"p2_left": True, "slotId": slot_id, "cancelledBy": self.username},
+                )
+            cancel_id = str(uuid.uuid4())
+            for participant in self._slot_participants(target_slot, {self.username, owner_username}):
+                await self._notify(
+                    participant,
+                    {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
+                    {"match_cancelled": True, "cancelledBy": self.username,
+                     "slotId": slot_id, "cancelId": cancel_id},
+                )
+            await self._cascade_cancel_takewins(target_slot.get("id"), target_slot.get("match_type", "SOLO"))
+            await self._close_bets_for_slot(target_slot)
+        await self._broadcast_queue()
+
+    # ── Helpers internes ────────────────────────────────────────────────────
+
+    async def _cascade_cancel_takewins(self, cancelled_slot_id, match_type):
+        """Annule uniquement les takeWin qui dépendent DIRECTEMENT de
+        cancelled_slot_id (parentSlotId == cancelled_slot_id), puis récurse.
+
+        Ainsi seuls les slots en aval (Match 4+) sont annulés quand le Match 3
+        est retiré, sans toucher l'amont (Match 2). Vaut pour SOLO et TEAM.
         """
-        global queue
         to_cancel = [
-            s for s in queue
+            s for s in state.queue
             if s.get("takeWin") and not s.get("p2")
             and s.get("match_type", "SOLO") == match_type
             and s.get("parentSlotId") == cancelled_slot_id
@@ -661,263 +526,74 @@ class QueueConsumer(AsyncWebsocketConsumer):
         if not to_cancel:
             return
         cancel_ids = {s["id"] for s in to_cancel}
-        queue = [s for s in queue if s.get("id") not in cancel_ids]
-        # Cancel any pending win_invites targeting these slots
-        stale_invite_ids = [k for k, v in win_invites.items() if v["slotId"] in cancel_ids]
+        state.queue = [s for s in state.queue if s.get("id") not in cancel_ids]
+        # Annule les win_invites en attente qui ciblent ces slots
+        stale_invite_ids = [k for k, v in state.win_invites.items() if v["slotId"] in cancel_ids]
         for inv_id in stale_invite_ids:
-            inv = win_invites.pop(inv_id, None)
-            if inv:
-                for t in inv.get("targets", []):
-                    # Remove from offline storage so the stale win_invite isn't re-delivered
-                    if t in pending_invites:
-                        pending_invites[t] = [
-                            i for i in pending_invites[t]
-                            if not (i.get("win_invite") and i.get("inviteId") == inv_id)
-                        ]
-                        if not pending_invites[t]:
-                            del pending_invites[t]
-                    if t in online_users:
-                        await self.channel_layer.group_send(
-                            f"user_{t}",
-                            {"type": "cancel_invite_msg", "inviteId": inv_id},
-                        )
-        # Notify each slot owner, then recurse into their dependents
+            inv = state.win_invites.pop(inv_id, None)
+            if not inv:
+                continue
+            for t in inv.get("targets", []):
+                # Retire de la file hors-ligne le win_invite obsolète (sans toucher aux autres)
+                if t in state.pending_invites:
+                    state.pending_invites[t] = [
+                        i for i in state.pending_invites[t]
+                        if not (i.get("win_invite") and i.get("inviteId") == inv_id)
+                    ]
+                    if not state.pending_invites[t]:
+                        del state.pending_invites[t]
+                if t in state.online_users:
+                    await self.channel_layer.group_send(
+                        f"user_{t}",
+                        {"type": "cancel_invite_msg", "inviteId": inv_id},
+                    )
+        # Notifie chaque propriétaire de slot, puis récurse dans ses dépendants
         for slot in to_cancel:
             owner = slot.get("p1")
             slot_id = slot.get("id")
             if owner:
                 cancel_id = str(uuid.uuid4())
-                payload = {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id}
-                if owner in online_users:
-                    await self.channel_layer.group_send(f"user_{owner}", payload)
-                else:
-                    pending_invites.setdefault(owner, []).append(
-                        {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id}
-                    )
+                await self._notify(
+                    owner,
+                    {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id},
+                    {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id},
+                )
             await self._cascade_cancel_takewins(slot_id, match_type)
 
-    @staticmethod
-    def _slot_to_game(slot):
-        """Normalise un slot de file en dict 'game' (joueurs + type)."""
-        return {
-            "player1": slot.get("player1") or slot.get("p1"),
-            "player2": slot.get("player2") or slot.get("p2"),
-            "player1_teammate": slot.get("player1_teammate"),
-            "player2_teammate": slot.get("player2_teammate"),
-            "match_type": slot.get("match_type", "SOLO"),
-        }
-
-    async def _close_bets_for_slot(self, slot):
-        """Match retiré de la file sans être joué → ferme + rembourse ses paris."""
-        g = self._slot_to_game(slot)
-        if not g["player1"] or not g["player2"]:
+    async def _notify(self, username, online_event, offline_payload):
+        """Livre un message à `username` : en live s'il est connecté, sinon
+        stocké dans pending_invites pour re-livraison à sa prochaine connexion."""
+        if not username:
             return
-        closed_id = await self._close_reservation_for_game(g, refund=True)
-        if closed_id:
-            await self.channel_layer.group_send(
-                "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
-            )
+        if username in state.online_users:
+            await self.channel_layer.group_send(f"user_{username}", online_event)
+        else:
+            state.pending_invites.setdefault(username, []).append(offline_payload)
 
-    def _game_usernames(self, game):
-        return {
-            game.get("player1"), game.get("player1_teammate"),
-            game.get("player2"), game.get("player2_teammate"),
-        } - {None}
+    @staticmethod
+    def _remove_pending(username, invite_id):
+        """Retire de la file hors-ligne d'un user l'invitation `invite_id`
+        (pour qu'elle ne soit pas re-livrée à la reconnexion)."""
+        if username in state.pending_invites:
+            state.pending_invites[username] = [
+                i for i in state.pending_invites[username]
+                if i.get("inviteId") != invite_id
+            ]
+            if not state.pending_invites[username]:
+                del state.pending_invites[username]
 
-    @database_sync_to_async
-    def _ensure_reservation_for_game(self, game):
-        """
-        Crée la Reservation IN_PROGRESS d'une partie (fenêtre de paris) si elle
-        n'existe pas déjà (dédup par joueurs, ex. path « réserver » d'Accueil).
-        Pas de réservation pour les 2v1 (non pariables). Retourne l'id ou None.
-        """
-        from django.contrib.auth import get_user_model
-        from planning.models import Reservation
-
-        match_type = game.get("match_type", "SOLO")
-        if match_type not in ("SOLO", "TEAM"):
-            return None
-        if not game.get("player1") or not game.get("player2"):
-            return None
-
-        unames = self._game_usernames(game)
-        existing = (
-            Reservation.objects
-            .filter(status=Reservation.Status.IN_PROGRESS)
-            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
-        )
-        for r in existing:
-            rp = {
-                getattr(r.player1, "username", None),
-                getattr(r.player1_teammate, "username", None),
-                getattr(r.player2, "username", None),
-                getattr(r.player2_teammate, "username", None),
-            } - {None}
-            if rp == unames:
-                return str(r.id)
-
-        User = get_user_model()
-        u = lambda name: User.objects.filter(username=name).first() if name else None
-        p1, p2 = u(game.get("player1")), u(game.get("player2"))
-        if not p1 or not p2:
-            return None
-        res = Reservation.objects.create(
-            match_type=match_type,
-            status=Reservation.Status.IN_PROGRESS,
-            player1=p1,
-            player2=p2,
-            player1_teammate=u(game.get("player1_teammate")),
-            player2_teammate=u(game.get("player2_teammate")),
-        )
-        return str(res.id)
-
-    @database_sync_to_async
-    def _close_reservation_for_game(self, game, refund=False):
-        """
-        Ferme (DONE) la Reservation IN_PROGRESS d'une partie terminée, appariée
-        par joueurs. Rembourse les paris ouverts si `refund` (partie abandonnée).
-        Retourne l'id fermé ou None.
-        """
-        from django.utils import timezone
-        from planning.models import Reservation
-
-        unames = self._game_usernames(game)
-        if not unames:
-            return None
-        candidates = (
-            Reservation.objects
-            .filter(status=Reservation.Status.IN_PROGRESS)
-            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
-        )
-        for r in candidates:
-            rp = {
-                getattr(r.player1, "username", None),
-                getattr(r.player1_teammate, "username", None),
-                getattr(r.player2, "username", None),
-                getattr(r.player2_teammate, "username", None),
-            } - {None}
-            if rp == unames:
-                r.status = Reservation.Status.DONE
-                r.ended_at = timezone.now()
-                r.save(update_fields=["status", "ended_at"])
-                if refund:
-                    from bets.services import refund_reservation
-                    refund_reservation(r)
-                return str(r.id)
-        return None
-
-    async def _broadcast_bet_market(self, game):
-        """Pousse la cote à jour du marché de paris correspondant à cette partie."""
-        try:
-            payload = await self._bet_market_payload(game)
-            if payload:
-                await self.channel_layer.group_send(
-                    "bets", {"type": "market_update_msg", "market": payload}
-                )
-        except Exception:
-            pass
-
-    @database_sync_to_async
-    def _bet_market_payload(self, game):
-        from planning.models import Reservation
-        from bets.serializers import market_payload
-        usernames = {
-            game.get("player1"), game.get("player1_teammate"),
-            game.get("player2"), game.get("player2_teammate"),
-        } - {None}
-        if not usernames:
-            return None
-        reservations = (
-            Reservation.objects
-            .filter(status=Reservation.Status.IN_PROGRESS)
-            .filter(match_type__in=["SOLO", "TEAM"])
-            .select_related(
-                "player1", "player1_teammate",
-                "player2", "player2_teammate",
-            )
-        )
-        for r in reservations:
-            rp = {
-                getattr(r.player1, "username", None),
-                getattr(r.player1_teammate, "username", None),
-                getattr(r.player2, "username", None),
-                getattr(r.player2_teammate, "username", None),
-            } - {None}
-            if rp == usernames:
-                return market_payload(r)
-        return None
-
-    async def queue_update(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "queue_state",
-            "queue": await self._queue_payload(event["queue"]),
-        }))
-
-    async def game_state_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "game_state",
-            "game": event["game"],
-        }))
-
-    async def game_ended_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "game_ended",
-            "gameId": event["gameId"],
-            "winner": event.get("winner"),
-            "winner_teammate": event.get("winner_teammate"),
-        }))
-
-    async def match_cancelled_msg(self, event):
-        msg = {"type": "match_cancelled", "cancelledBy": event["cancelledBy"]}
-        if event.get("slotId"):
-            msg["slotId"] = event["slotId"]
-        if event.get("chain"):
-            msg["chain"] = True
-        if event.get("cancelId"):
-            msg["cancelId"] = event["cancelId"]
-        await self.send(text_data=json.dumps(msg))
-
-    async def invite_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "invite_received",
-            "inviteId": event["inviteId"],
-            "from": event["from"],
-            "slot": event["slot"],
-        }))
-
-    async def invite_response_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "invite_response",
-            "inviteId": event["inviteId"],
-            "accepted": event["accepted"],
-            "responder": event.get("responder"),
-        }))
-
-    async def cancel_invite_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "invite_cancelled",
-            "inviteId": event["inviteId"],
-        }))
-
-    async def p2_left_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "p2_left",
-            "slotId": event["slotId"],
-            "cancelledBy": event.get("cancelledBy", ""),
-        }))
-
-    async def win_invite_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type":     "win_invite",
-            "inviteId": event["inviteId"],
-            "from":     event["from"],
-            "slot":     event["slot"],
-            "slotId":   event["slotId"],
-        }))
-
-    async def win_claim_declined_msg(self, event):
-        await self.send(text_data=json.dumps({
-            "type":   "win_claim_declined",
-            "slotId": event["slotId"],
-        }))
-
+    @staticmethod
+    def _slot_participants(slot, exclude=()):
+        """Pseudos des co-participants d'un créneau (p2 + équipiers + équipes),
+        en excluant ceux présents dans `exclude`."""
+        exclude = set(exclude)
+        out = set()
+        for field in ("p2", "player1_teammate", "player2_teammate"):
+            val = slot.get(field)
+            if val and val not in exclude:
+                out.add(val)
+        for team_key in ("team1", "team2"):
+            for p in (slot.get(team_key) or []):
+                if p and p not in exclude:
+                    out.add(p)
+        return out
