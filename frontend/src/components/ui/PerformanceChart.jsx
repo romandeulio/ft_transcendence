@@ -1,50 +1,66 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import { authFetch } from '../../services/api'
 import styles from './PerformanceChart.module.css'
 
 const COLORS = ['#CD3122', '#4068DB', '#57722F', '#E6B447', '#9B59B6', '#1ABC9C', '#E67E22', '#2C3E50']
 
 export default function PerformanceChart() {
   const { t } = useTranslation()
-  const [xAxis,    setXAxis]    = useState('weeks')
-  const [yAxis,    setYAxis]    = useState('elo')
-
-  const Y_OPTIONS = [
-    { value: 'elo',             label: t('performance.y.elo')            },
-    { value: 'wins',            label: t('performance.y.wins')           },
-    { value: 'losses',          label: t('performance.y.losses')         },
-    { value: 'winrate',         label: t('performance.y.winrate')        },
-    { value: 'goals',           label: t('performance.y.goals')          },
-    { value: 'goals_against',   label: t('performance.y.goals_against')  },
-    { value: 'bets_won',        label: t('performance.y.bets_won')       },
-    { value: 'bets_lost',       label: t('performance.y.bets_lost')      },
-    { value: 'tournaments_won', label: t('performance.y.tournaments_won')},
-    { value: 'streak',          label: t('performance.y.streak')         },
-  ]
+  const [xAxis,     setXAxis]     = useState('matches')
+  const [yAxis,     setYAxis]     = useState('elo')
+  const [search,    setSearch]    = useState('')
+  const [selected,  setSelected]  = useState([])
+  const [players,   setPlayers]   = useState([])
+  const [chartData, setChartData] = useState([])
 
   const X_OPTIONS = [
+    { value: 'matches', label: t('performance.x.matches') },
     { value: 'weeks',   label: t('performance.x.weeks')   },
     { value: 'months',  label: t('performance.x.months')  },
     { value: 'seasons', label: t('performance.x.seasons') },
-    { value: 'matches', label: t('performance.x.matches') },
   ]
-  const [search,   setSearch]   = useState('')
-  const [selected, setSelected] = useState([])
-  const [players,  setPlayers]  = useState([])
 
-  const filtered = players.filter(p =>
-    p.display.toLowerCase().includes(search.toLowerCase())
-  )
+  const Y_OPTIONS = [
+    { value: 'elo',     label: t('performance.y.elo')     },
+    { value: 'wins',    label: t('performance.y.wins')    },
+    { value: 'losses',  label: t('performance.y.losses')  },
+    { value: 'winrate', label: t('performance.y.winrate') },
+    { value: 'goals',   label: t('performance.y.goals')   },
+    { value: 'streak',  label: t('performance.y.streak')  },
+  ]
 
-  const togglePlayer = (login) => {
+  useEffect(() => {
+    if (!search.trim()) { setPlayers([]); return }
+    const timer = setTimeout(() => {
+      authFetch(`/api/auth/users/?search=${encodeURIComponent(search)}`)
+        .then(r => r.json())
+        .then(data => setPlayers(data.map(u => ({ login: u.login, display: u.name }))))
+        .catch(() => {})
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    if (selected.length === 0) { setChartData([]); return }
+    const logins = selected.map(p => p.login).join(',')
+    authFetch(
+      `/api/performance/history/?players=${encodeURIComponent(logins)}&x=${xAxis}&y=${yAxis}`
+    )
+      .then(r => r.json())
+      .then(data => setChartData(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [selected, xAxis, yAxis])
+
+  const togglePlayer = (player) => {
     setSelected(prev => {
-      if (prev.includes(login)) return prev.filter(p => p !== login)
+      if (prev.some(p => p.login === player.login)) return prev.filter(p => p.login !== player.login)
       if (prev.length >= 4) return prev
-      return [...prev, login]
+      return [...prev, player]
     })
   }
 
@@ -74,48 +90,86 @@ export default function PerformanceChart() {
           <span className={styles.pickerLabel}>
             {t('performance.comparePlayers')} <span className={styles.pickerCount}>{selected.length}/4</span>
           </span>
-          <input
-            className={styles.pickerSearch}
-            type="text"
-            placeholder={t('performance.searchPlayer')}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
         </div>
-        <div className={styles.pickerList}>
-          {filtered.map((p, i) => {
-            const selIdx = selected.indexOf(p.login)
-            const isSelected = selIdx !== -1
-            const color = isSelected ? COLORS[selIdx] : undefined
-            const disabled = !isSelected && selected.length >= 4
-            return (
-              <button
-                key={p.login}
-                className={`${styles.playerChip} ${isSelected ? styles.playerChipOn : ''} ${disabled ? styles.playerChipDisabled : ''}`}
-                style={isSelected ? { borderColor: color, background: color + '18', color } : {}}
-                onClick={() => !disabled && togglePlayer(p.login)}
-                disabled={disabled}
-              >
-                {isSelected && <span className={styles.chipDot} style={{ background: color }} />}
-                {p.display}
-                {isSelected && (
-                  <span className={styles.chipX} onClick={e => { e.stopPropagation(); togglePlayer(p.login) }}>✕</span>
-                )}
-              </button>
-            )
-          })}
-          {filtered.length === 0 && (
-            <span className={styles.pickerEmpty}>
-              {players.length === 0 ? t('performance.noData') : t('performance.noPlayer')}
-            </span>
-          )}
+        <div className={styles.pickerBody}>
+          <div className={styles.selectedPanel}>
+            {selected.length === 0
+              ? <span className={styles.pickerEmpty}>{t('performance.noSelected')}</span>
+              : selected.map((p, i) => {
+                  const color = COLORS[i]
+                  return (
+                    <span key={p.login} className={`${styles.playerChip} ${styles.playerChipOn}`}
+                      style={{ borderColor: color, background: color + '18', color }}>
+                      <span className={styles.chipDot} style={{ background: color }} />
+                      {p.display}
+                      <span className={styles.chipX} onClick={() => togglePlayer(p)}>✕</span>
+                    </span>
+                  )
+                })
+            }
+          </div>
+
+          <div className={styles.searchPanel}>
+            <input
+              className={styles.pickerSearch}
+              type="text"
+              placeholder={t('performance.searchPlayer')}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <div className={styles.searchResults}>
+              {players.filter(p => !selected.some(s => s.login === p.login)).map((p) => {
+                const disabled = selected.length >= 4
+                return (
+                  <button
+                    key={p.login}
+                    className={`${styles.resultItem} ${disabled ? styles.playerChipDisabled : ''}`}
+                    onClick={() => !disabled && togglePlayer(p)}
+                    disabled={disabled}
+                  >
+                    {p.display}
+                  </button>
+                )
+              })}
+              {players.length === 0 && (
+                <span className={styles.pickerEmpty}>
+                  {!search.trim() ? t('performance.searchHint') : t('performance.noPlayer')}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {selected.length === 0 && players.length > 0 && (
+      {selected.length === 0 ? (
         <div className={styles.emptyChart}>
           {t('performance.selectPlayer')}
         </div>
+      ) : chartData.length === 0 ? (
+        <div className={styles.emptyChart}>
+          {t('performance.noData')}
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="period" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 11 }} width={40} />
+            <Tooltip />
+            <Legend />
+            {selected.map((p, i) => (
+              <Line
+                key={p.login}
+                type="monotone"
+                dataKey={p.login}
+                stroke={COLORS[i]}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
       )}
     </div>
   )

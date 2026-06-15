@@ -103,6 +103,56 @@
   gap: 6px;
 }
 
+.pickerBody {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.selectedPanel {
+  flex: 0 0 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border-right: 1px solid var(--beige);
+  padding-right: 12px;
+  min-height: 60px;
+}
+
+.searchPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.searchResults {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--beige);
+  background: var(--white);
+  color: var(--ink3);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.12s;
+  width: fit-content;
+}
+.resultItem:hover:not(:disabled) { border-color: var(--blue); color: var(--ink); }
+.resultItemOn { font-weight: 700; }
+
 .playerChip {
   display: flex;
   align-items: center;

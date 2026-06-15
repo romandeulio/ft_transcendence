@@ -256,7 +256,10 @@ class UserListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        users = User.objects.filter(is_active=True).exclude(pk=request.user.pk).values('username', 'avatar_url')
+        search = request.query_params.get('search', '').strip()
+        if not search:
+            return Response([])
+        users = User.objects.filter(is_active=True, username__icontains=search).values('username', 'avatar_url')[:20]
         return Response([{'login': u['username'], 'name': u['username'], 'avatar_url': u['avatar_url']} for u in users])
 
 class AvatarUploadView(APIView):

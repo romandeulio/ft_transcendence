@@ -55,9 +55,10 @@ LOCAL_APPS_SYDNEY = [
 
 # Apps autres
 LOCAL_APPS_TEAM = [
-    'users',    # AUTH_USER_MODEL
-    'realtime', # WebSockets
-#    'bets',     # paris & wallet
+    'users',       # AUTH_USER_MODEL
+    'realtime',    # WebSockets
+    'performance', # Stats joueur
+#    'bets',        # paris & wallet
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS_SYDNEY + LOCAL_APPS_TEAM

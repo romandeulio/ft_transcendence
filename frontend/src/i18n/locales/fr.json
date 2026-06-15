@@ -402,6 +402,8 @@
     "searchPlayer": "Rechercher un joueur…",
     "noData": "Données non disponibles",
     "noPlayer": "Aucun joueur trouvé",
+    "searchHint": "Tape un login pour rechercher un joueur",
+    "noSelected": "Aucun joueur sélectionné",
     "selectPlayer": "Sélectionne au moins un joueur pour afficher le graphique.",
     "y": {
       "elo": "ELO",

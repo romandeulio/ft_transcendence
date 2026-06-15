@@ -402,6 +402,8 @@
     "searchPlayer": "Search a player…",
     "noData": "No data available",
     "noPlayer": "No player found",
+    "searchHint": "Type a login to search for a player",
+    "noSelected": "No player selected",
     "selectPlayer": "Select at least one player to display the chart.",
     "y": {
       "elo": "ELO",

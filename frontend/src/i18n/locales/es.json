@@ -398,6 +398,8 @@
     "searchPlayer": "Buscar un jugador…",
     "noData": "Datos no disponibles",
     "noPlayer": "Ningún jugador encontrado",
+    "searchHint": "Escribe un login para buscar un jugador",
+    "noSelected": "Ningún jugador seleccionado",
     "selectPlayer": "Selecciona al menos un jugador para mostrar el gráfico.",
     "y": {
       "elo": "ELO",
