@@ -1,19 +1,21 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authFetch } from '../services/api'
 
 export default function LoginSuccess() {
     const navigate = useNavigate()
     const { login } = useAuth()
     const done = useRef(false)
 
-    useEffect(() => {
+    {/*useEffect(() => {
         if (done.current) return
         done.current = true
 
+        //a partir d'ici
         const params  = new URLSearchParams(window.location.search)
-        const access  = params.get('access')
-        const refresh = params.get('refresh')
+        const access  = params.get('access_token')
+        const refresh = params.get('refresh_token')
 
         if (!access) {
             navigate('/login')
@@ -26,6 +28,7 @@ export default function LoginSuccess() {
         fetch('/api/auth/profile/', {
             headers: { Authorization: `Bearer ${access}` }
         })
+        //ou authFetch('/api/auth/profile/')
             .then(res => {
                 if (!res.ok) throw new Error('Profil inaccessible')
                 return res.json()
@@ -48,8 +51,16 @@ export default function LoginSuccess() {
                 navigate('/profil', { replace: true })
             })
             .catch(() => navigate('/login?error=profile_failed'))
+    }, [])*/}
+    useEffect(() => {
+        authFetch("/api/auth/profile/")
+            .then(r => r.json())
+            .then(user => {
+                login(user)
+                navigate("/profil")
+            })
+            .catch(() => navigate("/login"))
     }, [])
-
     return (
         <div style={{ textAlign: 'center', padding: '4rem' }}>
             Connexion en cours...

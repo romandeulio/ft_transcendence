@@ -61,10 +61,12 @@ export default function InviteLayer() {
           <div className={styles.inviteText}>
             {inv.isWinClaim
               ? t('invite.winClaimReceived', { player: inv.from })
-              : t('invite.received', {
-                  format: inv.slot?.format || '1v1',
-                  mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
-                })}
+              : inv.slot?.type === 'tournament_teammate'
+                ? t('invite.tournamentTeammate')
+                : t('invite.received', {
+                    format: inv.slot?.format || '1v1',
+                    mode: inv.slot?.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
+                  })}
           </div>
           {(inv.slot?.format === '2v2' || inv.slot?.match_type === 'TEAM') && (
             <div className={styles.inviteTeams}>

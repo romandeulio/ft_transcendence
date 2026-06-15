@@ -6,6 +6,21 @@
   background: var(--bg3);
   padding: 20px;
   position: relative;
+  overflow: hidden;
+}
+
+@keyframes floatBg {
+  0%   { transform: translateY(0px) rotate(0deg); opacity: 0.18; }
+  50%  { transform: translateY(-18px) rotate(12deg); opacity: 0.28; }
+  100% { transform: translateY(0px) rotate(0deg); opacity: 0.18; }
+}
+
+.bgItem {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  animation: floatBg 5s ease-in-out infinite;
+  opacity: 0.18;
 }
 
 .langBar {
@@ -96,6 +111,7 @@
   color: var(--ink);
   font-family: inherit;
   font-size: 13px;
+  margin-bottom: 12px;
 }
 
 .input::placeholder {
@@ -118,7 +134,7 @@
   font-weight: 700;
   border: none;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 16px;
 }
 
 .btnLogin:hover { background: #A02830; }

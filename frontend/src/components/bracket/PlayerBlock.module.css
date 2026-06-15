@@ -27,6 +27,21 @@
   font-style: italic;
 }
 
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  border-color: var(--color-primary);
+  background: var(--white);
+  color: var(--color-primary);
+}
+
+.clickable:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .name {
   white-space: nowrap;
   overflow: hidden;

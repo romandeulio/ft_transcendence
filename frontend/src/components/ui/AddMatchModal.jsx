@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Modal from './Modal'
 import LoginInput from './LoginInput'
 import { useTranslation } from 'react-i18next'
+import { authFetch } from '../../services/api'
 import styles from './AddMatchModal.module.css'
 
 export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam, initialOpponent }) {
@@ -92,10 +93,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     )]
     if (playersToVerify.length > 0) {
       try {
-        const token = localStorage.getItem('token')
-        const resp = await fetch('/api/auth/users/', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const resp = await authFetch('/api/auth/users/')
         if (resp.ok) {
           const knownUsers = await resp.json()
           const known = new Set(

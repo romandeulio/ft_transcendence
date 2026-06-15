@@ -77,7 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         try:
             django_validate_email(value)
-        except ValidationErrors:
+        except ValidationError:
             raise serializers.ValidationError("Invalid email format")
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already in use")
@@ -139,7 +139,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         token = default_token_generator.make_token(user)
 
         activation_link = (
-            f"https://localhost/api/auth/activate/{uid}/{token}/"
+            f"{settings.SITE_URL}/api/auth/activate/{uid}/{token}/"
         )
 
         send_mail(

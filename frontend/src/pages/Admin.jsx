@@ -168,7 +168,7 @@ function CreateTournamentModal({ onClose }) {
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>Nombre maximum de joueurs</label>
           <select className={styles.modalInput} value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)}>
-            {[8, 16, 32, 64].map(n => <option key={n} value={n}>{n} joueurs</option>)}
+            {[16, 32].map(n => <option key={n} value={n}>{n} joueurs</option>)}
           </select>
         </div>
         <div className={styles.modalActions}>

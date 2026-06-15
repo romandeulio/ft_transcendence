@@ -173,6 +173,7 @@
     "verifying": "מאמת…",
     "access": "גישה",
     "createTournament": "צור טורניר",
+    "planNextTournament": "תזמן טורניר חדש",
     "tournamentName": "שם הטורניר",
     "tournamentNamePlaceholder": "לדוג': טורניר יום חמישי #5",
     "dateTime": "תאריך ושעה",
@@ -411,6 +412,7 @@
     }
   },
   "bracket": {
+    "eighths": "שמינית גמר",
     "quarters": "רבע גמר",
     "semis": "חצי גמר",
     "final": "גמר",

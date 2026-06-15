@@ -32,6 +32,7 @@ urlpatterns = [
 	path('api/planning/', include('planning.urls')),
 	path('api/seasons/', include('seasons.urls')),
 	path('api/organizations/', include('organizations.urls')),
+	path('api/tournaments/', include('tournaments.urls')),
 
 	# Public API (module Major — clé d'accès + rate limiting)
 	path('api/public/', include('public_api.urls')),
