@@ -114,8 +114,8 @@ export default function Paris() {
   const histPages = Math.ceil(histTotal / HIST_PER_PAGE) || 1
   const histSlice = betHistory.slice(histPage * HIST_PER_PAGE, (histPage + 1) * HIST_PER_PAGE)
 
-  const bestGain    = [...betHistory].sort((a, b) => b.delta - a.delta)[0]
-  const biggestLoss = [...betHistory].sort((a, b) => a.delta - b.delta)[0]
+  const bestGain    = betHistory.filter(h => h.delta > 0).reduce((m, h) => !m || h.delta > m.delta ? h : m, null)
+  const biggestLoss = betHistory.filter(h => h.delta < 0).reduce((m, h) => !m || h.delta < m.delta ? h : m, null)
   const totalBalance = betHistory.reduce((s, h) => s + h.delta, 0)
 
   const yRange       = chartYFilter === 'auto' ? null : parseInt(chartYFilter)
