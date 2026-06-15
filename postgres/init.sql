@@ -1,5 +1,27 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE TABLE stats
+(
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    total_matches INT DEFAULT 0,
+    total_wins INT DEFAULT 0,
+    total_losses INT DEFAULT 0,
+    total_gamelles INT DEFAULT 0,
+    total_demis INT DEFAULT 0,
+    elo_solo INT DEFAULT 1000,
+    elo_team INT DEFAULT 1000,
+    series_wins INT DEFAULT 0,
+    series_losses INT DEFAULT 0,
+    total_bets INT DEFAULT 0,
+    total_wins_bets INT DEFAULT 0,
+    total_losses_bets INT DEFAULT 0,
+    total_amount_won INT DEFAULT 0,
+    total_amount_lost INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE users
 (
     id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -49,6 +71,8 @@ CREATE TABLE matches (
     score_player2 INT DEFAULT 0,
     gamelles_player1 INT DEFAULT 0,
     gamelles_player2 INT DEFAULT 0,
+    demis_player1 INT DEFAULT 0,
+    demis_player2 INT DEFAULT 0,
     elo_solo_p1_before INT DEFAULT 1000,
     elo_solo_p1_after  INT DEFAULT 1000,
     elo_solo_p2_before INT DEFAULT 1000,
