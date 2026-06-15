@@ -358,3 +358,56 @@ class UpdateProfileView(APIView):
 
         user.save()
         return Response(UserSerializer(user).data)
+
+
+class TicketView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        login_name = request.data.get('login', '').strip()
+        description = request.data.get('description', '').strip()
+        pages = request.data.get('pages', '')
+
+        if not login_name or not description:
+            return Response(
+                {'error': 'Login et description sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        body_lines = [
+            f"Login : {login_name}",
+            f"Description : {description}",
+        ]
+        if pages:
+            body_lines.append(f"Pages concernées : {pages}")
+
+        subject = f"[Ticket] Bug report de {login_name}"
+        body = "\n\n".join(body_lines)
+
+        attachments = []
+        for key in request.FILES:
+            f = request.FILES[key]
+            if f.content_type and f.content_type.startswith('image/'):
+                attachments.append((f.name, f.read(), f.content_type))
+
+        from django.core.mail import EmailMessage
+
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        for name, content, mime in attachments:
+            email.attach(name, content, mime)
+
+        try:
+            email.send(fail_silently=False)
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur envoi mail : {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response({'message': 'Ticket envoyé'}, status=status.HTTP_201_CREATED)
