@@ -89,6 +89,19 @@ CREATE TABLE matches (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE season_rewards (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    season_id       UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+    player_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ranking_type    VARCHAR(5) NOT NULL CHECK (ranking_type IN ('SOLO', 'TEAM')),
+    tier            VARCHAR(5) NOT NULL CHECK (tier IN ('TOP1', 'TOP3', 'TOP10')),
+    tokens_awarded  INTEGER NOT NULL CHECK (tokens_awarded >= 0),
+    elo_at_end      INTEGER NOT NULL,
+    rank_at_end     INTEGER NOT NULL CHECK (rank_at_end > 0),
+    awarded_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (season_id, player_id, ranking_type)
+);
+
 CREATE TABLE rankings (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID REFERENCES users(id),
@@ -285,3 +298,5 @@ CREATE INDEX idx_registrations_tournament  ON tournament_registrations(tournamen
 CREATE INDEX idx_teams_tournament          ON tournament_teams(tournament_id, seed);
 CREATE INDEX idx_bracket_tournament_round  ON tournament_matches(tournament_id, round_number);
 CREATE INDEX idx_bracket_status            ON tournament_matches(status);
+CREATE INDEX idx_season_rewards_season ON season_rewards(season_id);
+CREATE INDEX idx_season_rewards_player ON season_rewards(player_id);
