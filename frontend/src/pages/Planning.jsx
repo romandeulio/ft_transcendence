@@ -14,8 +14,8 @@ import styles from './Planning.module.css'
 const MAX_TOKENS = 1412
 
 export default function Planning() {
-  const { addBet } = useBets()
-  const { queue, mySlots, activeGame, completedGameIds, joinQueue, leaveQueue, cancelAsP2, connected, sendInvite, pendingInvites, cancelInvite, liveGames } = useQueue()
+  const { bets: liveMarkets, placeBet } = useBets()
+  const { queue, mySlots, activeGame, completedGameIds, joinQueue, leaveQueue, cancelAsP2, updateSlot, connected, sendInvite, pendingInvites, cancelInvite, liveGames } = useQueue()
   const { user } = useAuth()
   const { t } = useTranslation()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
@@ -24,6 +24,7 @@ export default function Planning() {
   const [betSlot,   setBetSlot]   = useState(null)
   const [betAmount, setBetAmount] = useState(50)
   const [betTeam,   setBetTeam]   = useState(null)
+  const [betMsg,    setBetMsg]    = useState(null)
 
   const [joinOpen, setJoinOpen] = useState(false)
 
@@ -97,19 +98,37 @@ export default function Planning() {
     }
   }
 
-  const handleBet = () => {
+  const handleBet = async () => {
     if (!betSlot || !betTeam) return
-    addBet({
-      match:   `${betSlot.p1} vs ${betSlot.p2}`,
-      p1:      betSlot.p1,
-      p2:      betSlot.p2,
-      status:  'soon',
-      context: "File d'attente",
-      myBet:   { player: betTeam, amount: betAmount },
-    })
-    setBetSlot(null)
-    setBetAmount(50)
-    setBetTeam(null)
+    setBetMsg(null)
+    const norm = s => (s || '').toString().toLowerCase()
+    let reservationId = betSlot.reservationId || null
+    let side = null
+    if (reservationId) {
+      side = betTeam === betSlot.p1 ? 'p1' : 'p2'
+    } else {
+      const market = liveMarkets.find(m =>
+        (norm(m.p1).includes(norm(betSlot.p1)) && norm(m.p2).includes(norm(betSlot.p2))) ||
+        (norm(m.p1).includes(norm(betSlot.p2)) && norm(m.p2).includes(norm(betSlot.p1)))
+      )
+      if (market) {
+        reservationId = market.reservationId
+        side = norm(market.p1).includes(norm(betTeam)) ? 'p1' : 'p2'
+      }
+    }
+    if (!reservationId) {
+      setBetMsg('Les paris ouvriront quand la partie démarrera.')
+      return
+    }
+    try {
+      await placeBet(reservationId, side, betAmount)
+      setBetSlot(null)
+      setBetAmount(50)
+      setBetTeam(null)
+      setBetMsg(null)
+    } catch (e) {
+      setBetMsg(e.message || 'Pari refusé.')
+    }
   }
 
 
@@ -382,7 +401,7 @@ export default function Planning() {
       </div>
 
       {/* ── Modal parier ── */}
-      <Modal open={!!betSlot} onClose={() => { setBetSlot(null); setBetTeam(null) }} title={t('queue.betModalTitle')}>
+      <Modal open={!!betSlot} onClose={() => { setBetSlot(null); setBetTeam(null); setBetMsg(null) }} title={t('queue.betModalTitle')}>
         {betSlot && (
           <>
             <div className={styles.betMatchRow}>
@@ -410,13 +429,18 @@ export default function Planning() {
               <div className={styles.sliderBox}>
                 <div className={styles.sliderLabel}>{t('bets.amount', { amount: betAmount })}</div>
                 <input
-                  type="range" min={1} max={Math.max(user?.tokens ?? 1000, 1)} value={betAmount}
+                  type="range" min={1} max={Math.max(user?.wallet_tokens ?? 1, 1)} value={betAmount}
                   onChange={e => setBetAmount(+e.target.value)}
                   className={styles.slider}
                 />
-                <div className={styles.sliderRange}><span>1</span><span>{user?.tokens ?? 1000}</span></div>
+                <div className={styles.sliderRange}><span>1</span><span>{user?.wallet_tokens ?? 0}</span></div>
               </div>
             </div>
+            {betMsg && (
+              <div className={styles.modalSection} style={{ color: '#CD3122', fontSize: 13 }}>
+                {betMsg}
+              </div>
+            )}
             <div className={styles.modalActions}>
               <button
                 className={styles.confirmBtn}

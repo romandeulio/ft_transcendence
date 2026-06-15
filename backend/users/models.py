@@ -51,7 +51,7 @@ class User(AbstractBaseUser):
     oauth_42_id = models.TextField(unique=True, null=True, blank=True)
 
     gdpr_deleted = models.BooleanField(default=False)
-    wallet_tokens = models.IntegerField(default=10)
+    wallet_tokens = models.IntegerField(default=10000)
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
@@ -66,7 +66,27 @@ class User(AbstractBaseUser):
     
     def __str__(self):
         return self.username
-    
+
+    def deposit_tokens(self, amount: int):
+        """Crédite le wallet (création de jetons). amount doit être > 0."""
+        if amount is None or amount <= 0:
+            return
+        self.wallet_tokens = (self.wallet_tokens or 0) + amount
+        self.save(update_fields=['wallet_tokens'])
+
+    def withdraw_tokens(self, amount: int):
+        """
+        Débite le wallet (destruction de jetons). amount doit être > 0.
+        Lève ValueError si le solde est insuffisant.
+        À appeler sous transaction + select_for_update pour éviter les courses.
+        """
+        if amount is None or amount <= 0:
+            return
+        if (self.wallet_tokens or 0) < amount:
+            raise ValueError("Solde de jetons insuffisant.")
+        self.wallet_tokens -= amount
+        self.save(update_fields=['wallet_tokens'])
+
     def generate_totp_secret(self):
         self.totp_secret = pyotp.random_base32()
         self.save()

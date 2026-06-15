@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react'
+import { authFetch } from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -21,8 +22,30 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
   }
 
+  const updateUser = (partial) => {
+    setUser(prev => {
+      if (!prev) return prev
+      const next = { ...prev, ...partial }
+      localStorage.setItem('user', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const refreshUser = async () => {
+    try {
+      const res = await authFetch('/api/auth/profile/')
+      if (!res.ok) return
+      const data = await res.json()
+      setUser(prev => {
+        const next = { ...(prev || {}), ...data }
+        localStorage.setItem('user', JSON.stringify(next))
+        return next
+      })
+    } catch {}
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

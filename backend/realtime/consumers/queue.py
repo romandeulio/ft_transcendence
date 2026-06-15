@@ -257,6 +257,11 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     break
             queue.insert(insert_idx, slot)
 
+            g = self._slot_to_game(slot)
+            if g["player1"] and g["player2"]:
+                await self._ensure_reservation_for_game(g)
+                await self._broadcast_bet_market(g)
+
         elif action == "leave":
             slot_id = data.get("slotId")
             leaving_slot = next(
@@ -290,6 +295,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                             "slotId": leaving_slot.get("id"), "cancelId": cancel_id,
                         })
                 await self._cascade_cancel_takewins(leaving_slot.get("id"), leaving_slot.get("match_type", "SOLO"))
+                await self._close_bets_for_slot(leaving_slot)
 
         elif action == "update":
             slot_id = data.get("slotId")
@@ -327,6 +333,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "queue_update", "queue": queue},
                 )
+                await self._ensure_reservation_for_game(games[game_id])
+                await self._broadcast_bet_market(games[game_id])
             return
 
         elif action == "score_update":
@@ -340,6 +348,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
+                await self._broadcast_bet_market(games[game_id])
             return
 
         elif action == "game_end":
@@ -407,6 +416,16 @@ class QueueConsumer(AsyncWebsocketConsumer):
                                     f"user_{target}",
                                     {"type": "win_invite_msg", **inv_payload},
                                 )
+                            else:
+                                pending_invites.setdefault(target, []).append(
+                                    {"win_invite": True, **inv_payload}
+                                )
+            if g:
+                closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
+                if closed_id:
+                    await self.channel_layer.group_send(
+                        "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                    )
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "game_ended_msg", "gameId": game_id, "winner": winner, "winner_teammate": winner_teammate},
@@ -609,6 +628,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         })
             if target_slot:
                 await self._cascade_cancel_takewins(target_slot.get("id"), target_slot.get("match_type", "SOLO"))
+                await self._close_bets_for_slot(target_slot)
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "queue_update", "queue": queue},
@@ -675,6 +695,157 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id}
                     )
             await self._cascade_cancel_takewins(slot_id, match_type)
+
+    @staticmethod
+    def _slot_to_game(slot):
+        """Normalise un slot de file en dict 'game' (joueurs + type)."""
+        return {
+            "player1": slot.get("player1") or slot.get("p1"),
+            "player2": slot.get("player2") or slot.get("p2"),
+            "player1_teammate": slot.get("player1_teammate"),
+            "player2_teammate": slot.get("player2_teammate"),
+            "match_type": slot.get("match_type", "SOLO"),
+        }
+
+    async def _close_bets_for_slot(self, slot):
+        """Match retiré de la file sans être joué → ferme + rembourse ses paris."""
+        g = self._slot_to_game(slot)
+        if not g["player1"] or not g["player2"]:
+            return
+        closed_id = await self._close_reservation_for_game(g, refund=True)
+        if closed_id:
+            await self.channel_layer.group_send(
+                "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+            )
+
+    def _game_usernames(self, game):
+        return {
+            game.get("player1"), game.get("player1_teammate"),
+            game.get("player2"), game.get("player2_teammate"),
+        } - {None}
+
+    @database_sync_to_async
+    def _ensure_reservation_for_game(self, game):
+        """
+        Crée la Reservation IN_PROGRESS d'une partie (fenêtre de paris) si elle
+        n'existe pas déjà (dédup par joueurs, ex. path « réserver » d'Accueil).
+        Pas de réservation pour les 2v1 (non pariables). Retourne l'id ou None.
+        """
+        from django.contrib.auth import get_user_model
+        from planning.models import Reservation
+
+        match_type = game.get("match_type", "SOLO")
+        if match_type not in ("SOLO", "TEAM"):
+            return None
+        if not game.get("player1") or not game.get("player2"):
+            return None
+
+        unames = self._game_usernames(game)
+        existing = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
+        )
+        for r in existing:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == unames:
+                return str(r.id)
+
+        User = get_user_model()
+        u = lambda name: User.objects.filter(username=name).first() if name else None
+        p1, p2 = u(game.get("player1")), u(game.get("player2"))
+        if not p1 or not p2:
+            return None
+        res = Reservation.objects.create(
+            match_type=match_type,
+            status=Reservation.Status.IN_PROGRESS,
+            player1=p1,
+            player2=p2,
+            player1_teammate=u(game.get("player1_teammate")),
+            player2_teammate=u(game.get("player2_teammate")),
+        )
+        return str(res.id)
+
+    @database_sync_to_async
+    def _close_reservation_for_game(self, game, refund=False):
+        """
+        Ferme (DONE) la Reservation IN_PROGRESS d'une partie terminée, appariée
+        par joueurs. Rembourse les paris ouverts si `refund` (partie abandonnée).
+        Retourne l'id fermé ou None.
+        """
+        from django.utils import timezone
+        from planning.models import Reservation
+
+        unames = self._game_usernames(game)
+        if not unames:
+            return None
+        candidates = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
+        )
+        for r in candidates:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == unames:
+                r.status = Reservation.Status.DONE
+                r.ended_at = timezone.now()
+                r.save(update_fields=["status", "ended_at"])
+                if refund:
+                    from bets.services import refund_reservation
+                    refund_reservation(r)
+                return str(r.id)
+        return None
+
+    async def _broadcast_bet_market(self, game):
+        """Pousse la cote à jour du marché de paris correspondant à cette partie."""
+        try:
+            payload = await self._bet_market_payload(game)
+            if payload:
+                await self.channel_layer.group_send(
+                    "bets", {"type": "market_update_msg", "market": payload}
+                )
+        except Exception:
+            pass
+
+    @database_sync_to_async
+    def _bet_market_payload(self, game):
+        from planning.models import Reservation
+        from bets.serializers import market_payload
+        usernames = {
+            game.get("player1"), game.get("player1_teammate"),
+            game.get("player2"), game.get("player2_teammate"),
+        } - {None}
+        if not usernames:
+            return None
+        reservations = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .filter(match_type__in=["SOLO", "TEAM"])
+            .select_related(
+                "player1", "player1_teammate",
+                "player2", "player2_teammate",
+            )
+        )
+        for r in reservations:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == usernames:
+                return market_payload(r)
+        return None
 
     async def queue_update(self, event):
         await self.send(text_data=json.dumps({
