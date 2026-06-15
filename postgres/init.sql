@@ -33,25 +33,6 @@ CREATE TABLE seasons
     updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-/*CREATE TABLE matches
-(
-    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    season_id UUID REFERENCES seasons(id),
-    mode      VARCHAR(10) CHECK (mode IN ('1v1', '2v2', 'Fun')),
-    status    VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('cancelled', 'finished', 'completed', 'draft')),
-    played_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE match_participants (
-    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    match_id     UUID REFERENCES matches(id) ON DELETE CASCADE,
-    user_id      UUID REFERENCES users(id),
-    team         SMALLINT CHECK (team IN (1, 2)),
-    result       VARCHAR(10) CHECK (result IN ('win', 'loss')),
-    score_before INT DEFAULT 0,
-    score_after  INT DEFAULT 0,
-    score_delta  INT DEFAULT 0
-);*/
 CREATE TABLE matches (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     season_id  UUID REFERENCES seasons(id),
@@ -152,6 +133,7 @@ CREATE TABLE bets (
     id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id          UUID REFERENCES users(id),
     match_id         UUID REFERENCES matches(id),
+    reservation_id     UUID REFERENCES reservations(id),
     amount           INTEGER NOT NULL CHECK (amount > 0),
     predicted_winner UUID REFERENCES users(id),
     result           VARCHAR(10) CHECK (result IN ('won', 'lost', 'refunded')),
@@ -218,9 +200,9 @@ CREATE OR REPLACE FUNCTION check_no_self_bet()
 RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
-        SELECT 1 FROM match_participants
-        WHERE match_id = NEW.match_id
-        AND user_id = NEW.user_id
+        SELECT 1 FROM reservations
+        WHERE match_id = NEW.reservation_id
+        AND user_id = NEW.user_id IN (player1_id, player1_teammate_id, player2_id, player2_teammate_id)
     ) THEN
         RAISE EXCEPTION 'Un joueur ne peut pas parier sur son propre match.';
     END IF;
