@@ -5,12 +5,13 @@ from django.conf import settings
 
 class Bet(models.Model):
     """
-    Pari sur un match. Table externe (postgres/init.sql) → managed=False.
+    Pari sur une partie en cours (Reservation IN_PROGRESS) = la fenêtre de
+    paris. Table externe (postgres/init.sql) → managed=False.
 
     Le pari porte sur un CAMP : `predicted_winner` stocke le joueur "leader"
-    du camp choisi (player1 ou player2 du match), ce qui identifie le côté.
-    `odds` est la cote figée à la pose ; `payout`/`result` sont renseignés à
-    la résolution.
+    du camp choisi (player1 ou player2), ce qui identifie le côté.
+    `match` est renseigné à la résolution (le Match officiel qui tranche).
+    `odds` est la cote figée à la pose ; `payout`/`result` à la résolution.
     """
 
     class Result(models.TextChoices):
@@ -26,6 +27,17 @@ class Bet(models.Model):
         related_name='bets',
         db_column='user_id',
     )
+
+    # La partie live ciblée (fenêtre de paris).
+    reservation = models.ForeignKey(
+        'planning.Reservation',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='bets',
+        db_column='reservation_id',
+    )
+
+    # Renseigné à la résolution (le Match validé qui tranche le résultat).
     match = models.ForeignKey(
         'matches.Match',
         null=True, blank=True,
@@ -36,7 +48,7 @@ class Bet(models.Model):
 
     amount = models.IntegerField()
 
-    # Joueur "leader" du camp parié (player1 ou player2 du match).
+    # Joueur "leader" du camp parié (player1 ou player2 de la partie).
     predicted_winner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True, blank=True,

@@ -140,13 +140,12 @@ def reservation_cancel(request, pk):
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
 
-	# Partie annulée → remboursement des paris du match associé (s'il existe).
-	if reservation.match_id:
-		try:
-			from bets.services import refund_for_match
-			refund_for_match(reservation.match)
-		except Exception:
-			logger.exception("Échec du remboursement des paris pour la réservation %s", reservation.id)
+	# Partie annulée → remboursement des paris en cours.
+	try:
+		from bets.services import refund_reservation
+		refund_reservation(reservation)
+	except Exception:
+		logger.exception("Échec du remboursement des paris pour la réservation %s", reservation.id)
 
 	_call_next_in_queue()
 

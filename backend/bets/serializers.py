@@ -2,11 +2,11 @@
 Sérialisation des paris pour l'API REST.
 
 En fonctions simples (dicts) plutôt qu'en ModelSerializer : les payloads
-agrègent match + marché + pari de l'utilisateur, et collent au contrat du
+agrègent partie + marché + pari de l'utilisateur, et collent au contrat du
 front (Paris.jsx : match, p1, p2, probP1, pctBets, myBet...).
 """
 from .models import Bet
-from .services import match_market
+from .services import reservation_market
 
 
 def _side_label(player, teammate):
@@ -17,37 +17,37 @@ def _side_label(player, teammate):
     return "—"
 
 
-def _bet_side(match, predicted_winner_id):
-    """'p1' / 'p2' selon le camp du leader prédit."""
-    if predicted_winner_id in {match.player1_id, match.player1_teammate_id}:
+def _bet_side(target, predicted_winner_id):
+    """'p1' / 'p2' selon le camp du leader prédit (target = reservation ou match)."""
+    if predicted_winner_id in {target.player1_id, target.player1_teammate_id}:
         return 'p1'
     return 'p2'
 
 
-def serialize_available(match, user):
-    """Un match ouvert aux paris, vu par `user`."""
-    market = match_market(match)
-    p1 = _side_label(match.player1, match.player1_teammate)
-    p2 = _side_label(match.player2, match.player2_teammate)
+def serialize_available(reservation, user):
+    """Une partie ouverte aux paris, vue par `user`."""
+    market = reservation_market(reservation)
+    p1 = _side_label(reservation.player1, reservation.player1_teammate)
+    p2 = _side_label(reservation.player2, reservation.player2_teammate)
     total = market['staked1'] + market['staked2']
     pct1 = round(100 * market['staked1'] / total) if total else 50
 
     my_bet = None
     mine = Bet.objects.filter(
-        user=user, match=match, result__isnull=True
+        user=user, reservation=reservation, result__isnull=True
     ).first()
     if mine:
         my_bet = {
             'id': str(mine.id),
-            'side': _bet_side(match, mine.predicted_winner_id),
+            'side': _bet_side(reservation, mine.predicted_winner_id),
             'amount': mine.amount,
             'odds': float(mine.odds) if mine.odds is not None else None,
         }
 
     return {
-        'match_id': str(match.id),
-        'match_type': match.match_type,
-        'is_ranked': match.is_ranked,
+        'reservation_id': str(reservation.id),
+        'match_type': reservation.match_type,
+        'is_ranked': reservation.is_ranked,
         'status': 'live',
         'match': f"{p1} vs {p2}",
         'p1': p1,
@@ -58,10 +58,10 @@ def serialize_available(match, user):
         'pct_bets_p1': pct1,
         'pool_p1': market['staked1'],
         'pool_p2': market['staked2'],
-        # bettable=False si l'utilisateur joue ce match.
+        # bettable=False si l'utilisateur joue cette partie.
         'bettable': user.pk not in (
-            match.player1_id, match.player2_id,
-            match.player1_teammate_id, match.player2_teammate_id,
+            reservation.player1_id, reservation.player2_id,
+            reservation.player1_teammate_id, reservation.player2_teammate_id,
         ),
         'my_bet': my_bet,
     }
@@ -69,12 +69,12 @@ def serialize_available(match, user):
 
 def serialize_history(bet):
     """Un pari de l'historique de l'utilisateur."""
-    m = bet.match
-    if m:
-        p1 = _side_label(m.player1, m.player1_teammate)
-        p2 = _side_label(m.player2, m.player2_teammate)
+    target = bet.reservation or bet.match
+    if target:
+        p1 = _side_label(target.player1, target.player1_teammate)
+        p2 = _side_label(target.player2, target.player2_teammate)
         match = f"{p1} vs {p2}"
-        side = _bet_side(m, bet.predicted_winner_id)
+        side = _bet_side(target, bet.predicted_winner_id)
         bet_on = p1 if side == 'p1' else p2
     else:
         match = "—"
