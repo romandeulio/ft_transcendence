@@ -8,7 +8,7 @@ export default function LoginSuccess() {
     const { login } = useAuth()
     const done = useRef(false)
 
-    useEffect(() => {
+    {/*useEffect(() => {
         if (done.current) return
         done.current = true
 
@@ -51,8 +51,16 @@ export default function LoginSuccess() {
                 navigate('/profil', { replace: true })
             })
             .catch(() => navigate('/login?error=profile_failed'))
+    }, [])*/}
+    useEffect(() => {
+        authFetch("/api/auth/profile/")
+            .then(r => r.json())
+            .then(user => {
+                login(user)
+                navigate("/profil")
+            })
+            .catch(() => navigate("/login"))
     }, [])
-
     return (
         <div style={{ textAlign: 'center', padding: '4rem' }}>
             Connexion en cours...

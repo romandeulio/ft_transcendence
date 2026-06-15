@@ -33,13 +33,13 @@ def set_auth_cookies(response, tokens):
     }
     response.set_cookie(
         settings.JWT_ACCESS_COOKIE_NAME,
-        tokens['access'],
+        tokens['access_token'],
         max_age=access_max_age,
         **cookie_options,
     )
     response.set_cookie(
         settings.JWT_REFRESH_COOKIE_NAME,
-        tokens['refresh'],
+        tokens['refresh_token'],
         max_age=refresh_max_age,
         **cookie_options,
     )

@@ -77,7 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         try:
             django_validate_email(value)
-        except ValidationErrors:
+        except ValidationError:
             raise serializers.ValidationError("Invalid email format")
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already in use")
