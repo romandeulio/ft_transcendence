@@ -139,15 +139,9 @@ CREATE TABLE queue (
     joined_at           TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE wallets (
-    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id    UUID UNIQUE REFERENCES users(id),
-    balance    INTEGER NOT NULL DEFAULT 100 CHECK (balance >= 0)
-);
-
 CREATE TABLE wallet_transactions (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    wallet_id    UUID REFERENCES wallets(id),
+    user_id      UUID REFERENCES users(id) ON DELETE CASCADE,
     type         VARCHAR(20) CHECK (type IN ('bet', 'win', 'deposit', 'refund')),
     amount       INTEGER NOT NULL,
     reference_id UUID,
@@ -162,7 +156,8 @@ CREATE TABLE bets (
     predicted_winner UUID REFERENCES users(id),
     result           VARCHAR(10) CHECK (result IN ('won', 'lost', 'refunded')),
     payout           INTEGER,
-    created_at       TIMESTAMP DEFAULT NOW()
+    created_at       TIMESTAMP DEFAULT NOW(),
+    odds             NUMERIC(5,2) NOT NULL CHECK (odds >= 1.00),
 );
 
 CREATE TABLE tournaments (
