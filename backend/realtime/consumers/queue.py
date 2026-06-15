@@ -162,6 +162,12 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     break
             queue.insert(insert_idx, slot)
 
+            # Match confirmé (2 camps) → ouvrir la fenêtre de paris dès la file.
+            g = self._slot_to_game(slot)
+            if g["player1"] and g["player2"]:
+                await self._ensure_reservation_for_game(g)
+                await self._broadcast_bet_market(g)
+
         elif action == "leave":
             slot_id = data.get("slotId")
             leaving_slot = next(
@@ -188,6 +194,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         {"type": "match_cancelled_msg", "cancelledBy": self.username},
                     )
                 await self._cascade_cancel_takewins(leaving_slot.get("id"), leaving_slot.get("match_type", "SOLO"))
+                await self._close_bets_for_slot(leaving_slot)
 
         elif action == "update":
             slot_id = data.get("slotId")
@@ -465,6 +472,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     )
             if target_slot:
                 await self._cascade_cancel_takewins(target_slot.get("id"), target_slot.get("match_type", "SOLO"))
+                await self._close_bets_for_slot(target_slot)
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "queue_update", "queue": queue},
@@ -521,6 +529,28 @@ class QueueConsumer(AsyncWebsocketConsumer):
                         {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True}
                     )
             await self._cascade_cancel_takewins(slot_id, match_type)
+
+    @staticmethod
+    def _slot_to_game(slot):
+        """Normalise un slot de file en dict 'game' (joueurs + type)."""
+        return {
+            "player1": slot.get("player1") or slot.get("p1"),
+            "player2": slot.get("player2") or slot.get("p2"),
+            "player1_teammate": slot.get("player1_teammate"),
+            "player2_teammate": slot.get("player2_teammate"),
+            "match_type": slot.get("match_type", "SOLO"),
+        }
+
+    async def _close_bets_for_slot(self, slot):
+        """Match retiré de la file sans être joué → ferme + rembourse ses paris."""
+        g = self._slot_to_game(slot)
+        if not g["player1"] or not g["player2"]:
+            return
+        closed_id = await self._close_reservation_for_game(g, refund=True)
+        if closed_id:
+            await self.channel_layer.group_send(
+                "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+            )
 
     def _game_usernames(self, game):
         return {
