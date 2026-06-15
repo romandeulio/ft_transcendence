@@ -1,5 +1,25 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE TABLE users
+(
+    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(8) UNIQUE NOT NULL,
+    email   VARCHAR(255) UNIQUE NOT NULL,
+    password TEXT,
+    role    VARCHAR(15) DEFAULT 'user' check( role IN ('user', 'bocalien', 'piscineux', 'stud', 'bde', 'admin', 'alumnni')),
+    is_2fa_enabled BOOLEAN DEFAULT FALSE,
+    totp_secret TEXT,
+    oauth_42_id TEXT UNIQUE,
+    avatar_url TEXT,
+    last_login TIMESTAMP,
+    gdpr_deleted  BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT FALSE,
+    wallet_tokens INT DEFAULT 10,
+    elo_solo INT DEFAULT 1000,
+    elo_team INT DEFAULT 1000,
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE stats
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -20,26 +40,6 @@ CREATE TABLE stats
     total_amount_lost INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE users
-(
-    id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(8) UNIQUE NOT NULL,
-    email   VARCHAR(255) UNIQUE NOT NULL,
-    password TEXT,
-    role    VARCHAR(15) DEFAULT 'user' check( role IN ('user', 'bocalien', 'piscineux', 'stud', 'bde', 'admin', 'alumnni')),
-    is_2fa_enabled BOOLEAN DEFAULT FALSE,
-    totp_secret TEXT,
-    oauth_42_id TEXT UNIQUE,
-    avatar_url TEXT,
-    last_login TIMESTAMP,
-    gdpr_deleted  BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT FALSE,
-    wallet_tokens INT DEFAULT 10,
-    elo_solo INT DEFAULT 1000,
-    elo_team INT DEFAULT 1000,
-    created_at  TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE seasons
