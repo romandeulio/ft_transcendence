@@ -22,7 +22,6 @@ from .odds import expected_score, blended_prob, prob_to_odds, score_prob
 
 User = get_user_model()
 
-# Fenêtre de paris : tant que la partie est en cours (cutoff au score = étape 2).
 OPEN_STATUSES = (Reservation.Status.IN_PROGRESS,)
 
 
@@ -30,10 +29,6 @@ class BetError(ValidationError):
     """Erreur métier de pari (mappée en 400 par la vue)."""
     pass
 
-
-# ---------------------------------------------------------------------------
-# Helpers camps / ELO / pools
-# ---------------------------------------------------------------------------
 
 def _avg(players, attr):
     vals = [getattr(p, attr) for p in players if p is not None]
@@ -59,7 +54,7 @@ def _side_elos(reservation):
     if reservation.match_type == 'TEAM':
         e1 = _avg([reservation.player1, reservation.player1_teammate], 'elo_team')
         e2 = _avg([reservation.player2, reservation.player2_teammate], 'elo_team')
-    else:  # SOLO
+    else:
         e1 = _avg([reservation.player1], 'elo_solo')
         e2 = _avg([reservation.player2], 'elo_solo')
     return e1, e2
@@ -110,8 +105,8 @@ def _live_score(reservation):
         } - {None}
         if gp != res_players:
             continue
-        p1_score = g.get('scoreBlue', 0)  # score du "player1" du jeu
-        p2_score = g.get('scoreRed', 0)   # score du "player2" du jeu
+        p1_score = g.get('scoreBlue', 0)
+        p2_score = g.get('scoreRed', 0)
         if g.get('player1') in s1:
             return p1_score, p2_score
         return p2_score, p1_score
@@ -126,8 +121,6 @@ def is_launched(reservation):
     return _live_score(reservation) is not None
 
 
-# Cutoff : on ferme les NOUVEAUX paris dès que le score cumulé des 2 camps
-# atteint ce seuil (la partie trop avancée devient trop prévisible).
 CUTOFF_TOTAL_SCORE = 5
 
 
@@ -164,10 +157,6 @@ def is_open(reservation):
     )
 
 
-# ---------------------------------------------------------------------------
-# Mint / burn + journalisation
-# ---------------------------------------------------------------------------
-
 def _credit(user_id, amount, tx_type, reference_id):
     locked = User.objects.select_for_update().get(pk=user_id)
     locked.deposit_tokens(amount)
@@ -178,15 +167,11 @@ def _credit(user_id, amount, tx_type, reference_id):
 
 def _debit(user_id, amount, tx_type, reference_id):
     locked = User.objects.select_for_update().get(pk=user_id)
-    locked.withdraw_tokens(amount)  # lève ValueError si solde insuffisant
+    locked.withdraw_tokens(amount)
     WalletTransaction.objects.create(
         user_id=user_id, type=tx_type, amount=amount, reference_id=reference_id,
     )
 
-
-# ---------------------------------------------------------------------------
-# Diffusion WebSocket (après commit ; import paresseux pour éviter le cycle)
-# ---------------------------------------------------------------------------
 
 def _broadcast_market(reservation):
     def _do():
@@ -201,10 +186,6 @@ def _broadcast_closed(reservation):
         broadcast_closed(reservation)
     transaction.on_commit(_do)
 
-
-# ---------------------------------------------------------------------------
-# Pose / annulation
-# ---------------------------------------------------------------------------
 
 @transaction.atomic
 def place_bet(user, reservation, side, amount):
@@ -252,7 +233,7 @@ def place_bet(user, reservation, side, amount):
     try:
         _debit(user.pk, amount, WalletTransaction.Type.BET, bet.id)
     except ValueError as exc:
-        raise BetError(str(exc))  # rollback de la transaction (bet annulé)
+        raise BetError(str(exc))
 
     _broadcast_market(reservation)
     return bet
@@ -275,10 +256,6 @@ def cancel_bet(user, bet):
     bet.delete()
     _broadcast_market(reservation)
 
-
-# ---------------------------------------------------------------------------
-# Résolution / remboursement
-# ---------------------------------------------------------------------------
 
 def _match_players(match):
     return {
@@ -329,14 +306,14 @@ def resolve_for_match(match):
     if reservation is None:
         return 0
 
-    winner_side = match.get_winner()  # 'player1_side' | 'player2_side' | None
+    winner_side = match.get_winner()
     bets = list(
         Bet.objects.select_for_update()
         .filter(reservation=reservation, result__isnull=True)
     )
     for bet in bets:
         bet.match_id = match.id
-        if winner_side is None:  # match nul → remboursement
+        if winner_side is None:
             _refund(bet)
             continue
         bet_side = _user_side(reservation, bet.predicted_winner_id)

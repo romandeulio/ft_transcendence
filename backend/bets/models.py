@@ -28,7 +28,6 @@ class Bet(models.Model):
         db_column='user_id',
     )
 
-    # La partie live ciblée (fenêtre de paris).
     reservation = models.ForeignKey(
         'planning.Reservation',
         null=True, blank=True,
@@ -37,7 +36,6 @@ class Bet(models.Model):
         db_column='reservation_id',
     )
 
-    # Renseigné à la résolution (le Match validé qui tranche le résultat).
     match = models.ForeignKey(
         'matches.Match',
         null=True, blank=True,
@@ -48,7 +46,6 @@ class Bet(models.Model):
 
     amount = models.IntegerField()
 
-    # Joueur "leader" du camp parié (player1 ou player2 de la partie).
     predicted_winner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True, blank=True,
@@ -57,7 +54,6 @@ class Bet(models.Model):
         db_column='predicted_winner',
     )
 
-    # Cote figée au moment de la pose : payout = round(amount * odds).
     odds = models.DecimalField(max_digits=5, decimal_places=2)
 
     result = models.CharField(
@@ -103,7 +99,6 @@ class WalletTransaction(models.Model):
         db_column='user_id',
     )
     type = models.CharField(max_length=20, choices=Type.choices)
-    # Magnitude positive du mouvement ; le `type` donne le sens (mise vs gain).
     amount = models.IntegerField()
     reference_id = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

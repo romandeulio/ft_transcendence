@@ -162,7 +162,6 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     break
             queue.insert(insert_idx, slot)
 
-            # Match confirmé (2 camps) → ouvrir la fenêtre de paris dès la file.
             g = self._slot_to_game(slot)
             if g["player1"] and g["player2"]:
                 await self._ensure_reservation_for_game(g)
@@ -226,8 +225,6 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
-                # Ouvre la fenêtre de paris : crée la Reservation IN_PROGRESS
-                # (dédup par joueurs) puis diffuse son marché.
                 await self._ensure_reservation_for_game(games[game_id])
                 await self._broadcast_bet_market(games[game_id])
             return
@@ -243,7 +240,6 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
-                # Le score live influe sur les cotes → re-broadcast le marché de paris.
                 await self._broadcast_bet_market(games[game_id])
             return
 
@@ -299,8 +295,6 @@ class QueueConsumer(AsyncWebsocketConsumer):
                                 pending_invites.setdefault(target, []).append(
                                     {"win_invite": True, **inv_payload}
                                 )
-            # Ferme la fenêtre de paris. Si la partie est abandonnée (pas de match
-            # à venir), on rembourse ; sinon la résolution viendra à la validation.
             if g:
                 closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
                 if closed_id:
@@ -588,7 +582,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 getattr(r.player2_teammate, "username", None),
             } - {None}
             if rp == unames:
-                return str(r.id)  # déjà ouverte
+                return str(r.id)
 
         User = get_user_model()
         u = lambda name: User.objects.filter(username=name).first() if name else None

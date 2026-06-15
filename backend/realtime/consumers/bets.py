@@ -59,7 +59,6 @@ class BetConsumer(AsyncWebsocketConsumer):
             return [serialize_available(r, user) for r in qs]
         return [market_payload(r) for r in qs]
 
-    # ── Handlers de groupe ──────────────────────────────────────────────────
 
     async def market_update_msg(self, event):
         await self.send(text_data=json.dumps({

@@ -15,9 +15,6 @@ MIN_PROB = 0.01
 MAX_PROB = 0.99
 ODDS_CAP = 100.0
 
-# Poids des composantes de la proba dynamique. Renormalisés selon ce qui est
-# disponible : sans paris et/ou sans score live, on retombe proprement sur le
-# sous-ensemble présent (ELO seul → proba ELO pure).
 W_ELO = 0.45
 W_POOL = 0.25
 W_SCORE = 0.30

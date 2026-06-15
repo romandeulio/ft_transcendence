@@ -67,7 +67,6 @@ def reservation_create(request):
 	serializer.is_valid(raise_exception=True)
 	reservation = serializer.save(status=Reservation.Status.IN_PROGRESS)
 
-	# Nouvelle partie pariable → la diffuser aux clients qui regardent les paris.
 	try:
 		from bets.realtime import broadcast_market
 		broadcast_market(reservation)
@@ -105,8 +104,6 @@ def reservation_close(request, pk):
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
 
-	# Partie terminée → fermer les paris (les paris ouverts seront résolus à la
-	# validation du match correspondant).
 	try:
 		from bets.realtime import broadcast_closed
 		broadcast_closed(reservation)
@@ -156,7 +153,6 @@ def reservation_cancel(request, pk):
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
 
-	# Partie annulée → remboursement des paris en cours.
 	try:
 		from bets.services import refund_reservation
 		refund_reservation(reservation)

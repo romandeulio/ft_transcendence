@@ -22,7 +22,6 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
   }
 
-  // Fusionne des champs dans l'utilisateur courant (ex. wallet_tokens après un pari).
   const updateUser = (partial) => {
     setUser(prev => {
       if (!prev) return prev
@@ -32,7 +31,6 @@ export function AuthProvider({ children }) {
     })
   }
 
-  // Recharge l'utilisateur depuis l'API (notamment le solde de jetons).
   const refreshUser = async () => {
     try {
       const res = await authFetch('/api/auth/profile/')
@@ -43,9 +41,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('user', JSON.stringify(next))
         return next
       })
-    } catch {
-      // silencieux : le solde sera resynchronisé au prochain refresh
-    }
+    } catch {}
   }
 
   return (

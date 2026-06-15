@@ -67,10 +67,6 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.username
 
-    # -------------------------------------------------------------------------
-    # Wallet de jetons (paris) — système "mint" : les jetons sont créés au
-    # crédit (gain de pari) et détruits au débit (mise). Pas de réserve maison.
-    # -------------------------------------------------------------------------
     def deposit_tokens(self, amount: int):
         """Crédite le wallet (création de jetons). amount doit être > 0."""
         if amount is None or amount <= 0:

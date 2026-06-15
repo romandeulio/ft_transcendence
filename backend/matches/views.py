@@ -171,8 +171,6 @@ def match_validate(request, pk):
 		match.save()
 		update_rankings_after_match(match)
 
-		# Résolution des paris liés à cette partie (gains/pertes/remboursements).
-		# Isolée : un souci côté paris ne doit jamais bloquer la validation.
 		try:
 			from bets.services import resolve_for_match
 			resolve_for_match(match)
@@ -216,7 +214,6 @@ def match_cancel(request, pk):
 	match.status = Match.Status.CANCELLED
 	match.save(update_fields=['status', 'updated_at'])
 
-	# Match annulé → remboursement des paris associés.
 	try:
 		from bets.services import refund_for_match
 		refund_for_match(match)

@@ -105,8 +105,6 @@ export default function Planning() {
     if (!betSlot || !betTeam) return
     setBetMsg(null)
     const norm = s => (s || '').toString().toLowerCase()
-    // Le créneau « live » d'Accueil porte déjà la réservation ; sinon on
-    // retrouve le marché de paris live par les joueurs.
     let reservationId = betSlot.reservationId || null
     let side = null
     if (reservationId) {

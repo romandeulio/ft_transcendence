@@ -10,14 +10,13 @@ function formatLabel(matchType, isRanked) {
   return `${fmt} · ${isRanked ? 'classé' : 'libre'}`
 }
 
-// Marché serveur → forme attendue par Paris.jsx
 function mapMarketToBet(m) {
   return {
     id:          m.reservation_id,
     reservationId: m.reservation_id,
     match:       m.match,
     context:     formatLabel(m.match_type, m.is_ranked),
-    status:      'open',            // pas 'live' → Paris.jsx autorise la mise
+    status:      'open',
     p1:          m.p1,
     p2:          m.p2,
     oddsP1:      m.odds_p1,
@@ -53,7 +52,7 @@ function mapHistory(b) {
 
 export function BetsProvider({ children }) {
   const { user, updateUser, refreshUser } = useAuth()
-  const [markets, setMarkets] = useState({})   // reservation_id -> payload marché
+  const [markets, setMarkets] = useState({})
   const [history, setHistory] = useState([])
 
   const wsUrl = user?.username
@@ -69,7 +68,7 @@ export function BetsProvider({ children }) {
       const map = {}
       list.forEach(m => { map[m.reservation_id] = m })
       setMarkets(map)
-    } catch { /* le WS reste le fallback temps réel */ }
+    } catch {}
   }, [])
 
   const loadHistory = useCallback(async () => {
@@ -78,19 +77,17 @@ export function BetsProvider({ children }) {
       if (!res.ok) return
       const list = await res.json()
       setHistory(list.filter(b => b.result).map(mapHistory))
-    } catch { /* ignore */ }
+    } catch {}
   }, [])
 
-  // Chargement initial / reset à la connexion-déconnexion
   useEffect(() => {
     if (!user?.username) { setMarkets({}); setHistory([]); return }
     loadAvailable()
     loadHistory()
-    refreshUser?.()   // resynchronise le solde de jetons
+    refreshUser?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, loadAvailable, loadHistory])
 
-  // Événements WebSocket
   useEffect(() => {
     if (!data) return
     if (data.type === 'bets_state' && Array.isArray(data.markets)) {
@@ -108,7 +105,6 @@ export function BetsProvider({ children }) {
         delete next[data.reservation_id]
         return next
       })
-      // Une partie s'est résolue → historique + solde à resynchroniser.
       loadHistory()
       refreshUser?.()
     }
@@ -116,7 +112,6 @@ export function BetsProvider({ children }) {
 
   const bets = Object.values(markets).map(mapMarketToBet)
 
-  // Pose un pari. `side` = 'p1' | 'p2'. Lève en cas d'erreur (solde, fenêtre fermée…).
   const placeBet = async (reservationId, side, amount) => {
     const res = await authFetch('/api/bets/', {
       method: 'POST',
@@ -124,7 +119,7 @@ export function BetsProvider({ children }) {
     })
     if (!res.ok) {
       let detail = 'Pari refusé.'
-      try { detail = (await res.json()).detail || detail } catch { /* ignore */ }
+      try { detail = (await res.json()).detail || detail } catch {}
       throw new Error(detail)
     }
     updateUser?.({ wallet_tokens: Math.max(0, (user?.wallet_tokens ?? 0) - amount) })
@@ -132,7 +127,6 @@ export function BetsProvider({ children }) {
     await loadHistory()
   }
 
-  // Annule mon pari ouvert sur cette partie (remboursement).
   const cancelBet = async (reservationId) => {
     const m = markets[reservationId]
     const betId = m?.my_bet?.id
@@ -144,7 +138,6 @@ export function BetsProvider({ children }) {
     await loadAvailable()
   }
 
-  // Conservé pour compat (Planning.jsx) : les paris viennent désormais du serveur.
   const addBet = () => {}
 
   return (

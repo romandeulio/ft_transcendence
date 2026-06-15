@@ -49,9 +49,7 @@ def market_payload(reservation):
         'pct_bets_p1': pct1,
         'pool_p1': market['staked1'],
         'pool_p2': market['staked2'],
-        # Match lancé → paris non annulables (le front masque « Annuler »).
         'launched': is_launched(reservation),
-        # Paris encore ouverts ? (cutoff au score cumulé)
         'open': betting_open(reservation),
     }
 
@@ -72,7 +70,6 @@ def serialize_available(reservation, user):
             'odds': float(mine.odds) if mine.odds is not None else None,
         }
 
-    # bettable=False si l'utilisateur joue cette partie.
     payload['bettable'] = user.pk not in (
         reservation.player1_id, reservation.player2_id,
         reservation.player1_teammate_id, reservation.player2_teammate_id,
@@ -102,7 +99,7 @@ def serialize_history(bet):
     elif bet.result == Bet.Result.REFUNDED:
         delta = 0
     else:
-        delta = None  # pari encore ouvert
+        delta = None
 
     return {
         'id': str(bet.id),

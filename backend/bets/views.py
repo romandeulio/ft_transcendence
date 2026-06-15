@@ -19,10 +19,6 @@ from . import services
 from .serializers import serialize_available, serialize_history
 
 
-# ---------------------------------------------------------------------------
-# GET /api/bets/available/
-# ---------------------------------------------------------------------------
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def available_bets(request):
@@ -39,10 +35,6 @@ def available_bets(request):
     data = [serialize_available(r, request.user) for r in reservations]
     return Response(data)
 
-
-# ---------------------------------------------------------------------------
-# POST /api/bets/
-# ---------------------------------------------------------------------------
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -77,10 +69,6 @@ def place_bet(request):
     return Response(serialize_history(bet), status=status.HTTP_201_CREATED)
 
 
-# ---------------------------------------------------------------------------
-# GET /api/bets/mine/
-# ---------------------------------------------------------------------------
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_bets(request):
@@ -98,10 +86,6 @@ def my_bets(request):
     )
     return Response([serialize_history(b) for b in bets])
 
-
-# ---------------------------------------------------------------------------
-# DELETE /api/bets/<id>/
-# ---------------------------------------------------------------------------
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
