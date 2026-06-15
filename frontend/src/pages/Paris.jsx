@@ -6,7 +6,6 @@ import Pill from '../components/ui/Pill'
 import ProgressBar from '../components/ui/ProgressBar'
 import { useBets } from '../context/BetsContext'
 import { useAuth } from '../context/AuthContext'
-import { getPlayerBadge } from '../utils/playerBadge'
 import { useTranslation } from 'react-i18next'
 import styles from './Paris.module.css'
 
@@ -201,22 +200,22 @@ export default function Paris() {
                             <div className={styles.playerChoiceRow}>
                               <button
                                 className={`${styles.playerChoiceBtn} ${styles.playerChoiceBtnRed}`}
-                                onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p1' }))}
+                                onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p2' }))}
                               >
-                                {bet.p1}
-                                {(() => { const b = getPlayerBadge(0); return (
-                                  <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
-                                )})()}
+                                {bet.p2}
+                                {bet.oddsP2 ? (
+                                  <span className={styles.playerBadge} style={{ background: 'rgba(205,49,34,0.12)', color: '#CD3122' }}>×{bet.oddsP2}</span>
+                                ) : null}
                               </button>
                               <span className={styles.playerChoiceVs}>vs</span>
                               <button
                                 className={`${styles.playerChoiceBtn} ${styles.playerChoiceBtnBlue}`}
-                                onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p2' }))}
+                                onClick={() => setBetChoices(prev => ({ ...prev, [bet.id]: 'p1' }))}
                               >
-                                {bet.p2}
-                                {(() => { const b = getPlayerBadge(0); return (
-                                  <span className={styles.playerBadge} style={{ background: b.bg, color: b.color }}>{b.label}</span>
-                                )})()}
+                                {bet.p1}
+                                {bet.oddsP1 ? (
+                                  <span className={styles.playerBadge} style={{ background: 'rgba(64,104,219,0.12)', color: '#4068DB' }}>×{bet.oddsP1}</span>
+                                ) : null}
                               </button>
                             </div>
                           </>
@@ -325,14 +324,14 @@ export default function Paris() {
                 {bestGain ? (
                   <div className={styles.glassRow}>
                     <span className={styles.glassBadgeGreen}>{t('bets.bestGain')}</span>
-                    <span className={styles.glassPlayer}>{bestGain.betOn}</span>
+                    <span className={styles.glassPlayer}>{bestGain.match}{bestGain.score ? ` · ${bestGain.score}` : ''}</span>
                     <span className={styles.glassVal} style={{ color: '#57722F' }}>+{bestGain.delta}</span>
                   </div>
                 ) : null}
                 {biggestLoss ? (
                   <div className={styles.glassRow}>
                     <span className={styles.glassBadgeRed}>{t('bets.biggestLoss')}</span>
-                    <span className={styles.glassPlayer}>{biggestLoss.betOn}</span>
+                    <span className={styles.glassPlayer}>{biggestLoss.match}{biggestLoss.score ? ` · ${biggestLoss.score}` : ''}</span>
                     <span className={styles.glassVal} style={{ color: '#CD3122' }}>{biggestLoss.delta}</span>
                   </div>
                 ) : null}

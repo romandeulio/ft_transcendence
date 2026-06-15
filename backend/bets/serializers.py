@@ -80,7 +80,9 @@ def serialize_available(reservation, user):
 
 def serialize_history(bet):
     """Un pari de l'historique de l'utilisateur."""
-    target = bet.reservation or bet.match
+    # Pari résolu : le Match officiel porte les joueurs ET le score définitif,
+    # donc on le préfère à la réservation pour aligner noms et score.
+    target = bet.match or bet.reservation
     if target:
         p1 = _side_label(target.player1, target.player1_teammate)
         p2 = _side_label(target.player2, target.player2_teammate)
@@ -101,11 +103,16 @@ def serialize_history(bet):
     else:
         delta = None
 
+    score = None
+    if bet.match:
+        score = f"{bet.match.score_player1}-{bet.match.score_player2}"
+
     return {
         'id': str(bet.id),
         'match': match,
         'side': side,
         'bet_on': bet_on,
+        'score': score,
         'amount': bet.amount,
         'odds': float(bet.odds) if bet.odds is not None else None,
         'result': bet.result,

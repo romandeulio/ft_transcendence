@@ -47,7 +47,7 @@ function mapHistory(b) {
   const date = d
     ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
     : ''
-  return { id: b.id, match: b.match, betOn: b.bet_on, date, delta: b.delta ?? 0, result }
+  return { id: b.id, match: b.match, betOn: b.bet_on, score: b.score ?? null, date, delta: b.delta ?? 0, result }
 }
 
 export function BetsProvider({ children }) {
