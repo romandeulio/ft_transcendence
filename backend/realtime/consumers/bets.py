@@ -48,7 +48,7 @@ class BetConsumer(AsyncWebsocketConsumer):
         qs = (
             Reservation.objects
             .filter(status=Reservation.Status.IN_PROGRESS)
-            .exclude(match_type="TWO_V_ONE")
+            .filter(match_type__in=["SOLO", "TEAM"])
             .select_related(
                 "player1", "player1_teammate",
                 "player2", "player2_teammate",

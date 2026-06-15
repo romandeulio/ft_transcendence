@@ -219,6 +219,10 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     self.group_name,
                     {"type": "game_state_msg", "game": {**games[game_id], "gameId": game_id}},
                 )
+                # Ouvre la fenêtre de paris : crée la Reservation IN_PROGRESS
+                # (dédup par joueurs) puis diffuse son marché.
+                await self._ensure_reservation_for_game(games[game_id])
+                await self._broadcast_bet_market(games[game_id])
             return
 
         elif action == "score_update":
@@ -288,6 +292,14 @@ class QueueConsumer(AsyncWebsocketConsumer):
                                 pending_invites.setdefault(target, []).append(
                                     {"win_invite": True, **inv_payload}
                                 )
+            # Ferme la fenêtre de paris. Si la partie est abandonnée (pas de match
+            # à venir), on rembourse ; sinon la résolution viendra à la validation.
+            if g:
+                closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
+                if closed_id:
+                    await self.channel_layer.group_send(
+                        "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                    )
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "game_ended_msg", "gameId": game_id, "winner": winner, "winner_teammate": winner_teammate},
@@ -510,6 +522,94 @@ class QueueConsumer(AsyncWebsocketConsumer):
                     )
             await self._cascade_cancel_takewins(slot_id, match_type)
 
+    def _game_usernames(self, game):
+        return {
+            game.get("player1"), game.get("player1_teammate"),
+            game.get("player2"), game.get("player2_teammate"),
+        } - {None}
+
+    @database_sync_to_async
+    def _ensure_reservation_for_game(self, game):
+        """
+        Crée la Reservation IN_PROGRESS d'une partie (fenêtre de paris) si elle
+        n'existe pas déjà (dédup par joueurs, ex. path « réserver » d'Accueil).
+        Pas de réservation pour les 2v1 (non pariables). Retourne l'id ou None.
+        """
+        from django.contrib.auth import get_user_model
+        from planning.models import Reservation
+
+        match_type = game.get("match_type", "SOLO")
+        if match_type not in ("SOLO", "TEAM"):
+            return None
+        if not game.get("player1") or not game.get("player2"):
+            return None
+
+        unames = self._game_usernames(game)
+        existing = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
+        )
+        for r in existing:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == unames:
+                return str(r.id)  # déjà ouverte
+
+        User = get_user_model()
+        u = lambda name: User.objects.filter(username=name).first() if name else None
+        p1, p2 = u(game.get("player1")), u(game.get("player2"))
+        if not p1 or not p2:
+            return None
+        res = Reservation.objects.create(
+            match_type=match_type,
+            status=Reservation.Status.IN_PROGRESS,
+            player1=p1,
+            player2=p2,
+            player1_teammate=u(game.get("player1_teammate")),
+            player2_teammate=u(game.get("player2_teammate")),
+        )
+        return str(res.id)
+
+    @database_sync_to_async
+    def _close_reservation_for_game(self, game, refund=False):
+        """
+        Ferme (DONE) la Reservation IN_PROGRESS d'une partie terminée, appariée
+        par joueurs. Rembourse les paris ouverts si `refund` (partie abandonnée).
+        Retourne l'id fermé ou None.
+        """
+        from django.utils import timezone
+        from planning.models import Reservation
+
+        unames = self._game_usernames(game)
+        if not unames:
+            return None
+        candidates = (
+            Reservation.objects
+            .filter(status=Reservation.Status.IN_PROGRESS)
+            .select_related("player1", "player1_teammate", "player2", "player2_teammate")
+        )
+        for r in candidates:
+            rp = {
+                getattr(r.player1, "username", None),
+                getattr(r.player1_teammate, "username", None),
+                getattr(r.player2, "username", None),
+                getattr(r.player2_teammate, "username", None),
+            } - {None}
+            if rp == unames:
+                r.status = Reservation.Status.DONE
+                r.ended_at = timezone.now()
+                r.save(update_fields=["status", "ended_at"])
+                if refund:
+                    from bets.services import refund_reservation
+                    refund_reservation(r)
+                return str(r.id)
+        return None
+
     async def _broadcast_bet_market(self, game):
         """Pousse la cote à jour du marché de paris correspondant à cette partie."""
         try:
@@ -534,7 +634,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         reservations = (
             Reservation.objects
             .filter(status=Reservation.Status.IN_PROGRESS)
-            .exclude(match_type="TWO_V_ONE")
+            .filter(match_type__in=["SOLO", "TEAM"])
             .select_related(
                 "player1", "player1_teammate",
                 "player2", "player2_teammate",

@@ -84,6 +84,8 @@ export function BetsProvider({ children }) {
     if (!user?.username) { setMarkets({}); setHistory([]); return }
     loadAvailable()
     loadHistory()
+    refreshUser?.()   // resynchronise le solde de jetons
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, loadAvailable, loadHistory])
 
   // Événements WebSocket

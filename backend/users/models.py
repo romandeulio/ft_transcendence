@@ -51,7 +51,7 @@ class User(AbstractBaseUser):
     oauth_42_id = models.TextField(unique=True, null=True, blank=True)
 
     gdpr_deleted = models.BooleanField(default=False)
-    wallet_tokens = models.IntegerField(default=10)
+    wallet_tokens = models.IntegerField(default=10000)
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)

@@ -14,7 +14,7 @@ CREATE TABLE users
     last_login TIMESTAMP,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT FALSE,
-    wallet_tokens INT DEFAULT 10,
+    wallet_tokens INT DEFAULT 10000,
     elo_solo INT DEFAULT 1000,
     elo_team INT DEFAULT 1000,
     created_at  TIMESTAMP DEFAULT NOW()
