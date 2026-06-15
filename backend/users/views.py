@@ -82,16 +82,21 @@ class LoginView(APIView):
                 return Response({'error': 'Account not activated'}, status=403)
         except User.DoesNotExist:
             return Response({'error': 'Bad email or password'}, status= 401)
-        
+
         if not user.check_password(password):
             return Response({'error': 'Bad email or password'}, status=401)
-        
+
+        # Vérifier le ban
+        ban = user.ban_info()
+        if ban:
+            return Response({'error': 'banned', 'ban': ban}, status=403)
+
         if user.is_2fa_enabled:
             if not totp_code:
                 return Response({'requires_2fa': True}, status=200)
             if not user.verify_totp(totp_code):
                 return Response({'error': 'Code 2FA invalide'}, status=401)
-        
+
         response = Response({'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
 
@@ -157,14 +162,17 @@ class OAuth42CallbackView(APIView):
                 }
             )
 
-            tokens = get_tokens(user)
+            # Vérifier le ban
+            ban = user.ban_info()
+            if ban:
+                if ban['type'] == 'permanent':
+                    return django_redirect(f"{settings.SITE_URL}/banned?type=permanent")
+                else:
+                    return django_redirect(
+                        f"{settings.SITE_URL}/banned?type=temporary&until={ban['until']}"
+                    )
 
-            # Rediriger vers React avec les tokens
-            #return django_redirect(
-            #    f"https://localhost/login-success"
-            #    f"?access={tokens['access']}"
-            #    f"&refresh={tokens['refresh']}"
-            #)
+            tokens = get_tokens(user)
             response = django_redirect(f"{settings.SITE_URL}/login-success")
             return set_auth_cookies(response, get_tokens(user))
 

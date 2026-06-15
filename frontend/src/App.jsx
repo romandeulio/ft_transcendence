@@ -17,6 +17,7 @@ import Admin       from './pages/Admin'
 import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
 import LoginSuccess from './pages/LoginSuccess'
+import Banned      from './pages/Banned'
 
 function isTokenValid(token) {
   if (!token) return false;
@@ -52,6 +53,7 @@ export default function App() {
                 <Route path="/login"         element={<Login />} />
                 <Route path="/login-success" element={<LoginSuccess />} />
                 <Route path="/register"      element={<Register />} />
+                <Route path="/banned"        element={<Banned />} />
                 <Route path="/admin"         element={<Admin />} />
                 <Route path="/ticket"        element={<Ticket />} />
                 <Route path="/status"        element={<Status />} />

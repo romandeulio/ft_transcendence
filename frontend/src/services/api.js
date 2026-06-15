@@ -30,6 +30,26 @@ async function refreshAuthCookie() {
 // Fetch authentifié — les JWT HttpOnly sont envoyés via cookies same-origin.
 export function authFetch(url, options = {}) {
   return fetch(url, buildFetchOptions(options)).then(async res => {
+    // Détection ban : le backend renvoie 401 avec detail "User is banned"
+    if (res.status === 401) {
+      const clone = res.clone()
+      try {
+        const data = await clone.json()
+        if (data.detail === 'User is banned' || (typeof data.detail === 'object' && data.detail?.detail === 'User is banned')) {
+          localStorage.removeItem('user')
+          const ban = data.ban || data.detail?.ban || {}
+          if (ban.type === 'permanent') {
+            window.location.href = '/banned?type=permanent'
+          } else if (ban.type === 'temporary' && ban.until) {
+            window.location.href = `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
+          } else {
+            window.location.href = '/banned?type=permanent'
+          }
+          return res
+        }
+      } catch { /* pas du JSON, on continue */ }
+    }
+
     if (res.status !== 401 || url === `${BASE}/token/refresh/`) {
       return res
     }
