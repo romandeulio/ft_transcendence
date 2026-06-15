@@ -174,13 +174,16 @@ export default function Paris() {
                         {!isLive && hasBet && bet.launched && (
                           <span className={styles.betContext}>Pari verrouillé</span>
                         )}
-                        {!isLive && !hasBet && bet.bettable && (
+                        {!isLive && !hasBet && bet.bettable && bet.bettingOpen && (
                           <button
                             className={`${styles.miserBtn} ${sliderOpen ? styles.miserBtnOpen : ''}`}
                             onClick={() => sliderOpen ? setShowSlider(null) : openMiser(bet.id)}
                           >
                             {sliderOpen ? '✕' : t('bets.bet')}
                           </button>
+                        )}
+                        {!isLive && !hasBet && bet.bettable && !bet.bettingOpen && (
+                          <span className={styles.betContext}>Paris fermés</span>
                         )}
                         {!isLive && !hasBet && !bet.bettable && (
                           <span className={styles.betContext}>Vous jouez</span>

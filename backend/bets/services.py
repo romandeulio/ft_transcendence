@@ -126,6 +126,19 @@ def is_launched(reservation):
     return _live_score(reservation) is not None
 
 
+# Cutoff : on ferme les NOUVEAUX paris dès que le score cumulé des 2 camps
+# atteint ce seuil (la partie trop avancée devient trop prévisible).
+CUTOFF_TOTAL_SCORE = 5
+
+
+def betting_open(reservation):
+    """Paris ouverts tant que le score cumulé des deux camps < CUTOFF_TOTAL_SCORE."""
+    sc = _live_score(reservation)
+    if sc is None:
+        return True
+    return (sc[0] + sc[1]) < CUTOFF_TOTAL_SCORE
+
+
 def reservation_market(reservation):
     """Proba dynamique du camp 1, cotes des deux camps, mises par camp."""
     e1, e2 = _side_elos(reservation)
@@ -198,6 +211,11 @@ def place_bet(user, reservation, side, amount):
     """Pose un pari sur `side` ('p1'/'p2') de la partie. Débite la mise, fige la cote."""
     if not is_open(reservation):
         raise BetError("Les paris sont fermés pour cette partie.")
+    if not betting_open(reservation):
+        raise BetError(
+            f"Paris fermés : la partie est trop avancée "
+            f"({CUTOFF_TOTAL_SCORE} points marqués)."
+        )
     if side not in ('p1', 'p2'):
         raise BetError("Camp invalide (attendu 'p1' ou 'p2').")
     if amount is None or int(amount) <= 0:

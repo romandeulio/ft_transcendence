@@ -6,7 +6,7 @@ agrègent partie + marché + pari de l'utilisateur, et collent au contrat du
 front (Paris.jsx : match, p1, p2, probP1, pctBets, myBet...).
 """
 from .models import Bet
-from .services import reservation_market, is_launched
+from .services import reservation_market, is_launched, betting_open
 
 
 def _side_label(player, teammate):
@@ -51,6 +51,8 @@ def market_payload(reservation):
         'pool_p2': market['staked2'],
         # Match lancé → paris non annulables (le front masque « Annuler »).
         'launched': is_launched(reservation),
+        # Paris encore ouverts ? (cutoff au score cumulé)
+        'open': betting_open(reservation),
     }
 
 
