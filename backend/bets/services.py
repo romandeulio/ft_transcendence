@@ -118,6 +118,14 @@ def _live_score(reservation):
     return None
 
 
+def is_launched(reservation):
+    """
+    True si la partie est lancée (un jeu existe en mémoire pour ces joueurs).
+    Une fois lancé, les paris ne sont plus annulables.
+    """
+    return _live_score(reservation) is not None
+
+
 def reservation_market(reservation):
     """Proba dynamique du camp 1, cotes des deux camps, mises par camp."""
     e1, e2 = _side_elos(reservation)
@@ -241,6 +249,8 @@ def cancel_bet(user, bet):
         raise BetError("Ce pari est déjà résolu et ne peut plus être annulé.")
     if bet.reservation is None or not is_open(bet.reservation):
         raise BetError("Les paris sont fermés : annulation impossible.")
+    if is_launched(bet.reservation):
+        raise BetError("Le match est lancé : impossible d'annuler le pari.")
 
     reservation = bet.reservation
     _credit(bet.user_id, bet.amount, WalletTransaction.Type.REFUND, bet.id)

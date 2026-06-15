@@ -25,6 +25,7 @@ function mapMarketToBet(m) {
     probP1:      m.prob_p1 ?? 50,
     pctBets:     m.pct_bets_p1 ?? 50,
     bettable:    m.bettable !== false,
+    launched:    m.launched === true,
     myBet: m.my_bet
       ? {
           betId:  m.my_bet.id,

@@ -168,8 +168,11 @@ export default function Paris() {
                       <span className={styles.betMatch}>{bet.match}</span>
                       <div className={styles.betHeaderRight}>
                         {isLive && <Pill label="LIVE" type="live" />}
-                        {!isLive && hasBet && (
+                        {!isLive && hasBet && !bet.launched && (
                           <button className={styles.cancelBtn} onClick={() => cancelBet(bet.id)}>{t('bets.cancel')}</button>
+                        )}
+                        {!isLive && hasBet && bet.launched && (
+                          <span className={styles.betContext}>Pari verrouillé</span>
                         )}
                         {!isLive && !hasBet && bet.bettable && (
                           <button
