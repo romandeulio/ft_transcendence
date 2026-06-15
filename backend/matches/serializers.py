@@ -33,6 +33,7 @@ class MatchSerializer(serializers.ModelSerializer):
 			'player2', 'player2_teammate',
 			# scores
 			'score_player1', 'score_player2',
+			'gamelles_player1', 'gamelles_player2',
 			'winner',
 			# ELO solo
 			'elo_solo_player1_before', 'elo_solo_player1_after',
@@ -82,6 +83,7 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 			'player1', 'player1_teammate',
 			'player2', 'player2_teammate',
 			'score_player1', 'score_player2',
+			'gamelles_player1', 'gamelles_player2',
 			'season',
 		]
 

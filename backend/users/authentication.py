@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError, AuthenticationFailed
+
 
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
@@ -17,4 +18,9 @@ class CookieJWTAuthentication(JWTAuthentication):
         except (InvalidToken, TokenError):
             return None
 
-        return self.get_user(validated_token), validated_token
+        try:
+            return self.get_user(validated_token), validated_token
+        except AuthenticationFailed:
+            # Token structurally valid but user no longer exists (e.g. after DB wipe).
+            # Return None so AllowAny views stay accessible with stale cookies.
+            return None

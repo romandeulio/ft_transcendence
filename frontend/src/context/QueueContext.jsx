@@ -55,14 +55,18 @@ export function QueueProvider({ children }) {
   const [lastGameEndedId, setLastGameEndedId] = useState(null)
 
   // Invite state
+  const [liveGames, setLiveGames] = useState({})             // gameId → game state (scores, players)
   const [pendingInvites, setPendingInvites] = useState([])   // received invites (J2 side)
   const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (J1 side)
   const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
   const pendingInvitesRef = useRef([])                       // mirror of pendingInvites for non-stale reads in effects
   const acceptedInviteFromsRef = useRef({})                  // inviteId → from, for 2v2 partial-accept tracking
   const persistedQueueRef = useRef([])
+  const seenCancelIds = useRef(new Set())
 
   const prevConnected = useRef(false)
+  const completedGameIdsRef = useRef(completedGameIds)
+  completedGameIdsRef.current = completedGameIds
 
   // Keep ref in sync so effect handlers can read latest pendingInvites without stale closure
   useEffect(() => { pendingInvitesRef.current = pendingInvites }, [pendingInvites])
@@ -104,9 +108,17 @@ export function QueueProvider({ children }) {
                 g.player1_teammate === u || g.player2_teammate === u)) {
         setActiveGame(prev => ({ ...prev, ...g }))
       }
+      setLiveGames(prev => ({ ...prev, [g.gameId]: g }))
     } else if (data.type === 'game_ended' && data.gameId) {
       setActiveGame(prev => prev?.gameId === data.gameId ? null : prev)
+      setCompletedGameIds(prev => new Set([...prev, data.gameId]))
+      setLiveGames(prev => {
+        const next = { ...prev }
+        delete next[data.gameId]
+        return next
+      })
       setLastGameEndedId(data.gameId)
+      setQueue(prev => prev.filter(s => String(s.id || s._localId) !== String(data.gameId)))
       setMySlots(prev => {
         let next = prev.filter(s => s._localId !== data.gameId)
         if (data.winner) {
@@ -183,14 +195,24 @@ export function QueueProvider({ children }) {
       setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
 
     } else if (data.type === 'p2_left') {
-      // J2 a annulé le match accepté → J1 retire le slot de mySlots
+      // J2 a annulé le match accepté → J1 retire le slot de mySlots + notification
       setMySlots(prev => {
         const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
+      setInviteResults(prev => [...prev, {
+        inviteId: `p2left-${Date.now()}-${Math.random()}`,
+        accepted: false,
+        target: data.cancelledBy || '?',
+        cancelled: true,
+      }])
 
     } else if (data.type === 'match_cancelled') {
+      if (data.cancelId) {
+        if (seenCancelIds.current.has(data.cancelId)) return
+        seenCancelIds.current.add(data.cancelId)
+      }
       if (data.slotId) {
         setMySlots(prev => {
           const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
@@ -241,7 +263,7 @@ export function QueueProvider({ children }) {
         // All accepted → enter queue (skip for tournament_teammate invites)
         setMySlots(prev => {
           const next = prev.map(s =>
-            s._localId === inviteId ? { ...s, type: 'taken' } : s
+            s._localId === inviteId ? { ...s, type: 'taken', _accepted: undefined } : s
           )
           localStorage.setItem('myQueueSlots', JSON.stringify(next))
           return next
@@ -252,7 +274,14 @@ export function QueueProvider({ children }) {
         setInviteResults(prev => [...prev, { inviteId, accepted: true, target: nowAccepted.join(', ') }])
         invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
       } else {
-        // Partial — show intermediate notification (e.g. "2/3 accepté")
+        // Partial accept — persist accepted list so it survives a J1 disconnect/reconnect
+        setMySlots(prev => {
+          const next = prev.map(s =>
+            s._localId === inviteId ? { ...s, _accepted: nowAccepted } : s
+          )
+          localStorage.setItem('myQueueSlots', JSON.stringify(next))
+          return next
+        })
         setInviteResults(prev => [...prev, {
           inviteId, accepted: true, target: responder,
           partial: true, count: nowAccepted.length, total: invite.targets.length,
@@ -283,9 +312,12 @@ export function QueueProvider({ children }) {
         const persistedQueue = entries.map(mapPersistedQueueEntry)
         if (cancelled) return
         persistedQueueRef.current = persistedQueue
+        const filteredPersisted = persistedQueue.filter(s =>
+          !completedGameIdsRef.current.has(String(s.id || s._localId))
+        )
         setQueue(prev => mergeQueueState(
           prev.filter(slot => slot.source !== 'db'),
-          persistedQueue,
+          filteredPersisted,
         ))
       } catch {
         // WebSocket remains the realtime fallback if the REST queue is temporarily unavailable.
@@ -300,12 +332,31 @@ export function QueueProvider({ children }) {
     }
   }, [user?.username])
 
-  // Re-join our slots after a reconnect (skip pending_invite and already-completed slots)
+  // Re-join our slots after a reconnect (skip pending_invite and already-completed slots,
+  // but keep takeWin pending_invite slots so they stay in the backend queue).
+  // Also restore invitesSentRef from persisted pending_invite slots so that J1 can still
+  // process invite_response and cancel_invite correctly after a page refresh.
   useEffect(() => {
-    if (connected && !prevConnected.current && mySlots.length > 0) {
-      mySlots
-        .filter(s => !completedGameIds.has(s._localId) && s.type !== 'pending_invite')
-        .forEach(slot => send({ action: 'join', slot }))
+    if (connected && !prevConnected.current) {
+      if (mySlots.length > 0) {
+        mySlots
+          .filter(s =>
+            !completedGameIds.has(s._localId) &&
+            (s.type !== 'pending_invite' || s.takeWin) &&
+            s._localId !== activeGame?.gameId  // skip active game slot: backend keeps it while alive,
+                                               // and delivers game_ended offline if it ended
+          )
+          .forEach(slot => send({ action: 'join', slot }))
+      }
+      const toRestore = mySlots.filter(s =>
+        s.type === 'pending_invite' && !completedGameIds.has(s._localId) && !s.takeWin
+      )
+      if (toRestore.length > 0) {
+        invitesSentRef.current = [
+          ...invitesSentRef.current.filter(i => !toRestore.find(r => r.inviteId === i.inviteId)),
+          ...toRestore.map(s => ({ inviteId: s._localId, targets: s._targets || [], slot: s, accepted: s._accepted || [] })),
+        ]
+      }
     }
     prevConnected.current = connected
   }, [connected, send, mySlots, completedGameIds])
@@ -373,9 +424,9 @@ export function QueueProvider({ children }) {
     send({ action: 'score_update', gameId, scoreRed, scoreBlue })
   }
 
-  const closeGame = (gameId) => {
+  const closeGame = (gameId, { isTie = false } = {}) => {
     if (gameId) {
-      send({ action: 'game_end', gameId })
+      send({ action: 'game_end', gameId, ...(isTie ? { tie: true } : {}) })
       setCompletedGameIds(prev => new Set([...prev, gameId]))
     }
     setActiveGame(null)
@@ -399,6 +450,11 @@ export function QueueProvider({ children }) {
     const localSlot  = { ...slot, _localId: inviteId, type: 'pending_invite', _targets: targetList }
     invitesSentRef.current = [...invitesSentRef.current, { inviteId, targets: targetList, slot: localSlot }]
     targetList.forEach(t => send({ action: 'invite', target: t, inviteId, slot: localSlot }))
+    // For takeWin slots, join the backend queue immediately so the slot is present
+    // when the game ends and the winner invite is dispatched (upsert on accept is safe).
+    if (slot.takeWin) {
+      send({ action: 'join', slot: { ...localSlot, type: 'taken' } })
+    }
     setMySlots(prev => {
       const next = [...prev, localSlot]
       localStorage.setItem('myQueueSlots', JSON.stringify(next))
@@ -447,6 +503,7 @@ export function QueueProvider({ children }) {
       setQueue,
       mySlots,
       activeGame,
+      liveGames,
       completedGameIds,
       lastGameEndedId,
       pendingInvites,

@@ -143,7 +143,11 @@
     "betAmount": "Wager amount",
     "confirmBet": "Confirm — {{amount}} tokens",
     "loginPlaceholder": "Login...",
-    "waitingWinner": "Waiting for winner..."
+    "waitingWinner": "Waiting for winner...",
+    "pendingAccept": "Awaiting acceptance",
+    "noPending": "No pending invitations",
+    "pendingVs": "vs {{opponent}}",
+    "cancelInvite": "✕ Cancel"
   },
   "tournaments": {
     "bdeAccess": "BDE Access",
@@ -207,6 +211,8 @@
     "lossesSub": "this season",
     "gamesPerMonth": "Games / month",
     "gamesPerMonthSub": "average this month",
+    "gamelles": "Buckets 🪣",
+    "gamellesSub": "gamelle goals",
     "favoriteTeammates": "Favourite teammates",
     "teammateNote": "(added automatically based on games played together)",
     "noTeammate": "No teammate registered.",
@@ -374,6 +380,7 @@
     "half": "Half ×2",
     "removeRed": "−1 Red",
     "removeBlue": "−1 Blue",
+    "gamelle": "Bucket",
     "tie": "Draw!",
     "tieCancelWarning": "This match will be cancelled — any takeWin chains will be removed.",
     "wins": "{{color}} wins!",

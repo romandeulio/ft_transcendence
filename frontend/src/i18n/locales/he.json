@@ -143,7 +143,11 @@
     "betAmount": "סכום ההימור",
     "confirmBet": "אשר — {{amount}} אסימונים",
     "loginPlaceholder": "לוגין...",
-    "waitingWinner": "ממתין לזוכה..."
+    "waitingWinner": "ממתין לזוכה...",
+    "pendingAccept": "ממתין לאישור",
+    "noPending": "אין הזמנות ממתינות",
+    "pendingVs": "נגד {{opponent}}",
+    "cancelInvite": "✕ בטל"
   },
   "tournaments": {
     "bdeAccess": "גישה BDE",
@@ -204,6 +208,8 @@
     "lossesSub": "עונה זו",
     "gamesPerMonth": "משחקים / חודש",
     "gamesPerMonthSub": "ממוצע חודשי",
+    "gamelles": "גמלים 🪣",
+    "gamellesSub": "שערי גמל",
     "favoriteTeammates": "שותפי קבוצה מועדפים",
     "teammateNote": "(נוספים אוטומטית לפי מספר המשחקים ביחד)",
     "noTeammate": "אין שותף קבוצה רשום.",
@@ -370,6 +376,7 @@
     "half": "חצי ×2",
     "removeRed": "−1 אדום",
     "removeBlue": "−1 כחול",
+    "gamelle": "גמל",
     "tie": "!תיקו",
     "tieCancelWarning": "משחק זה יבוטל — שרשראות הרפיזה הקשורות יוסרו.",
     "wins": "!{{color}} מנצח",

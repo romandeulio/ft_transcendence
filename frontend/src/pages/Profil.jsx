@@ -32,7 +32,7 @@ export default function Profil() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null })
+  const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0 })
   const [teammates_,    setTeammates]    = useState(() => {
     try { return JSON.parse(localStorage.getItem('favTeammates')) || [] } catch { return [] }
   })
@@ -57,11 +57,17 @@ export default function Profil() {
     authFetch(`/api/matches/?player=${user.username}`)
       .then(r => r.json())
       .then(data => {
-        const rows = (Array.isArray(data) ? data : (data?.results ?? []))
+        const validated = (Array.isArray(data) ? data : (data?.results ?? []))
           .filter(m => m.status === 'VALIDATED')
           .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
-          .map(m => matchToRow(m, user.username))
+        const rows = validated.map(m => matchToRow(m, user.username))
         setRecentMatches(rows)
+        // Compter les gamelles du joueur sur tous ses matchs validés
+        const totalGamelles = validated.reduce((sum, m) => {
+          const asP1 = m.player1?.username === user.username || m.player1 === user.username
+          return sum + (asP1 ? (m.gamelles_player1 || 0) : (m.gamelles_player2 || 0))
+        }, 0)
+        setStats(prev => ({ ...prev, gamelles: totalGamelles }))
       })
       .catch(console.error)
 
@@ -245,6 +251,7 @@ export default function Profil() {
           <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
           <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value={stats.losses || '—'} sub={t('profile.lossesSub')} />
           <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value="—" sub={t('profile.gamesPerMonthSub')} />
+          <StatCard color="#CD3122"            label={t('profile.gamelles')}      value={stats.gamelles || '—'} sub={t('profile.gamellesSub')} />
         </div>
 
         <div className={styles.grid}>

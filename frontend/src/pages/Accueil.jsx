@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
@@ -19,10 +19,17 @@ const MATCHES_PER_PAGE = 3
 export default function Accueil() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite, cancelInvite, cancelAsP2, pendingInvites, respondToInvite } = useQueue()
+  const { queue, mySlots, activeGame, completedGameIds, lastGameEndedId, joinQueue, leaveQueue, openGame, updateScore, closeGame, signalGameEnd, sendInvite, cancelInvite, cancelAsP2, pendingInvites, respondToInvite, connected } = useQueue()
 
   const [jouerOpen,      setJouerOpen]      = useState(false)
   const [selectedMatch,  setSelectedMatch]  = useState(null)
+
+  // Refs to read latest values in effects without stale closures
+  const jouerOpenRef = useRef(false)
+  jouerOpenRef.current = jouerOpen
+  const selectedMatchRef = useRef(null)
+  selectedMatchRef.current = selectedMatch
+  const prevConnectedRef = useRef(false)
   const [matchPickOpen,  setMatchPickOpen]  = useState(false)
   const [joinOpen,       setJoinOpen]       = useState(false)
 
@@ -32,6 +39,7 @@ export default function Accueil() {
 
   const [matchError,     setMatchError]     = useState(null)
   const [initialOpponent, setInitialOpponent] = useState(null)
+  const [userAvatars,    setUserAvatars]    = useState({})
 
   // Matchs que j'ai initiés (persistant via localStorage)
   const myUpcoming = mySlots
@@ -83,7 +91,7 @@ export default function Accueil() {
         vs = opp.length ? opp.join(' & ') : '?'
         vsColor = userIsBlue ? 'red' : 'blue'
       } else {
-        vs = userIsBlue ? (s.p2 || s.player2 || '?') : (s.p1 || '?')
+        vs = userIsBlue ? (s.player2 || s.p1 || '?') : (s.player1 || s.p2 || '?')
         vsColor = userIsBlue ? 'red' : 'blue'
       }
       return {
@@ -98,7 +106,49 @@ export default function Accueil() {
       }
     })
 
-  const upcomingMatches = [...myUpcoming, ...invitedUpcoming]
+  const baseUpcomingMatches = [...myUpcoming, ...invitedUpcoming]
+
+  // Fallback: si activeGame est défini et que l'utilisateur est participant mais que le slot
+  // n'est pas dans la file (J1 brièvement déconnecté), on synthétise un match pour que J2
+  // puisse quand même accéder à "Jouer" au lieu d'avoir le bouton grisé.
+  const activeGameSlotId = activeGame?.gameId
+  const hasActiveGameInUpcoming = baseUpcomingMatches.some(m =>
+    (m._slot?._localId || m._slot?.id || m.id) === activeGameSlotId
+  )
+  const isParticipantOfActiveGame = !!(activeGame && user?.username && (
+    activeGame.player1 === user.username ||
+    activeGame.player2 === user.username ||
+    activeGame.player1_teammate === user.username ||
+    activeGame.player2_teammate === user.username
+  ))
+  const syntheticActiveMatch = (activeGame && !hasActiveGameInUpcoming && isParticipantOfActiveGame)
+    ? {
+        id: activeGame.gameId,
+        vs: activeGame.player1 === user.username
+          ? (activeGame.player2 || '?')
+          : (activeGame.player1 || '?'),
+        vsColor: activeGame.player1 === user.username ? 'red' : 'blue',
+        format: activeGame.match_type === 'TEAM' ? '2v2' : '1v1',
+        mode: 'Chill',
+        label: t('home.waiting'),
+        cancelFn: () => {},
+        _slot: {
+          _localId: activeGame.gameId,
+          id: activeGame.gameId,
+          p1: activeGame.player1,
+          p2: activeGame.player2,
+          player1: activeGame.player1,
+          player2: activeGame.player2,
+          player1_teammate: activeGame.player1_teammate || null,
+          player2_teammate: activeGame.player2_teammate || null,
+          match_type: activeGame.match_type || 'SOLO',
+        },
+      }
+    : null
+
+  const upcomingMatches = syntheticActiveMatch
+    ? [syntheticActiveMatch, ...baseUpcomingMatches]
+    : baseUpcomingMatches
 
   // Dernier slot de la file = match précédent pour "prendre la gagne"
   const lastQueueSlot = [...queue]
@@ -120,12 +170,15 @@ export default function Accueil() {
   ) || mySlots.find(s => !completedGameIds.has(s._localId) && s.type !== 'pending_invite') || null
 
   const matchToPlay = selectedMatch || (upcomingMatches.length > 0 ? upcomingMatches[0] : null)
-  const canPlay = firstGlobalSlot ? isParticipant({ _slot: firstGlobalSlot }) : false
+  // canPlay est aussi vrai si activeGame est actif et que l'utilisateur est participant
+  // (couvre le cas où le slot a temporairement disparu de la file pendant la reconnexion de J1)
+  const canPlay = (firstGlobalSlot ? isParticipant({ _slot: firstGlobalSlot }) : false)
+    || isParticipantOfActiveGame
 
   const handleAddMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     setMatchError(null)
 
-    if (upcomingMatches.length >= 3) {
+    if (baseUpcomingMatches.length >= 3) {
       return t('home.maxMatches')
     }
 
@@ -286,6 +339,18 @@ export default function Accueil() {
   }
 
   useEffect(() => {
+    authFetch('/api/auth/users/')
+      .then(r => r.json())
+      .then(data => {
+        const users = Array.isArray(data) ? data : (data?.results ?? [])
+        const map = {}
+        users.forEach(u => { if (u.login && u.avatar_url) map[u.login] = u.avatar_url })
+        setUserAvatars(map)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (!user?.username) return
 
     // Matchs validés (historique)
@@ -315,7 +380,7 @@ export default function Accueil() {
       .map(([login, count]) => ({ login, count }))
   }, [matches])
 
-  const handleMatchComplete = async (scoreRed, scoreBlue) => {
+  const handleMatchComplete = async (scoreRed, scoreBlue, gamellesRed = 0, gamellesBlue = 0) => {
     setJouerOpen(false)
     const rawSlot = selectedMatch?._slot
     // Relire le slot depuis mySlots pour obtenir player2 à jour (cas takeWin)
@@ -352,12 +417,14 @@ export default function Accueil() {
 
     try {
       const matchBody = {
-        match_type:      slot.match_type || 'SOLO',
-        is_ranked:       slot.is_ranked  ?? false,
-        player1:         slot.player1,
-        player2:         effectivePlayer2,
-        score_player1:   scoreBlue,
-        score_player2:   scoreRed,
+        match_type:        slot.match_type || 'SOLO',
+        is_ranked:         slot.is_ranked  ?? false,
+        player1:           slot.player1,
+        player2:           effectivePlayer2,
+        score_player1:     scoreBlue,
+        score_player2:     scoreRed,
+        gamelles_player1:  gamellesBlue,
+        gamelles_player2:  gamellesRed,
         ...(slot.player1_teammate ? { player1_teammate: slot.player1_teammate } : {}),
         ...(slot.player2_teammate ? { player2_teammate: slot.player2_teammate } : {}),
       }
@@ -418,22 +485,37 @@ export default function Accueil() {
     const slot = mySlots.find(s => s._localId === rawSlot?._localId) || rawSlot
     const gameId = slot?._localId || activeGame?.gameId
     if (slot?._localId) leaveQueue(slot._localId)
-    closeGame(gameId)
+    closeGame(gameId, { isTie: true })
     setSelectedMatch(null)
     setJouerOpen(false)
   }
 
-  // Auto-close JouerMode when the other player ends the game
+  // On WS reconnect, close JouerMode so J1 never sees a stale game screen.
+  // If the game is still alive, game_state will restore activeGame and J1 can re-click Jouer.
   useEffect(() => {
-    if (!lastGameEndedId || !jouerOpen) return
-    const slot = selectedMatch?._slot
-    const slotId = slot?._localId || slot?.id || selectedMatch?.id
-    if (slotId !== lastGameEndedId) return
-    if (slot?._localId) leaveQueue(slot._localId)
-    setSelectedMatch(null)
-    setJouerOpen(false)
+    const wasConnected = prevConnectedRef.current
+    prevConnectedRef.current = connected
+    if (connected && !wasConnected && jouerOpenRef.current) {
+      setJouerOpen(false)
+      setSelectedMatch(null)
+    }
+  }, [connected])
+
+  // Auto-close JouerMode when the active game ends (online: other player ends it while J1 is live).
+  // Uses refs instead of closure capture to avoid stale jouerOpen / selectedMatch.
+  const prevActiveGameIdRef = useRef(activeGame?.gameId)
+  useEffect(() => {
+    const prevId = prevActiveGameIdRef.current
+    prevActiveGameIdRef.current = activeGame?.gameId
+    // Fired when activeGame transitions from a known gameId → null
+    if (prevId && !activeGame?.gameId && jouerOpenRef.current) {
+      const slot = selectedMatchRef.current?._slot
+      if (slot?._localId) leaveQueue(slot._localId)
+      setSelectedMatch(null)
+      setJouerOpen(false)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastGameEndedId])
+  }, [activeGame?.gameId])
 
   const filtered = matches.filter(m =>
     m.vs.toLowerCase().includes(matchSearch.toLowerCase())
@@ -447,13 +529,14 @@ export default function Accueil() {
 
       {jouerOpen && (
         <JouerMode
-          onClose={() => { closeGame(activeGame?.gameId); setJouerOpen(false) }}
+          onClose={() => { setJouerOpen(false); setSelectedMatch(null) }}
           match={selectedMatch}
           onComplete={handleMatchComplete}
           onTieCancel={handleTieCancel}
           scoreRed={activeGame?.scoreRed}
           scoreBlue={activeGame?.scoreBlue}
           onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
+          startTime={activeGame?.startTime}
         />
       )}
 
@@ -578,7 +661,7 @@ export default function Accueil() {
               {topOpponents.map((tm, i) => (
                 <div key={tm.login} className={styles.teammateRow}>
                   <span className={styles.rankBadge}>#{i + 1}</span>
-                  <Avatar initials={tm.login.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round />
+                  <Avatar initials={tm.login.substring(0, 2).toUpperCase()} size={32} bg="var(--beige)" round src={userAvatars[tm.login] || null} />
                   <span className={styles.teammateName}>{tm.login}</span>
                   <span className={styles.gamesCount}>{tm.count}p</span>
                   <button

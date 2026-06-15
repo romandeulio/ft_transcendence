@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './JouerMode.module.css'
 
-export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange }) {
+export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange, startTime }) {
   const { t } = useTranslation()
 
   const slot    = match?._slot
@@ -16,11 +16,24 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     : slot?.player2 || slot?.p2 || t('game.red')
   const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
   const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
-  const [elapsed,   setElapsed]   = useState(0)
-  const [fois,      setFois]      = useState(0)
-  const [ended,     setEnded]     = useState(false)
+  const [elapsed,   setElapsed]   = useState(() =>
+    startTime ? Math.max(0, Math.floor((Date.now() - startTime) / 1000)) : 0
+  )
+  const [fois,        setFois]        = useState(0)
+  const [ended,       setEnded]       = useState(false)
+  const [gamellesRed,  setGamellesRed]  = useState(0)
+  const [gamellesBlue, setGamellesBlue] = useState(0)
   const intervalRef = useRef(null)
   const localUpdate = useRef(false)
+  const prevStartTime = useRef(startTime)
+
+  // Resync elapsed when startTime arrives after mount (reconnect / late join)
+  useEffect(() => {
+    if (startTime && !prevStartTime.current && !ended) {
+      setElapsed(Math.max(0, Math.floor((Date.now() - startTime) / 1000)))
+    }
+    prevStartTime.current = startTime
+  }, [startTime, ended])
 
   // Sync external score changes (from the other player via WS)
   useEffect(() => {
@@ -76,6 +89,30 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     onScoreChange?.(scoreRed, next)
     setTimeout(() => { localUpdate.current = false }, 300)
   }
+  const gamelleRed = () => {
+    if (ended) return
+    setGamellesRed(g => g + 1)
+    // Red scored a gamelle: Red +1, Blue -1
+    const nextRed  = scoreRed  + 1
+    const nextBlue = scoreBlue - 1
+    localUpdate.current = true
+    setScoreRed(nextRed)
+    setScoreBlue(nextBlue)
+    onScoreChange?.(nextRed, nextBlue)
+    setTimeout(() => { localUpdate.current = false }, 300)
+  }
+  const gamelleBlue = () => {
+    if (ended) return
+    setGamellesBlue(g => g + 1)
+    // Blue scored a gamelle: Blue +1, Red -1
+    const nextBlue = scoreBlue + 1
+    const nextRed  = scoreRed  - 1
+    localUpdate.current = true
+    setScoreBlue(nextBlue)
+    setScoreRed(nextRed)
+    onScoreChange?.(nextRed, nextBlue)
+    setTimeout(() => { localUpdate.current = false }, 300)
+  }
 
   const handleEnd = () => {
     setEnded(true)
@@ -105,7 +142,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
               if (onTieCancel) onTieCancel()
               else onClose()
             } else {
-              if (onComplete) onComplete(scoreRed, scoreBlue)
+              if (onComplete) onComplete(scoreRed, scoreBlue, gamellesRed, gamellesBlue)
               else onClose()
             }
           }}>
@@ -131,29 +168,37 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
         <button className={styles.sideRed} onClick={addRed}>
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelRed}</div>
           <div className={styles.sideScore}>{scoreRed}</div>
+          {gamellesRed > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesRed}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
         {/* Centre */}
         <div className={styles.center}>
           <div className={styles.vsText}>VS</div>
-          <button
-            className={styles.finPartieBtn}
-            onClick={handleEnd}
-          >
+          <button className={styles.finPartieBtn} onClick={handleEnd}>
             {t('game.endMatch').split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br/>}</span>)}
           </button>
-          <div className={styles.centerBtns}>
-            <button
-              className={`${styles.demiBtn} ${fois > 0 ? styles.demiBtnActive : ''}`}
-              onClick={() => setFois(f => f === 0 ? 2 : f + 1)}
-            >
-              {fois > 0 ? `×${fois}` : t('game.half')}
-            </button>
+          <button
+            className={`${styles.demiBtn} ${fois > 0 ? styles.demiBtnActive : ''}`}
+            onClick={() => setFois(f => f === 0 ? 2 : f + 1)}
+          >
+            {fois > 0 ? `×${fois}` : t('game.half')}
+          </button>
+
+          <div className={styles.actionBlock}>
+            <span className={styles.actionBlockLabel}>−1</span>
+            <div className={styles.colorPair}>
+              <button className={styles.colorBtnRed} onClick={removeRed}>●</button>
+              <button className={styles.colorBtnBlue} onClick={removeBlue}>●</button>
+            </div>
           </div>
-          <div className={styles.gamelleRow}>
-            <button className={styles.gamelleBtn} onClick={removeRed}>{t('game.removeRed')}</button>
-            <button className={styles.gamelleBtn} onClick={removeBlue}>{t('game.removeBlue')}</button>
+
+          <div className={styles.actionBlock}>
+            <span className={styles.actionBlockLabel}>{t('game.gamelle')}</span>
+            <div className={styles.colorPair}>
+              <button className={styles.colorBtnRed} onClick={gamelleRed}>🪣</button>
+              <button className={styles.colorBtnBlue} onClick={gamelleBlue}>🪣</button>
+            </div>
           </div>
         </div>
 
@@ -161,6 +206,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
         <button className={styles.sideBlue} onClick={addBlue}>
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelBlue}</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
+          {gamellesBlue > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesBlue}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
