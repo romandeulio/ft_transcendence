@@ -24,6 +24,11 @@ games = {}
 # inviteId -> {slotId, targets, accepted, owner}  (invitations « take-the-winner »)
 win_invites = {}
 
+# inviteId -> {from, ownerId, targets, slot, accepted}  (invitations directes)
+# Permet d'activer le créneau dans la file à l'acceptation même si l'invitant
+# (J1) est hors-ligne à ce moment-là.
+invites = {}
+
 # pseudos actuellement connectés
 online_users = set()
 

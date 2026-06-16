@@ -12,7 +12,7 @@ function buildAbsoluteUrl(url) {
 const BASE_DELAY = 1000
 const MAX_DELAY  = 30000
 
-export function useWebSocket(url) {
+export function useWebSocket(url, onMessage) {
   const [data, setData] = useState(null)
   const [connected, setConnected] = useState(false)
   const wsRef       = useRef(null)
@@ -20,6 +20,12 @@ export function useWebSocket(url) {
   const retryTimer  = useRef(null)
   const retryDelay  = useRef(BASE_DELAY)
   const activeUrl   = useRef(null)
+  // Pointe toujours sur le dernier handler : chaque message est livré une fois,
+  // de façon synchrone par événement onmessage — immunisé au batching React.
+  // (Un unique slot `data` perd les messages arrivés en rafale, ex. la salve
+  //  queue_state + invite_received différé à la (re)connexion.)
+  const onMessageRef = useRef(onMessage)
+  onMessageRef.current = onMessage
 
   useEffect(() => {
     activeUrl.current = url
@@ -41,7 +47,11 @@ export function useWebSocket(url) {
 
       ws.onmessage = (e) => {
         if (activeUrl.current !== url) return
-        try { setData(JSON.parse(e.data)) } catch { setData(e.data) }
+        let msg
+        try { msg = JSON.parse(e.data) } catch { msg = e.data }
+        // Livraison directe (aucune perte) ; `data` reste exposé pour compat.
+        if (onMessageRef.current) onMessageRef.current(msg)
+        setData(msg)
       }
 
       ws.onclose = () => {
@@ -60,9 +70,28 @@ export function useWebSocket(url) {
       }
     }
 
+    // Reconnexion immédiate quand le réseau/onglet revient, au lieu d'attendre
+    // le backoff (jusqu'à 30s) — sinon l'utilisateur croit devoir rafraîchir
+    // (ex. une invite reçue hors-ligne n'arrive qu'à la reconnexion).
+    function reconnectNow() {
+      if (!activeUrl.current) return
+      const ws = wsRef.current
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
+      clearTimeout(retryTimer.current)
+      retryDelay.current = BASE_DELAY
+      connect()
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') reconnectNow() }
+    window.addEventListener('online', reconnectNow)
+    window.addEventListener('focus', reconnectNow)
+    document.addEventListener('visibilitychange', onVisible)
+
     connect()
 
     return () => {
+      window.removeEventListener('online', reconnectNow)
+      window.removeEventListener('focus', reconnectNow)
+      document.removeEventListener('visibilitychange', onVisible)
       activeUrl.current = null
       clearTimeout(retryTimer.current)
       const ws = wsRef.current

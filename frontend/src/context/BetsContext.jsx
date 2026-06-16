@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useAuth } from '../hooks/useAuth'
 import { authFetch } from '../services/api'
@@ -58,7 +58,8 @@ export function BetsProvider({ children }) {
   const wsUrl = user?.username
     ? `/ws/bets/?username=${encodeURIComponent(user.username)}`
     : null
-  const { data } = useWebSocket(wsUrl)
+  const handleMessageRef = useRef(null)
+  useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
 
   const loadAvailable = useCallback(async () => {
     try {
@@ -88,7 +89,9 @@ export function BetsProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, loadAvailable, loadHistory])
 
-  useEffect(() => {
+  // Réassigné à chaque render → useWebSocket l'invoque pour CHAQUE message reçu,
+  // de façon synchrone (aucune perte due au batching d'un unique slot `data`).
+  handleMessageRef.current = (data) => {
     if (!data) return
     if (data.type === 'bets_state' && Array.isArray(data.markets)) {
       const map = {}
@@ -108,7 +111,7 @@ export function BetsProvider({ children }) {
       loadHistory()
       refreshUser?.()
     }
-  }, [data, loadHistory, refreshUser])
+  }
 
   const bets = Object.values(markets).map(mapMarketToBet)
 

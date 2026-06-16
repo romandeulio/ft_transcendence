@@ -200,18 +200,25 @@ class QueueConsumer(
 
         slot["ownerId"] = self.user_id
         slot["type"] = "taken"
-        # Upsert : si un slot de même id existe déjà, on préserve les champs joueur
-        # côté serveur que le client reconnecté n'a peut-être pas encore (ex. p2
-        # rempli par un win_claim pendant que J1 était hors-ligne).
-        existing = next((s for s in state.queue if s.get("id") == slot["id"]), None)
+        await self._commit_slot(slot)
+
+    async def _commit_slot(self, slot):
+        """Upsert d'un créneau « taken » dans la file puis diffusion.
+
+        Préserve les champs joueur côté serveur qu'un client reconnecté n'a
+        peut-être pas encore (ex. p2 rempli par un win_claim pendant qu'il était
+        hors-ligne), réinsère selon createdAt (FIFO par date de création), et
+        recalcule réservation / marché de paris si le match est complet.
+        Partagé par _on_join et _activate_invite_slot.
+        """
+        slot_id = slot["id"]
+        existing = next((s for s in state.queue if s.get("id") == slot_id), None)
         if existing:
             for field in ("p2", "player1", "player2", "player1_teammate",
                           "player2_teammate", "team1", "team2"):
                 if existing.get(field) and not slot.get(field):
                     slot[field] = existing[field]
-        state.queue = [s for s in state.queue if s.get("id") != slot["id"]]
-        # Insertion à la bonne place selon createdAt : les slots retardés par une
-        # invitation se replacent avant ceux créés plus tard (FIFO par date de création).
+        state.queue = [s for s in state.queue if s.get("id") != slot_id]
         created_at = slot.get("createdAt") or 0
         insert_idx = len(state.queue)
         for i, s in enumerate(state.queue):
@@ -387,6 +394,18 @@ class QueueConsumer(
         slot      = data.get("slot") or {}
         if not target:
             return
+        # Registre serveur : permet d'activer le créneau dans la file à
+        # l'acceptation même si l'invitant (J1) est hors-ligne à ce moment-là.
+        # L'ownerId est celui de J1 (self ici) pour que le slot lui reste rattaché.
+        inv = state.invites.setdefault(invite_id, {
+            "from":     self.username,
+            "ownerId":  self.user_id,
+            "targets":  list(slot.get("_targets") or [target]),
+            "slot":     slot,
+            "accepted": [],
+        })
+        if target not in inv["targets"]:
+            inv["targets"].append(target)
         # Toujours persisté pour re-livraison à la reco (retiré à la réponse/annulation)
         state.pending_invites.setdefault(target, []).append({
             "inviteId": invite_id,
@@ -405,6 +424,21 @@ class QueueConsumer(
         from_user = data.get("from")    # pseudo de J1
         # Retire de la file hors-ligne pour ne pas re-livrer à la prochaine reco
         self._remove_pending(self.username, invite_id)
+
+        inv = state.invites.get(invite_id)
+        if not accepted:
+            # Un refus annule l'invitation pour tout le monde
+            state.invites.pop(invite_id, None)
+        elif inv:
+            if self.username not in inv["accepted"]:
+                inv["accepted"].append(self.username)
+            # Toutes les cibles ont accepté → le serveur ajoute lui-même le
+            # créneau à la file (indépendant de l'état de connexion de J1) : tout
+            # joueur connecté le voit alors et peut lancer le match.
+            if len(inv["accepted"]) >= len(inv["targets"]):
+                await self._activate_invite_slot(inv)
+                state.invites.pop(invite_id, None)
+
         if from_user:
             payload = {"inviteId": invite_id, "accepted": accepted, "responder": self.username}
             await self._notify(
@@ -413,11 +447,29 @@ class QueueConsumer(
                 {"invite_response": True, **payload},
             )
 
+    async def _activate_invite_slot(self, inv):
+        """Ajoute le créneau d'une invitation directe acceptée à la file.
+
+        Mirroir serveur de ce que faisait le client de J1 à l'acceptation, mais
+        sans dépendre de sa connexion. Les invitations « tournament_teammate »
+        (simple notification) ne rejoignent pas la file.
+        """
+        slot = dict(inv["slot"])
+        if slot.get("type") == "tournament_teammate":
+            return
+        slot["id"] = slot.get("_localId") or slot.get("id") or str(uuid.uuid4())
+        if slot["id"] in state.completed_game_ids:
+            return
+        slot["ownerId"] = inv.get("ownerId")
+        slot["type"] = "taken"
+        await self._commit_slot(slot)
+
     async def _on_cancel_invite(self, data):
         target    = data.get("target")
         invite_id = data.get("inviteId")
         if not target:
             return
+        state.invites.pop(invite_id, None)
         self._remove_pending(target, invite_id)
         await self.channel_layer.group_send(
             f"user_{target}",
@@ -444,6 +496,15 @@ class QueueConsumer(
                 {"type": "win_claim_declined_msg", "slotId": slot_id},
                 {"win_claim_declined": True, "slotId": slot_id},
             )
+            # Notifie aussi les coéquipiers du créneau takeWin (ex. J6 en 2v2),
+            # pas seulement son propriétaire J5.
+            if cancelled_slot:
+                for mate in self._slot_participants(cancelled_slot, {invite["owner"]}):
+                    await self._notify(
+                        mate,
+                        {"type": "win_claim_declined_msg", "slotId": slot_id},
+                        {"win_claim_declined": True, "slotId": slot_id},
+                    )
             # Annuler pour les autres co-gagnants en ligne (leur pending déjà retiré à leur réponse)
             for t in invite["targets"]:
                 if t != self.username and t in state.online_users:
@@ -547,14 +608,16 @@ class QueueConsumer(
                         f"user_{t}",
                         {"type": "cancel_invite_msg", "inviteId": inv_id},
                     )
-        # Notifie chaque propriétaire de slot, puis récurse dans ses dépendants
+        # Notifie le propriétaire ET ses coéquipiers, puis récurse dans les dépendants.
+        # Même cancelId pour tous → la dédup côté front (seenCancelIds) reste correcte
+        # (chaque client est un user distinct, il ne voit que sa propre notif).
         for slot in to_cancel:
             owner = slot.get("p1")
             slot_id = slot.get("id")
-            if owner:
-                cancel_id = str(uuid.uuid4())
+            cancel_id = str(uuid.uuid4())
+            for recipient in ({owner} | self._slot_participants(slot, {owner})):
                 await self._notify(
-                    owner,
+                    recipient,
                     {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id},
                     {"match_cancelled": True, "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id},
                 )

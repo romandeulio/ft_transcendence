@@ -158,6 +158,9 @@ export default function Accueil() {
   const isParticipant = (m) => {
     const slot = m?._slot
     if (!slot || !user?.username) return false
+    // Un « prendre la gagne » n'est pas jouable tant que le gagnant précédent
+    // n'a pas accepté l'invitation (p2 encore vide) : pas d'adversaire confirmé.
+    if (slot.takeWin && !slot.p2) return false
     const u = user.username
     return slot.p1 === u || slot.p2 === u ||
       slot.team1?.includes(u) || slot.team2?.includes(u)
