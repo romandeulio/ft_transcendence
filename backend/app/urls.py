@@ -41,7 +41,7 @@ urlpatterns = [
 	# APPS autres
 	# ===========================================================================
 	# path('api/bets/', include('bets.urls')),  # Roman — commenté en attendant la création de l'app
-
+	path('api/stats/', include('stats.urls')),
 	path('health', health.health),
 ]
 if settings.DEBUG:
