@@ -30,7 +30,16 @@ export default function Login() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.detail || data.non_field_errors?.[0] || t('login.error'))
+        if (data.error === 'banned' && data.ban) {
+          const ban = data.ban
+          if (ban.type === 'permanent') {
+            navigate('/banned?type=permanent')
+          } else {
+            navigate(`/banned?type=temporary&until=${encodeURIComponent(ban.until)}`)
+          }
+          return
+        }
+        setError(data.detail || data.error || data.non_field_errors?.[0] || t('login.error'))
         return
       }
       const me = await authFetch('/api/auth/profile/')

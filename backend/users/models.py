@@ -51,7 +51,9 @@ class User(AbstractBaseUser):
     oauth_42_id = models.TextField(unique=True, null=True, blank=True)
 
     gdpr_deleted = models.BooleanField(default=False)
-    wallet_tokens = models.IntegerField(default=10)
+    ban_permanent = models.BooleanField(default=False)
+    banned_until = models.DateTimeField(null=True, blank=True)
+    wallet_tokens = models.IntegerField(default=10000)
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
@@ -66,6 +68,61 @@ class User(AbstractBaseUser):
     
     def __str__(self):
         return self.username
+
+    def deposit_tokens(self, amount: int):
+        """Crédite le wallet (création de jetons). amount doit être > 0."""
+        if amount is None or amount <= 0:
+            return
+        self.wallet_tokens = (self.wallet_tokens or 0) + amount
+        self.save(update_fields=['wallet_tokens'])
+
+    def withdraw_tokens(self, amount: int):
+        """
+        Débite le wallet (destruction de jetons). amount doit être > 0.
+        Lève ValueError si le solde est insuffisant.
+        À appeler sous transaction + select_for_update pour éviter les courses.
+        """
+        if amount is None or amount <= 0:
+            return
+        if (self.wallet_tokens or 0) < amount:
+            raise ValueError("Solde de jetons insuffisant.")
+        self.wallet_tokens -= amount
+        self.save(update_fields=['wallet_tokens'])
+
+    def _aware_banned_until(self):
+        """Retourne banned_until en timezone-aware (gère les colonnes TIMESTAMP sans tz)."""
+        if self.banned_until is None:
+            return None
+        from django.utils import timezone
+        if timezone.is_naive(self.banned_until):
+            return timezone.make_aware(self.banned_until)
+        return self.banned_until
+
+    @property
+    def is_banned(self):
+        if self.ban_permanent:
+            return True
+        bu = self._aware_banned_until()
+        if bu:
+            from django.utils import timezone
+            return bu > timezone.now()
+        return False
+
+    def ban_info(self):
+        """Retourne un dict décrivant le ban, ou None si pas banni."""
+        if self.ban_permanent:
+            return {'type': 'permanent'}
+        bu = self._aware_banned_until()
+        if bu:
+            from django.utils import timezone
+            remaining = bu - timezone.now()
+            if remaining.total_seconds() > 0:
+                return {
+                    'type': 'temporary',
+                    'until': bu.isoformat(),
+                    'remaining_seconds': int(remaining.total_seconds()),
+                }
+        return None
     
     def generate_totp_secret(self):
         self.totp_secret = pyotp.random_base32()

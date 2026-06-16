@@ -13,8 +13,10 @@ CREATE TABLE users
     avatar_url TEXT,
     last_login TIMESTAMP,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
+    ban_permanent BOOLEAN DEFAULT FALSE,
+    banned_until  TIMESTAMPTZ,
     is_active BOOLEAN DEFAULT FALSE,
-    wallet_tokens INT DEFAULT 10,
+    wallet_tokens INT DEFAULT 10000,
     elo_solo INT DEFAULT 1000,
     elo_team INT DEFAULT 1000,
     created_at  TIMESTAMP DEFAULT NOW()
@@ -239,15 +241,9 @@ CREATE OR REPLACE FUNCTION check_no_self_bet()
 RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
-        SELECT 1
-        FROM reservations
-        WHERE match_id = NEW.match_id
-          AND (
-              NEW.user_id = player1_id
-              OR NEW.user_id = player1_teammate_id
-              OR NEW.user_id = player2_id
-              OR NEW.user_id = player2_teammate_id
-          )
+        SELECT 1 FROM reservations
+        WHERE id = NEW.reservation_id
+          AND NEW.user_id IN (player1_id, player1_teammate_id, player2_id, player2_teammate_id)
     ) THEN
         RAISE EXCEPTION 'Un joueur ne peut pas parier sur son propre match.';
     END IF;

@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -13,6 +15,8 @@ from .serializers import (
 	ReservationCreateSerializer,
 	ReservationSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ===========================================================================
@@ -62,6 +66,13 @@ def reservation_create(request):
 	serializer = ReservationCreateSerializer(data=request.data)
 	serializer.is_valid(raise_exception=True)
 	reservation = serializer.save(status=Reservation.Status.IN_PROGRESS)
+
+	try:
+		from bets.realtime import broadcast_market
+		broadcast_market(reservation)
+	except Exception:
+		logger.exception("Échec de la diffusion du marché pour la réservation %s", reservation.id)
+
 	return Response(
 		ReservationSerializer(reservation).data,
 		status=status.HTTP_201_CREATED,
@@ -92,6 +103,12 @@ def reservation_close(request, pk):
 	reservation.status   = Reservation.Status.DONE
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
+
+	try:
+		from bets.realtime import broadcast_closed
+		broadcast_closed(reservation)
+	except Exception:
+		logger.exception("Échec de la diffusion de fermeture pour la réservation %s", reservation.id)
 
 	# Appeler le premier de la file d'attente
 	_call_next_in_queue()
@@ -135,6 +152,12 @@ def reservation_cancel(request, pk):
 	reservation.status   = Reservation.Status.CANCELLED
 	reservation.ended_at = timezone.now()
 	reservation.save(update_fields=['status', 'ended_at'])
+
+	try:
+		from bets.services import refund_reservation
+		refund_reservation(reservation)
+	except Exception:
+		logger.exception("Échec du remboursement des paris pour la réservation %s", reservation.id)
 
 	_call_next_in_queue()
 

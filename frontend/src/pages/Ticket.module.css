@@ -223,6 +223,13 @@
 .submitBtn:hover:not(:disabled) { opacity: 0.88; }
 .submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.errorMsg {
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* Success */
 .successBox {
   display: flex;
