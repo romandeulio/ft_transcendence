@@ -51,6 +51,7 @@ LOCAL_APPS_SYDNEY = [
 	'organizations',
 	'public_api',
 	'tournaments',
+    'stats',
 ]
 
 # Apps autres
