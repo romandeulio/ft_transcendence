@@ -61,17 +61,17 @@ def update_stats_after_match(match):
 
         if match.is_ranked and match.match_type == 'SOLO':
             if user == match.player1:
-                stats.elo_solo = match.elo_solo_p1_after
+                stats.elo_solo = user.elo_solo
             elif user == match.player2:
-                stats.elo_solo = match.elo_solo_p2_after
+                stats.elo_solo = user.elo_solo
         elif match.is_ranked and match.match_type == 'TEAM':
             if user == match.player1:
-                stats.elo_team = match.elo_team_p1_after
+                stats.elo_team = user.elo_team
             elif user == match.player1_teammate:
-                stats.elo_team = match.elo_team_p1tm_after
+                stats.elo_team = user.elo_team
             elif user == match.player2:
-                stats.elo_team = match.elo_team_p2_after
+                stats.elo_team = user.elo_team
             elif user == match.player2_teammate:
-                stats.elo_team = match.elo_team_p2tm_after
+                stats.elo_team = user.elo_team
 
         stats.save()
