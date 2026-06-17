@@ -1,8 +1,6 @@
 from .models import Stats
 
 def update_stats_after_match(match):
-    """Met à jour la table stats pour les joueurs d'un match validé."""
-    
     score_p1 = match.score_player1
     score_p2 = match.score_player2
     p1_won = score_p1 > score_p2
@@ -61,17 +59,17 @@ def update_stats_after_match(match):
 
         if match.is_ranked and match.match_type == 'SOLO':
             if user == match.player1:
-                stats.elo_solo = user.elo_solo
+                stats.elo_solo = match.elo_solo_player1_after
             elif user == match.player2:
-                stats.elo_solo = user.elo_solo
+                stats.elo_solo = match.elo_solo_player2_after
         elif match.is_ranked and match.match_type == 'TEAM':
             if user == match.player1:
-                stats.elo_team = user.elo_team
+                stats.elo_team = match.elo_team_p1_after
             elif user == match.player1_teammate:
-                stats.elo_team = user.elo_team
+                stats.elo_team = match.elo_team_p1tm_after
             elif user == match.player2:
-                stats.elo_team = user.elo_team
+                stats.elo_team = match.elo_team_p2_after
             elif user == match.player2_teammate:
-                stats.elo_team = user.elo_team
+                stats.elo_team = match.elo_team_p2tm_after
 
         stats.save()

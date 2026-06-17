@@ -87,7 +87,8 @@ class AdminPlayersView(APIView):
     permission_classes = [IsAdminSession]
 
     def get(self, request):
-        users = User.objects.all().order_by('-created_at')
+        #users = User.objects.all().order_by('-created_at')
+        users = User.objects.select_related("stats").all().order_by('-created_at')
         data = []
         for u in users:
             data.append({
@@ -95,8 +96,8 @@ class AdminPlayersView(APIView):
                 'username': u.username,
                 'email': u.email,
                 'role': u.role,
-                'elo_solo': u.elo_solo,
-                'elo_team': u.elo_team,
+                'elo_solo': u.stats.elo_solo,
+                'elo_team': u.stats.elo_team,
                 'is_active': u.is_active,
                 'ban_permanent': u.ban_permanent,
                 'banned_until': u.banned_until.isoformat() if u.banned_until else None,
@@ -165,21 +166,24 @@ class AdminUpdateEloView(APIView):
         elo_team = request.data.get('elo_team')
 
         fields = []
+        stats = user.stats
+
         if elo_solo is not None:
-            user.elo_solo = int(elo_solo)
-            fields.append('elo_solo')
+            stats.elo_solo = int(elo_solo)
+            fields.appends(elo_solo)
+
         if elo_team is not None:
-            user.elo_team = int(elo_team)
-            fields.append('elo_team')
+            stats.elo_team = int(elo_team)
+            fields.appends(elo_team)
 
         if not fields:
             return Response({'error': 'Aucun ELO fourni.'}, status=400)
 
-        user.save(update_fields=fields)
+        stats.save(update_fields=fields)
         return Response({
             'detail': 'ELO mis à jour.',
-            'elo_solo': user.elo_solo,
-            'elo_team': user.elo_team,
+            'elo_solo': stats.elo_solo,
+            'elo_team': stats.elo_team,
         })
 
 

@@ -62,7 +62,7 @@ export default function Ticket() {
     try {
       const res = await fetch('/api/auth/ticket/', {
         method: 'POST',
-        credentials: 'same-origin',
+        credentials: 'include',
         body: fd,
       })
       if (!res.ok) {

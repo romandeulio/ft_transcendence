@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     fetch('/api/auth/logout/', {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: 'include',
     }).catch(() => {})
     setUser(null)
     localStorage.removeItem('user')

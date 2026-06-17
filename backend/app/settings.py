@@ -171,8 +171,8 @@ SIMPLE_JWT = {
 
 JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
 JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
-JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
-#JWT_COOKIE_SECURE = False
+#JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
+JWT_COOKIE_SECURE = False #a commente et decommenter la ligne du dessus en prod
 JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================
@@ -181,17 +181,23 @@ JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 # ===========================================================================
 
 CORS_ALLOWED_ORIGINS = config(
-	'CORS_ALLOWED_ORIGINS',
-	default='https://transcendance.maagosti.fr'
+    'CORS_ALLOWED_ORIGINS',
+    default='https://transcendance.maagosti.fr,http://localhost:3000'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = config(
-	'CSRF_TRUSTED_ORIGINS',
-	default=SITE_URL,
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://transcendance.maagosti.fr,http://localhost:3000'
 ).split(',')
 
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"
 # ===========================================================================
 # CHANNELS (WebSockets — Roman)
 # ===========================================================================

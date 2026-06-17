@@ -96,6 +96,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
         return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
 
     async def connect(self):
+        self.username = None
+        self.user_id = None
         if not self.scope["user"].is_authenticated:
             await self.close()
             return
@@ -204,7 +206,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
             or bool(s.get("takeWin"))
         ]
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        if self.username:
+        #if self.username:
+        if getattr(self, "username", None):
             await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
             online_users.discard(self.username)
         await self.channel_layer.group_send(
@@ -424,7 +427,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
                 if closed_id:
                     await self.channel_layer.group_send(
-                        "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                        "bets", {"type": "market_closed", "reservation_id": closed_id}
                     )
             await self.channel_layer.group_send(
                 self.group_name,
@@ -715,7 +718,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         closed_id = await self._close_reservation_for_game(g, refund=True)
         if closed_id:
             await self.channel_layer.group_send(
-                "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                "bets", {"type": "market_closed", "reservation_id": closed_id}
             )
 
     def _game_usernames(self, game):
@@ -812,7 +815,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
             payload = await self._bet_market_payload(game)
             if payload:
                 await self.channel_layer.group_send(
-                    "bets", {"type": "market_update_msg", "market": payload}
+                    "bets", {"type": "market_update", "market": payload}
                 )
         except Exception:
             pass

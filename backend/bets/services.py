@@ -30,8 +30,18 @@ class BetError(ValidationError):
     pass
 
 
+def _get_stat(player, attr):
+    if player is None:
+        return None
+    stats = getattr(player, "stats", None)
+    if not stats:
+        return None
+    return getattr(stats, attr, None)
+
+
 def _avg(players, attr):
-    vals = [getattr(p, attr) for p in players if p is not None]
+    vals = [_get_stat(p, attr) for p in players]
+    vals = [v for v in vals if v is not None]
     return sum(vals) / len(vals) if vals else 1000
 
 

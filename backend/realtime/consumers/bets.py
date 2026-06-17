@@ -60,13 +60,13 @@ class BetConsumer(AsyncWebsocketConsumer):
         return [market_payload(r) for r in qs]
 
 
-    async def market_update_msg(self, event):
+    async def market_update(self, event):
         await self.send(text_data=json.dumps({
             "type": "market_update",
             "market": event["market"],
         }))
 
-    async def market_closed_msg(self, event):
+    async def market_closed(self, event):
         await self.send(text_data=json.dumps({
             "type": "market_closed",
             "reservation_id": event["reservation_id"],

@@ -10,17 +10,7 @@ from django.conf import settings
 
 class StatsView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        try:
-            stats = Stats.objects.get(user=request.user)
-        except Stats.DoesNotExist:
-            return Response({
-                'total_matches': 0,
-                'total_wins': 0,
-                'total_losses': 0,
-                'total_gamelles': 0,
-                'total_demis': 0,
-                'elo_solo': request.user.elo_solo,
-                'elo_team': request.user.elo_team,
-            })
+        stats, _ = Stats.objects.get_or_create(user=request.user)
         return Response(StatsSerializer(stats).data)
