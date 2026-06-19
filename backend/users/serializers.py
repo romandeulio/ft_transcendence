@@ -154,17 +154,35 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 # serializers.py — remplacer UserSerializer
 
+#class UserSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model  = User
+#        fields = [
+#            'id',
+#            'username',
+#            'email',
+#            'avatar_url',
+#            'role',
+#            'elo_solo',
+#            'elo_team',
+#            'wallet_tokens',
+#            'is_2fa_enabled',
+#        ]
+
 class UserSerializer(serializers.ModelSerializer):
+    elo_solo = serializers.IntegerField(source="stats.elo_solo", read_only=True)
+    elo_team = serializers.IntegerField(source="stats.elo_team", read_only=True)
+
     class Meta:
-        model  = User
+        model = User
         fields = [
-            'id',
-            'username',
-            'email',
-            'avatar_url',
-            'role',
-            'elo_solo',
-            'elo_team',
-            'wallet_tokens',
-            'is_2fa_enabled',
+            "id",
+            "username",
+            "email",
+            "avatar_url",
+            "role",
+            "elo_solo",
+            "elo_team",
+            "wallet_tokens",
+            "is_2fa_enabled",
         ]

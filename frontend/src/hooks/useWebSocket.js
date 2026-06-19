@@ -13,6 +13,8 @@ const BASE_DELAY = 1000
 const MAX_DELAY  = 30000
 
 export function useWebSocket(url) {
+  const alive = useRef(true)
+  const connectingRef = useRef(false)
   const [data, setData] = useState(null)
   const [connected, setConnected] = useState(false)
   const wsRef       = useRef(null)
@@ -21,7 +23,7 @@ export function useWebSocket(url) {
   const retryDelay  = useRef(BASE_DELAY)
   const activeUrl   = useRef(null)
 
-  useEffect(() => {
+  {/*useEffect(() => {
     activeUrl.current = url
     retryDelay.current = BASE_DELAY
 
@@ -72,8 +74,71 @@ export function useWebSocket(url) {
       }
       setConnected(false)
     }
-  }, [url])
+  }, [url])*/}
+  useEffect(() => {
+    alive.current = true
+    activeUrl.current = url
+    retryDelay.current = BASE_DELAY
 
+    function connect() {
+      if (!alive.current){
+        connectingRef.current = false
+        return
+      }
+      if (connectingRef.current) return
+      connectingRef.current = true
+      const absUrl = buildAbsoluteUrl(activeUrl.current)
+      if (!absUrl){
+        connectingRef.current = false
+        return
+      }
+      if (wsRef.current && wsRef.current.readyState < 2) {
+        wsRef.current.close()
+      }
+      const ws = new WebSocket(absUrl)
+      wsRef.current = ws
+
+      ws.onopen = () => {
+        if (!alive.current) return
+        setConnected(true)
+        retryDelay.current = BASE_DELAY
+        connectingRef.current = false
+      }
+
+      ws.onmessage = (e) => {
+        if (!alive.current) return
+        try { setData(JSON.parse(e.data)) }
+        catch { setData(e.data) }
+      }
+
+      ws.onclose = () => {
+        if (!alive.current) return
+        setConnected(false)
+        connectingRef.current = false
+
+        retryTimer.current = setTimeout(() => {
+          if (!alive.current) return
+          retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY)
+          connect()
+        }, retryDelay.current)
+      }
+
+      ws.onerror = () => ws.close()
+    }
+
+    connect()
+
+    return () => {
+      alive.current = false
+      clearTimeout(retryTimer.current)
+
+      const ws = wsRef.current
+      wsRef.current = null
+
+      if (ws) ws.close()
+      setConnected(false)
+    }
+  }, [url])
   const send = useCallback((payload) => {
     const ws = wsRef.current
     if (!ws || ws.readyState !== WebSocket.OPEN) return false
@@ -81,7 +146,7 @@ export function useWebSocket(url) {
     return true
   }, [])
 
-  sendRef.current = send
+  //sendRef.current = send
 
   return { data, connected, send }
 }

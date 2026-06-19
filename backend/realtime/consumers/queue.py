@@ -96,6 +96,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
         return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
 
     async def connect(self):
+        self.username = None
+        self.user_id = None
         if not self.scope["user"].is_authenticated:
             await self.close()
             return
@@ -204,7 +206,8 @@ class QueueConsumer(AsyncWebsocketConsumer):
             or bool(s.get("takeWin"))
         ]
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        if self.username:
+        #if self.username:
+        if getattr(self, "username", None):
             await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
             online_users.discard(self.username)
         await self.channel_layer.group_send(

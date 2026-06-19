@@ -25,7 +25,7 @@ export default function Login() {
       const res = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -47,17 +47,6 @@ export default function Login() {
       const user = await me.json()
       login(user)
       navigate('/accueil')
-      /*if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('refresh_token', data.refresh_token)
-        const me = await fetch('/api/auth/profile/', {
-          headers: { Authorization: `Bearer ${data.access_token}` },
-        })
-        const user = await me.json()
-        localStorage.setItem("user", JSON.stringify(user))
-        login(user)
-        navigate('/accueil')
-      }*/
     } catch {
       setError(t('login.networkError'))
     }

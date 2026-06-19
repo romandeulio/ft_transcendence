@@ -21,6 +21,5 @@ class StatsSerializer(serializers.ModelSerializer):
             'total_losses_bets',
             'total_amount_won',
             'total_amount_lost',
-            'created_at',
             'updated_at'
         ]

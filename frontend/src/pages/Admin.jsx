@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import styles from './Admin.module.css'
 
 const adm = (url, opts = {}) =>
-  fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } })
+  fetch(url, { credentials: 'include', ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } })
 
 /* ------------------------------------------------------------------ */
 /*  Status serveur                                                     */
@@ -577,7 +577,7 @@ export default function Admin() {
       const res = await fetch('/api/admin/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({ login, password }),
       })
       if (res.ok) {

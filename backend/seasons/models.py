@@ -33,6 +33,7 @@ class Season(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		managed  = False
 		db_table = 'seasons'
 		ordering = ['-start_date']
 
@@ -104,6 +105,8 @@ class SeasonReward(models.Model):
 	awarded_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
+		managed  = False
+		db_table = 'season_rewards'
 		ordering = ['season', 'ranking_type', 'rank_at_end']
 		# Un joueur ne peut avoir qu'une récompense par classement par saison
 		unique_together = [('season', 'player', 'ranking_type')]

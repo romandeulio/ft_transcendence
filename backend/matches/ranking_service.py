@@ -3,7 +3,6 @@
 from django.db import transaction
 from .models_ranking import Ranking, RankingHistory
 
-
 @transaction.atomic
 def update_rankings_after_match(match):
     if not match.is_ranked or match.match_type == 'FUN':
@@ -47,7 +46,6 @@ def update_rankings_after_match(match):
                 score_after=score_after,
                 score_delta=delta,
             )
-
 
 def _get_players_with_deltas(match):
     p1_won = match.score_player1 > match.score_player2
