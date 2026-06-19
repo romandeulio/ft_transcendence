@@ -55,6 +55,8 @@ class QueueConsumer(
     # ── Cycle de vie ────────────────────────────────────────────────────────
 
     async def connect(self):
+        self.user_id = None
+        self.username = ""
         if not self.scope["user"].is_authenticated:
             await self.close()
             return
