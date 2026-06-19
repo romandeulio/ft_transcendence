@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from django.db.models import Q, Max
 from django.db.models.functions import TruncWeek, TruncMonth, TruncDate
 
-from .models import Stats
-from .serializers import StatsSerializer
+from stats.models import Stats
+from stats.serializers import StatsSerializer
 
 
 class StatsView(APIView):
