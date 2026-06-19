@@ -21,9 +21,9 @@ def _send(event):
 
 def broadcast_market(reservation):
     """Pousse le marché à jour d'une partie (nouvelle cote/pool) au groupe bets."""
-    _send({"type": "market_update_msg", "market": market_payload(reservation)})
+    _send({"type": "market_update", "market": market_payload(reservation)})
 
 
 def broadcast_closed(reservation):
     """Signale qu'une partie n'est plus pariable (fermée / annulée / résolue)."""
-    _send({"type": "market_closed_msg", "reservation_id": str(reservation.id)})
+    _send({"type": "market_closed", "reservation_id": str(reservation.id)})

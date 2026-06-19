@@ -424,7 +424,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
                 if closed_id:
                     await self.channel_layer.group_send(
-                        "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                        "bets", {"type": "market_closed", "reservation_id": closed_id}
                     )
             await self.channel_layer.group_send(
                 self.group_name,
@@ -715,7 +715,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         closed_id = await self._close_reservation_for_game(g, refund=True)
         if closed_id:
             await self.channel_layer.group_send(
-                "bets", {"type": "market_closed_msg", "reservation_id": closed_id}
+                "bets", {"type": "market_closed", "reservation_id": closed_id}
             )
 
     def _game_usernames(self, game):
@@ -812,7 +812,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
             payload = await self._bet_market_payload(game)
             if payload:
                 await self.channel_layer.group_send(
-                    "bets", {"type": "market_update_msg", "market": payload}
+                    "bets", {"type": "market_update", "market": payload}
                 )
         except Exception:
             pass
