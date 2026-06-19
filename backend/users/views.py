@@ -82,16 +82,21 @@ class LoginView(APIView):
                 return Response({'error': 'Account not activated'}, status=403)
         except User.DoesNotExist:
             return Response({'error': 'Bad email or password'}, status= 401)
-        
+
         if not user.check_password(password):
             return Response({'error': 'Bad email or password'}, status=401)
-        
+
+        # Vérifier le ban
+        ban = user.ban_info()
+        if ban:
+            return Response({'error': 'banned', 'ban': ban}, status=403)
+
         if user.is_2fa_enabled:
             if not totp_code:
                 return Response({'requires_2fa': True}, status=200)
             if not user.verify_totp(totp_code):
                 return Response({'error': 'Code 2FA invalide'}, status=401)
-        
+
         response = Response({'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
 
@@ -157,14 +162,17 @@ class OAuth42CallbackView(APIView):
                 }
             )
 
-            tokens = get_tokens(user)
+            # Vérifier le ban
+            ban = user.ban_info()
+            if ban:
+                if ban['type'] == 'permanent':
+                    return django_redirect(f"{settings.SITE_URL}/banned?type=permanent")
+                else:
+                    return django_redirect(
+                        f"{settings.SITE_URL}/banned?type=temporary&until={ban['until']}"
+                    )
 
-            # Rediriger vers React avec les tokens
-            #return django_redirect(
-            #    f"https://localhost/login-success"
-            #    f"?access={tokens['access']}"
-            #    f"&refresh={tokens['refresh']}"
-            #)
+            tokens = get_tokens(user)
             response = django_redirect(f"{settings.SITE_URL}/login-success")
             return set_auth_cookies(response, get_tokens(user))
 
@@ -358,3 +366,84 @@ class UpdateProfileView(APIView):
 
         user.save()
         return Response(UserSerializer(user).data)
+
+
+class TicketView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        login_name = request.data.get('login', '').strip()
+        description = request.data.get('description', '').strip()
+        pages = request.data.get('pages', '')
+
+        if not login_name or not description:
+            return Response(
+                {'error': 'Login et description sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        body_lines = [
+            f"Login : {login_name}",
+            f"Description : {description}",
+        ]
+        if pages:
+            body_lines.append(f"Pages concernées : {pages}")
+
+        subject = f"[Ticket] Bug report de {login_name}"
+        body = "\n\n".join(body_lines)
+
+        attachments = []
+        for key in request.FILES:
+            f = request.FILES[key]
+            if f.content_type and f.content_type.startswith('image/'):
+                attachments.append((f.name, f.read(), f.content_type))
+
+        from django.core.mail import EmailMessage
+
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        for name, content, mime in attachments:
+            email.attach(name, content, mime)
+
+        try:
+            email.send(fail_silently=False)
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur envoi mail : {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response({'message': 'Ticket envoyé'}, status=status.HTTP_201_CREATED)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current  = request.data.get('current_password')
+        new_pass = request.data.get('new_password')
+
+        if not user.check_password(current):
+            return Response({'error': 'Mot de passe actuel incorrect'}, status=400)
+        if len(new_pass) < 8:
+            return Response({'error': 'Minimum 8 caractères'}, status=400)
+
+        user.set_password(new_pass)
+        user.save()
+        return Response({'status': 'Mot de passe modifié'})
+
+
+class Disable2FAView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_2fa_enabled = False
+        user.totp_secret    = None
+        user.save(update_fields=['is_2fa_enabled', 'totp_secret'])
+        return Response({'status': '2FA désactivé'})

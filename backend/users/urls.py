@@ -18,4 +18,7 @@ urlpatterns = [
     path('gdpr/export/',      RGPD.GDPRExportView.as_view()),
     path('gdpr/delete/',      RGPD.GDPRDeleteView.as_view()),
     path("profile/update/", views.UpdateProfileView.as_view()),
+    path("ticket/", views.TicketView.as_view()),
+    path('password/change/', views.ChangePasswordView.as_view()),
+    path('2fa/disable/',     views.Disable2FAView.as_view()),
 ]

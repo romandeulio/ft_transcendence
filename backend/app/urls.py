@@ -42,6 +42,9 @@ urlpatterns = [
 	# ===========================================================================
 	path('api/bets/', include('bets.urls')),
 
+	# Dashboard admin
+	path('api/admin/', include('app.admin_urls')),
+	path('api/stats/', include('stats.urls')),
 	path('health', health.health),
 ]
 if settings.DEBUG:

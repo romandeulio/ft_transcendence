@@ -250,8 +250,8 @@ def _build_ranking(season, ranking_type: str) -> list:
 		for m in matches:
 			winner = m.get_winner()  # 'player1_side' | 'player2_side' | None
 
-			elo_map[m.player1_id] = (m.player1.username, m.elo_solo_player1_after)
-			elo_map[m.player2_id] = (m.player2.username, m.elo_solo_player2_after)
+			elo_map[m.player1_id] = (m.player1.username, m.elo_solo_p1_after)
+			elo_map[m.player2_id] = (m.player2.username, m.elo_solo_p2_after)
 
 			# Égalité → on n'incrémente ni wins ni losses
 			if winner == 'player1_side':
@@ -279,14 +279,14 @@ def _build_ranking(season, ranking_type: str) -> list:
 		for m in matches:
 			winner = m.get_winner()
 
-			elo_map[m.player1_id] = (m.player1.username, m.elo_team_player1_after)
+			elo_map[m.player1_id] = (m.player1.username, m.elo_team_p1_after)
 			elo_map[m.player1_teammate_id] = (
-				m.player1_teammate.username, m.elo_team_player1_teammate_after
+				m.player1_teammate.username, m.elo_team_p1tm_after
 			)
-			elo_map[m.player2_id] = (m.player2.username, m.elo_team_player2_after)
+			elo_map[m.player2_id] = (m.player2.username, m.elo_team_p2_after)
 			if m.player2_teammate_id:
 				elo_map[m.player2_teammate_id] = (
-					m.player2_teammate.username, m.elo_team_player2_teammate_after
+					m.player2_teammate.username, m.elo_team_p2tm_after
 				)
 
 			# Égalité → on n'incrémente ni wins ni losses

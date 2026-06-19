@@ -25,12 +25,21 @@ export default function Login() {
       const res = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify(form),
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.detail || data.non_field_errors?.[0] || t('login.error'))
+        if (data.error === 'banned' && data.ban) {
+          const ban = data.ban
+          if (ban.type === 'permanent') {
+            navigate('/banned?type=permanent')
+          } else {
+            navigate(`/banned?type=temporary&until=${encodeURIComponent(ban.until)}`)
+          }
+          return
+        }
+        setError(data.detail || data.error || data.non_field_errors?.[0] || t('login.error'))
         return
       }
       const me = await authFetch('/api/auth/profile/')
@@ -38,17 +47,6 @@ export default function Login() {
       const user = await me.json()
       login(user)
       navigate('/accueil')
-      /*if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('refresh_token', data.refresh_token)
-        const me = await fetch('/api/auth/profile/', {
-          headers: { Authorization: `Bearer ${data.access_token}` },
-        })
-        const user = await me.json()
-        localStorage.setItem("user", JSON.stringify(user))
-        login(user)
-        navigate('/accueil')
-      }*/
     } catch {
       setError(t('login.networkError'))
     }

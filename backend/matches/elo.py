@@ -16,7 +16,7 @@ Usage :
 """
 
 from django.db import transaction
-
+from stats.models import Stats
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -50,6 +50,9 @@ def new_elo(elo: int, expected: float, actual: float) -> int:
 	k = k_factor(elo)
 	return max(0, round(elo + k * (actual - expected)))
 
+def get_stats(user):
+    stats, _ = Stats.objects.get_or_create(user=user)
+    return stats
 
 # ---------------------------------------------------------------------------
 # Calculs par type de match
@@ -64,8 +67,11 @@ def _compute_solo(match, score_p1: int, score_p2: int) -> None:
 	p1 = match.player1
 	p2 = match.player2
 
-	elo1 = p1.elo_solo
-	elo2 = p2.elo_solo
+	s1 = get_stats(p1)
+	s2 = get_stats(p2)
+
+	elo1 = s1.elo_solo
+	elo2 = s2.elo_solo
 
 	exp1 = expected_score(elo1, elo2)
 	exp2 = 1.0 - exp1
@@ -83,10 +89,11 @@ def _compute_solo(match, score_p1: int, score_p2: int) -> None:
 	match.elo_solo_player2_after  = new2
 
 	# Mise à jour des joueurs
-	p1.elo_solo = new1
-	p2.elo_solo = new2
-	p1.save(update_fields=['elo_solo'])
-	p2.save(update_fields=['elo_solo'])
+	s1.elo_solo = new1
+	s2.elo_solo = new2
+
+	s1.save(update_fields=["elo_solo"])
+	s2.save(update_fields=["elo_solo"])
 
 
 def _compute_team(match, score_p1: int, score_p2: int) -> None:
@@ -99,11 +106,14 @@ def _compute_team(match, score_p1: int, score_p2: int) -> None:
 	p1_tm = match.player1_teammate
 	p2    = match.player2
 	p2_tm = match.player2_teammate
-
-	elo_p1    = p1.elo_team
-	elo_p1_tm = p1_tm.elo_team
-	elo_p2    = p2.elo_team
-	elo_p2_tm = p2_tm.elo_team
+	sp1 = get_stats(p1)
+	sp1tm = get_stats(p1_tm)
+	sp2 = get_stats(p2)
+	sp2tm = get_stats(p2_tm)
+	elo_p1 = sp1.elo_team
+	elo_p1_tm = sp1tm.elo_team
+	elo_p2 = sp2.elo_team
+	elo_p2_tm = sp2tm.elo_team
 
 	team1_avg = (elo_p1 + elo_p1_tm) / 2
 	team2_avg = (elo_p2 + elo_p2_tm) / 2
@@ -130,14 +140,15 @@ def _compute_team(match, score_p1: int, score_p2: int) -> None:
 	match.elo_team_p2tm_after  = new_p2_tm
 
 	# Mise à jour des joueurs
-	p1.elo_team    = new_p1
-	p1_tm.elo_team = new_p1_tm
-	p2.elo_team    = new_p2
-	p2_tm.elo_team = new_p2_tm
-	p1.save(update_fields=['elo_team'])
-	p1_tm.save(update_fields=['elo_team'])
-	p2.save(update_fields=['elo_team'])
-	p2_tm.save(update_fields=['elo_team'])
+	sp1.elo_team = new_p1
+	sp1tm.elo_team = new_p1_tm
+	sp2.elo_team = new_p2
+	sp2tm.elo_team = new_p2_tm
+
+	sp1.save(update_fields=["elo_team"])
+	sp1tm.save(update_fields=["elo_team"])
+	sp2.save(update_fields=["elo_team"])
+	sp2tm.save(update_fields=["elo_team"])
 
 
 # ---------------------------------------------------------------------------

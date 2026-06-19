@@ -36,7 +36,14 @@ export default function Parametres() {
   const TAB_PARAM_MAP = { notice: 'notice' }
   const initialTabKey = TAB_PARAM_MAP[searchParams.get('tab')] ?? 'profile'
   const [activeTab, setActiveTab] = useState(initialTabKey)
-
+  const [pwForm,     setPwForm]     = useState({ current: '', new1: '', new2: '' })
+  const [pwError,    setPwError]    = useState('')
+  const [pwSuccess,  setPwSuccess]  = useState(false)
+  const [pwLoading,  setPwLoading]  = useState(false)
+  const [tfaData,    setTfaData]    = useState(null)
+  const [tfaCode,    setTfaCode]    = useState('')
+  const [tfaError,   setTfaError]   = useState('')
+  const [tfaSuccess, setTfaSuccess] = useState(false)
   useEffect(() => {
     const tab = TAB_PARAM_MAP[searchParams.get('tab')]
     if (tab) setActiveTab(tab)
@@ -77,7 +84,7 @@ export default function Parametres() {
       setAvatarDeleted(true)
   }
 
-  const handleExport = async () => {
+  {/*const handleExport = async () => {
     const res = await authFetch("/api/auth/gdpr/export/?format=json")
 
     if (!res.ok) {
@@ -111,11 +118,33 @@ export default function Parametres() {
 
     logout()
     navigate("/login")
-  }
+}*/}
+const handleExport = async () => {
+    const res = await fetch('/api/auth/gdpr/export/?format=json', {
+        credentials: 'include',
+    })
+    if (!res.ok) { alert('Erreur export'); return }
+    const blob = await res.blob()
+    const url  = window.URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = 'my_data.json'
+    a.click()
+    window.URL.revokeObjectURL(url)
+}
+
+const handleDeleteAccount = async () => {
+    if (!window.confirm('Supprimer définitivement votre compte ?')) return
+    const res = await fetch('/api/auth/gdpr/delete/', {
+        method:      'DELETE',
+        credentials: 'include',
+    })
+    if (!res.ok) { alert('Erreur suppression'); return }
+    logout()
+    navigate('/login')
+}
 
 const handleSave = async () => {
-    const token = localStorage.getItem('access_token')
-
     try {
         setAvatarLoading(true)
         setAvatarError('')
@@ -123,41 +152,101 @@ const handleSave = async () => {
         const profileData = new FormData()
         profileData.append('email', email)
 
-        // Avatar supprimé → signaler au back
-        if (avatarDeleted) {
-            profileData.append('delete_avatar', 'true')
-        }
+        if (avatarDeleted)  profileData.append('delete_avatar', 'true')
+        if (avatarFile)     profileData.append('avatar', avatarFile)
 
-        // Nouvel avatar → l'envoyer directement dans le même PUT
-        if (avatarFile) {
-            profileData.append('avatar', avatarFile)
-        }
-
+        // FormData → pas de Content-Type manuel (boundary auto)
         const res = await fetch('/api/auth/profile/update/', {
-            method:  'PUT',
-            headers: { Authorization: `Bearer ${token}` },
-            body:    profileData,
+            method:      'PUT',
+            credentials: 'include',   // ← cookies
+            body:        profileData,
         })
         if (!res.ok) throw new Error('Erreur mise à jour profil')
 
         const updated = await res.json()
-
-        login({
-            ...user,
-            email:      updated.email,
-            avatar_url: updated.avatar_url,
-        })
-
+        login({ ...user, email: updated.email, avatar_url: updated.avatar_url })
         setAvatarPreview(updated.avatar_url ?? null)
         setAvatarFile(null)
         setAvatarDeleted(false)
 
     } catch (err) {
         setAvatarError(err.message)
-        console.error(err)
     } finally {
         setAvatarLoading(false)
     }
+  }
+const handleChangePassword = async () => {
+    if (pwForm.new1 !== pwForm.new2) {
+        setPwError('Les mots de passe ne correspondent pas')
+        return
+    }
+    if (pwForm.new1.length < 8) {
+        setPwError('Minimum 8 caractères')
+        return
+    }
+    setPwLoading(true)
+    setPwError('')
+    setPwSuccess(false)
+
+    const res = await fetch('/api/auth/password/change/', {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({
+            current_password: pwForm.current,
+            new_password:     pwForm.new1,
+        }),
+    })
+
+    if (res.ok) {
+        setPwSuccess(true)
+        setPwForm({ current: '', new1: '', new2: '' })
+    } else {
+        const data = await res.json()
+        setPwError(data.error || 'Erreur')
+    }
+    setPwLoading(false)
+  }
+
+  const handleEnable2FA = async () => {
+      setTfaError('')
+      const res = await fetch('/api/auth/2fa/enable/', {
+          method:      'POST',
+          credentials: 'include',
+      })
+      const data = await res.json()
+      setTfaData(data)
+  }
+
+  const handleConfirm2FA = async () => {
+    setTfaError('')
+    const res = await fetch('/api/auth/2fa/enable/', {
+        method:      'PUT',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ code: tfaCode }),
+    })
+    if (res.ok) {
+        setTfaSuccess(true)
+        setTfaData(null)
+        setTfaCode('')
+        login({ ...user, is_2fa_enabled: true })
+    } else {
+        const data = await res.json()
+        setTfaError(data.error || 'Code invalide')
+    }
+  }
+
+
+  const handleDisable2FA = async () => {
+      const res = await fetch('/api/auth/2fa/disable/', {
+          method:      'POST',
+          credentials: 'include',
+      })
+      if (res.ok) {
+          login({ ...user, is_2fa_enabled: false })
+          setTfaSuccess(false)
+      }
   }
   return (
     <Shell>
@@ -243,29 +332,94 @@ const handleSave = async () => {
 
           {activeTab === 'security' && (
             <div>
-              <div className={styles.section}>
-                <button className={styles.btnSecondary}>{t('settings.security.changePassword')}</button>
-              </div>
-              <div className={styles.toggleRow}>
-                <div>
-                  <div className={styles.toggleLabel}>{t('settings.security.tfa')}</div>
-                  <div className={styles.toggleSub}>{t('settings.security.tfaSub')}</div>
+                {/* Changer le mot de passe */}
+                {!user?.oauth_42_id && (
+                    <div className={styles.section}>
+                        <div className={styles.sectionTitle}>{t('settings.security.changePassword')}</div>
+                        <input
+                            className={styles.input}
+                            type="password"
+                            placeholder="Mot de passe actuel"
+                            value={pwForm.current}
+                            onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))}
+                            style={{ marginBottom: '8px' }}
+                        />
+                        <input
+                            className={styles.input}
+                            type="password"
+                            placeholder="Nouveau mot de passe"
+                            value={pwForm.new1}
+                            onChange={e => setPwForm(f => ({ ...f, new1: e.target.value }))}
+                            style={{ marginBottom: '8px' }}
+                        />
+                        <input
+                            className={styles.input}
+                            type="password"
+                            placeholder="Confirmer le nouveau mot de passe"
+                            value={pwForm.new2}
+                            onChange={e => setPwForm(f => ({ ...f, new2: e.target.value }))}
+                            style={{ marginBottom: '8px' }}
+                        />
+                        {pwError   && <p style={{ color: '#ef4444', fontSize: '13px' }}>{pwError}</p>}
+                        {pwSuccess && <p style={{ color: '#22c55e', fontSize: '13px' }}>Mot de passe modifié ✓</p>}
+                        <button
+                            className={styles.btnSecondary}
+                            onClick={handleChangePassword}
+                            disabled={pwLoading}
+                        >
+                            {pwLoading ? 'Enregistrement...' : 'Changer le mot de passe'}
+                        </button>
+                    </div>
+                )}
+
+                {/* 2FA */}
+                <div className={styles.section}>
+                    <div className={styles.sectionTitle}>{t('settings.security.tfa')}</div>
+                    <div className={styles.toggleSub}>{t('settings.security.tfaSub')}</div>
+
+                    {!user?.is_2fa_enabled && !tfaData && (
+                        <button className={styles.btnSecondary} onClick={handleEnable2FA} style={{ marginTop: '12px' }}>
+                            Activer le 2FA
+                        </button>
+                    )}
+
+                    {/* QR code affiché après clic */}
+                    {tfaData && (
+                        <div style={{ marginTop: '12px' }}>
+                            <p style={{ fontSize: '13px', marginBottom: '8px' }}>
+                                Scanne ce QR code avec ton application (Google Authenticator, Authy...)
+                            </p>
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(tfaData.totp_uri)}&size=160x160`} alt="QR 2FA" />
+                            <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0' }}>
+                                Ou entre le secret manuellement : <code>{tfaData.secret}</code>
+                            </p>
+                            <input
+                                className={styles.input}
+                                type="text"
+                                placeholder="Code à 6 chiffres"
+                                maxLength={6}
+                                value={tfaCode}
+                                onChange={e => setTfaCode(e.target.value)}
+                                style={{ letterSpacing: '4px', textAlign: 'center', marginBottom: '8px' }}
+                            />
+                            {tfaError && <p style={{ color: '#ef4444', fontSize: '13px' }}>{tfaError}</p>}
+                            <button className={styles.btnPrimary} onClick={handleConfirm2FA}>
+                                Confirmer le 2FA
+                            </button>
+                        </div>
+                    )}
+
+                    {user?.is_2fa_enabled && (
+                        <div style={{ marginTop: '12px' }}>
+                            <p style={{ fontSize: '13px', color: '#22c55e' }}>2FA activé ✓</p>
+                            <button className={styles.btnDanger} onClick={handleDisable2FA} style={{ marginTop: '8px' }}>
+                                Désactiver le 2FA
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <Toggle on={tfa} onChange={setTfa} />
-              </div>
-              <div className={styles.toggleRow}>
-                <div>
-                  <div className={styles.toggleLabel}>{t('settings.security.oauth')}</div>
-                  <div className={styles.toggleSub}>{t('settings.security.oauthSub')}</div>
-                </div>
-                <Toggle on={oauth} onChange={setOauth} />
-              </div>
-              <div className={styles.section}>
-                <div className={styles.sectionTitle}>{t('settings.security.activeSessions')}</div>
-                <button className={styles.btnDanger}>{t('settings.security.disconnectAll')}</button>
-              </div>
             </div>
-          )}
+        )}
 
           {activeTab === 'notifs' && (
             <div>

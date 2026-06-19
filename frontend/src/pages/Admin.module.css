@@ -406,6 +406,22 @@
 .statusOk { background: #E4EDD4; color: #57722F; }
 .statusKo { background: #FBEAE8; color: #CD3122; }
 
+/* ── Search input ── */
+.searchInput {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #EBF0FC;
+  background: #F5F7FF;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1A2B5E;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+.searchInput::placeholder { color: #7A8FD0; }
+.searchInput:focus { border-color: #4068DB; }
+
 /* ── Modal overlay ── */
 .modalOverlay {
   position: fixed;

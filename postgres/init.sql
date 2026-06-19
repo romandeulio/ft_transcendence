@@ -13,17 +13,17 @@ CREATE TABLE users
     avatar_url TEXT,
     last_login TIMESTAMP,
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
+    ban_permanent BOOLEAN DEFAULT FALSE,
+    banned_until  TIMESTAMPTZ,
     is_active BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10000,
-    elo_solo INT DEFAULT 1000,
-    elo_team INT DEFAULT 1000,
     created_at  TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE stats
 (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     total_matches INT DEFAULT 0,
     total_wins INT DEFAULT 0,
     total_losses INT DEFAULT 0,
@@ -89,12 +89,40 @@ CREATE TABLE matches (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE season_rewards (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    season_id       UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+    player_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ranking_type    VARCHAR(5) NOT NULL CHECK (ranking_type IN ('SOLO', 'TEAM')),
+    tier            VARCHAR(5) NOT NULL CHECK (tier IN ('TOP1', 'TOP3', 'TOP10')),
+    tokens_awarded  INTEGER NOT NULL CHECK (tokens_awarded >= 0),
+    elo_at_end      INTEGER NOT NULL,
+    rank_at_end     INTEGER NOT NULL CHECK (rank_at_end > 0),
+    awarded_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (season_id, player_id, ranking_type)
+);
+
+CREATE TABLE season_stats (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    season_id UUID REFERENCES seasons(id),
+    total_matches INT DEFAULT 0,
+    total_wins INT DEFAULT 0,
+    total_losses INT DEFAULT 0,
+    total_gamelles INT DEFAULT 0,
+    total_demis INT DEFAULT 0,
+    elo_solo INT DEFAULT 1000,
+    elo_team INT DEFAULT 1000,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, season_id)
+);
+
 CREATE TABLE rankings (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID REFERENCES users(id),
     season_id  UUID REFERENCES seasons(id),
+    scope VARCHAR(20),
     mode       VARCHAR(10) CHECK (mode IN ('SOLO', 'TEAM')),
-    scope      VARCHAR(10) CHECK (scope IN ('season', 'global')),
     score      INT DEFAULT 0,
     wins       INT DEFAULT 0,
     losses     INT DEFAULT 0,
@@ -279,3 +307,5 @@ CREATE INDEX idx_registrations_tournament  ON tournament_registrations(tournamen
 CREATE INDEX idx_teams_tournament          ON tournament_teams(tournament_id, seed);
 CREATE INDEX idx_bracket_tournament_round  ON tournament_matches(tournament_id, round_number);
 CREATE INDEX idx_bracket_status            ON tournament_matches(status);
+CREATE INDEX idx_season_rewards_season ON season_rewards(season_id);
+CREATE INDEX idx_season_rewards_player ON season_rewards(player_id);
