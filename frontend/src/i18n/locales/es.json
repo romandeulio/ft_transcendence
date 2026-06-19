@@ -399,6 +399,8 @@
     "noData": "Datos no disponibles",
     "noPlayer": "Ningún jugador encontrado",
     "searchHint": "Escribe un login para buscar un jugador",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
     "noSelected": "Ningún jugador seleccionado",
     "selectPlayer": "Selecciona al menos un jugador para mostrar el gráfico.",
     "y": {
@@ -414,10 +416,10 @@
       "streak": "Racha actual"
     },
     "x": {
-      "weeks": "Semanas",
-      "months": "Meses",
-      "seasons": "Temporadas",
-      "matches": "Partidos jugados"
+      "matches": "Partidos jugados (últimos 30)",
+      "weeks": "Semanas (últimas 8)",
+      "months": "Meses (últimos 6)",
+      "fixed": "Fechas fijas"
     }
   },
   "bracket": {

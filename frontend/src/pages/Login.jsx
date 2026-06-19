@@ -64,7 +64,7 @@ export default function Login() {
   }
 
   const bgItems = [
-    { icon: '⚽', top: '8%',  left: '5%',  size: 28, delay: 0 },
+    { icon: '⚽', top: '8%',  left: '5%',  size: 28, delay: 0   },
     { icon: '🥅', top: '15%', left: '88%', size: 32, delay: 1.2 },
     { icon: '🏆', top: '70%', left: '7%',  size: 26, delay: 2.1 },
     { icon: '⚽', top: '80%', left: '85%', size: 30, delay: 0.7 },
@@ -74,6 +74,16 @@ export default function Login() {
     { icon: '⚽', top: '90%', left: '40%', size: 20, delay: 2.5 },
     { icon: '🥅', top: '5%',  left: '55%', size: 26, delay: 1.5 },
     { icon: '🏆', top: '88%', left: '62%', size: 22, delay: 3.3 },
+    { icon: '⚽', top: '22%', left: '18%', size: 24, delay: 0.9 },
+    { icon: '🥅', top: '60%', left: '78%', size: 28, delay: 2.7 },
+    { icon: '🏆', top: '42%', left: '12%', size: 20, delay: 1.1 },
+    { icon: '⚽', top: '35%', left: '75%', size: 26, delay: 3.5 },
+    { icon: '🥅', top: '75%', left: '30%', size: 22, delay: 0.3 },
+    { icon: '🏆', top: '12%', left: '35%', size: 30, delay: 2.0 },
+    { icon: '⚽', top: '65%', left: '50%', size: 18, delay: 1.6 },
+    { icon: '🥅', top: '95%', left: '15%', size: 24, delay: 3.8 },
+    { icon: '🏆', top: '50%', left: '60%', size: 20, delay: 0.6 },
+    { icon: '⚽', top: '25%', left: '48%', size: 22, delay: 2.9 },
   ]
 
   return (
