@@ -32,6 +32,8 @@ invites = {}
 # pseudos actuellement connectés
 online_users = set()
 
+active_connections = {}
+
 # pseudo -> liste de messages stockés pour un joueur hors-ligne (re-livrés à la reco)
 pending_invites = {}
 

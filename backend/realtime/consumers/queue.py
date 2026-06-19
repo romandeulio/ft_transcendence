@@ -38,7 +38,6 @@ class QueueConsumer(
 ):
     group_name = "queue"
 
-    # action reçue du front -> méthode qui la traite
     ACTIONS = {
         "join":               "_on_join",
         "leave":              "_on_leave",
@@ -67,6 +66,10 @@ class QueueConsumer(
         # Groupe personnel pour les messages directs (invitations, réponses)
         if self.username:
             await self.channel_layer.group_add(f"user_{self.username}", self.channel_name)
+            previous = state.active_connections.get(self.username)
+            if previous and previous != self.channel_name:
+                await self.channel_layer.send(previous, {"type": "session.superseded"})
+            state.active_connections[self.username] = self.channel_name
             state.online_users.add(self.username)
         await self.accept()
         await self.send(text_data=json.dumps({
@@ -153,7 +156,25 @@ class QueueConsumer(
                     "slot":     inv["slot"],
                 }))
 
+    async def session_superseded(self, event):
+        try:
+            await self.send(text_data=json.dumps({"type": "session_superseded"}))
+        except Exception:
+            pass
+        await self.close(code=4001)
+
     async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if self.username:
+            await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
+
+        if self.username and state.active_connections.get(self.username) != self.channel_name:
+            return
+
+        if self.username:
+            state.active_connections.pop(self.username, None)
+            state.online_users.discard(self.username)
+
         # On garde les slots qui :
         # - appartiennent à un autre user
         # - sont liés à une partie active
@@ -167,10 +188,6 @@ class QueueConsumer(
             or bool(s.get("p2"))
             or bool(s.get("takeWin"))
         ]
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        if self.username:
-            await self.channel_layer.group_discard(f"user_{self.username}", self.channel_name)
-            state.online_users.discard(self.username)
         await self._broadcast_queue()
 
     async def receive(self, text_data):
@@ -203,14 +220,6 @@ class QueueConsumer(
         await self._commit_slot(slot)
 
     async def _commit_slot(self, slot):
-        """Upsert d'un créneau « taken » dans la file puis diffusion.
-
-        Préserve les champs joueur côté serveur qu'un client reconnecté n'a
-        peut-être pas encore (ex. p2 rempli par un win_claim pendant qu'il était
-        hors-ligne), réinsère selon createdAt (FIFO par date de création), et
-        recalcule réservation / marché de paris si le match est complet.
-        Partagé par _on_join et _activate_invite_slot.
-        """
         slot_id = slot["id"]
         existing = next((s for s in state.queue if s.get("id") == slot_id), None)
         if existing:

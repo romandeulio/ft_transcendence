@@ -12,14 +12,19 @@ function buildAbsoluteUrl(url) {
 const BASE_DELAY = 1000
 const MAX_DELAY  = 30000
 
+const SUPERSEDED_CODE = 4001
+
 export function useWebSocket(url, onMessage) {
   const [data, setData] = useState(null)
   const [connected, setConnected] = useState(false)
+  const [superseded, setSuperseded] = useState(false)
   const wsRef       = useRef(null)
   const sendRef     = useRef(null)
   const retryTimer  = useRef(null)
   const retryDelay  = useRef(BASE_DELAY)
   const activeUrl   = useRef(null)
+
+  const supersededRef = useRef(false)
   // Pointe toujours sur le dernier handler : chaque message est livré une fois,
   // de façon synchrone par événement onmessage — immunisé au batching React.
   // (Un unique slot `data` perd les messages arrivés en rafale, ex. la salve
@@ -30,6 +35,8 @@ export function useWebSocket(url, onMessage) {
   useEffect(() => {
     activeUrl.current = url
     retryDelay.current = BASE_DELAY
+    supersededRef.current = false
+    setSuperseded(false)
 
     function connect() {
       const absUrl = buildAbsoluteUrl(activeUrl.current)
@@ -40,13 +47,13 @@ export function useWebSocket(url, onMessage) {
       wsRef.current = ws
 
       ws.onopen = () => {
-        if (activeUrl.current !== url) return
+        if (activeUrl.current !== url || wsRef.current !== ws) return
         setConnected(true)
         retryDelay.current = BASE_DELAY
       }
 
       ws.onmessage = (e) => {
-        if (activeUrl.current !== url) return
+        if (activeUrl.current !== url || wsRef.current !== ws) return
         let msg
         try { msg = JSON.parse(e.data) } catch { msg = e.data }
         // Livraison directe (aucune perte) ; `data` reste exposé pour compat.
@@ -54,9 +61,14 @@ export function useWebSocket(url, onMessage) {
         setData(msg)
       }
 
-      ws.onclose = () => {
-        if (activeUrl.current !== url) return
+      ws.onclose = (e) => {
+        if (activeUrl.current !== url || wsRef.current !== ws) return
         setConnected(false)
+        if (e && e.code === SUPERSEDED_CODE) {
+          supersededRef.current = true
+          setSuperseded(true)
+          return
+        }
         if (activeUrl.current) {
           retryTimer.current = setTimeout(() => {
             retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY)
@@ -74,7 +86,7 @@ export function useWebSocket(url, onMessage) {
     // le backoff (jusqu'à 30s) — sinon l'utilisateur croit devoir rafraîchir
     // (ex. une invite reçue hors-ligne n'arrive qu'à la reconnexion).
     function reconnectNow() {
-      if (!activeUrl.current) return
+      if (!activeUrl.current || supersededRef.current) return
       const ws = wsRef.current
       if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
       clearTimeout(retryTimer.current)
@@ -112,5 +124,5 @@ export function useWebSocket(url, onMessage) {
 
   sendRef.current = send
 
-  return { data, connected, send }
+  return { data, connected, send, superseded }
 }

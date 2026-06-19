@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ S'ajouter à la file",
     "disconnected": "Déconnecté",
+    "supersededTitle": "Session ouverte dans un autre onglet",
+    "supersededBody": "Votre compte a été ouvert dans un autre onglet ou navigateur. Une seule session active est autorisée. Rafraîchissez pour reprendre la main ici.",
+    "supersededReload": "Rafraîchir",
     "waitingMatches": "Matchs en attente",
     "live": "En cours",
     "myMatch": "Mon match",

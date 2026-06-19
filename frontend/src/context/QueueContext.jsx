@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useAuth } from '../hooks/useAuth'
 import { authFetch } from '../services/api'
@@ -47,6 +48,7 @@ function mergeQueueState(liveQueue, persistedQueue) {
 }
 
 export function QueueProvider({ children }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [queue, setQueue] = useState([])
   const [mySlots, setMySlots] = useState(loadMySlots)
@@ -73,7 +75,7 @@ export function QueueProvider({ children }) {
 
   const wsUrl = user?.username ? `/ws/queue/` : null
   const handleMessageRef = useRef(null)
-  const { connected, send } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
+  const { connected, send, superseded } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
 
   // Empile une notification en ignorant les doublons (même `inviteId`) : protège
   // contre une éventuelle double livraison d'un message côté serveur/transport.
@@ -544,8 +546,35 @@ export function QueueProvider({ children }) {
       respondToInvite,
       dismissInviteResult,
       connected,
+      superseded,
     }}>
       {children}
+      {superseded && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.75)',
+        }}>
+          <div style={{
+            background: 'var(--topbar-bg, #001A57)', color: '#fff',
+            padding: '28px 32px', borderRadius: '12px', maxWidth: '420px',
+            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', color: '#fff' }}>{t('queue.supersededTitle')}</h3>
+            <p style={{ margin: '0 0 20px', color: '#fff', opacity: 0.85 }}>{t('queue.supersededBody')}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                background: 'var(--color-primary, #4068DB)', color: '#fff',
+                fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {t('queue.supersededReload')}
+            </button>
+          </div>
+        </div>
+      )}
     </QueueContext.Provider>
   )
 }
