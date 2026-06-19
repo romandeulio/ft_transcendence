@@ -13,4 +13,5 @@ urlpatterns = [
     path('tournaments/',                    v.AdminTournamentsView.as_view()),
     path('tournaments/<uuid:tournament_id>/cancel/', v.AdminCancelTournamentView.as_view()),
     path('seasons/',                        v.AdminSeasonsView.as_view()),
+    path('seasons/<uuid:season_id>/',       v.AdminSeasonDetailView.as_view()),
 ]
