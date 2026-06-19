@@ -2,12 +2,13 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 import pyotp
+from stats.models import Stats
 
 class UserManager(BaseUserManager):
     def create_user(self, email, username, password=None):
         if not email:
             raise ValueError("Email required")
-        
+
         user = self.model(
             email=self.normalize_email(email),
             username=username
@@ -15,25 +16,17 @@ class UserManager(BaseUserManager):
 
         user.set_password(password)
         user.save()
+
+        Stats.objects.get_or_create(user=user)
+
         return user
     
 
 class User(AbstractBaseUser):
 
-    # -------------------------------------------------------------------------
-    # Champs ELO — ajoutés nécessaires pour la logique matches ??
-    # -------------------------------------------------------------------------
     class Meta:
         db_table = 'users'
         managed   = False
-    elo_solo = models.IntegerField(
-        default=1000,
-        help_text="ELO individuel 1v1. Mis à jour à chaque match SOLO classé validé.",
-    )
-    elo_team = models.IntegerField(
-        default=1000,
-        help_text="ELO personnel en 2v2. Indépendant du partenaire.",
-    )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 

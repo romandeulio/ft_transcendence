@@ -17,7 +17,7 @@ from .serializers import (
 	MatchValidateSerializer,
 )
 from .ranking_service import update_rankings_after_match
-
+from stats.service import update_stats_after_match
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -170,6 +170,7 @@ def match_validate(request, pk):
 		match.status = Match.Status.VALIDATED
 		match.save()
 		update_rankings_after_match(match)
+		update_stats_after_match(match)
 
 		try:
 			from bets.services import resolve_for_match

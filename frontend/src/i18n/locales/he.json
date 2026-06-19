@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ הצטרף לתור",
     "disconnected": "מנותק",
+    "supersededTitle": "הסשן נפתח בלשונית אחרת",
+    "supersededBody": "החשבון שלך נפתח בלשונית או בדפדפן אחר. מותרת רק סשן פעיל אחד. רענן כדי להחזיר את השליטה לכאן.",
+    "supersededReload": "רענן",
     "waitingMatches": "משחקים בהמתנה",
     "live": "בשידור חי",
     "myMatch": "המשחק שלי",

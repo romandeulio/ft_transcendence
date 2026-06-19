@@ -429,3 +429,31 @@ class TicketView(APIView):
             )
 
         return Response({'message': 'Ticket envoyé'}, status=status.HTTP_201_CREATED)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current  = request.data.get('current_password')
+        new_pass = request.data.get('new_password')
+
+        if not user.check_password(current):
+            return Response({'error': 'Mot de passe actuel incorrect'}, status=400)
+        if len(new_pass) < 8:
+            return Response({'error': 'Minimum 8 caractères'}, status=400)
+
+        user.set_password(new_pass)
+        user.save()
+        return Response({'status': 'Mot de passe modifié'})
+
+
+class Disable2FAView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_2fa_enabled = False
+        user.totp_secret    = None
+        user.save(update_fields=['is_2fa_enabled', 'totp_secret'])
+        return Response({'status': '2FA désactivé'})

@@ -33,28 +33,25 @@ def _skip_ban_check(request):
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         header = self.get_header(request)
-        if header is not None:
-            result = super().authenticate(request)
-            if result is not None:
-                user, token = result
-                if user.is_banned and not _skip_ban_check(request):
-                    _raise_banned(user)
-            return result
+        if header:
+            try:
+                result = super().authenticate(request)
+                if result:
+                    user, token = result
+                    if user.is_banned and not _skip_ban_check(request):
+                        _raise_banned(user)
+                    return result
+            except (InvalidToken, TokenError, AuthenticationFailed):
+                pass
 
         raw_token = request.COOKIES.get(settings.JWT_ACCESS_COOKIE_NAME)
-        if raw_token is None:
+        if not raw_token:
             return None
 
         try:
             validated_token = self.get_validated_token(raw_token)
-        except (InvalidToken, TokenError):
-            return None
-
-        try:
-            user, validated_token = self.get_user(validated_token), validated_token
-        except AuthenticationFailed:
-            # Token structurally valid but user no longer exists (e.g. after DB wipe).
-            # Return None so AllowAny views stay accessible with stale cookies.
+            user = self.get_user(validated_token)
+        except (InvalidToken, TokenError, AuthenticationFailed):
             return None
 
         if user.is_banned and not _skip_ban_check(request):

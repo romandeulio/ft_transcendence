@@ -45,7 +45,7 @@ urlpatterns = [
 
 	# Dashboard admin
 	path('api/admin/', include('app.admin_urls')),
-
+	path('api/stats/', include('stats.urls')),
 	path('health', health.health),
 ]
 if settings.DEBUG:

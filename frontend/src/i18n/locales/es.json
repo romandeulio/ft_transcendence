@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ Unirse a la cola",
     "disconnected": "Desconectado",
+    "supersededTitle": "Sesión abierta en otra pestaña",
+    "supersededBody": "Tu cuenta se abrió en otra pestaña o navegador. Solo se permite una sesión activa. Actualiza para retomar el control aquí.",
+    "supersededReload": "Actualizar",
     "waitingMatches": "Partidos en espera",
     "live": "En curso",
     "myMatch": "Mi partido",
