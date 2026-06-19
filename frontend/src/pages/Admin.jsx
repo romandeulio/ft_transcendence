@@ -344,8 +344,8 @@ function Dashboard({ onLogout }) {
     }
   }
 
-  const handleEloSaved = (updated) => {
-    setPlayers(prev => prev.map(u => u.id === updated.id ? { ...u, elo_solo: updated.elo_solo, elo_team: updated.elo_team } : u))
+  const handleEloSaved = () => {
+    adm('/api/admin/players/').then(r => r.json()).then(setPlayers).catch(() => {})
   }
 
   const fmtDate = (iso) => {

@@ -8,7 +8,7 @@
     "tournaments": "Tournois",
     "account": "Compte",
     "profile": "Mon profil",
-    "settings": "Paramètres"
+    "settings": "Parametres"
   },
   "topbar": {
     "home": "Accueil",
@@ -17,7 +17,7 @@
     "queue": "File d'attente",
     "tournaments": "Tournois",
     "profile": "Mon Profil",
-    "settings": "Paramètres",
+    "settings": "Parametres",
     "admin": "Admin",
     "ticket": "Ticket"
   },
@@ -403,6 +403,8 @@
     "noData": "Données non disponibles",
     "noPlayer": "Aucun joueur trouvé",
     "searchHint": "Tape un login pour rechercher un joueur",
+    "dateFrom": "Du",
+    "dateTo": "Au",
     "noSelected": "Aucun joueur sélectionné",
     "selectPlayer": "Sélectionne au moins un joueur pour afficher le graphique.",
     "y": {
@@ -418,10 +420,10 @@
       "streak": "Série en cours"
     },
     "x": {
-      "weeks": "Semaines",
-      "months": "Mois",
-      "seasons": "Saisons",
-      "matches": "Matchs joués"
+      "matches": "Matchs joués (30 derniers)",
+      "weeks": "Semaines (8 dernières)",
+      "months": "Mois (6 derniers)",
+      "fixed": "Dates fixes"
     }
   },
   "bracket": {

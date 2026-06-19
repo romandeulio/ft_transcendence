@@ -125,6 +125,7 @@ export function BetsProvider({ children }) {
     updateUser?.({ wallet_tokens: Math.max(0, (user?.wallet_tokens ?? 0) - amount) })
     await loadAvailable()
     await loadHistory()
+    refreshUser?.()
   }
 
   const cancelBet = async (reservationId) => {
@@ -136,6 +137,7 @@ export function BetsProvider({ children }) {
     if (!res.ok) return
     updateUser?.({ wallet_tokens: (user?.wallet_tokens ?? 0) + amount })
     await loadAvailable()
+    refreshUser?.()
   }
 
   const addBet = () => {}

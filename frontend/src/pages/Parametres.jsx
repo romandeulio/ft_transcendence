@@ -42,13 +42,71 @@ export default function Parametres() {
     if (tab) setActiveTab(tab)
   }, [searchParams])
 
-  const [tfa,   setTfa]   = useState(false)
+  const [tfa,        setTfa]        = useState(user?.is_2fa_enabled ?? false)
+  const [tfaSetup,   setTfaSetup]   = useState(null)
+  const [tfaCode,    setTfaCode]    = useState('')
+  const [tfaError,   setTfaError]   = useState('')
+  const [tfaLoading, setTfaLoading] = useState(false)
   const [oauth, setOauth] = useState(true)
-  const [notifs, setNotifs] = useState({ turn: true, bet: true, tourney: false, season: true, invite: true })
+  const [notifs, setNotifs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('notifPrefs')) || { turn: true, bet: true, tourney: false, season: true, invite: true } } catch { return { turn: true, bet: true, tourney: false, season: true, invite: true } }
+  })
   //const [email, setEmail]   = useState('')
   const [email, setEmail] = useState(user.email)
 
-  const toggleNotif = (id) => setNotifs(prev => ({ ...prev, [id]: !prev[id] }))
+  const toggleNotif = (id) => {
+    const next = { ...notifs, [id]: !notifs[id] }
+    setNotifs(next)
+    localStorage.setItem('notifPrefs', JSON.stringify(next))
+  }
+
+  const handleTfaToggle = async (val) => {
+    if (val && !tfa) {
+      setTfaLoading(true)
+      setTfaError('')
+      try {
+        const res = await authFetch('/api/auth/2fa/enable/', { method: 'POST' })
+        const data = await res.json()
+        setTfaSetup(data)
+        setTfaCode('')
+      } catch { setTfaError('Erreur réseau') }
+      finally { setTfaLoading(false) }
+    } else if (!val && tfa) {
+      setTfaLoading(true)
+      setTfaError('')
+      try {
+        const res = await authFetch('/api/auth/2fa/enable/', { method: 'DELETE' })
+        if (res.ok) {
+          setTfa(false)
+          login({ ...user, is_2fa_enabled: false })
+        } else {
+          setTfaError('Erreur lors de la désactivation')
+        }
+      } catch { setTfaError('Erreur réseau') }
+      finally { setTfaLoading(false) }
+    }
+  }
+
+  const handleTfaConfirm = async () => {
+    setTfaLoading(true)
+    setTfaError('')
+    try {
+      const res = await authFetch('/api/auth/2fa/enable/', {
+        method: 'PUT',
+        body: JSON.stringify({ code: tfaCode }),
+      })
+      if (res.ok) {
+        setTfa(true)
+        setTfaSetup(null)
+        setTfaCode('')
+        login({ ...user, is_2fa_enabled: true })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setTfaError(data.error || 'Code invalide')
+      }
+    } catch { setTfaError('Erreur réseau') }
+    finally { setTfaLoading(false) }
+  }
 
   const handleLang = (code) => {
     i18n.changeLanguage(code)
@@ -251,8 +309,37 @@ const handleSave = async () => {
                   <div className={styles.toggleLabel}>{t('settings.security.tfa')}</div>
                   <div className={styles.toggleSub}>{t('settings.security.tfaSub')}</div>
                 </div>
-                <Toggle on={tfa} onChange={setTfa} />
+                <Toggle on={tfa} onChange={tfaLoading ? () => {} : handleTfaToggle} />
               </div>
+              {tfaSetup && (
+                <div className={styles.section} style={{ background: 'var(--bg2)', borderRadius: 8, padding: '14px', marginTop: 8 }}>
+                  <div className={styles.label} style={{ marginBottom: 8 }}>Clé secrète à ajouter dans votre app authenticator :</div>
+                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, letterSpacing: '0.1em', marginBottom: 12, wordBreak: 'break-all', color: 'var(--ink)' }}>
+                    {tfaSetup.secret}
+                  </div>
+                  <div className={styles.label} style={{ marginBottom: 6 }}>Entrez le code de confirmation :</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      className={styles.input}
+                      style={{ maxWidth: 160 }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={tfaCode}
+                      onChange={e => { setTfaCode(e.target.value); setTfaError('') }}
+                    />
+                    <button className={styles.btnPrimary} style={{ marginTop: 0 }} onClick={handleTfaConfirm} disabled={tfaLoading || tfaCode.length < 6}>
+                      {tfaLoading ? '...' : 'Confirmer'}
+                    </button>
+                    <button className={styles.btnSecondary} onClick={() => { setTfaSetup(null); setTfaCode(''); setTfaError('') }}>
+                      Annuler
+                    </button>
+                  </div>
+                  {tfaError && <div style={{ color: '#CD3122', fontSize: 12, marginTop: 6 }}>{tfaError}</div>}
+                </div>
+              )}
+              {tfaError && !tfaSetup && <div style={{ color: '#CD3122', fontSize: 12, marginTop: 4 }}>{tfaError}</div>}
               <div className={styles.toggleRow}>
                 <div>
                   <div className={styles.toggleLabel}>{t('settings.security.oauth')}</div>

@@ -11,6 +11,7 @@ import { getPlayerBadge } from '../utils/playerBadge'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { authFetch, matchToRow } from '../services/api'
+import ComparisonBarChart from '../components/ui/ComparisonBarChart'
 import styles from './Profil.module.css'
 
 async function uploadAvatar(file, user, login) {
@@ -32,7 +33,7 @@ export default function Profil() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0 })
+  const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0, gamesPerMonth: null, streak: null })
   const [teammates_,    setTeammates]    = useState(() => {
     try { return JSON.parse(localStorage.getItem('favTeammates')) || [] } catch { return [] }
   })
@@ -48,6 +49,26 @@ export default function Profil() {
       .then(r => r.json())
       .then(data => setAllPlayers(Array.isArray(data) ? data : []))
       .catch(() => {})
+  }, [user?.username])
+
+  useEffect(() => {
+    if (!user?.username) return
+    authFetch(`/api/performance/stats/?players=${encodeURIComponent(user.username)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const s = data[0]
+          setStats(prev => ({
+            ...prev,
+            wins:          s.total_wins,
+            losses:        s.total_losses,
+            gamelles:      s.total_gamelles,
+            gamesPerMonth: s.matches_per_month,
+            streak:        s.series_wins,
+          }))
+        }
+      })
+      .catch(console.error)
   }, [user?.username])
 
   useEffect(() => {
@@ -247,10 +268,10 @@ export default function Profil() {
 
         <div className={styles.statsGrid}>
           <StatCard color="var(--orange-pale)" label={t('profile.ratio')}         value={stats.wins + stats.losses > 0 ? `${Math.round(stats.wins / (stats.wins + stats.losses) * 100)}%` : '—'} sub={t('profile.winLoss')} />
-          <StatCard color="var(--yellow-pale)" label={t('profile.streak')}        value="—" sub={t('profile.streakSub')} />
+          <StatCard color="var(--yellow-pale)" label={t('profile.streak')}        value={stats.streak ?? '—'} sub={t('profile.streakSub')} />
           <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
           <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value={stats.losses || '—'} sub={t('profile.lossesSub')} />
-          <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value="—" sub={t('profile.gamesPerMonthSub')} />
+          <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value={stats.gamesPerMonth ?? '—'} sub={t('profile.gamesPerMonthSub')} />
           <StatCard color="#CD3122"            label={t('profile.gamelles')}      value={stats.gamelles || '—'} sub={t('profile.gamellesSub')} />
         </div>
 
@@ -370,6 +391,10 @@ export default function Profil() {
                   }
                 </div>
               ))}
+            </Card>
+
+            <Card title="Comparaison joueurs">
+              <ComparisonBarChart />
             </Card>
           </div>
         </div>

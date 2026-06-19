@@ -231,6 +231,13 @@ class Enable2FAView(APIView):
         request.user.save()
         return Response({'status': '2FA activé'})
 
+    def delete(self, request):
+        """Désactiver le 2FA"""
+        request.user.is_2fa_enabled = False
+        request.user.totp_secret = None
+        request.user.save()
+        return Response({'status': '2FA désactivé'})
+
 # Activation par email
 class ActivateAccountView(APIView):
     permission_classes = [AllowAny]

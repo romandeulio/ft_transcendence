@@ -702,7 +702,7 @@ export default function Tournois() {
               </div>
             )
           })()}
-          {countdown == null && (
+          {!tournament && (
             <div className={styles.bracketBlur}>
               <div className={styles.countdownBox}>
                 <div className={styles.countdownLabel}>{t('tournaments.noTournamentPlanned')}</div>
