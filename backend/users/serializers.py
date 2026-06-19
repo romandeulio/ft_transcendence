@@ -149,7 +149,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             recipient_list=[user.email],
             fail_silently=False,
         )
-        print("role = ", user.role)
         return user
 
 # serializers.py — remplacer UserSerializer
