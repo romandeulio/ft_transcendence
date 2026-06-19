@@ -311,8 +311,8 @@ class AdminSeasonsView(APIView):
             'id': str(season.id),
             'name': season.name,
             'status': season.status,
-            'start_date': season.start_date.isoformat(),
-            'end_date': season.end_date.isoformat(),
+            'start_date': str(season.start_date),
+            'end_date': str(season.end_date),
             'detail': 'Saison créée.',
         }, status=201)
 
