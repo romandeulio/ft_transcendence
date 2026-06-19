@@ -272,9 +272,13 @@ class UserListView(APIView):
 
     def get(self, request):
         search = request.query_params.get('search', '').strip()
-        if not search:
-            return Response([])
-        users = User.objects.filter(is_active=True, username__icontains=search).values('username', 'avatar_url')[:20]
+        users = User.objects.filter(is_active=True)
+        if search:
+            # Mode autocomplétion (recherche performance) : filtré + limité
+            users = users.filter(username__icontains=search).values('username', 'avatar_url')[:20]
+        else:
+            # Liste complète (validation d'ajout de match, map des avatars, comparaison profil)
+            users = users.values('username', 'avatar_url')
         return Response([{'login': u['username'], 'name': u['username'], 'avatar_url': u['avatar_url']} for u in users])
 
 class AvatarUploadView(APIView):
