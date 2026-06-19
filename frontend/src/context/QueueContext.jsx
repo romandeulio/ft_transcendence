@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useAuth } from '../hooks/useAuth'
 import { authFetch } from '../services/api'
@@ -47,6 +48,7 @@ function mergeQueueState(liveQueue, persistedQueue) {
 }
 
 export function QueueProvider({ children }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [queue, setQueue] = useState([])
   const [mySlots, setMySlots] = useState(loadMySlots)
@@ -71,12 +73,23 @@ export function QueueProvider({ children }) {
   // Keep ref in sync so effect handlers can read latest pendingInvites without stale closure
   useEffect(() => { pendingInvitesRef.current = pendingInvites }, [pendingInvites])
 
-  const wsUrl = user?.username
-    ? `/ws/queue/?username=${encodeURIComponent(user.username)}`
-    : null
-  const { data, connected, send } = useWebSocket(wsUrl)
+  const wsUrl = user?.username ? `/ws/queue/` : null
+  const handleMessageRef = useRef(null)
+  const { connected, send, superseded } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
 
-  useEffect(() => {
+  // Empile une notification en ignorant les doublons (même `inviteId`) : protège
+  // contre une éventuelle double livraison d'un message côté serveur/transport.
+  // Chaque notification doit donc porter un id STABLE dérivé de l'événement
+  // (jamais Date.now()/Math.random(), sinon la déduplication est inopérante).
+  const pushInviteResult = (result) =>
+    setInviteResults(prev =>
+      prev.some(r => r.inviteId === result.inviteId) ? prev : [...prev, result]
+    )
+
+  // Réassigné à chaque render → capture toujours les dernières valeurs (user,
+  // send, mySlots, refs…). useWebSocket l'invoque pour CHAQUE message reçu, de
+  // façon synchrone (aucune perte due au batching d'un unique slot `data`).
+  handleMessageRef.current = (data) => {
     if (!data) return
     if (data.type === 'queue_state' && data.queue) {
       setQueue(mergeQueueState(data.queue, persistedQueueRef.current))
@@ -162,12 +175,12 @@ export function QueueProvider({ children }) {
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
-      setInviteResults(prev => [...prev, {
-        inviteId: `wcd-${Date.now()}`,
+      pushInviteResult({
+        inviteId: `wcd-${data.slotId}`,
         accepted: false,
         target: '?',
         winClaimDeclined: true,
-      }])
+      })
 
     } else if (data.type === 'invite_received') {
       // J2 receives an invite from J1
@@ -184,12 +197,12 @@ export function QueueProvider({ children }) {
       const fromAccepted = acceptedInviteFromsRef.current[inviteId]
       const from = inv?.from ?? fromAccepted
       if (from) {
-        setInviteResults(r => [...r, {
+        pushInviteResult({
           inviteId: `ic-${inviteId}`,
           accepted: false,
           target: from,
           inviteCancelled: true,
-        }])
+        })
         delete acceptedInviteFromsRef.current[inviteId]
       }
       setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
@@ -201,12 +214,12 @@ export function QueueProvider({ children }) {
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
         return next
       })
-      setInviteResults(prev => [...prev, {
-        inviteId: `p2left-${Date.now()}-${Math.random()}`,
+      pushInviteResult({
+        inviteId: `p2left-${data.slotId}`,
         accepted: false,
         target: data.cancelledBy || '?',
         cancelled: true,
-      }])
+      })
 
     } else if (data.type === 'match_cancelled') {
       if (data.cancelId) {
@@ -220,18 +233,29 @@ export function QueueProvider({ children }) {
           return next
         })
       }
-      setInviteResults(prev => [...prev, {
-        inviteId: `cancel-${Date.now()}-${Math.random()}`,
+      pushInviteResult({
+        inviteId: `cancel-${data.cancelId || data.slotId || Date.now()}`,
         accepted: false,
         target: data.cancelledBy || '',
         cancelled: true,
         chain: data.chain || false,
-      }])
+      })
 
     } else if (data.type === 'invite_response') {
       // J1 receives a response from one of the invited players
       const { inviteId, accepted, responder } = data
-      const invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+      let invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
+      if (!invite) {
+        // J1 vient peut-être de se reconnecter et la réponse différée arrive
+        // AVANT que l'effet `connected` n'ait restauré invitesSentRef depuis les
+        // slots persistés. On reconstruit depuis mySlots pour ne pas perdre
+        // l'acceptation (sinon le match n'est jamais rejoint → il « disparaît »).
+        const slot = mySlots.find(s => s._localId === inviteId && s.type === 'pending_invite')
+        if (slot) {
+          invite = { inviteId, targets: slot._targets || [], slot, accepted: slot._accepted || [] }
+          invitesSentRef.current = [...invitesSentRef.current, invite]
+        }
+      }
       if (!invite) return
 
       const cancelAll = () => {
@@ -247,7 +271,7 @@ export function QueueProvider({ children }) {
       if (!accepted) {
         // Any decline → cancel everything for everyone
         cancelAll()
-        setInviteResults(prev => [...prev, { inviteId, accepted: false, target: responder }])
+        pushInviteResult({ inviteId: `decline-${inviteId}`, accepted: false, target: responder })
         return
       }
 
@@ -271,7 +295,7 @@ export function QueueProvider({ children }) {
         if (invite.slot?.type !== 'tournament_teammate') {
           send({ action: 'join', slot: { ...invite.slot, type: 'taken' } })
         }
-        setInviteResults(prev => [...prev, { inviteId, accepted: true, target: nowAccepted.join(', ') }])
+        pushInviteResult({ inviteId: `accept-${inviteId}`, accepted: true, target: nowAccepted.join(', ') })
         invitesSentRef.current = invitesSentRef.current.filter(i => i.inviteId !== inviteId)
       } else {
         // Partial accept — persist accepted list so it survives a J1 disconnect/reconnect
@@ -282,13 +306,13 @@ export function QueueProvider({ children }) {
           localStorage.setItem('myQueueSlots', JSON.stringify(next))
           return next
         })
-        setInviteResults(prev => [...prev, {
-          inviteId, accepted: true, target: responder,
+        pushInviteResult({
+          inviteId: `accept-${inviteId}-${responder}`, accepted: true, target: responder,
           partial: true, count: nowAccepted.length, total: invite.targets.length,
-        }])
+        })
       }
     }
-  }, [data, user?.username])
+  }
 
   useEffect(() => {
     if (!user?.username) {
@@ -522,8 +546,35 @@ export function QueueProvider({ children }) {
       respondToInvite,
       dismissInviteResult,
       connected,
+      superseded,
     }}>
       {children}
+      {superseded && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.75)',
+        }}>
+          <div style={{
+            background: 'var(--topbar-bg, #001A57)', color: '#fff',
+            padding: '28px 32px', borderRadius: '12px', maxWidth: '420px',
+            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', color: '#fff' }}>{t('queue.supersededTitle')}</h3>
+            <p style={{ margin: '0 0 20px', color: '#fff', opacity: 0.85 }}>{t('queue.supersededBody')}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                background: 'var(--color-primary, #4068DB)', color: '#fff',
+                fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {t('queue.supersededReload')}
+            </button>
+          </div>
+        </div>
+      )}
     </QueueContext.Provider>
   )
 }

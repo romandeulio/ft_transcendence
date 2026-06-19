@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -15,6 +17,8 @@ from .serializers import (
 	MatchValidateSerializer,
 )
 from .ranking_service import update_rankings_after_match
+from stats.service import update_stats_after_match
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # GET /api/matches/   POST /api/matches/
@@ -166,6 +170,13 @@ def match_validate(request, pk):
 		match.status = Match.Status.VALIDATED
 		match.save()
 		update_rankings_after_match(match)
+		update_stats_after_match(match)
+
+		try:
+			from bets.services import resolve_for_match
+			resolve_for_match(match)
+		except Exception:
+			logger.exception("Échec de la résolution des paris pour le match %s", match.id)
 	return Response(MatchSerializer(match).data)
 
 
@@ -203,5 +214,11 @@ def match_cancel(request, pk):
 
 	match.status = Match.Status.CANCELLED
 	match.save(update_fields=['status', 'updated_at'])
+
+	try:
+		from bets.services import refund_for_match
+		refund_for_match(match)
+	except Exception:
+		logger.exception("Échec du remboursement des paris pour le match %s", match.id)
 
 	return Response(MatchSerializer(match).data)

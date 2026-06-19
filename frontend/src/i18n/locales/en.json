@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ Join the queue",
     "disconnected": "Disconnected",
+    "supersededTitle": "Session opened in another tab",
+    "supersededBody": "Your account was opened in another tab or browser. Only one active session is allowed. Refresh to take control back here.",
+    "supersededReload": "Refresh",
     "waitingMatches": "Waiting matches",
     "live": "Live",
     "myMatch": "My match",
@@ -402,6 +405,10 @@
     "searchPlayer": "Search a player…",
     "noData": "No data available",
     "noPlayer": "No player found",
+    "searchHint": "Type a login to search for a player",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "noSelected": "No player selected",
     "selectPlayer": "Select at least one player to display the chart.",
     "y": {
       "elo": "ELO",
@@ -416,10 +423,10 @@
       "streak": "Current streak"
     },
     "x": {
-      "weeks": "Weeks",
-      "months": "Months",
-      "seasons": "Seasons",
-      "matches": "Matches played"
+      "matches": "Matches played (last 30)",
+      "weeks": "Weeks (last 8)",
+      "months": "Months (last 6)",
+      "fixed": "Fixed dates"
     }
   },
   "bracket": {

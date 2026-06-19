@@ -8,7 +8,7 @@
     "tournaments": "Tournois",
     "account": "Compte",
     "profile": "Mon profil",
-    "settings": "Paramètres"
+    "settings": "Parametres"
   },
   "topbar": {
     "home": "Accueil",
@@ -17,7 +17,7 @@
     "queue": "File d'attente",
     "tournaments": "Tournois",
     "profile": "Mon Profil",
-    "settings": "Paramètres",
+    "settings": "Parametres",
     "admin": "Admin",
     "ticket": "Ticket"
   },
@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ S'ajouter à la file",
     "disconnected": "Déconnecté",
+    "supersededTitle": "Session ouverte dans un autre onglet",
+    "supersededBody": "Votre compte a été ouvert dans un autre onglet ou navigateur. Une seule session active est autorisée. Rafraîchissez pour reprendre la main ici.",
+    "supersededReload": "Rafraîchir",
     "waitingMatches": "Matchs en attente",
     "live": "En cours",
     "myMatch": "Mon match",
@@ -402,6 +405,10 @@
     "searchPlayer": "Rechercher un joueur…",
     "noData": "Données non disponibles",
     "noPlayer": "Aucun joueur trouvé",
+    "searchHint": "Tape un login pour rechercher un joueur",
+    "dateFrom": "Du",
+    "dateTo": "Au",
+    "noSelected": "Aucun joueur sélectionné",
     "selectPlayer": "Sélectionne au moins un joueur pour afficher le graphique.",
     "y": {
       "elo": "ELO",
@@ -416,10 +423,10 @@
       "streak": "Série en cours"
     },
     "x": {
-      "weeks": "Semaines",
-      "months": "Mois",
-      "seasons": "Saisons",
-      "matches": "Matchs joués"
+      "matches": "Matchs joués (30 derniers)",
+      "weeks": "Semaines (8 dernières)",
+      "months": "Mois (6 derniers)",
+      "fixed": "Dates fixes"
     }
   },
   "bracket": {

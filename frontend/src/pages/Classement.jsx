@@ -49,7 +49,7 @@ export default function Classement() {
         // Hall of Fame : champions des saisons terminées
         const finished = allSeasons.filter(s => s.status === 'FINISHED' && s.rewards_distributed)
         const champions = finished.map(s => {
-          const reward = s.rewards?.find(r => r.ranking_type === 'Solo' && r.tier === 'Top 1')
+          const reward = s.rewards?.find(r => r.ranking_type === 'SOLO' && r.tier === 'TOP1')
           if (!reward) return null
           return { season: s.id, name: reward.player, initials: reward.player?.[0]?.toUpperCase() ?? '?', elo: reward.elo_at_end }
         }).filter(Boolean)

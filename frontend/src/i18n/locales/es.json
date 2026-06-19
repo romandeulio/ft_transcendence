@@ -122,6 +122,9 @@
   "queue": {
     "joinQueue": "+ Unirse a la cola",
     "disconnected": "Desconectado",
+    "supersededTitle": "Sesión abierta en otra pestaña",
+    "supersededBody": "Tu cuenta se abrió en otra pestaña o navegador. Solo se permite una sesión activa. Actualiza para retomar el control aquí.",
+    "supersededReload": "Actualizar",
     "waitingMatches": "Partidos en espera",
     "live": "En curso",
     "myMatch": "Mi partido",
@@ -398,6 +401,10 @@
     "searchPlayer": "Buscar un jugador…",
     "noData": "Datos no disponibles",
     "noPlayer": "Ningún jugador encontrado",
+    "searchHint": "Escribe un login para buscar un jugador",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
+    "noSelected": "Ningún jugador seleccionado",
     "selectPlayer": "Selecciona al menos un jugador para mostrar el gráfico.",
     "y": {
       "elo": "ELO",
@@ -412,10 +419,10 @@
       "streak": "Racha actual"
     },
     "x": {
-      "weeks": "Semanas",
-      "months": "Meses",
-      "seasons": "Temporadas",
-      "matches": "Partidos jugados"
+      "matches": "Partidos jugados (últimos 30)",
+      "weeks": "Semanas (últimas 8)",
+      "months": "Meses (últimos 6)",
+      "fixed": "Fechas fijas"
     }
   },
   "bracket": {

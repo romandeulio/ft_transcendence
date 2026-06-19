@@ -10,7 +10,7 @@ function buildFetchOptions(options = {}) {
 
   return {
     ...options,
-    credentials: 'same-origin',
+    credentials: 'include',
     headers,
   }
 }
@@ -28,8 +28,28 @@ async function refreshAuthCookie() {
 }
 
 // Fetch authentifié — les JWT HttpOnly sont envoyés via cookies same-origin.
-export function authFetch(url, options = {}) {
+{/*export function authFetch(url, options = {}) {
   return fetch(url, buildFetchOptions(options)).then(async res => {
+    // Détection ban : le backend renvoie 401 avec detail "User is banned"
+    if (res.status === 401) {
+      const clone = res.clone()
+      try {
+        const data = await clone.json()
+        if (data.detail === 'User is banned' || (typeof data.detail === 'object' && data.detail?.detail === 'User is banned')) {
+          localStorage.removeItem('user')
+          const ban = data.ban || data.detail?.ban || {}
+          if (ban.type === 'permanent') {
+            window.location.href = '/banned?type=permanent'
+          } else if (ban.type === 'temporary' && ban.until) {
+            window.location.href = `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
+          } else {
+            window.location.href = '/banned?type=permanent'
+          }
+          return res
+        }
+      } catch {}
+    }
+
     if (res.status !== 401 || url === `${BASE}/token/refresh/`) {
       return res
     }
@@ -40,6 +60,47 @@ export function authFetch(url, options = {}) {
     } catch {
       return res
     }
+  })
+}*/}
+
+export function authFetch(url, options = {}) {
+  const isJSON =
+    !(options.body instanceof FormData) &&
+    typeof options.body === 'string'
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...(isJSON ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
+  }).then(async (res) => {
+
+    // ❗ BAN HANDLING (tu peux garder ça)
+    if (res.status === 401) {
+      try {
+        const data = await res.clone().json()
+
+        if (data.detail === 'User is banned') {
+          localStorage.removeItem('user')
+
+          const ban = data.ban || {}
+
+          if (ban.type === 'permanent') {
+            window.location.href = '/banned?type=permanent'
+          } else if (ban.type === 'temporary' && ban.until) {
+            window.location.href =
+              `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
+          } else {
+            window.location.href = '/banned?type=permanent'
+          }
+
+          return res
+        }
+      } catch {}
+    }
+
+    return res
   })
 }
 
@@ -94,7 +155,7 @@ export async function apiLogin({ email, password, totp_code }) {
   const res = await fetch(`${BASE}/login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
+    credentials: 'include',
     body: JSON.stringify(body),
   })
   const data = await res.json()
@@ -106,7 +167,7 @@ export async function apiRefresh() {
   const res = await fetch(`${BASE}/token/refresh/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
+    credentials: 'include',
   })
   const data = await res.json()
   if (!res.ok) throw data

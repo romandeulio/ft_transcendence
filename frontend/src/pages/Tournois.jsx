@@ -57,7 +57,7 @@ function mapTournament(data) {
 export default function Tournois() {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { notifyTournamentTeammate } = useQueue()
+  const { notifyTournamentTeammate } =useQueue ()
 
   // ── BDE modal ──
   const [bdeOpen,    setBdeOpen]    = useState(false)
@@ -702,7 +702,7 @@ export default function Tournois() {
               </div>
             )
           })()}
-          {countdown == null && (
+          {!tournament && (
             <div className={styles.bracketBlur}>
               <div className={styles.countdownBox}>
                 <div className={styles.countdownLabel}>{t('tournaments.noTournamentPlanned')}</div>

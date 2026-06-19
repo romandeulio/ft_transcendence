@@ -51,13 +51,15 @@ LOCAL_APPS_SYDNEY = [
 	'organizations',
 	'public_api',
 	'tournaments',
+    'stats',
 ]
 
 # Apps autres
 LOCAL_APPS_TEAM = [
-    'users',    # AUTH_USER_MODEL
-    'realtime', # WebSockets
-#    'bets',     # paris & wallet
+    'users',       # AUTH_USER_MODEL
+    'realtime',    # WebSockets
+    'performance', # Stats joueur
+    'bets',        # paris & wallet
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS_SYDNEY + LOCAL_APPS_TEAM
@@ -170,8 +172,8 @@ SIMPLE_JWT = {
 
 JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
 JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
-JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
-#JWT_COOKIE_SECURE = False
+#JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
+JWT_COOKIE_SECURE = False #a commente et decommenter la ligne du dessus en prod
 JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================
@@ -180,17 +182,23 @@ JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 # ===========================================================================
 
 CORS_ALLOWED_ORIGINS = config(
-	'CORS_ALLOWED_ORIGINS',
-	default='https://transcendance.maagosti.fr'
+    'CORS_ALLOWED_ORIGINS',
+    default='https://transcendance.maagosti.fr,http://localhost:3000'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = config(
-	'CSRF_TRUSTED_ORIGINS',
-	default=SITE_URL,
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://transcendance.maagosti.fr,http://localhost:3000'
 ).split(',')
 
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"
 # ===========================================================================
 # CHANNELS (WebSockets — Roman)
 # ===========================================================================
@@ -219,6 +227,10 @@ CACHES = {
         "LOCATION": f"redis://{config('REDIS_HOST', default='redis')}:{config('REDIS_PORT', default=6379)}/1",
     }
 }
+
+# Sessions stockées dans Redis (pas besoin de table django_session)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
 # ===========================================================================
 # INTERNATIONALISATION
@@ -257,3 +269,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # BDE — mot de passe partagé pour créer un tournoi
 BDE_PASSWORD = config('BDE_PASSWORD', default='bde42')
+
+# Admin dashboard
+ADMIN_LOGIN = config('ADMIN_LOGIN', default='admin')
+ADMIN_PASSWORD = config('ADMIN_PASSWORD', default='admin42')
