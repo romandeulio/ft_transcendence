@@ -57,12 +57,14 @@ function SeasonPanel() {
   const [newName,  setNewName]  = useState('')
   const [newStart, setNewStart] = useState('')
   const [newEnd,   setNewEnd]   = useState('')
+  const [actionLoading, setActionLoading] = useState(null)
 
-  useEffect(() => {
-    adm('/api/admin/seasons/').then(r => r.json()).then(setSeasons).catch(() => {})
-  }, [])
+  const reload = () => adm('/api/admin/seasons/').then(r => r.json()).then(setSeasons).catch(() => {})
 
-  const active = seasons.find(s => s.status === 'ACTIVE')
+  useEffect(() => { reload() }, [])
+
+  const active   = seasons.find(s => s.status === 'ACTIVE')
+  const upcoming = seasons.filter(s => s.status === 'UPCOMING')
 
   const handleAddSeason = async () => {
     if (!newName || !newStart || !newEnd) return
@@ -71,11 +73,20 @@ function SeasonPanel() {
       body: JSON.stringify({ name: newName, start_date: newStart, end_date: newEnd }),
     })
     if (res.ok) {
-      const created = await res.json()
-      setSeasons(s => [{ id: created.id, name: created.name, status: 'UPCOMING', start_date: newStart, end_date: newEnd }, ...s])
       setNewName(''); setNewStart(''); setNewEnd('')
       setAddOpen(false)
+      reload()
     }
+  }
+
+  const handleSeasonAction = async (seasonId, action) => {
+    setActionLoading(seasonId + action)
+    const res = await adm(`/api/admin/seasons/${seasonId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action }),
+    })
+    setActionLoading(null)
+    if (res.ok) reload()
   }
 
   return (
@@ -109,18 +120,38 @@ function SeasonPanel() {
       {active ? (
         <div className={styles.seasonCurrent}>
           <span className={styles.seasonIcon}>📅</span>
-          <div>
+          <div style={{ flex: 1 }}>
             <div className={styles.seasonLabel}>Saison en cours</div>
             <div className={styles.seasonName}>{active.name}</div>
           </div>
+          <button
+            className={styles.seasonCancelBtn}
+            style={{ marginLeft: 8, fontSize: 11 }}
+            onClick={() => handleSeasonAction(active.id, 'finish')}
+            disabled={actionLoading === active.id + 'finish'}
+          >
+            Terminer
+          </button>
         </div>
       ) : (
         <div className={styles.seasonNext}>Aucune saison active.</div>
       )}
 
-      {seasons.filter(s => s.status === 'UPCOMING').length > 0 && (
-        <div className={styles.seasonNext}>
-          A venir : {seasons.filter(s => s.status === 'UPCOMING').map(s => s.name).join(', ')}
+      {upcoming.length > 0 && (
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {upcoming.map(s => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+              <span style={{ flex: 1, color: 'var(--ink2)' }}>📋 {s.name}</span>
+              <button
+                className={styles.seasonOkBtn}
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => handleSeasonAction(s.id, 'activate')}
+                disabled={actionLoading === s.id + 'activate'}
+              >
+                {actionLoading === s.id + 'activate' ? '...' : 'Activer'}
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

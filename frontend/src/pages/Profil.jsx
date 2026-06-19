@@ -272,7 +272,6 @@ export default function Profil() {
           <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
           <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value={stats.losses || '—'} sub={t('profile.lossesSub')} />
           <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value={stats.gamesPerMonth ?? '—'} sub={t('profile.gamesPerMonthSub')} />
-          <StatCard color="#CD3122"            label={t('profile.gamelles')}      value={stats.gamelles || '—'} sub={t('profile.gamellesSub')} />
         </div>
 
         <div className={styles.grid}>

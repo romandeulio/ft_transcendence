@@ -170,11 +170,11 @@ class AdminUpdateEloView(APIView):
 
         if elo_solo is not None:
             stats.elo_solo = int(elo_solo)
-            fields.appends(elo_solo)
+            fields.append('elo_solo')
 
         if elo_team is not None:
             stats.elo_team = int(elo_team)
-            fields.appends(elo_team)
+            fields.append('elo_team')
 
         if not fields:
             return Response({'error': 'Aucun ELO fourni.'}, status=400)
@@ -310,5 +310,42 @@ class AdminSeasonsView(APIView):
         return Response({
             'id': str(season.id),
             'name': season.name,
+            'status': season.status,
+            'start_date': season.start_date.isoformat(),
+            'end_date': season.end_date.isoformat(),
             'detail': 'Saison créée.',
         }, status=201)
+
+
+class AdminSeasonDetailView(APIView):
+    permission_classes = [IsAdminSession]
+
+    def patch(self, request, season_id):
+        from django.db import transaction
+        try:
+            season = Season.objects.get(pk=season_id)
+        except Season.DoesNotExist:
+            return Response({'error': 'Saison introuvable'}, status=404)
+
+        action = request.data.get('action')
+
+        if action == 'activate':
+            if season.status != 'UPCOMING':
+                return Response({'error': f"Statut actuel : '{season.status}'. Seules les saisons UPCOMING peuvent être activées."}, status=400)
+            with transaction.atomic():
+                Season.objects.filter(status='ACTIVE').update(status='FINISHED')
+                season.status = 'ACTIVE'
+                season.save(update_fields=['status'])
+        elif action == 'finish':
+            if season.status != 'ACTIVE':
+                return Response({'error': "Seule une saison ACTIVE peut être terminée."}, status=400)
+            season.status = 'FINISHED'
+            season.save(update_fields=['status'])
+        else:
+            return Response({'error': "Action invalide. Utiliser 'activate' ou 'finish'."}, status=400)
+
+        return Response({
+            'id': str(season.id),
+            'name': season.name,
+            'status': season.status,
+        })
