@@ -189,17 +189,14 @@ export default function Tournois() {
     setBdeLoading(true)
     setBdeError('')
     try {
-      const res = await authFetch('/api/tournaments/bde-unlock/', {
-        method: 'POST',
-        body:   JSON.stringify({ password: bdeInput }),
-      })
+      const res = await authFetch('/api/tournaments/bde-unlock/', { method: 'POST' })
       if (res.ok) {
         setBdeUnlocked(true)
         setBdeOpen(false)
-      } else if (res.status === 401) {
-        setBdeError('Session expirée — reconnecte-toi.')
+      } else if (res.status === 403) {
+        setBdeError("Vous n'avez pas les droits BDE.")
       } else {
-        setBdeError(t('tournaments.incorrectPwd'))
+        setBdeError('Erreur inattendue.')
       }
     } catch {
       setBdeError('Erreur réseau.')
@@ -722,15 +719,7 @@ export default function Tournois() {
       {/* ── Modal Accès BDE ── */}
       <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError('') }} title={t('tournaments.bdeAccess')}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t('tournaments.bdePwd')}</label>
-          <input
-            className={styles.input}
-            type="password"
-            placeholder="••••••••"
-            value={bdeInput}
-            onChange={e => { setBdeInput(e.target.value); setBdeError('') }}
-            onKeyDown={e => e.key === 'Enter' && handleBdeSubmit()}
-          />
+          <div className={styles.adminSub}>Vérifie ton accès BDE via ton compte.</div>
           {bdeError && <div className={styles.bdeError}>{bdeError}</div>}
         </div>
         <div className={styles.modalFooter}>

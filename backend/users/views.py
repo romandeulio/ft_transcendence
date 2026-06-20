@@ -136,6 +136,7 @@ class OAuth42CallbackView(APIView):
             profile = requests.get('https://api.intra.42.fr/v2/me', headers={
                 'Authorization': f'Bearer {access_token}'
             }).json()
+            
             avatar_link = profile.get("image", {}).get("link")
             avatar_url = None
 
@@ -152,15 +153,41 @@ class OAuth42CallbackView(APIView):
                         f.write(response.content)
 
                     avatar_url = f"/media/{filename}"
-            user, _ = User.objects.get_or_create(
+            
+            has_piscine   = any(c["cursus"]["name"] == "C Piscine"  for c in profile.get("cursus_users", []))
+            has_42cursus  = any(c["cursus"]["name"] == "42cursus"   for c in profile.get("cursus_users", []))
+
+            if profile.get("staff?"):
+                role = "bocalien"
+            elif profile.get("alumni?"):
+                role = "alumnni"
+            elif has_piscine and not has_42cursus:
+                role = "piscineux"
+            elif has_42cursus:
+                role = "stud"
+            else:
+                role = "user"
+
+            if role != "bocalien":
+                for group in profile.get("groups", []):
+                    if "bde" in group.get("name", "").lower():
+                        role = "bde"
+                        break
+
+            user, created = User.objects.get_or_create(
                 oauth_42_id=str(profile['id']),
                 defaults={
                     'email':      profile.get('email', f"{profile['login']}@42.fr"),
                     'username':   profile['login'],
                     'avatar_url': avatar_url,
                     'is_active':  True,
+                    'role':       role,
                 }
             )
+
+            if not created:
+                user.role = role
+                user.save(update_fields=['role'])
 
             # Vérifier le ban
             ban = user.ban_info()
