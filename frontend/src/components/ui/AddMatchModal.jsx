@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { authFetch } from '../../services/api'
 import styles from './AddMatchModal.module.css'
 
-export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam, initialOpponent }) {
+export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam, initialOpponent, initialTeammate }) {
   const { t } = useTranslation()
 
   const u = user?.username
@@ -27,8 +27,14 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
 
   useEffect(() => {
     if (!open) return
-    if (initialOpponent) {
-      // Pre-fill opponent, start from mode choice (step 1), skip takeWin step
+    if (initialTeammate) {
+      setTakeWin(false)
+      setJoinFormat('2v2')
+      setBluePlayers(['', initialTeammate])
+      setRedPlayers(['', ''])
+      setMyColor('blue')
+      setStep(1)
+    } else if (initialOpponent) {
       setTakeWin(false)
       setRedPlayers([initialOpponent, ''])
       setBluePlayers(['', ''])
@@ -37,7 +43,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
     } else {
       setBluePlayers(['', ''])
     }
-  }, [open, initialOpponent])
+  }, [open, initialOpponent, initialTeammate])
 
   const reset = () => {
     setStep(1); setJoinMode('compet'); setJoinFormat('1v1')
@@ -318,7 +324,29 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             {/* Équipe rouge */}
             <div className={styles.teamRed}>
               <div className={styles.teamLabel}>{t('addMatch.redTeam')}</div>
-              {initialOpponent && myColor === 'red' ? (
+              {initialTeammate ? (
+                myColor === 'red' ? (
+                  <>
+                    <div className={styles.lockedPlayer}>
+                      <span>{user?.username}</span>
+                      <span className={styles.lockedPlayerTag}>{t('addMatch.you')}</span>
+                    </div>
+                    <div className={styles.lockedPlayer}>
+                      <span>{initialTeammate}</span>
+                      <span className={styles.lockedPlayerTag}>{t('addMatch.teammate') || 'Coéquipier'}</span>
+                    </div>
+                  </>
+                ) : (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <LoginInput
+                      key={i}
+                      value={redPlayers[i] || ''}
+                      onChange={v => setRedPlayers(prev => { const n = [...prev]; n[i] = v; return n })}
+                      placeholder={t('addMatch.redPlayer2v2', { num: i + 1 })}
+                    />
+                  ))
+                )
+              ) : initialOpponent && myColor === 'red' ? (
                 // initialOpponent, user rouge : utilisateur verrouillé + coéquipier libre (2v2)
                 <>
                   <div className={styles.lockedPlayer}>
@@ -384,7 +412,31 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
             {/* Équipe bleue */}
             <div className={styles.teamBlue}>
               <div className={styles.teamLabel}>{t('addMatch.blueTeam')}</div>
-              {initialOpponent && myColor === 'red' ? (
+              {initialTeammate && myColor === 'blue' ? (
+                <>
+                  <div className={styles.lockedPlayer}>
+                    <span>{user?.username}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.you')}</span>
+                  </div>
+                  <div className={styles.lockedPlayer}>
+                    <span>{initialTeammate}</span>
+                    <span className={styles.lockedPlayerTag}>{t('addMatch.teammate') || 'Coéquipier'}</span>
+                  </div>
+                </>
+              ) : initialTeammate && myColor === 'red' ? (
+                <>
+                  <LoginInput
+                    value={bluePlayers[0] || ''}
+                    onChange={v => setBluePlayers(prev => { const n = [...prev]; n[0] = v; return n })}
+                    placeholder={t('addMatch.bluePlayer2v2', { num: 1 })}
+                  />
+                  <LoginInput
+                    value={bluePlayers[1] || ''}
+                    onChange={v => setBluePlayers(prev => { const n = [...prev]; n[1] = v; return n })}
+                    placeholder={t('addMatch.bluePlayer2v2', { num: 2 })}
+                  />
+                </>
+              ) : initialOpponent && myColor === 'red' ? (
                 // initialOpponent, user rouge : adversaire verrouillé bleu + coéquipier libre (2v2)
                 <>
                   <div className={styles.lockedPlayer}>

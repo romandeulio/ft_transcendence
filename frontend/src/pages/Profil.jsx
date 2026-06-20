@@ -38,6 +38,7 @@ export default function Profil() {
 
   const [joinOpen,         setJoinOpen]         = useState(false)
   const [initialOpponent,  setInitialOpponent]   = useState(null)
+  const [initialTeammate,  setInitialTeammate]   = useState(null)
   const [matchError,       setMatchError]        = useState(null)
 
   const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0, gamesPerMonth: null, streak: null })
@@ -365,7 +366,7 @@ export default function Profil() {
                 <div key={tm.login} className={styles.teammateRow}>
                   <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
                   <span className={styles.teammateName}>{tm.name}</span>
-                  <button className={styles.planBtn} onClick={() => { setInitialOpponent(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
+                  <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
                   <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
                 </div>
               ))}
@@ -476,10 +477,11 @@ export default function Profil() {
 
       <AddMatchModal
         open={joinOpen}
-        onClose={() => { setJoinOpen(false); setMatchError(null); setInitialOpponent(null) }}
+        onClose={() => { setJoinOpen(false); setMatchError(null); setInitialOpponent(null); setInitialTeammate(null) }}
         onConfirm={handlePlanMatch}
         user={user}
         initialOpponent={initialOpponent}
+        initialTeammate={initialTeammate}
       />
 
       {matchError && (
