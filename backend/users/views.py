@@ -339,9 +339,11 @@ class MyStatsCardView(APIView):
         total_matches = stats.total_matches if stats else 0
         best_streak   = stats.series_wins   if stats else 0
 
+        from django.db.models import F
         wins_by_month = (
             Match.objects.filter(
-                Q(player1=user, winner='player1_side') | Q(player2=user, winner='player2_side'),
+                Q(player1=user, score_player1__gt=F('score_player2')) |
+                Q(player2=user, score_player2__gt=F('score_player1')),
                 status='VALIDATED',
             )
             .annotate(month=TruncMonth('played_at'))
