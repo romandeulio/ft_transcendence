@@ -306,7 +306,7 @@ export default function Profil() {
     const login = newPartner.trim()
     if (!login) return
     if (login === user?.username) {
-      setAddError('Tu ne peux pas t'ajouter toi-même.')
+      setAddError("Tu ne peux pas t'ajouter toi-même.")
       return
     }
     if (!allPlayers.some(p => p.login === login)) {
