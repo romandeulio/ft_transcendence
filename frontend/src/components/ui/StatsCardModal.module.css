@@ -77,14 +77,14 @@
 .dlBtn {
   padding: 9px 20px;
   border-radius: 8px;
-  background: #238636;
-  border: 1px solid #30a14e;
+  background: #1d4ed8;
+  border: 1px solid #1e3a8a;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
-.dlBtn:hover:not(:disabled) { background: #2ea043; }
+.dlBtn:hover:not(:disabled) { background: #2563eb; }
 .dlBtn:disabled { opacity: 0.5; cursor: default; }
 
 .closeBtn {
