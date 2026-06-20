@@ -49,10 +49,12 @@ export default function Profil() {
   const [recentMatches, setRecentMatches] = useState([])
   const [seasons,       setSeasons]      = useState([])
   const [allPlayers,    setAllPlayers]   = useState([])
-  const [onlineUsers,   setOnlineUsers]  = useState([])
-  const [friendSearch,  setFriendSearch] = useState('')
-  const [friendSort,    setFriendSort]   = useState('az')
-  const [friendPage,    setFriendPage]   = useState(0)
+  const [onlineUsers,    setOnlineUsers]   = useState([])
+  const [lastPlayedWith, setLastPlayedWith] = useState({})
+  const [friendSearch,   setFriendSearch]  = useState('')
+  const [friendSort,     setFriendSort]    = useState('az')
+  const [friendPage,     setFriendPage]    = useState(0)
+  const [addError,       setAddError]      = useState('')
   const FRIENDS_PER_PAGE = 8
 
   const avatarMap = useMemo(() =>
@@ -117,6 +119,17 @@ export default function Profil() {
           .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
         const rows = validated.map(m => matchToRow(m, user.username))
         setRecentMatches(rows)
+        // Dernière date jouée avec chaque coéquipier (matchs TEAM seulement)
+        const playedWith = {}
+        validated.forEach(m => {
+          if (m.match_type !== 'TEAM') return
+          const onTeam1 = m.player1 === user.username || m.player1_teammate === user.username
+          const teammate = onTeam1
+            ? (m.player1_teammate === user.username ? m.player1 : m.player1_teammate)
+            : (m.player2_teammate === user.username ? m.player2 : m.player2_teammate)
+          if (teammate && !playedWith[teammate]) playedWith[teammate] = m.played_at
+        })
+        setLastPlayedWith(playedWith)
         // Compter les gamelles du joueur sur tous ses matchs validés
         const totalGamelles = validated.reduce((sum, m) => {
           const asP1 = m.player1?.username === user.username || m.player1 === user.username
@@ -184,13 +197,18 @@ export default function Profil() {
       const q = friendSearch.toLowerCase()
       list = list.filter(tm => tm.login.toLowerCase().includes(q))
     }
-    if (friendSort === 'az')     list.sort((a, b) => a.login.localeCompare(b.login))
-    else if (friendSort === 'za') list.sort((a, b) => b.login.localeCompare(a.login))
+    if (friendSort === 'az')       list.sort((a, b) => a.login.localeCompare(b.login))
+    else if (friendSort === 'za')  list.sort((a, b) => b.login.localeCompare(a.login))
     else if (friendSort === 'online') list.sort((a, b) =>
       (onlineUsers.includes(b.login) ? 1 : 0) - (onlineUsers.includes(a.login) ? 1 : 0)
     )
+    else if (friendSort === 'recent') list.sort((a, b) => {
+      const ta = lastPlayedWith[a.login] ? new Date(lastPlayedWith[a.login]).getTime() : 0
+      const tb = lastPlayedWith[b.login] ? new Date(lastPlayedWith[b.login]).getTime() : 0
+      return tb - ta
+    })
     return list
-  }, [teammates_, friendSearch, friendSort, onlineUsers])
+  }, [teammates_, friendSearch, friendSort, onlineUsers, lastPlayedWith])
 
   const friendTotalPages = Math.ceil(filteredFriends.length / FRIENDS_PER_PAGE)
   const friendSlice = filteredFriends.slice(friendPage * FRIENDS_PER_PAGE, (friendPage + 1) * FRIENDS_PER_PAGE)
@@ -287,6 +305,11 @@ export default function Profil() {
   const addTeammate = () => {
     const login = newPartner.trim()
     if (!login || teammates_.length >= 25) return
+    if (!allPlayers.some(p => p.login === login)) {
+      setAddError('Joueur introuvable dans la base de données.')
+      return
+    }
+    setAddError('')
     if (addFriend(login)) {
       setTeammates(getFriends())
       setNewPartner('')
@@ -413,6 +436,7 @@ export default function Profil() {
                     <option value="az">A → Z</option>
                     <option value="za">Z → A</option>
                     <option value="online">En ligne d'abord</option>
+                    <option value="recent">Récemment joué</option>
                   </select>
                 </div>
               )}
@@ -436,9 +460,15 @@ export default function Profil() {
 
               {friendTotalPages > 1 && (
                 <div className={styles.friendPagination}>
-                  <button className={styles.pageBtn} onClick={() => setFriendPage(p => Math.max(0, p - 1))} disabled={friendPage === 0}>←</button>
-                  <span className={styles.pageInfo}>{friendPage + 1} / {friendTotalPages}</span>
-                  <button className={styles.pageBtn} onClick={() => setFriendPage(p => Math.min(friendTotalPages - 1, p + 1))} disabled={friendPage === friendTotalPages - 1}>→</button>
+                  <button className={styles.pageNavBtn} onClick={() => setFriendPage(p => Math.max(0, p - 1))} disabled={friendPage === 0}>←</button>
+                  {Array.from({ length: friendTotalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      className={`${styles.pageNumBtn} ${i === friendPage ? styles.pageNumActive : ''}`}
+                      onClick={() => setFriendPage(i)}
+                    >{i + 1}</button>
+                  ))}
+                  <button className={styles.pageNavBtn} onClick={() => setFriendPage(p => Math.min(friendTotalPages - 1, p + 1))} disabled={friendPage === friendTotalPages - 1}>→</button>
                 </div>
               )}
 
@@ -448,12 +478,13 @@ export default function Profil() {
                   <div className={styles.addTeammateRow}>
                     <LoginInput
                       value={newPartner}
-                      onChange={setNewPartner}
+                      onChange={v => { setNewPartner(v); setAddError('') }}
                       placeholder={t('profile.loginPlayerPlaceholder')}
                       players={allPlayers.filter(p => !teammates_.some(tm => tm.login === p.login))}
                     />
                     <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
                   </div>
+                  {addError && <div className={styles.addError}>{addError}</div>}
                 </div>
               )}
             </Card>
