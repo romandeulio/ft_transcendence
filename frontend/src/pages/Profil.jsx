@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
@@ -42,6 +42,9 @@ export default function Profil() {
   const [recentMatches, setRecentMatches] = useState([])
   const [seasons,       setSeasons]      = useState([])
   const [allPlayers,    setAllPlayers]   = useState([])
+  const avatarMap = useMemo(() =>
+    Object.fromEntries(allPlayers.map(p => [p.login, p.avatar_url]).filter(([, v]) => v)),
+  [allPlayers])
 
   useEffect(() => {
     if (!user?.username) return
@@ -288,7 +291,7 @@ export default function Profil() {
               )}
               {teammates_.map(tm => (
                 <div key={tm.login} className={styles.teammateRow}>
-                  <Avatar initials={tm.name} size={30} bg="var(--beige)" />
+                  <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
                   <span className={styles.teammateName}>{tm.name}</span>
                   <button className={styles.planBtn}>{t('profile.planGame')}</button>
                   <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
@@ -315,7 +318,7 @@ export default function Profil() {
               )}
               {opponents.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
-                  <Avatar initials={o.name} size={28} bg="var(--beige)" />
+                  <Avatar initials={o.name} size={28} bg="var(--beige)" round src={avatarMap[o.login] || null} />
                   <span className={styles.opponentName}>{o.name}</span>
                   <span className={styles.winrate}>{t('profile.winrate', { pct: o.winrate })}</span>
                 </div>
@@ -331,7 +334,7 @@ export default function Profil() {
               )}
               {feared.map(o => (
                 <div key={o.login} className={styles.opponentRow}>
-                  <Avatar initials={o.name} size={28} bg="var(--red-pale)" />
+                  <Avatar initials={o.name} size={28} bg="var(--red-pale)" round src={avatarMap[o.login] || null} />
                   <span className={styles.opponentName}>{o.name}</span>
                   <span className={styles.lossrate}>{t('profile.lossrate', { pct: o.lossrate })}</span>
                 </div>
