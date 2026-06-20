@@ -316,6 +316,56 @@ class OnlineUsersView(APIView):
         return Response(list(online_users))
 
 
+class MyStatsCardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Q, Max, Count
+        from django.db.models.functions import TruncMonth
+        from matches.models import Match
+        from matches.models_ranking import RankingHistory
+        from stats.models import Stats
+
+        user = request.user
+        try:
+            stats = Stats.objects.get(user=user)
+        except Stats.DoesNotExist:
+            stats = None
+
+        best_elo = RankingHistory.objects.filter(
+            user=user, mode='SOLO'
+        ).aggregate(m=Max('score_after'))['m'] or (stats.elo_solo if stats else 0)
+
+        total_matches = stats.total_matches if stats else 0
+        best_streak   = stats.series_wins   if stats else 0
+
+        wins_by_month = (
+            Match.objects.filter(
+                Q(player1=user, winner='player1_side') | Q(player2=user, winner='player2_side'),
+                status='VALIDATED',
+            )
+            .annotate(month=TruncMonth('played_at'))
+            .values('month')
+            .annotate(cnt=Count('id'))
+            .order_by('-cnt')
+            .first()
+        )
+        FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
+        best_month = '—'
+        if wins_by_month and wins_by_month['month']:
+            m = wins_by_month['month']
+            best_month = f"{FR_MONTHS[m.month - 1]}. {m.year}"
+
+        return Response({
+            'login':         user.username,
+            'best_elo':      best_elo,
+            'total_matches': total_matches,
+            'best_streak':   best_streak,
+            'max_tokens':    user.wallet_tokens or 0,
+            'best_month':    best_month,
+        })
+
+
 class FriendAddNotifyView(APIView):
     permission_classes = [IsAuthenticated]
 

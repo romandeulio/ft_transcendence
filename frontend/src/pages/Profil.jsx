@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { authFetch, matchToRow } from '../services/api'
 import { getFriends, addFriend, removeFriend } from '../services/friends'
 import ComparisonBarChart from '../components/ui/ComparisonBarChart'
+import StatsCardModal from '../components/ui/StatsCardModal'
 import styles from './Profil.module.css'
 
 async function uploadAvatar(file, user, login) {
@@ -222,6 +223,7 @@ export default function Profil() {
   const [matchPage,   setMatchPage]   = useState(0)
   const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
   const [photoError,       setPhotoError]       = useState(null)
+  const [statsCardOpen,    setStatsCardOpen]    = useState(false)
 
   const handlePlanMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
     setMatchError(null)
@@ -413,9 +415,9 @@ export default function Profil() {
             <div className={styles.eloDelta}>ELO</div>
             <button
               className={styles.logoutBtn}
-              onClick={() => { logout(); navigate('/login', { replace: true }) }}
+              onClick={() => setStatsCardOpen(true)}
             >
-              {t('profile.logout')}
+              My Stats Card
             </button>
           </div>
         </div>
@@ -657,6 +659,8 @@ export default function Profil() {
           <button onClick={() => setMatchError(null)} style={{ background:'none', border:'none', color:'#fff', cursor:'pointer', fontSize:18, lineHeight:1, padding:0, opacity:0.8 }}>×</button>
         </div>
       )}
+
+      {statsCardOpen && <StatsCardModal onClose={() => setStatsCardOpen(false)} />}
     </Shell>
   )
 }
