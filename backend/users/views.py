@@ -308,6 +308,14 @@ class UserListView(APIView):
             users = users.values('username', 'avatar_url')
         return Response([{'login': u['username'], 'name': u['username'], 'avatar_url': u['avatar_url']} for u in users])
 
+class OnlineUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from realtime.state import online_users
+        return Response(list(online_users))
+
+
 class AvatarUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser, FormParser]
