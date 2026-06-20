@@ -213,8 +213,9 @@ export default function Profil() {
   const friendTotalPages = Math.ceil(filteredFriends.length / FRIENDS_PER_PAGE)
   const friendSlice = filteredFriends.slice(friendPage * FRIENDS_PER_PAGE, (friendPage + 1) * FRIENDS_PER_PAGE)
 
-  const [newPartner,  setNewPartner]  = useState('')
-  const [matchSearch, setMatchSearch] = useState('')
+  const [newPartner,    setNewPartner]   = useState('')
+  const [matchSearch,   setMatchSearch]  = useState('')
+  const [matchFilters,  setMatchFilters] = useState({ wins: false, losses: false, low: false })
   const [matchPage,   setMatchPage]   = useState(0)
   const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
   const [photoError,       setPhotoError]       = useState(null)
@@ -296,9 +297,16 @@ export default function Profil() {
     }
   }
 
-  const filteredMatches = recentMatches.filter(m =>
-    m.vs.toLowerCase().includes(matchSearch.toLowerCase())
-  )
+  const filteredMatches = recentMatches.filter(m => {
+    if (matchSearch && !m.vs.toLowerCase().includes(matchSearch.toLowerCase())) return false
+    if (matchFilters.wins   && m.result !== 'Victoire')  return false
+    if (matchFilters.losses && m.result !== 'Défaite')   return false
+    if (matchFilters.low) {
+      const myScore = parseInt(m.score.split('-')[0], 10)
+      if (isNaN(myScore) || myScore >= 5) return false
+    }
+    return true
+  })
   const totalMatchPages = Math.ceil(filteredMatches.length / MATCHES_PER_PAGE)
   const matchSlice = filteredMatches.slice(matchPage * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE + MATCHES_PER_PAGE)
 
@@ -532,6 +540,23 @@ export default function Profil() {
                   value={matchSearch}
                   onChange={e => { setMatchSearch(e.target.value); setMatchPage(0) }}
                 />
+                <div className={styles.matchFilters}>
+                  {[
+                    { key: 'wins',   label: 'Victoires' },
+                    { key: 'losses', label: 'Défaites' },
+                    { key: 'low',    label: '< 5 pts marqués' },
+                  ].map(f => (
+                    <label key={f.key} className={`${styles.filterChip} ${matchFilters[f.key] ? styles.filterChipOn : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={matchFilters[f.key]}
+                        onChange={() => { setMatchFilters(p => ({ ...p, [f.key]: !p[f.key] })); setMatchPage(0) }}
+                        style={{ display: 'none' }}
+                      />
+                      {f.label}
+                    </label>
+                  ))}
+                </div>
               </div>
               {matchSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>

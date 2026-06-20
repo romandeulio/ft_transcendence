@@ -589,6 +589,37 @@
 
 .matchSearch {
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matchFilters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  color: var(--ink3);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.filterChip:hover { background: var(--beige); color: var(--ink2); }
+
+.filterChipOn {
+  background: var(--primary, #001A57);
+  color: #fff;
+  border-color: var(--primary, #001A57);
 }
 
 .searchInput {
