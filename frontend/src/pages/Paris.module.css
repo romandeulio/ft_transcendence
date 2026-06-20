@@ -53,10 +53,10 @@
 }
 
 .cardHeader {
-  font-family: var(--font-title);
   font-weight: 700;
   padding: 12px 16px;
   border-bottom: 1px solid var(--beige);
+  background: var(--bg2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,7 +71,7 @@
 }
 
 .cardTitle {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink);
   text-transform: uppercase;
@@ -102,8 +102,13 @@
 .addBetBtnTop:hover { opacity: 0.88; }
 
 .cardBody {
-  padding: 0 16px 12px;
+  padding: 16px;
   flex: 1;
+}
+
+.emptyBets {
+  font-size: 13px;
+  color: var(--ink3);
 }
 
 /* ── Bloc par pari ── */

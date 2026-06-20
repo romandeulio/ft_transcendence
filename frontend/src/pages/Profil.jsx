@@ -270,7 +270,7 @@ export default function Profil() {
           <StatCard color="var(--orange-pale)" label={t('profile.ratio')}         value={stats.wins + stats.losses > 0 ? `${Math.round(stats.wins / (stats.wins + stats.losses) * 100)}%` : '—'} sub={t('profile.winLoss')} />
           <StatCard color="var(--yellow-pale)" label={t('profile.streak')}        value={stats.streak ?? '—'} sub={t('profile.streakSub')} />
           <StatCard color="var(--green-pale)"  label={t('profile.tokensWon')}     value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
-          <StatCard color="var(--red-pale)"    label={t('profile.losses')}        value={stats.losses || '—'} sub={t('profile.lossesSub')} />
+          <StatCard color="var(--red-pale)"    label={t('profile.gamelles')}      value={stats.gamelles ?? '—'} sub={t('profile.gamellesSub')} />
           <StatCard color="var(--beige)"       label={t('profile.gamesPerMonth')} value={stats.gamesPerMonth ?? '—'} sub={t('profile.gamesPerMonthSub')} />
         </div>
 
