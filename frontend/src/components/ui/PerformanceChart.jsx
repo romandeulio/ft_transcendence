@@ -190,8 +190,8 @@ export default function PerformanceChart() {
         if (xAxis === 'matches') {
           const byPeriod = {}
           for (const row of data) byPeriod[row.period] = row
-          // Use total rows from backend — backend returns exactly one row per actual match
-          setChartData(Array.from({ length: data.length }, (_, i) => {
+          // Always 30 slots on X-axis; curve stops naturally at actual match count
+          setChartData(Array.from({ length: 30 }, (_, i) => {
             const p = String(i + 1)
             return byPeriod[p] ?? { period: p }
           }))
