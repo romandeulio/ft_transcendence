@@ -97,31 +97,11 @@ class PerformanceHistoryView(APIView):
             qs = qs.filter(recorded_at__date__lte=date_to)
 
         if x == 'matches':
-            from matches.models import Match
-            match_qs = (
-                Match.objects.filter(status='VALIDATED')
-                .filter(Q(player1__username=login) | Q(player2__username=login))
-                .order_by('played_at')
-            )
-            if date_from:
-                match_qs = match_qs.filter(played_at__date__gte=date_from)
-            if date_to:
-                match_qs = match_qs.filter(played_at__date__lte=date_to)
             if limit:
-                match_list = list(match_qs.order_by('-played_at').values('id')[:limit])[::-1]
+                entries = list(qs.order_by('-recorded_at')[:limit])[::-1]
             else:
-                match_list = list(match_qs.values('id'))
-            match_ids = [m['id'] for m in match_list]
-            rh_map = {
-                rh['match_id']: rh['score_after']
-                for rh in RankingHistory.objects.filter(
-                    user__username=login,
-                    mode='SOLO',
-                    scope='global',
-                    match_id__in=match_ids,
-                ).values('match_id', 'score_after')
-            }
-            return {i + 1: rh_map.get(m['id']) for i, m in enumerate(match_list)}
+                entries = list(qs)
+            return {i + 1: e.score_after for i, e in enumerate(entries)}
 
         if x == 'days':
             entries = (
