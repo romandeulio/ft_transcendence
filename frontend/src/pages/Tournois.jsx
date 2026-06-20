@@ -87,13 +87,14 @@ export default function Tournois() {
   const [editError,      setEditError]      = useState('')
 
   // ── Inscription modal ──
-  const [registerOpen,  setRegisterOpen]  = useState(false)
-  const [registered,    setRegistered]    = useState(false)
-  const [partner,       setPartner]       = useState('')
-  const [registerError, setRegisterError] = useState('')
-  const [registerLoading, setRegisterLoading] = useState(false)
-  const [showRecruit,   setShowRecruit]   = useState(false)
-  const [invitedSet,    setInvitedSet]    = useState(new Set())
+  const [registerOpen,      setRegisterOpen]      = useState(false)
+  const [registered,        setRegistered]        = useState(false)
+  const [myRegistrationId,  setMyRegistrationId]  = useState(null)
+  const [partner,           setPartner]           = useState('')
+  const [registerError,     setRegisterError]     = useState('')
+  const [registerLoading,   setRegisterLoading]   = useState(false)
+  const [showRecruit,       setShowRecruit]       = useState(false)
+  const [invitedSet,        setInvitedSet]        = useState(new Set())
 
   // ── Données backend ──
   const [tournament,  setTournament]  = useState(null)
@@ -143,9 +144,20 @@ export default function Tournois() {
     const data = await res.json()
     if (data) {
       setRegistered(true)
+      setMyRegistrationId(data.id)
       if (!data.player2) setShowRecruit(true)
     }
   }, [])
+
+  const handleSelfUnregister = async () => {
+    if (!tournament || !myRegistrationId) return
+    const res = await authFetch(`/api/tournaments/${tournament.id}/my-registration/`, { method: 'DELETE' })
+    if (res.ok) {
+      setRegistered(false)
+      setMyRegistrationId(null)
+      setShowRecruit(false)
+    }
+  }
 
   const fetchBracket = useCallback(async (id) => {
     const res = await authFetch(`/api/tournaments/${id}/bracket/`)
@@ -539,6 +551,15 @@ export default function Tournois() {
             <span>{t('tournaments.notRegistered')}</span>
             <button className={styles.registerBtn} onClick={() => setRegisterOpen(true)}>
               {t('tournaments.register')}
+            </button>
+          </div>
+        )}
+
+        {tournament?.status === 'OPEN' && registered && (
+          <div className={styles.registerBanner}>
+            <span>Tu es inscrit au tournoi.</span>
+            <button className={styles.unregisterBtn} onClick={handleSelfUnregister}>
+              Se désinscrire
             </button>
           </div>
         )}
