@@ -7,8 +7,10 @@ import Card from '../components/ui/Card'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
 import LoginInput from '../components/ui/LoginInput'
+import AddMatchModal from '../components/ui/AddMatchModal'
 import { getPlayerBadge } from '../utils/playerBadge'
 import { useAuth } from '../context/AuthContext'
+import { useQueue } from '../context/QueueContext'
 import { useTranslation } from 'react-i18next'
 import { authFetch, matchToRow } from '../services/api'
 import ComparisonBarChart from '../components/ui/ComparisonBarChart'
@@ -32,6 +34,11 @@ export default function Profil() {
   const { user, logout, login } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { queue, completedGameIds, sendInvite, joinQueue } = useQueue()
+
+  const [joinOpen,         setJoinOpen]         = useState(false)
+  const [initialOpponent,  setInitialOpponent]   = useState(null)
+  const [matchError,       setMatchError]        = useState(null)
 
   const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0, gamesPerMonth: null, streak: null })
   const [teammates_,    setTeammates]    = useState(() => {
@@ -152,6 +159,71 @@ export default function Profil() {
   const [matchPage,   setMatchPage]   = useState(0)
   const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
   const [photoError,       setPhotoError]       = useState(null)
+
+  const handlePlanMatch = async ({ mode, format, redPlayers, bluePlayers, takeWin }) => {
+    setMatchError(null)
+    const matchType = format === '2v2' ? 'TEAM' : 'SOLO'
+    const isRanked  = mode === 'compet'
+    const userOnBlue = takeWin ? bluePlayers[0] === user?.username : true
+    const body = {
+      match_type:       matchType,
+      is_ranked:        isRanked,
+      player1:          takeWin ? (userOnBlue ? user?.username : null) : (bluePlayers[0] || user?.username),
+      player2:          takeWin ? (userOnBlue ? null : user?.username) : (redPlayers[0] || null),
+      ...(matchType === 'TEAM' ? {
+        player1_teammate: takeWin ? (userOnBlue ? (bluePlayers[1] || null) : null) : (bluePlayers[1] || null),
+        player2_teammate: takeWin ? (userOnBlue ? null : (redPlayers[1] || null)) : (redPlayers[1] || null),
+      } : {}),
+    }
+    const opponent = takeWin ? null : (
+      bluePlayers[0] === user?.username ? (redPlayers[0] || null) : (bluePlayers[0] || null)
+    )
+    const parentSlotId = takeWin
+      ? (queue.filter(s => s.match_type === matchType && !completedGameIds.has(s.id) && !completedGameIds.has(s._localId)).at(-1)?.id || null)
+      : null
+    const baseSlot = {
+      p1: user?.username, p2: opponent,
+      player1: body.player1, player2: body.player2 || null,
+      player1_teammate: body.player1_teammate || null,
+      player2_teammate: body.player2_teammate || null,
+      match_type: matchType, is_ranked: isRanked,
+      format: format === '2v2' ? '2v2' : '1v1',
+      takeWin: takeWin || false, createdAt: Date.now(),
+      ...(parentSlotId ? { parentSlotId } : {}),
+      ...(matchType === 'TEAM' ? {
+        team1: [body.player1, body.player1_teammate].filter(Boolean),
+        team2: [body.player2, body.player2_teammate].filter(Boolean),
+      } : {}),
+    }
+    if (opponent && !takeWin) {
+      const localSlot = { ...baseSlot, _localId: crypto.randomUUID() }
+      const inviteTargets = format === '2v2'
+        ? [...bluePlayers, ...redPlayers].filter(p => p && p !== user?.username)
+        : [opponent]
+      sendInvite(inviteTargets, localSlot)
+      setMatchError(t('invite.sent', { player: inviteTargets.join(', ') }))
+      return
+    }
+    if (takeWin && matchType === 'TEAM') {
+      const teammate = body.player1_teammate || body.player2_teammate
+      if (teammate) {
+        const localSlot = { ...baseSlot, _localId: crypto.randomUUID() }
+        sendInvite([teammate], localSlot)
+        setMatchError(t('invite.sent', { player: teammate }))
+        return
+      }
+    }
+    if (takeWin) { joinQueue(baseSlot); return }
+    const resv = await authFetch('/api/planning/reservation/', { method: 'POST', body: JSON.stringify(body) })
+    if (resv.ok) {
+      const resvData = await resv.json().catch(() => ({}))
+      setMatchError('✅ Table réservée ! À vous de jouer.')
+      joinQueue({ ...baseSlot, reservationId: resvData.id, type: 'live' })
+      return
+    }
+    const resvErr = await resv.json().catch(() => ({}))
+    setMatchError(Object.values(resvErr).flat().join(' ') || 'Erreur lors de la réservation.')
+  }
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -293,7 +365,7 @@ export default function Profil() {
                 <div key={tm.login} className={styles.teammateRow}>
                   <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
                   <span className={styles.teammateName}>{tm.name}</span>
-                  <button className={styles.planBtn}>{t('profile.planGame')}</button>
+                  <button className={styles.planBtn} onClick={() => { setInitialOpponent(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
                   <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
                 </div>
               ))}
@@ -401,6 +473,21 @@ export default function Profil() {
           </div>
         </div>
       </div>
+
+      <AddMatchModal
+        open={joinOpen}
+        onClose={() => { setJoinOpen(false); setMatchError(null); setInitialOpponent(null) }}
+        onConfirm={handlePlanMatch}
+        user={user}
+        initialOpponent={initialOpponent}
+      />
+
+      {matchError && (
+        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background: matchError.startsWith('✅') ? '#22aa55' : '#ff4444', color:'#fff', padding:'10px 20px', borderRadius:8, zIndex:9999, display:'flex', alignItems:'center', gap:12 }}>
+          <span>{matchError}</span>
+          <button onClick={() => setMatchError(null)} style={{ background:'none', border:'none', color:'#fff', cursor:'pointer', fontSize:18, lineHeight:1, padding:0, opacity:0.8 }}>×</button>
+        </div>
+      )}
     </Shell>
   )
 }
