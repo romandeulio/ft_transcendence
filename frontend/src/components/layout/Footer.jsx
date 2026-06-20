@@ -19,10 +19,10 @@ export default function Footer() {
 
           <div className={styles.column}>
             <div className={styles.colTitle}>{t('footer.services')}</div>
-            <span className={styles.link}>{t('footer.privacy')}</span>
+            <Link to="/privacy-policy" className={styles.link}>{t('footer.privacy')}</Link>
+            <Link to="/terms-of-service" className={styles.link}>{t('footer.rgpd')}</Link>
             <Link to="/ticket" className={styles.link}>{t('footer.ticket')}</Link>
             <Link to="/status" className={styles.link}>{t('footer.status')}</Link>
-            <span className={styles.link}>{t('footer.rgpd')}</span>
           </div>
 
         </div>

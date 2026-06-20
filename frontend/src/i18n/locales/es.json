@@ -457,5 +457,281 @@
     "loginLink": "Iniciar sesión",
     "passwordMismatch": "Las contraseñas no coinciden.",
     "networkError": "Error de red, inténtalo de nuevo."
+  },
+  "privacy": {
+    "title": "Política de privacidad",
+    "updated": "Última actualización: junio 2026",
+    "s1": {
+      "title": "1. ¿Quiénes somos?",
+      "body": "Babyfoot42 es una plataforma interna de la École 42 para gestionar el futbolín: planning, clasificación ELO por temporada, apuestas en fichas virtuales y torneos organizados por el BDE. Esta política describe qué datos se recogen, cómo se utilizan y cuáles son tus derechos."
+    },
+    "s2": {
+      "title": "2. Datos recopilados",
+      "items": [
+        "Cuenta — nombre de usuario (login 42 o elegido libremente), dirección de correo, contraseña hasheada y salada (PBKDF2).",
+        "Perfil — avatar (opcional), estado en línea.",
+        "Autenticación — ID OAuth 42 (si se inicia sesión mediante la intranet 42), secreto TOTP cifrado (si el 2FA está activado).",
+        "Actividad de juego — historial de partidas, puntuaciones, variaciones de ELO, estadísticas (victorias, derrotas, gamelles, demis).",
+        "Apuestas — apuestas realizadas, ganancias/pérdidas, saldo del monedero en fichas, historial de transacciones.",
+        "Planning — franjas reservadas, posiciones en la cola.",
+        "Torneos — inscripciones, resultados de partidas de torneo.",
+        "Registros técnicos — dirección IP, marcas de tiempo de conexión (conservación máxima de 30 días)."
+      ]
+    },
+    "s3": {
+      "title": "3. Finalidades del tratamiento",
+      "items": [
+        "Proporcionar las funcionalidades de la plataforma (clasificación, planning, apuestas, torneos).",
+        "Garantizar la seguridad de las cuentas (autenticación, 2FA, detección de abusos).",
+        "Calcular y mostrar la clasificación ELO en tiempo real.",
+        "Gestionar el monedero de fichas virtuales y las transacciones asociadas.",
+        "Moderar la plataforma (rol admin/BDE)."
+      ]
+    },
+    "s4": {
+      "title": "4. Base jurídica",
+      "body": "El tratamiento se basa en tu consentimiento al crear la cuenta y en el interés legítimo de la plataforma para su seguridad y correcto funcionamiento."
+    },
+    "s5": {
+      "title": "5. Almacenamiento y seguridad",
+      "items": [
+        "Los datos se almacenan en una base de datos PostgreSQL alojada localmente en los servidores de la École 42.",
+        "Las contraseñas nunca se almacenan en texto claro (PBKDF2 + sal).",
+        "Todas las comunicaciones están cifradas mediante HTTPS (TLS 1.2/1.3).",
+        "Se realizan copias de seguridad automáticas cada noche.",
+        "El acceso a la base de datos está restringido a los servicios internos."
+      ]
+    },
+    "s6": {
+      "title": "6. Compartición de datos",
+      "body": "Tus datos no se venden ni se transmiten a terceros. Solo el OAuth 42 implica un intercambio de información con la intranet 42 (login, correo) en el inicio de sesión inicial."
+    },
+    "s7": {
+      "title": "7. Tus derechos (RGPD)",
+      "items": [
+        "Acceso y exportación — exporta todos tus datos (perfil, partidas, apuestas, transacciones) en JSON o CSV desde tus ajustes.",
+        "Rectificación — modifica tu nombre de usuario y avatar desde tus ajustes.",
+        "Supresión — solicita la eliminación de tu cuenta desde tus ajustes. Tus datos personales serán anonimizados.",
+        "Oposición — desactiva el 2FA y revoca la conexión OAuth desde tus ajustes."
+      ]
+    },
+    "s8": {
+      "title": "8. Cookies",
+      "body": "La plataforma utiliza una única cookie de sesión JWT (HttpOnly, Secure, SameSite=Lax) estrictamente necesaria para la autenticación. No se utilizan cookies publicitarias ni de rastreo de terceros."
+    },
+    "s9": {
+      "title": "9. Contacto",
+      "body": "Para cualquier pregunta sobre tus datos, utiliza el formulario de ticket disponible en el pie de página o contacta al equipo a través de la intranet 42."
+    }
+  },
+  "terms": {
+    "title": "Términos de uso",
+    "updated": "Última actualización: junio 2026",
+    "s1": {
+      "title": "1. Objeto",
+      "body": "Las presentes condiciones rigen el uso de Babyfoot42, plataforma interna de la École 42 para la gestión de partidas de futbolín. Al crear una cuenta, aceptas estas condiciones en su totalidad."
+    },
+    "s2": {
+      "title": "2. Acceso a la plataforma",
+      "items": [
+        "La plataforma está reservada a estudiantes, exalumnos y personal de la École 42.",
+        "Cada persona solo puede tener una cuenta. La creación de cuentas múltiples está prohibida.",
+        "Eres responsable de la confidencialidad de tus credenciales.",
+        "La plataforma es accesible únicamente mediante HTTPS."
+      ]
+    },
+    "s3": {
+      "title": "3. Reglas de juego limpio",
+      "items": [
+        "Está prohibido apostar en tus propias partidas.",
+        "Cualquier intento de manipular los resultados, la clasificación o el sistema de apuestas está prohibido.",
+        "Los resultados de las partidas deben introducirse honestamente. El fraude puede conllevar una suspensión.",
+        "El respeto hacia los demás jugadores es obligatorio. Los comportamientos abusivos serán sancionados."
+      ]
+    },
+    "s4": {
+      "title": "4. Fichas virtuales y apuestas",
+      "items": [
+        "Las fichas son una moneda virtual sin valor monetario real. No pueden intercambiarse, venderse ni convertirse en dinero.",
+        "Cada nueva cuenta recibe un saldo inicial de fichas.",
+        "Se pueden ganar fichas adicionales ganando apuestas o terminando en lo alto de la clasificación al final de una temporada.",
+        "Las apuestas son definitivas una vez realizadas. Solo se reembolsan si un administrador cancela la partida."
+      ]
+    },
+    "s5": {
+      "title": "5. Clasificación y temporadas",
+      "items": [
+        "La clasificación se basa en el ELO calculado a partir de las partidas validadas.",
+        "Las temporadas son creadas y cerradas por los administradores. El cierre desencadena la distribución de recompensas y el reinicio del ELO.",
+        "Los historiales de temporadas pasadas se conservan y pueden consultarse."
+      ]
+    },
+    "s6": {
+      "title": "6. Planning y reservas",
+      "items": [
+        "Las franjas de reserva son limitadas para garantizar un acceso equitativo a todos.",
+        "Una reserva no cumplida puede conllevar una penalización (pérdida de posición en la cola).",
+        "La cola de espera se gestiona automáticamente y es visible para todos los usuarios conectados."
+      ]
+    },
+    "s7": {
+      "title": "7. Torneos",
+      "items": [
+        "Los torneos son organizados por el BDE (Bureau Des Élèves) de la École 42.",
+        "Inscribirse en un torneo compromete al participante a estar disponible para todos sus partidos.",
+        "Los resultados de las partidas de torneo son registrados por el organizador y no pueden ser modificados por los jugadores."
+      ]
+    },
+    "s8": {
+      "title": "8. Moderación y sanciones",
+      "items": [
+        "Los administradores pueden suspender temporalmente o banear definitivamente cualquier cuenta por incumplimiento de estas condiciones.",
+        "En caso de ban, el saldo de fichas y el historial se conservan pero la cuenta deja de ser accesible.",
+        "Cualquier reclamación puede presentarse a través del formulario de ticket."
+      ]
+    },
+    "s9": {
+      "title": "9. Disponibilidad del servicio",
+      "body": "La plataforma se ofrece tal cual, sin garantía de disponibilidad continua. Se pueden realizar mantenimientos sin previo aviso."
+    },
+    "s10": {
+      "title": "10. Modificación de las condiciones",
+      "body": "Estas condiciones pueden actualizarse en cualquier momento. Los usuarios son informados mediante una notificación en la aplicación en caso de cambios sustanciales."
+    },
+    "s11": {
+      "title": "11. Contacto",
+      "body": "Para cualquier pregunta o reclamación, utiliza el formulario de ticket en el pie de página o contacta al equipo a través de la intranet 42."
+    }
+  },
+  "ticket": {
+    "title": "Enviar un ticket",
+    "intro": "¿Algo no funciona? Descríbenos el problema y nos ocupamos.",
+    "login_label": "Login o nombre",
+    "login_placeholder": "Ej: ltcherep",
+    "desc_label": "Descripción del error",
+    "desc_placeholder": "Describe lo que observaste, los pasos para reproducir el problema y lo que esperabas...",
+    "pages_label": "Páginas afectadas",
+    "photos_label": "Adjuntar capturas de pantalla",
+    "drop_text": "Haz clic o arrastra tus imágenes aquí",
+    "drop_hint": "PNG, JPG, WebP — máx. 5 archivos",
+    "cancel": "Cancelar",
+    "sending": "Enviando…",
+    "submit": "Enviar ticket →",
+    "success_title": "¡Ticket enviado!",
+    "success_sub": "Gracias por tu comentario. El equipo lo revisará pronto.",
+    "back": "← Volver",
+    "err_server": "Error del servidor",
+    "err_network": "Error de red",
+    "pages": [
+      "Inicio",
+      "Clasificación",
+      "Apuestas",
+      "Cola",
+      "Torneos",
+      "Mi perfil",
+      "Ajustes",
+      "Admin"
+    ]
+  },
+  "status": {
+    "title": "Estado",
+    "loading": "Cargando..."
+  },
+  "admin": {
+    "title": "Administración",
+    "subtitle": "Acceso reservado a administradores",
+    "back": "← Volver",
+    "login_label": "Usuario",
+    "password_label": "Contraseña",
+    "show_pwd": "Ver contraseña",
+    "hide_pwd": "Ocultar contraseña",
+    "err_credentials": "Usuario o contraseña incorrectos.",
+    "err_server": "No se puede contactar con el servidor.",
+    "signing_in": "Conectando...",
+    "sign_in": "Iniciar sesión",
+    "logged_as": "Conectado como administrador",
+    "logout": "Cerrar sesión",
+    "status_server": "Estado del servidor",
+    "loading": "Cargando...",
+    "loading_stats": "Cargando estadísticas...",
+    "stat_players": "Jugadores activos",
+    "stat_matches": "Partidas jugadas",
+    "stat_tournaments": "Torneos",
+    "stat_season": "Temporada activa",
+    "matches_title": "Partidas recientes",
+    "matches_empty": "No hay partidas recientes.",
+    "col_players": "Jugadores",
+    "col_score": "Marcador",
+    "col_mode": "Modo",
+    "col_date": "Fecha",
+    "pill_ranked": "Clasificada",
+    "pill_free": "Libre",
+    "players_title": "Jugadores",
+    "players_empty": "No hay jugadores registrados.",
+    "players_search": "Buscar un jugador...",
+    "col_login": "Login",
+    "col_elo1v1": "ELO 1v1",
+    "col_elo2v2": "ELO 2v2",
+    "col_status": "Estado",
+    "col_actions": "Acciones",
+    "status_ban_perm": "Ban def.",
+    "status_ban_temp": "Ban temp.",
+    "status_active": "Activo",
+    "status_inactive": "Inactivo",
+    "btn_elo": "ELO",
+    "btn_unban": "Desbanear",
+    "btn_ban": "Banear",
+    "tournaments_title": "Torneos",
+    "tournaments_empty": "No hay torneos.",
+    "col_name": "Nombre",
+    "col_spots": "Plazas",
+    "status_open": "Abierto",
+    "status_ongoing": "En curso",
+    "status_cancelled": "Cancelado",
+    "status_finished": "Finalizado",
+    "btn_cancel_tourn": "Cancelar",
+    "confirm_cancel_tourn": "¿Cancelar el torneo \"{{name}}\"?",
+    "quick_title": "Acciones rápidas",
+    "btn_create_tourn": "🏆 Crear torneo",
+    "seasons_title": "Temporadas",
+    "btn_add_season": "+ Temporada",
+    "season_name_label": "Nombre",
+    "season_start_label": "Inicio",
+    "season_end_label": "Fin",
+    "season_name_ph": "Temporada 4 - Verano",
+    "btn_cancel": "Cancelar",
+    "btn_create": "Crear",
+    "season_current": "Temporada en curso",
+    "btn_end_season": "Finalizar",
+    "no_active_season": "No hay temporada activa.",
+    "btn_activate": "Activar",
+    "modal_create_title": "Crear torneo",
+    "modal_tourn_name": "Nombre del torneo",
+    "modal_tourn_name_ph": "Ej: Torneo del jueves #5",
+    "modal_tourn_date": "Fecha y hora",
+    "modal_tourn_deadline": "Límite de inscripción",
+    "modal_tourn_max": "Número máximo de jugadores",
+    "modal_tourn_players": "{{n}} jugadores",
+    "modal_tourn_cancel": "Cancelar",
+    "modal_tourn_submit": "Crear torneo",
+    "modal_tourn_err": "Error",
+    "modal_tourn_success": "Torneo creado",
+    "modal_tourn_close": "Cerrar",
+    "modal_ban_title": "Banear a {{username}}",
+    "modal_ban_type": "Tipo de ban",
+    "modal_ban_temp": "Temporal",
+    "modal_ban_perm": "Definitivo",
+    "modal_ban_duration": "Duración (en horas)",
+    "modal_ban_warning": "El jugador ya no podrá conectarse.",
+    "modal_ban_cancel": "Cancelar",
+    "modal_ban_doing": "Baneando...",
+    "modal_ban_confirm": "Confirmar ban",
+    "day_abbr": "d",
+    "modal_elo_title": "Editar ELO — {{username}}",
+    "modal_elo_solo": "ELO Solo (1v1)",
+    "modal_elo_team": "ELO Equipo (2v2)",
+    "modal_elo_cancel": "Cancelar",
+    "modal_elo_saving": "Guardando...",
+    "modal_elo_save": "Guardar"
   }
 }

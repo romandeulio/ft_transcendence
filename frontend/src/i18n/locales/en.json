@@ -461,5 +461,281 @@
     "loginLink": "Log in",
     "passwordMismatch": "Passwords do not match.",
     "networkError": "Network error, please try again."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: June 2026",
+    "s1": {
+      "title": "1. Who are we?",
+      "body": "Babyfoot42 is an internal platform at École 42 for managing foosball: planning, seasonal ELO rankings, virtual token betting, and BDE-organized tournaments. This policy describes what data is collected, how it is used, and what your rights are."
+    },
+    "s2": {
+      "title": "2. Data collected",
+      "items": [
+        "Account — username (42 login or chosen freely), email address, hashed and salted password (PBKDF2).",
+        "Profile — avatar (optional), online status.",
+        "Authentication — 42 OAuth ID (if logging in via the 42 intranet), encrypted TOTP secret (if 2FA is enabled).",
+        "Game activity — match history, scores, ELO changes, statistics (wins, losses, gamelles, demis).",
+        "Betting — bets placed, winnings/losses, token wallet balance, transaction history.",
+        "Planning — reserved slots, queue positions.",
+        "Tournaments — registrations, tournament match results.",
+        "Technical logs — IP address, login timestamps (retained for 30 days maximum)."
+      ]
+    },
+    "s3": {
+      "title": "3. Purposes",
+      "items": [
+        "Provide the platform features (ranking, planning, betting, tournaments).",
+        "Ensure account security (authentication, 2FA, abuse detection).",
+        "Calculate and display the ELO ranking in real time.",
+        "Manage the virtual token wallet and associated transactions.",
+        "Moderate the platform (admin/BDE role)."
+      ]
+    },
+    "s4": {
+      "title": "4. Legal basis",
+      "body": "Processing is based on your consent at account creation and on the platform's legitimate interest in security and proper service operation."
+    },
+    "s5": {
+      "title": "5. Storage and security",
+      "items": [
+        "Data is stored in a PostgreSQL database hosted locally on École 42 servers.",
+        "Passwords are never stored in plain text (PBKDF2 + salt).",
+        "All communications are encrypted via HTTPS (TLS 1.2/1.3).",
+        "Automatic backups are performed every night.",
+        "Database access is restricted to internal services only."
+      ]
+    },
+    "s6": {
+      "title": "6. Data sharing",
+      "body": "Your data is never sold or shared with third parties. Only the 42 OAuth flow involves exchanging information with the 42 intranet (login, email) at initial sign-in."
+    },
+    "s7": {
+      "title": "7. Your rights (GDPR)",
+      "items": [
+        "Access and export — export all your data (profile, matches, bets, transactions) as JSON or CSV from your settings.",
+        "Rectification — change your username and avatar from your settings.",
+        "Deletion — request account deletion from your settings. Your personal data will be anonymised.",
+        "Opposition — disable 2FA and revoke OAuth login from your settings."
+      ]
+    },
+    "s8": {
+      "title": "8. Cookies",
+      "body": "The platform uses a single JWT session cookie (HttpOnly, Secure, SameSite=Lax) strictly necessary for authentication. No advertising or third-party tracking cookies are used."
+    },
+    "s9": {
+      "title": "9. Contact",
+      "body": "For any questions about your data, use the ticket form in the footer or contact the team via the 42 intranet."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "updated": "Last updated: June 2026",
+    "s1": {
+      "title": "1. Purpose",
+      "body": "These terms govern the use of Babyfoot42, an internal platform at École 42 for managing foosball. By creating an account, you agree to these terms in full."
+    },
+    "s2": {
+      "title": "2. Access to the platform",
+      "items": [
+        "The platform is reserved for students, alumni, and staff of École 42.",
+        "Each person may only have one account. Creating multiple accounts is prohibited.",
+        "You are responsible for keeping your credentials confidential.",
+        "The platform is accessible via HTTPS only."
+      ]
+    },
+    "s3": {
+      "title": "3. Fair play rules",
+      "items": [
+        "Betting on your own matches is prohibited.",
+        "Any attempt to manipulate results, the ranking, or the betting system is prohibited.",
+        "Match results must be entered honestly. Cheating may result in a suspension.",
+        "Respect for other players is mandatory. Abusive behaviour will be sanctioned."
+      ]
+    },
+    "s4": {
+      "title": "4. Virtual tokens and betting",
+      "items": [
+        "Tokens are a virtual currency with no real monetary value. They cannot be exchanged, sold, or converted into money.",
+        "Each new account receives an initial token balance.",
+        "Additional tokens can be earned by winning bets or finishing in the top of the leaderboard at the end of a season.",
+        "Bets are final once placed. Refunds are only issued if a match is cancelled by an administrator."
+      ]
+    },
+    "s5": {
+      "title": "5. Rankings and seasons",
+      "items": [
+        "The ranking is based on ELO calculated from validated matches.",
+        "Seasons are created and closed by administrators. Closing a season triggers reward distribution and an ELO reset.",
+        "Past season histories are preserved and viewable."
+      ]
+    },
+    "s6": {
+      "title": "6. Planning and reservations",
+      "items": [
+        "Reservation slots are limited to ensure fair access for everyone.",
+        "A no-show reservation may result in a penalty (loss of queue position).",
+        "The waiting queue is managed automatically and visible to all connected users."
+      ]
+    },
+    "s7": {
+      "title": "7. Tournaments",
+      "items": [
+        "Tournaments are organized by the BDE (student association) of École 42.",
+        "Registering for a tournament commits the participant to being available for all their matches.",
+        "Tournament match results are recorded by the organizer and cannot be modified by players."
+      ]
+    },
+    "s8": {
+      "title": "8. Moderation and sanctions",
+      "items": [
+        "Administrators may temporarily suspend or permanently ban any account for violation of these terms.",
+        "In case of a ban, the token balance and history are retained but the account is no longer accessible.",
+        "Any dispute may be submitted via the ticket form."
+      ]
+    },
+    "s9": {
+      "title": "9. Service availability",
+      "body": "The platform is provided as-is, without guarantee of continuous availability. Maintenance may be performed without notice."
+    },
+    "s10": {
+      "title": "10. Changes to terms",
+      "body": "These terms may be updated at any time. Users are notified via an in-app notification in case of substantial changes."
+    },
+    "s11": {
+      "title": "11. Contact",
+      "body": "For any questions or complaints, use the ticket form in the footer or contact the team via the 42 intranet."
+    }
+  },
+  "ticket": {
+    "title": "Submit a ticket",
+    "intro": "Something not working? Describe the problem and we'll take care of it.",
+    "login_label": "Login or name",
+    "login_placeholder": "e.g. ltcherep",
+    "desc_label": "Bug description",
+    "desc_placeholder": "Describe what you observed, the steps to reproduce the issue, and what you expected to happen...",
+    "pages_label": "Affected pages",
+    "photos_label": "Attach screenshots",
+    "drop_text": "Click or drag your images here",
+    "drop_hint": "PNG, JPG, WebP — max 5 files",
+    "cancel": "Cancel",
+    "sending": "Sending…",
+    "submit": "Send ticket →",
+    "success_title": "Ticket sent!",
+    "success_sub": "Thanks for your feedback. The team will look into it shortly.",
+    "back": "← Back",
+    "err_server": "Server error",
+    "err_network": "Network error",
+    "pages": [
+      "Home",
+      "Ranking",
+      "Bets",
+      "Queue",
+      "Tournaments",
+      "My profile",
+      "Settings",
+      "Admin"
+    ]
+  },
+  "status": {
+    "title": "Status",
+    "loading": "Loading..."
+  },
+  "admin": {
+    "title": "Administration",
+    "subtitle": "Restricted to administrators",
+    "back": "← Back",
+    "login_label": "Username",
+    "password_label": "Password",
+    "show_pwd": "Show password",
+    "hide_pwd": "Hide password",
+    "err_credentials": "Incorrect username or password.",
+    "err_server": "Unable to reach the server.",
+    "signing_in": "Signing in...",
+    "sign_in": "Sign in",
+    "logged_as": "Logged in as admin",
+    "logout": "Sign out",
+    "status_server": "Server status",
+    "loading": "Loading...",
+    "loading_stats": "Loading statistics...",
+    "stat_players": "Active players",
+    "stat_matches": "Matches played",
+    "stat_tournaments": "Tournaments",
+    "stat_season": "Active season",
+    "matches_title": "Recent matches",
+    "matches_empty": "No recent matches.",
+    "col_players": "Players",
+    "col_score": "Score",
+    "col_mode": "Mode",
+    "col_date": "Date",
+    "pill_ranked": "Ranked",
+    "pill_free": "Free",
+    "players_title": "Players",
+    "players_empty": "No registered players.",
+    "players_search": "Search a player...",
+    "col_login": "Login",
+    "col_elo1v1": "ELO 1v1",
+    "col_elo2v2": "ELO 2v2",
+    "col_status": "Status",
+    "col_actions": "Actions",
+    "status_ban_perm": "Perm. ban",
+    "status_ban_temp": "Temp. ban",
+    "status_active": "Active",
+    "status_inactive": "Inactive",
+    "btn_elo": "ELO",
+    "btn_unban": "Unban",
+    "btn_ban": "Ban",
+    "tournaments_title": "Tournaments",
+    "tournaments_empty": "No tournaments.",
+    "col_name": "Name",
+    "col_spots": "Spots",
+    "status_open": "Open",
+    "status_ongoing": "Ongoing",
+    "status_cancelled": "Cancelled",
+    "status_finished": "Finished",
+    "btn_cancel_tourn": "Cancel",
+    "confirm_cancel_tourn": "Cancel tournament \"{{name}}\"?",
+    "quick_title": "Quick actions",
+    "btn_create_tourn": "🏆 Create tournament",
+    "seasons_title": "Seasons",
+    "btn_add_season": "+ Season",
+    "season_name_label": "Name",
+    "season_start_label": "Start",
+    "season_end_label": "End",
+    "season_name_ph": "Season 4 - Summer",
+    "btn_cancel": "Cancel",
+    "btn_create": "Create",
+    "season_current": "Current season",
+    "btn_end_season": "End",
+    "no_active_season": "No active season.",
+    "btn_activate": "Activate",
+    "modal_create_title": "Create tournament",
+    "modal_tourn_name": "Tournament name",
+    "modal_tourn_name_ph": "e.g. Thursday Tournament #5",
+    "modal_tourn_date": "Date and time",
+    "modal_tourn_deadline": "Registration deadline",
+    "modal_tourn_max": "Maximum number of players",
+    "modal_tourn_players": "{{n}} players",
+    "modal_tourn_cancel": "Cancel",
+    "modal_tourn_submit": "Create tournament",
+    "modal_tourn_err": "Error",
+    "modal_tourn_success": "Tournament created",
+    "modal_tourn_close": "Close",
+    "modal_ban_title": "Ban {{username}}",
+    "modal_ban_type": "Ban type",
+    "modal_ban_temp": "Temporary",
+    "modal_ban_perm": "Permanent",
+    "modal_ban_duration": "Duration (in hours)",
+    "modal_ban_warning": "The player will no longer be able to log in.",
+    "modal_ban_cancel": "Cancel",
+    "modal_ban_doing": "Banning...",
+    "modal_ban_confirm": "Confirm ban",
+    "day_abbr": "d",
+    "modal_elo_title": "Edit ELO — {{username}}",
+    "modal_elo_solo": "ELO Solo (1v1)",
+    "modal_elo_team": "ELO Team (2v2)",
+    "modal_elo_cancel": "Cancel",
+    "modal_elo_saving": "Saving...",
+    "modal_elo_save": "Save"
   }
 }
