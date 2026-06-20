@@ -190,9 +190,11 @@ export default function PerformanceChart() {
         if (xAxis === 'matches') {
           const byPeriod = {}
           for (const row of data) byPeriod[row.period] = row
-          const maxPeriod = data.length > 0
-            ? Math.max(...data.map(r => parseInt(r.period)))
-            : 0
+          // Only count periods where at least one selected player has actual data
+          const filledPeriods = data
+            .filter(r => selected.some(p => r[p.login] !== undefined && r[p.login] !== null))
+            .map(r => parseInt(r.period))
+          const maxPeriod = filledPeriods.length > 0 ? Math.max(...filledPeriods) : 0
           setChartData(Array.from({ length: maxPeriod }, (_, i) => {
             const p = String(i + 1)
             return byPeriod[p] ?? { period: p }
@@ -406,9 +408,10 @@ export default function PerformanceChart() {
           <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="period"
-              ticks={fixedTicks}
+              ticks={xAxis === 'fixed' ? fixedTicks : undefined}
               tick={xAxis === 'fixed' ? renderFixedTick : { fontSize: 10 }}
-              interval={xAxis === 'fixed' ? 0 : 'preserveStartEnd'}
+              interval={xAxis === 'fixed' ? 0 : xAxis === 'matches' ? 'preserveStartEnd' : 'preserveStartEnd'}
+              allowDataOverflow={false}
             />
             <YAxis
               tick={{ fontSize: 11 }}
