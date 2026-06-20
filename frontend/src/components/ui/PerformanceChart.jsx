@@ -190,12 +190,8 @@ export default function PerformanceChart() {
         if (xAxis === 'matches') {
           const byPeriod = {}
           for (const row of data) byPeriod[row.period] = row
-          // Only count periods where at least one selected player has actual data
-          const filledPeriods = data
-            .filter(r => selected.some(p => r[p.login] !== undefined && r[p.login] !== null))
-            .map(r => parseInt(r.period))
-          const maxPeriod = filledPeriods.length > 0 ? Math.max(...filledPeriods) : 0
-          setChartData(Array.from({ length: maxPeriod }, (_, i) => {
+          // Use total rows from backend — backend returns exactly one row per actual match
+          setChartData(Array.from({ length: data.length }, (_, i) => {
             const p = String(i + 1)
             return byPeriod[p] ?? { period: p }
           }))
