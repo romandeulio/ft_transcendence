@@ -333,8 +333,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
                     </div>
                     <div className={styles.lockedPlayer}>
                       <span>{initialTeammate}</span>
-                      <span className={styles.lockedPlayerTag}>{t('addMatch.teammate') || 'Coéquipier'}</span>
-                    </div>
+                      </div>
                   </>
                 ) : (
                   Array.from({ length: 2 }).map((_, i) => (
@@ -420,7 +419,6 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
                   </div>
                   <div className={styles.lockedPlayer}>
                     <span>{initialTeammate}</span>
-                    <span className={styles.lockedPlayerTag}>{t('addMatch.teammate') || 'Coéquipier'}</span>
                   </div>
                 </>
               ) : initialTeammate && myColor === 'red' ? (
