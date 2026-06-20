@@ -339,17 +339,115 @@ function EditEloModal({ player, onClose, onSaved }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Modal modification de rôle  [NOUVEAU]                             */
+/* ------------------------------------------------------------------ */
+const ROLES = ['user', 'stud', 'bde', 'piscineux', 'alumni', 'bocalien']
+
+function EditRoleModal({ player, onClose, onSaved }) {
+  const [role,   setRole]   = useState(player.role ?? 'user')
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError('')
+    const res = await adm(`/api/admin/players/${player.id}/role/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      onSaved?.()
+      onClose()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setError(d.error || 'Erreur lors de la mise à jour du rôle.')
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTitle}>Modifier le rôle — {player.username}</div>
+        <div className={styles.modalField}>
+          <label className={styles.modalLabel}>Rôle</label>
+          <select className={styles.modalInput} value={role} onChange={e => setRole(e.target.value)}>
+            {ROLES.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+        {error && <div className={styles.error}>{error}</div>}
+        <div className={styles.modalActions}>
+          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button className={styles.modalOkBtn} onClick={handleSave} disabled={saving}>
+            {saving ? 'Sauvegarde...' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Modal confirmation suppression  [NOUVEAU]                         */
+/* ------------------------------------------------------------------ */
+function DeleteUserModal({ player, onClose, onDeleted }) {
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
+
+  const handleDelete = async () => {
+    setSaving(true)
+    setError('')
+    const res = await adm(`/api/admin/players/${player.id}/delete/`, { method: 'DELETE' })
+    setSaving(false)
+    if (res.ok || res.status === 204) {
+      onDeleted?.()
+      onClose()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setError(d.error || 'Impossible de supprimer cet utilisateur.')
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTitle}>Supprimer {player.username}</div>
+        <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 600, margin: '8px 0 16px' }}>
+          Cette action est irréversible. Toutes les données du joueur seront supprimées.
+        </div>
+        {error && <div className={styles.error}>{error}</div>}
+        <div className={styles.modalActions}>
+          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button
+            className={styles.modalOkBtn}
+            onClick={handleDelete}
+            disabled={saving}
+            style={{ background: '#c0392b', color: '#fff' }}
+          >
+            {saving ? 'Suppression...' : 'Supprimer définitivement'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Dashboard principal                                                */
 /* ------------------------------------------------------------------ */
 function Dashboard({ onLogout }) {
-  const [createOpen,    setCreateOpen]    = useState(false)
-  const [editEloPlayer, setEditEloPlayer] = useState(null)
-  const [banPlayer,     setBanPlayer]     = useState(null)
-  const [playerSearch,  setPlayerSearch]  = useState('')
-  const [stats,         setStats]         = useState(null)
-  const [recentMatches, setRecentMatches] = useState([])
-  const [players,       setPlayers]       = useState([])
-  const [tournaments,   setTournaments]   = useState([])
+  const [createOpen,      setCreateOpen]      = useState(false)
+  const [editEloPlayer,   setEditEloPlayer]   = useState(null)
+  const [editRolePlayer,  setEditRolePlayer]  = useState(null)   // [NOUVEAU]
+  const [deletePlayer,    setDeletePlayer]    = useState(null)   // [NOUVEAU]
+  const [banPlayer,       setBanPlayer]       = useState(null)
+  const [playerSearch,    setPlayerSearch]    = useState('')
+  const [stats,           setStats]           = useState(null)
+  const [recentMatches,   setRecentMatches]   = useState([])
+  const [players,         setPlayers]         = useState([])
+  const [tournaments,     setTournaments]     = useState([])
 
   const loadAll = () => {
     adm('/api/admin/stats/').then(r => r.json()).then(setStats).catch(() => {})
@@ -399,9 +497,11 @@ function Dashboard({ onLogout }) {
 
   return (
     <div className={styles.dashboard}>
-      {createOpen && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={loadAll} />}
-      {editEloPlayer && <EditEloModal player={editEloPlayer} onClose={() => setEditEloPlayer(null)} onSaved={handleEloSaved} />}
-      {banPlayer && <BanModal player={banPlayer} onClose={() => setBanPlayer(null)} onBanned={loadAll} />}
+      {createOpen     && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={loadAll} />}
+      {editEloPlayer  && <EditEloModal  player={editEloPlayer}  onClose={() => setEditEloPlayer(null)}  onSaved={handleEloSaved} />}
+      {editRolePlayer && <EditRoleModal player={editRolePlayer} onClose={() => setEditRolePlayer(null)} onSaved={loadAll} />}
+      {deletePlayer   && <DeleteUserModal player={deletePlayer} onClose={() => setDeletePlayer(null)}   onDeleted={loadAll} />}
+      {banPlayer      && <BanModal       player={banPlayer}     onClose={() => setBanPlayer(null)}      onBanned={loadAll} />}
 
       <header className={styles.dashHeader}>
         <div className={styles.dashTitle}>Administration</div>
@@ -486,7 +586,8 @@ function Dashboard({ onLogout }) {
               ) : (
                 <table className={styles.table}>
                   <thead>
-                    <tr><th>Login</th><th>ELO 1v1</th><th>ELO 2v2</th><th>Statut</th><th>Actions</th></tr>
+                    {/* Ajout des colonnes Rôle et suppression [NOUVEAU] */}
+                    <tr><th>Login</th><th>ELO 1v1</th><th>ELO 2v2</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {players.filter(p => {
@@ -503,6 +604,12 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td className={styles.tdScore}>{p.elo_solo}</td>
                         <td className={styles.tdScore}>{p.elo_team}</td>
+                        {/* Colonne rôle [NOUVEAU] */}
+                        <td>
+                          <span className={`${styles.pill} ${styles.pillChill}`} style={{ fontSize: 11 }}>
+                            {p.role ?? 'user'}
+                          </span>
+                        </td>
                         <td>
                           <span className={`${styles.pill} ${p.is_banned ? styles.pillInactif : p.is_active ? styles.pillActif : styles.pillInactif}`}>
                             {p.is_banned ? (p.ban_permanent ? 'Ban déf.' : 'Ban temp.') : p.is_active ? 'Actif' : 'Inactif'}
@@ -510,6 +617,8 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td className={styles.tdActions}>
                           <button className={styles.miniBtn} onClick={() => setEditEloPlayer(p)}>ELO</button>
+                          {/* Bouton rôle [NOUVEAU] */}
+                          <button className={styles.miniBtn} onClick={() => setEditRolePlayer(p)}>Rôle</button>
                           {p.is_banned ? (
                             <button className={styles.miniBtn} onClick={() => handleUnban(p)}>Débannir</button>
                           ) : (
@@ -518,6 +627,15 @@ function Dashboard({ onLogout }) {
                               onClick={() => setBanPlayer(p)}
                             >
                               Bannir
+                            </button>
+                          )}
+                          {/* Bouton supprimer [NOUVEAU] — masqué pour les admins */}
+                          {!p.is_staff && (
+                            <button
+                              className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
+                              onClick={() => setDeletePlayer(p)}
+                            >
+                              Suppr.
                             </button>
                           )}
                         </td>
