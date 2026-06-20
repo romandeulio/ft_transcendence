@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
@@ -216,6 +216,9 @@ export default function Profil() {
   const [newPartner,    setNewPartner]   = useState('')
   const [matchSearch,   setMatchSearch]  = useState('')
   const [matchFilters,  setMatchFilters] = useState({ wins: false, losses: false, low: false })
+  const [compareChecked, setCompareChecked] = useState([])
+  const [compareTarget,  setCompareTarget]  = useState(null)
+  const comparisonRef = useRef(null)
   const [matchPage,   setMatchPage]   = useState(0)
   const [photoUploadOpen,  setPhotoUploadOpen]  = useState(false)
   const [photoError,       setPhotoError]       = useState(null)
@@ -429,7 +432,23 @@ export default function Profil() {
           <div className={styles.leftCol}>
             <Card
               title={t('profile.favoriteTeammates')}
-              right={<span className={styles.counter}>{teammates_.length}</span>}
+              right={
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {compareChecked.length > 0 && (
+                    <button
+                      className={styles.compareBtn}
+                      onClick={() => {
+                        setCompareTarget(compareChecked.map(l => ({ login: l, display: l })))
+                        setCompareChecked([])
+                        setTimeout(() => comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+                      }}
+                    >
+                      Comparer ({compareChecked.length})
+                    </button>
+                  )}
+                  <span className={styles.counter}>{teammates_.length}</span>
+                </div>
+              }
             >
               {teammates_.length > 0 && (
                 <div className={styles.friendControls}>
@@ -457,17 +476,30 @@ export default function Profil() {
                 {filteredFriends.length === 0 && (
                   <div className={styles.noMatch}>{teammates_.length === 0 ? t('profile.noTeammate') : 'Aucun résultat.'}</div>
                 )}
-                {friendSlice.map(tm => (
-                  <div key={tm.login} className={styles.teammateRow}>
-                    <div className={styles.avatarOnlineWrap}>
-                      <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
-                      <span className={onlineUsers.includes(tm.login) ? styles.onlineDot : styles.offlineDot} />
+                {friendSlice.map(tm => {
+                  const isChecked = compareChecked.includes(tm.login)
+                  const maxReached = compareChecked.length >= 4 && !isChecked
+                  return (
+                    <div key={tm.login} className={`${styles.teammateRow} ${isChecked ? styles.teammateRowChecked : ''}`}>
+                      <input
+                        type="checkbox"
+                        className={styles.compareCheck}
+                        checked={isChecked}
+                        disabled={maxReached}
+                        onChange={() => setCompareChecked(prev =>
+                          isChecked ? prev.filter(l => l !== tm.login) : [...prev, tm.login]
+                        )}
+                      />
+                      <div className={styles.avatarOnlineWrap}>
+                        <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
+                        <span className={onlineUsers.includes(tm.login) ? styles.onlineDot : styles.offlineDot} />
+                      </div>
+                      <span className={styles.teammateName}>{tm.name}</span>
+                      <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
+                      <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
                     </div>
-                    <span className={styles.teammateName}>{tm.name}</span>
-                    <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
-                    <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               {friendTotalPages > 1 && (
@@ -601,9 +633,11 @@ export default function Profil() {
               ))}
             </Card>
 
-            <Card title="Comparaison joueurs">
-              <ComparisonBarChart />
-            </Card>
+            <div ref={comparisonRef}>
+              <Card title="Comparaison joueurs">
+                <ComparisonBarChart externalSelected={compareTarget} />
+              </Card>
+            </div>
           </div>
         </div>
       </div>
