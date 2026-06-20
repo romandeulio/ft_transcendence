@@ -244,6 +244,13 @@
   text-align: center;
 }
 
+.emptyState {
+  font-size: 13px;
+  color: var(--ink3);
+  text-align: center;
+  padding: 24px 0;
+}
+
 /* ── Hall of Fame ── */
 .hallCard {
   background: var(--white);
