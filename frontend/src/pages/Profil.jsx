@@ -304,7 +304,11 @@ export default function Profil() {
 
   const addTeammate = () => {
     const login = newPartner.trim()
-    if (!login || teammates_.length >= 25) return
+    if (!login) return
+    if (login === user?.username) {
+      setAddError('Tu ne peux pas t'ajouter toi-même.')
+      return
+    }
     if (!allPlayers.some(p => p.login === login)) {
       setAddError('Joueur introuvable dans la base de données.')
       return
@@ -417,7 +421,7 @@ export default function Profil() {
           <div className={styles.leftCol}>
             <Card
               title={t('profile.favoriteTeammates')}
-              right={<span className={styles.counter}>{teammates_.length} / 25</span>}
+              right={<span className={styles.counter}>{teammates_.length}</span>}
             >
               {teammates_.length > 0 && (
                 <div className={styles.friendControls}>
@@ -472,21 +476,19 @@ export default function Profil() {
                 </div>
               )}
 
-              {teammates_.length < 25 && (
-                <div className={styles.addTeammate}>
+              <div className={styles.addTeammate}>
                   <div className={styles.addTeammateDivider} />
                   <div className={styles.addTeammateRow}>
                     <LoginInput
                       value={newPartner}
                       onChange={v => { setNewPartner(v); setAddError('') }}
                       placeholder={t('profile.loginPlayerPlaceholder')}
-                      players={allPlayers.filter(p => !teammates_.some(tm => tm.login === p.login))}
+                      players={allPlayers.filter(p => p.login !== user?.username && !teammates_.some(tm => tm.login === p.login))}
                     />
                     <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
                   </div>
                   {addError && <div className={styles.addError}>{addError}</div>}
                 </div>
-              )}
             </Card>
 
             <div className={styles.divider} />
