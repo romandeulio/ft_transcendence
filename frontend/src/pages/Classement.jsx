@@ -3,6 +3,7 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Avatar from '../components/ui/Avatar'
 import Pill from '../components/ui/Pill'
+import RankingEvolutionChart from '../components/ui/RankingEvolutionChart'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { authFetch } from '../services/api'
@@ -215,6 +216,9 @@ export default function Classement() {
           </div>
 
         </div>
+
+        {/* ── Évolution du classement ── */}
+        <RankingEvolutionChart seasonOptions={seasonOptions} seasonMap={seasonMap} />
 
         {/* ── Hall of Fame ── */}
         <div className={styles.hallCard}>
