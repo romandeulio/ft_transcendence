@@ -660,7 +660,17 @@ export default function Profil() {
         </div>
       )}
 
-      {statsCardOpen && <StatsCardModal onClose={() => setStatsCardOpen(false)} />}
+      {statsCardOpen && (
+        <StatsCardModal
+          onClose={() => setStatsCardOpen(false)}
+          knownStats={{
+            login:         user?.username,
+            total_matches: (stats.wins ?? 0) + (stats.losses ?? 0),
+            best_streak:   stats.streak,
+            max_tokens:    user?.wallet_tokens,
+          }}
+        />
+      )}
     </Shell>
   )
 }

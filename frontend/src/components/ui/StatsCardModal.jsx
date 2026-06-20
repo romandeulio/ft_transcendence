@@ -2,26 +2,32 @@ import { useEffect, useRef, useState } from 'react'
 import { authFetch } from '../../services/api'
 import styles from './StatsCardModal.module.css'
 
-const ROWS = [
-  { icon: '⚡', key: 'best_elo',      label: 'Meilleur ELO'          },
-  { icon: '🎮', key: 'total_matches', label: 'Matchs joués'           },
-  { icon: '🔥', key: 'best_streak',   label: 'Meilleure série'        },
-  { icon: '💰', key: 'max_tokens',    label: 'Plus grande richesse'   },
-  { icon: '📅', key: 'best_month',    label: 'Meilleur mois'          },
-]
-
-export default function StatsCardModal({ onClose }) {
-  const [data,     setData]     = useState(null)
-  const [loading,  setLoading]  = useState(true)
+export default function StatsCardModal({ onClose, knownStats = {} }) {
+  const [remote,    setRemote]    = useState(null)
   const [dlLoading, setDlLoading] = useState(false)
   const cardRef = useRef(null)
 
   useEffect(() => {
     authFetch('/api/auth/my-stats-card/')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setRemote(d))
+      .catch(() => {})
   }, [])
+
+  const login       = remote?.login           ?? knownStats.login ?? ''
+  const bestElo     = remote?.best_elo        ?? '…'
+  const totalMatchs = knownStats.total_matches ?? remote?.total_matches ?? '…'
+  const bestStreak  = knownStats.best_streak   ?? remote?.best_streak   ?? '…'
+  const maxTokens   = knownStats.max_tokens    ?? remote?.max_tokens    ?? '…'
+  const bestMonth   = remote?.best_month       ?? '…'
+
+  const ROWS = [
+    { icon: '⭐', label: 'Meilleur ELO',       value: bestElo     },
+    { icon: '🎮', label: 'Matchs joués',        value: totalMatchs  },
+    { icon: '🔥', label: 'Meilleure série',      value: bestStreak  },
+    { icon: '💰', label: 'Plus grande richesse', value: maxTokens   },
+    { icon: '📅', label: 'Meilleur mois',        value: bestMonth   },
+  ]
 
   const download = async () => {
     if (!cardRef.current) return
@@ -35,7 +41,7 @@ export default function StatsCardModal({ onClose }) {
       })
       const a = document.createElement('a')
       a.href = canvas.toDataURL('image/png')
-      a.download = `${data?.login ?? 'stats'}_card.png`
+      a.download = `${login || 'stats'}_card.png`
       a.click()
     } finally {
       setDlLoading(false)
@@ -48,23 +54,21 @@ export default function StatsCardModal({ onClose }) {
 
         <div className={styles.card} ref={cardRef}>
           <div className={styles.cardTitle}>
-            {loading ? '…' : `${data?.login}'s Stats`}
+            {login ? `${login}'s Stats` : 'My Stats'}
           </div>
           <div className={styles.rows}>
-            {ROWS.map(r => (
-              <div key={r.key} className={styles.row}>
+            {ROWS.map((r, i) => (
+              <div key={i} className={styles.row}>
                 <span className={styles.icon}>{r.icon}</span>
                 <span className={styles.rowLabel}>{r.label} :</span>
-                <span className={styles.rowValue}>
-                  {loading ? '…' : (data?.[r.key] ?? '—')}
-                </span>
+                <span className={styles.rowValue}>{r.value}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.dlBtn} onClick={download} disabled={loading || dlLoading}>
+          <button className={styles.dlBtn} onClick={download} disabled={dlLoading}>
             {dlLoading ? 'Export…' : '↓ Télécharger (.png)'}
           </button>
           <button className={styles.closeBtn} onClick={onClose}>Fermer</button>
