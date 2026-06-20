@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext'
 import { useQueue } from '../context/QueueContext'
 import { useTranslation } from 'react-i18next'
 import { authFetch, matchToRow } from '../services/api'
+import { getFriends, addFriend, removeFriend } from '../services/friends'
 import ComparisonBarChart from '../components/ui/ComparisonBarChart'
 import styles from './Profil.module.css'
 
@@ -42,9 +43,7 @@ export default function Profil() {
   const [matchError,       setMatchError]        = useState(null)
 
   const [stats,         setStats]        = useState({ wins: 0, losses: 0, rank: null, gamelles: 0, gamesPerMonth: null, streak: null })
-  const [teammates_,    setTeammates]    = useState(() => {
-    try { return JSON.parse(localStorage.getItem('favTeammates')) || [] } catch { return [] }
-  })
+  const [teammates_,    setTeammates]    = useState(() => getFriends())
   const [opponents,     setOpponents]    = useState([])
   const [feared,        setFeared]       = useState([])
   const [recentMatches, setRecentMatches] = useState([])
@@ -67,6 +66,12 @@ export default function Profil() {
       .then(data => setAllPlayers(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [user?.username])
+
+  useEffect(() => {
+    const onChanged = () => setTeammates(getFriends())
+    window.addEventListener('favTeammatesChanged', onChanged)
+    return () => window.removeEventListener('favTeammatesChanged', onChanged)
+  }, [])
 
   useEffect(() => {
     if (!user?.username) return
@@ -280,19 +285,18 @@ export default function Profil() {
   const matchSlice = filteredMatches.slice(matchPage * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE + MATCHES_PER_PAGE)
 
   const addTeammate = () => {
-    if (newPartner.trim() && teammates_.length < 25) {
-      const next = [...teammates_, { login: newPartner.trim(), name: newPartner.trim() }]
-
-      setTeammates(next)
-      localStorage.setItem('favTeammates', JSON.stringify(next))
+    const login = newPartner.trim()
+    if (!login || teammates_.length >= 25) return
+    if (addFriend(login)) {
+      setTeammates(getFriends())
       setNewPartner('')
+      authFetch('/api/auth/friend-notify/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: login }) }).catch(() => {})
     }
   }
 
   const removeTeammate = (login) => {
-    const next = teammates_.filter(tm => tm.login !== login)
-    setTeammates(next)
-    localStorage.setItem('favTeammates', JSON.stringify(next))
+    removeFriend(login)
+    setTeammates(getFriends())
   }
 
   const myLogin = user?.username ?? '—'
@@ -392,18 +396,6 @@ export default function Profil() {
               title={t('profile.favoriteTeammates')}
               right={<span className={styles.counter}>{teammates_.length} / 25</span>}
             >
-              {teammates_.length < 25 && (
-                <div className={styles.addTeammate}>
-                  <LoginInput
-                    value={newPartner}
-                    onChange={setNewPartner}
-                    placeholder={t('profile.loginPlayerPlaceholder')}
-                    players={allPlayers.filter(p => !teammates_.some(tm => tm.login === p.login))}
-                  />
-                  <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
-                </div>
-              )}
-
               {teammates_.length > 0 && (
                 <div className={styles.friendControls}>
                   <input
@@ -425,26 +417,43 @@ export default function Profil() {
                 </div>
               )}
 
-              {filteredFriends.length === 0 && (
-                <div className={styles.noMatch}>{teammates_.length === 0 ? t('profile.noTeammate') : 'Aucun résultat.'}</div>
-              )}
-              {friendSlice.map(tm => (
-                <div key={tm.login} className={styles.teammateRow}>
-                  <div className={styles.avatarOnlineWrap}>
-                    <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
-                    <span className={onlineUsers.includes(tm.login) ? styles.onlineDot : styles.offlineDot} />
+              <div className={styles.friendList}>
+                {filteredFriends.length === 0 && (
+                  <div className={styles.noMatch}>{teammates_.length === 0 ? t('profile.noTeammate') : 'Aucun résultat.'}</div>
+                )}
+                {friendSlice.map(tm => (
+                  <div key={tm.login} className={styles.teammateRow}>
+                    <div className={styles.avatarOnlineWrap}>
+                      <Avatar initials={tm.name} size={30} bg="var(--beige)" round src={avatarMap[tm.login] || null} />
+                      <span className={onlineUsers.includes(tm.login) ? styles.onlineDot : styles.offlineDot} />
+                    </div>
+                    <span className={styles.teammateName}>{tm.name}</span>
+                    <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
+                    <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
                   </div>
-                  <span className={styles.teammateName}>{tm.name}</span>
-                  <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
-                  <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
-                </div>
-              ))}
+                ))}
+              </div>
 
               {friendTotalPages > 1 && (
                 <div className={styles.friendPagination}>
                   <button className={styles.pageBtn} onClick={() => setFriendPage(p => Math.max(0, p - 1))} disabled={friendPage === 0}>←</button>
                   <span className={styles.pageInfo}>{friendPage + 1} / {friendTotalPages}</span>
                   <button className={styles.pageBtn} onClick={() => setFriendPage(p => Math.min(friendTotalPages - 1, p + 1))} disabled={friendPage === friendTotalPages - 1}>→</button>
+                </div>
+              )}
+
+              {teammates_.length < 25 && (
+                <div className={styles.addTeammate}>
+                  <div className={styles.addTeammateDivider} />
+                  <div className={styles.addTeammateRow}>
+                    <LoginInput
+                      value={newPartner}
+                      onChange={setNewPartner}
+                      placeholder={t('profile.loginPlayerPlaceholder')}
+                      players={allPlayers.filter(p => !teammates_.some(tm => tm.login === p.login))}
+                    />
+                    <button className={styles.addBtn} onClick={addTeammate}>{t('profile.addBtn')}</button>
+                  </div>
                 </div>
               )}
             </Card>

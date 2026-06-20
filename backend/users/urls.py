@@ -22,4 +22,5 @@ urlpatterns = [
     path('password/change/', views.ChangePasswordView.as_view()),
     path('2fa/disable/',     views.Disable2FAView.as_view()),
     path('online-users/',    views.OnlineUsersView.as_view()),
+    path('friend-notify/',   views.FriendAddNotifyView.as_view()),
 ]

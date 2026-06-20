@@ -316,6 +316,28 @@ class OnlineUsersView(APIView):
         return Response(list(online_users))
 
 
+class FriendAddNotifyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target = request.data.get('target', '').strip()
+        if not target:
+            return Response({'error': 'target required'}, status=400)
+        if not User.objects.filter(username=target, is_active=True).exists():
+            return Response({'error': 'user not found'}, status=404)
+        try:
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{target}",
+                {"type": "friend_added", "from": request.user.username},
+            )
+        except Exception:
+            pass
+        return Response({'detail': 'ok'})
+
+
 class AvatarUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser, FormParser]

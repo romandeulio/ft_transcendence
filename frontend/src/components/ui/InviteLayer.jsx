@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueue } from '../../context/QueueContext'
 import { useTranslation } from 'react-i18next'
+import { isFriend, addFriend } from '../../services/friends'
 import styles from './InviteLayer.module.css'
 
 export default function InviteLayer() {
   const { t } = useTranslation()
-  const { pendingInvites, inviteResults, respondToInvite, dismissInviteResult } = useQueue()
+  const { pendingInvites, inviteResults, respondToInvite, dismissInviteResult,
+          friendNotifications, dismissFriendNotification } = useQueue()
+  const [addedFriends, setAddedFriends] = useState({})
   const timersRef = useRef({})
   const [hiddenInviteIds, setHiddenInviteIds] = useState([])
 
@@ -51,7 +54,7 @@ export default function InviteLayer() {
 
   const visibleInvites = pendingInvites.filter(inv => !hiddenInviteIds.includes(inv.inviteId))
 
-  if (!visibleInvites.length && !inviteResults.length) return null
+  if (!visibleInvites.length && !inviteResults.length && !friendNotifications.length) return null
 
   return (
     <div className={styles.layer}>
@@ -87,6 +90,33 @@ export default function InviteLayer() {
               onClick={() => respondToInvite(inv.inviteId, false, inv.slot, inv.from, inv.isWinClaim, inv.slotId)}
             >
               {t('invite.decline')}
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {friendNotifications.map(notif => (
+        <div key={notif.id} className={styles.friendCard}>
+          <div className={styles.friendCardHeader}>
+            <span className={styles.friendCardTitle}>Ami ajouté</span>
+            <button className={styles.dismissBtn} onClick={() => dismissFriendNotification(notif.id)}>✕</button>
+          </div>
+          <div className={styles.friendCardFrom}>{notif.from}</div>
+          <div className={styles.friendCardText}>
+            t'a ajouté en coéquipier favori.
+          </div>
+          <div className={styles.friendCardActions}>
+            <button
+              className={styles.addBackBtn}
+              disabled={addedFriends[notif.from] || isFriend(notif.from)}
+              onClick={() => {
+                if (addFriend(notif.from)) setAddedFriends(p => ({ ...p, [notif.from]: true }))
+              }}
+            >
+              {addedFriends[notif.from] || isFriend(notif.from) ? 'Déjà ajouté' : 'Ajouter en retour'}
+            </button>
+            <button className={styles.friendDismissBtn} onClick={() => dismissFriendNotification(notif.id)}>
+              Ignorer
             </button>
           </div>
         </div>

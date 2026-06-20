@@ -298,10 +298,25 @@
 }
 .removeBtn:hover { background: #fee; border-color: #CD3122; color: #CD3122; }
 
+.friendList {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
 .addTeammate {
+  margin-top: 4px;
+}
+
+.addTeammateDivider {
+  height: 1px;
+  background: var(--beige-dark, #d4cec8);
+  margin: 14px 0 14px;
+}
+
+.addTeammateRow {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .friendControls {
