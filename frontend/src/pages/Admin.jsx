@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Admin.module.css'
 
 const adm = (url, opts = {}) =>
@@ -521,6 +522,7 @@ function Dashboard({ onLogout }) {
       <header className={styles.dashHeader}>
         <div className={styles.dashTitle}>{t('admin.title')}</div>
         <div className={styles.dashHeaderRight}>
+          <LanguageSwitcher />
           <span className={styles.dashAdmin}>{t('admin.logged_as')}</span>
           <button className={styles.logoutBtn} onClick={handleLogout}>{t('admin.logout')}</button>
         </div>
@@ -779,7 +781,9 @@ export default function Admin() {
   return (
     <div className={styles.page}>
       <button className={styles.backBtn} onClick={() => navigate(-1)}>{t('admin.back')}</button>
-
+      <div className={styles.langBar}>
+        <LanguageSwitcher />
+      </div>
       <div className={styles.card}>
         <div className={styles.logo}>⚙️</div>
         <div className={styles.title}>{t('admin.title')}</div>
