@@ -24,9 +24,9 @@ export default function StatsCardModal({ onClose, knownStats = {} }) {
   const ROWS = [
     { icon: '⭐', label: 'Meilleur ELO',       value: bestElo     },
     { icon: '🎮', label: 'Matchs joués',        value: totalMatchs  },
-    { icon: '🔥', label: 'Meilleure série',      value: bestStreak  },
-    { icon: '💰', label: 'Plus grande richesse', value: maxTokens   },
-    { icon: '📊', label: 'Meilleur ratio',       value: bestRatio   },
+    { icon: '🔥', label: 'Série actuelle',         value: bestStreak  },
+    { icon: '💰', label: 'Richesse actuelle',     value: maxTokens   },
+    { icon: '📊', label: 'Ratio actuel',          value: bestRatio   },
   ]
 
   const download = async () => {

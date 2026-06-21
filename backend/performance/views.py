@@ -20,32 +20,102 @@ class StatsView(APIView):
             from matches.models import Match
             from django.db.models import Q, Min
             from django.utils import timezone
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
 
             logins = [l.strip() for l in players_param.split(',') if l.strip()]
-            rows = Stats.objects.filter(user__username__in=logins).select_related('user')
             result = []
-            for s in rows:
-                total = s.total_wins + s.total_losses
-                login = s.user.username
-                first = Match.objects.filter(
+
+            for login in logins:
+                if not User.objects.filter(username=login).exists():
+                    continue
+
+                # Récupérer tous les matchs validés du joueur (ordre chrono)
+                matches = Match.objects.filter(
                     Q(player1__username=login) | Q(player2__username=login),
                     status='VALIDATED'
-                ).aggregate(first=Min('played_at'))['first']
-                if first and timezone.is_naive(first):
-                    first = timezone.make_aware(first, timezone.utc)
-                months = max(1, (timezone.now() - first).days / 30) if first else 1
+                ).select_related(
+                    'player1', 'player1_teammate',
+                    'player2', 'player2_teammate',
+                ).order_by('played_at')
+
+                total_wins = 0
+                total_losses = 0
+                total_gamelles = 0
+                series_wins = 0
+                series_losses = 0
+                elo_solo = 1000
+                elo_team = 1000
+                first_date = None
+
+                for m in matches:
+                    if first_date is None:
+                        first_date = m.played_at
+
+                    is_p1 = (m.player1.username == login)
+                    is_p1_tm = (m.player1_teammate and m.player1_teammate.username == login)
+                    on_team1 = is_p1 or is_p1_tm
+
+                    # Gamelles
+                    if on_team1:
+                        total_gamelles += m.gamelles_player1 or 0
+                    else:
+                        total_gamelles += m.gamelles_player2 or 0
+
+                    # Win/loss
+                    winner = m.get_winner()
+                    won = (winner == 'player1_side' and on_team1) or \
+                          (winner == 'player2_side' and not on_team1)
+                    lost = (winner == 'player2_side' and on_team1) or \
+                           (winner == 'player1_side' and not on_team1)
+
+                    if won:
+                        total_wins += 1
+                        series_wins += 1
+                        series_losses = 0
+                    elif lost:
+                        total_losses += 1
+                        series_losses += 1
+                        series_wins = 0
+
+                    # ELO (dernière valeur connue)
+                    if m.is_ranked and m.match_type == 'SOLO':
+                        if is_p1:
+                            elo_solo = m.elo_solo_player1_after or elo_solo
+                        else:
+                            elo_solo = m.elo_solo_player2_after or elo_solo
+                    elif m.is_ranked and m.match_type == 'TEAM':
+                        if is_p1:
+                            elo_team = m.elo_team_p1_after or elo_team
+                        elif is_p1_tm:
+                            elo_team = m.elo_team_p1tm_after or elo_team
+                        elif m.player2.username == login:
+                            elo_team = m.elo_team_p2_after or elo_team
+                        elif m.player2_teammate and m.player2_teammate.username == login:
+                            elo_team = m.elo_team_p2tm_after or elo_team
+
+                total_matches = total_wins + total_losses
+                total = total_wins + total_losses
+
+                if first_date:
+                    if timezone.is_naive(first_date):
+                        first_date = timezone.make_aware(first_date, timezone.utc)
+                    months = max(1, (timezone.now() - first_date).days / 30)
+                else:
+                    months = 1
+
                 result.append({
                     'login':             login,
-                    'elo_solo':          s.elo_solo,
-                    'elo_team':          s.elo_team,
-                    'total_wins':        s.total_wins,
-                    'total_losses':      s.total_losses,
-                    'winrate':           round(s.total_wins / total * 100, 1) if total > 0 else 0,
-                    'series_wins':       s.series_wins,
-                    'series_losses':     s.series_losses,
-                    'total_matches':     s.total_matches,
-                    'total_gamelles':    s.total_gamelles,
-                    'matches_per_month': round(s.total_matches / months, 1),
+                    'elo_solo':          elo_solo,
+                    'elo_team':          elo_team,
+                    'total_wins':        total_wins,
+                    'total_losses':      total_losses,
+                    'winrate':           round(total_wins / total * 100, 1) if total > 0 else 0,
+                    'series_wins':       series_wins,
+                    'series_losses':     series_losses,
+                    'total_matches':     total_matches,
+                    'total_gamelles':    total_gamelles,
+                    'matches_per_month': round(total_matches / months, 1),
                 })
             return Response(result)
         try:

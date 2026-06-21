@@ -423,34 +423,57 @@ class MyStatsCardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.db.models import Q, Max, Count
-        from django.db.models.functions import TruncMonth
+        from django.db.models import Q
         from matches.models import Match
-        from matches.models_ranking import RankingHistory
-        from stats.models import Stats
 
         user = request.user
-        try:
-            stats = Stats.objects.get(user=user)
-        except Stats.DoesNotExist:
-            stats = None
+        login = user.username
 
-        best_elo = RankingHistory.objects.filter(
-            user=user, mode='SOLO'
-        ).aggregate(m=Max('score_after'))['m'] or (stats.elo_solo if stats else 0)
+        matches = Match.objects.filter(
+            Q(player1__username=login) | Q(player2__username=login),
+            status='VALIDATED'
+        ).select_related(
+            'player1', 'player1_teammate',
+            'player2', 'player2_teammate',
+        ).order_by('played_at')
 
-        total_matches = stats.total_matches if stats else 0
-        best_streak   = stats.series_wins   if stats else 0
+        total_wins = 0
+        total_losses = 0
+        best_elo = 1000
+        current_streak = 0
 
-        wins  = stats.total_wins   if stats else 0
-        total = stats.total_matches if stats else 0
-        best_ratio = f"{round(wins / total * 100)}%" if total > 0 else '—'
+        for m in matches:
+            is_p1 = (m.player1.username == login)
+            is_p1_tm = (m.player1_teammate and m.player1_teammate.username == login)
+            on_team1 = is_p1 or is_p1_tm
+
+            winner = m.get_winner()
+            won = (winner == 'player1_side' and on_team1) or \
+                  (winner == 'player2_side' and not on_team1)
+            lost = (winner == 'player2_side' and on_team1) or \
+                   (winner == 'player1_side' and not on_team1)
+
+            if won:
+                total_wins += 1
+                current_streak += 1
+            elif lost:
+                total_losses += 1
+                current_streak = 0
+
+            # Meilleur ELO solo
+            if m.is_ranked and m.match_type == 'SOLO':
+                elo_after = m.elo_solo_player1_after if is_p1 else m.elo_solo_player2_after
+                if elo_after:
+                    best_elo = max(best_elo, elo_after)
+
+        total = total_wins + total_losses
+        best_ratio = f"{round(total_wins / total * 100)}%" if total > 0 else '—'
 
         return Response({
-            'login':         user.username,
+            'login':         login,
             'best_elo':      best_elo,
-            'total_matches': total_matches,
-            'best_streak':   best_streak,
+            'total_matches': total,
+            'best_streak':   current_streak,
             'max_tokens':    user.wallet_tokens or 0,
             'best_ratio':    best_ratio,
         })
