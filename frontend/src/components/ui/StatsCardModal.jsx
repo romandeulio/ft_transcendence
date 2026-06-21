@@ -19,14 +19,14 @@ export default function StatsCardModal({ onClose, knownStats = {} }) {
   const totalMatchs = knownStats.total_matches ?? remote?.total_matches ?? '…'
   const bestStreak  = knownStats.best_streak   ?? remote?.best_streak   ?? '…'
   const maxTokens   = knownStats.max_tokens    ?? remote?.max_tokens    ?? '…'
-  const bestMonth   = remote?.best_month       ?? '…'
+  const bestRatio   = remote?.best_ratio       ?? '…'
 
   const ROWS = [
     { icon: '⭐', label: 'Meilleur ELO',       value: bestElo     },
     { icon: '🎮', label: 'Matchs joués',        value: totalMatchs  },
     { icon: '🔥', label: 'Meilleure série',      value: bestStreak  },
     { icon: '💰', label: 'Plus grande richesse', value: maxTokens   },
-    { icon: '📅', label: 'Meilleur mois',        value: bestMonth   },
+    { icon: '📊', label: 'Meilleur ratio',       value: bestRatio   },
   ]
 
   const download = async () => {

@@ -442,24 +442,9 @@ class MyStatsCardView(APIView):
         total_matches = stats.total_matches if stats else 0
         best_streak   = stats.series_wins   if stats else 0
 
-        from django.db.models import F
-        wins_by_month = (
-            Match.objects.filter(
-                Q(player1=user, score_player1__gt=F('score_player2')) |
-                Q(player2=user, score_player2__gt=F('score_player1')),
-                status='VALIDATED',
-            )
-            .annotate(month=TruncMonth('played_at'))
-            .values('month')
-            .annotate(cnt=Count('id'))
-            .order_by('-cnt')
-            .first()
-        )
-        FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
-        best_month = '—'
-        if wins_by_month and wins_by_month['month']:
-            m = wins_by_month['month']
-            best_month = f"{FR_MONTHS[m.month - 1]}. {m.year}"
+        wins  = stats.total_wins   if stats else 0
+        total = stats.total_matches if stats else 0
+        best_ratio = f"{round(wins / total * 100)}%" if total > 0 else '—'
 
         return Response({
             'login':         user.username,
@@ -467,7 +452,7 @@ class MyStatsCardView(APIView):
             'total_matches': total_matches,
             'best_streak':   best_streak,
             'max_tokens':    user.wallet_tokens or 0,
-            'best_month':    best_month,
+            'best_ratio':    best_ratio,
         })
 
 
