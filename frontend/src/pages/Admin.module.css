@@ -669,3 +669,14 @@
 .addSeasonInput:focus { outline: none; border-color: #4068DB; }
 
 .addSeasonActions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+
+.langBar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+[dir="rtl"] .langBar {
+  left: auto;
+  right: 20px;
+}

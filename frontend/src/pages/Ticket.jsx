@@ -1,28 +1,21 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import styles from './Ticket.module.css'
 
-const PAGES = [
-  'Accueil',
-  'Classement',
-  'Paris',
-  "File d'attente",
-  'Tournois',
-  'Mon profil',
-  'Paramètres',
-  'Admin',
-]
-
 export default function Ticket() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const fileRef = useRef(null)
+
+  const PAGES = t('ticket.pages', { returnObjects: true })
 
   const [login,       setLogin]       = useState('')
   const [description, setDescription] = useState('')
   const [pages,       setPages]       = useState(new Set())
-  const [photos,      setPhotos]      = useState([])   // { name, url, file }
+  const [photos,      setPhotos]      = useState([])
   const [error,       setError]       = useState(null)
   const [sending,     setSending]     = useState(false)
   const [sent,        setSent]        = useState(false)
@@ -67,11 +60,11 @@ export default function Ticket() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Erreur serveur')
+        throw new Error(data.error || t('ticket.err_server'))
       }
       setSent(true)
     } catch (err) {
-      setError(err.message || 'Erreur réseau')
+      setError(err.message || t('ticket.err_network'))
     } finally {
       setSending(false)
     }
@@ -80,13 +73,13 @@ export default function Ticket() {
   if (sent) {
     return (
       <Shell>
-        <Topbar title="Envoyer un ticket" titleSize={26} />
+        <Topbar title={t('ticket.title')} titleSize={26} />
         <div className={styles.content}>
           <div className={styles.successBox}>
             <div className={styles.successIcon}>✅</div>
-            <div className={styles.successTitle}>Ticket envoyé !</div>
-            <div className={styles.successSub}>Merci pour ton retour. L'équipe en prendra connaissance rapidement.</div>
-            <button className={styles.backBtn} onClick={() => navigate(-1)}>← Retour</button>
+            <div className={styles.successTitle}>{t('ticket.success_title')}</div>
+            <div className={styles.successSub}>{t('ticket.success_sub')}</div>
+            <button className={styles.backBtn} onClick={() => navigate(-1)}>{t('ticket.back')}</button>
           </div>
         </div>
       </Shell>
@@ -95,31 +88,29 @@ export default function Ticket() {
 
   return (
     <Shell>
-      <Topbar title="Envoyer un ticket" titleSize={26} />
+      <Topbar title={t('ticket.title')} titleSize={26} />
       <div className={styles.content}>
         <div className={styles.card}>
-          <div className={styles.cardIntro}>
-            Quelque chose ne fonctionne pas ? Décris-nous le problème et on s'en occupe.
-          </div>
+          <div className={styles.cardIntro}>{t('ticket.intro')}</div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
 
             <div className={styles.field}>
-              <label className={styles.label}>Login ou nom <span className={styles.req}>*</span></label>
+              <label className={styles.label}>{t('ticket.login_label')} <span className={styles.req}>*</span></label>
               <input
                 className={styles.input}
                 type="text"
-                placeholder="Ex : ltcherp"
+                placeholder={t('ticket.login_placeholder')}
                 value={login}
                 onChange={e => setLogin(e.target.value)}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Description du bug <span className={styles.req}>*</span></label>
+              <label className={styles.label}>{t('ticket.desc_label')} <span className={styles.req}>*</span></label>
               <textarea
                 className={styles.textarea}
-                placeholder="Décris ce que tu as observé, les étapes pour reproduire le problème, et ce que tu attendais..."
+                placeholder={t('ticket.desc_placeholder')}
                 rows={5}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -127,7 +118,7 @@ export default function Ticket() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Pages concernées</label>
+              <label className={styles.label}>{t('ticket.pages_label')}</label>
               <div className={styles.checkGrid}>
                 {PAGES.map(page => (
                   <label key={page} className={`${styles.checkItem} ${pages.has(page) ? styles.checkItemOn : ''}`}>
@@ -145,7 +136,7 @@ export default function Ticket() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Joindre des captures d'écran</label>
+              <label className={styles.label}>{t('ticket.photos_label')}</label>
               <div
                 className={styles.dropZone}
                 onClick={() => fileRef.current.click()}
@@ -157,8 +148,8 @@ export default function Ticket() {
                 }}
               >
                 <span className={styles.dropIcon}>📎</span>
-                <span className={styles.dropText}>Clique ou glisse tes images ici</span>
-                <span className={styles.dropHint}>PNG, JPG, WebP — max 5 fichiers</span>
+                <span className={styles.dropText}>{t('ticket.drop_text')}</span>
+                <span className={styles.dropHint}>{t('ticket.drop_hint')}</span>
                 <input
                   ref={fileRef}
                   type="file"
@@ -188,13 +179,13 @@ export default function Ticket() {
             {error && <div className={styles.errorMsg}>{error}</div>}
 
             <div className={styles.formActions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => navigate(-1)}>Annuler</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => navigate(-1)}>{t('ticket.cancel')}</button>
               <button
                 type="submit"
                 className={styles.submitBtn}
                 disabled={!login.trim() || !description.trim() || sending}
               >
-                {sending ? 'Envoi en cours…' : 'Envoyer le ticket →'}
+                {sending ? t('ticket.sending') : t('ticket.submit')}
               </button>
             </div>
 

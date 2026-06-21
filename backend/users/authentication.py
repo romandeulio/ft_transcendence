@@ -43,6 +43,16 @@ class CookieJWTAuthentication(JWTAuthentication):
                     return result
             except (InvalidToken, TokenError, AuthenticationFailed):
                 pass
+        if header:
+            try:
+                result = super().authenticate(request)
+                if result:
+                    user, token = result
+                    if user.is_banned and not _skip_ban_check(request):
+                        _raise_banned(user)
+                    return result
+            except (InvalidToken, TokenError, AuthenticationFailed):
+                pass
 
         raw_token = request.COOKIES.get(settings.JWT_ACCESS_COOKIE_NAME)
         if not raw_token:
@@ -52,8 +62,14 @@ class CookieJWTAuthentication(JWTAuthentication):
             validated_token = self.get_validated_token(raw_token)
             user = self.get_user(validated_token)
         except (InvalidToken, TokenError, AuthenticationFailed):
+            user = self.get_user(validated_token)
+        except (InvalidToken, TokenError, AuthenticationFailed):
             return None
 
+        if user.is_banned and not _skip_ban_check(request):
+            _raise_banned(user)
+
+        return user, validated_token
         if user.is_banned and not _skip_ban_check(request):
             _raise_banned(user)
 

@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
+import uuid
 
 class Organization(models.Model):
 	"""
@@ -10,7 +10,7 @@ class Organization(models.Model):
 	organiser des tournois inter-équipes, afficher des stats de groupe.
 	Les équipes pour les matchs 2v2 sont composées à la volée lors de chaque réservation.
 	"""
-
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	name        = models.CharField(max_length=100, unique=True)
 	description = models.TextField(blank=True, default='')
 	avatar      = models.ImageField(
@@ -31,6 +31,8 @@ class Organization(models.Model):
 
 	class Meta:
 		ordering = ['name']
+		db_table = 'organizations'
+		managed   = False
 
 	def __str__(self):
 		return self.name
@@ -48,7 +50,7 @@ class OrganizationMember(models.Model):
 	Appartenance d'un joueur à un groupe.
 	Un joueur ne peut appartenir qu'à un seul groupe à la fois.
 	"""
-
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	class Role(models.TextChoices):
 		OWNER  = 'OWNER',  'Propriétaire'
 		MEMBER = 'MEMBER', 'Membre'
@@ -73,6 +75,8 @@ class OrganizationMember(models.Model):
 	class Meta:
 		unique_together = [('organization', 'player')]
 		ordering = ['joined_at']
+		db_table = 'organization_members'
+		managed   = False
 
 	def __str__(self):
 		return f"{self.player} — {self.organization.name} ({self.get_role_display()})"

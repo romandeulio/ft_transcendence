@@ -8,6 +8,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -349,3 +350,28 @@ class AdminSeasonDetailView(APIView):
             'name': season.name,
             'status': season.status,
         })
+
+class AdminDeleteUserView(APIView):
+    permission_classes = [IsAdminSession]
+ 
+    def delete(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        user.delete()
+        return Response(status=204)
+ 
+ 
+class AdminUpdateUserRoleView(APIView):
+    permission_classes = [IsAdminSession]
+ 
+    ALLOWED_ROLES = {"user", "stud", "bde", "piscineux", "alumni", "bocalien"}
+ 
+    def patch(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+ 
+        role = request.data.get("role")
+        if role not in self.ALLOWED_ROLES:
+            return Response({"error": "Rôle invalide"}, status=400)
+ 
+        user.role = role
+        user.save(update_fields=["role"])
+        return Response({"id": str(user.id), "role": user.role})

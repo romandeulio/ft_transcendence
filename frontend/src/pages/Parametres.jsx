@@ -43,9 +43,7 @@ export default function Parametres() {
   const [pwLoading, setPwLoading] = useState(false)
 
   // ── 2FA ──
-  const [tfaData,    setTfaData]    = useState(null)
-  const [tfaCode,    setTfaCode]    = useState('')
-  const [tfaError,   setTfaError]   = useState('')
+  const [tfaLoading, setTfaLoading] = useState(false)
 
   // ── OAuth toggle ──
   const [oauth, setOauth] = useState(true)
@@ -157,33 +155,14 @@ export default function Parametres() {
     setPwLoading(false)
   }
 
-  const handleEnable2FA = async () => {
-    setTfaError('')
-    const res = await fetch('/api/auth/2fa/enable/', { method: 'POST', credentials: 'include' })
-    const data = await res.json()
-    setTfaData(data)
-  }
-
-  const handleConfirm2FA = async () => {
-    setTfaError('')
-    const res = await fetch('/api/auth/2fa/enable/', {
-      method: 'PUT', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: tfaCode }),
-    })
+  const handleToggle2FA = async () => {
+    setTfaLoading(true)
+    const method = user?.is_2fa_enabled ? 'DELETE' : 'POST'
+    const res = await fetch('/api/auth/2fa/enable/', { method, credentials: 'include' })
     if (res.ok) {
-      setTfaData(null)
-      setTfaCode('')
-      login({ ...user, is_2fa_enabled: true })
-    } else {
-      const data = await res.json()
-      setTfaError(data.error || 'Code invalide')
+      login({ ...user, is_2fa_enabled: !user.is_2fa_enabled })
     }
-  }
-
-  const handleDisable2FA = async () => {
-    const res = await fetch('/api/auth/2fa/enable/', { method: 'DELETE', credentials: 'include' })
-    if (res.ok) login({ ...user, is_2fa_enabled: false })
+    setTfaLoading(false)
   }
 
   return (
@@ -260,51 +239,25 @@ export default function Parametres() {
 
               <div className={styles.section}>
                 <div className={styles.sectionTitle}>{t('settings.security.tfa')}</div>
-                <div className={styles.toggleSub}>{t('settings.security.tfaSub')}</div>
-
-                {!user?.is_2fa_enabled && !tfaData && (
-                  <button className={styles.btnSecondary} onClick={handleEnable2FA} style={{ marginTop: '12px' }}>
-                    Activer le 2FA
-                  </button>
-                )}
-
-                {tfaData && (
-                  <div style={{ marginTop: '12px' }}>
-                    <p style={{ fontSize: '13px', marginBottom: '8px' }}>
-                      Scanne ce QR code avec ton application (Google Authenticator, Authy...)
-                    </p>
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(tfaData.totp_uri)}&size=160x160`} alt="QR 2FA" />
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0' }}>
-                      Ou entre le secret manuellement : <code>{tfaData.secret}</code>
-                    </p>
-                    <input
-                      className={styles.input}
-                      type="text"
-                      placeholder="Code à 6 chiffres"
-                      maxLength={6}
-                      value={tfaCode}
-                      onChange={e => setTfaCode(e.target.value)}
-                      style={{ letterSpacing: '4px', textAlign: 'center', marginBottom: '8px' }}
-                    />
-                    {tfaError && <p style={{ color: '#ef4444', fontSize: '13px' }}>{tfaError}</p>}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className={styles.btnPrimary} onClick={handleConfirm2FA} disabled={tfaCode.length < 6}>
-                        Confirmer le 2FA
-                      </button>
-                      <button className={styles.btnSecondary} onClick={() => { setTfaData(null); setTfaCode(''); setTfaError('') }}>
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                )}
-
+                <div className={styles.toggleSub}>
+                  {user?.is_2fa_enabled
+                    ? 'Un code de vérification sera envoyé par email à chaque connexion.'
+                    : 'Activez la double authentification par email pour sécuriser votre compte.'}
+                </div>
+                <button
+                  className={user?.is_2fa_enabled ? styles.btnDanger : styles.btnSecondary}
+                  onClick={handleToggle2FA}
+                  disabled={tfaLoading}
+                  style={{ marginTop: '12px' }}
+                >
+                  {tfaLoading
+                    ? '...'
+                    : user?.is_2fa_enabled
+                      ? 'Désactiver le 2FA'
+                      : 'Activer le 2FA par email'}
+                </button>
                 {user?.is_2fa_enabled && (
-                  <div style={{ marginTop: '12px' }}>
-                    <p style={{ fontSize: '13px', color: '#22c55e' }}>2FA activé ✓</p>
-                    <button className={styles.btnDanger} onClick={handleDisable2FA} style={{ marginTop: '8px' }}>
-                      Désactiver le 2FA
-                    </button>
-                  </div>
+                  <p style={{ fontSize: '13px', color: '#22c55e', marginTop: '8px' }}>2FA activé ✓</p>
                 )}
               </div>
 
