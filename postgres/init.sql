@@ -15,6 +15,8 @@ CREATE TABLE users
     gdpr_deleted  BOOLEAN DEFAULT FALSE,
     ban_permanent BOOLEAN DEFAULT FALSE,
     banned_until  TIMESTAMPTZ,
+    ban_permanent BOOLEAN DEFAULT FALSE,
+    banned_until  TIMESTAMPTZ,
     is_active BOOLEAN DEFAULT FALSE,
     wallet_tokens INT DEFAULT 10000,
     created_at  TIMESTAMP DEFAULT NOW()
@@ -29,8 +31,29 @@ CREATE TABLE stats
     total_losses INT DEFAULT 0,
     total_gamelles INT DEFAULT 0,
     total_demis INT DEFAULT 0,
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE stats
+(
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    total_matches INT DEFAULT 0,
+    total_wins INT DEFAULT 0,
+    total_losses INT DEFAULT 0,
+    total_gamelles INT DEFAULT 0,
+    total_demis INT DEFAULT 0,
     elo_solo INT DEFAULT 1000,
     elo_team INT DEFAULT 1000,
+    series_wins INT DEFAULT 0,
+    series_losses INT DEFAULT 0,
+    total_bets INT DEFAULT 0,
+    total_wins_bets INT DEFAULT 0,
+    total_losses_bets INT DEFAULT 0,
+    total_amount_won INT DEFAULT 0,
+    total_amount_lost INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
     series_wins INT DEFAULT 0,
     series_losses INT DEFAULT 0,
     total_bets INT DEFAULT 0,
@@ -69,6 +92,10 @@ CREATE TABLE matches (
     player2_teammate_id UUID REFERENCES users(id) ON DELETE SET NULL,
     score_player1 INT DEFAULT 0,
     score_player2 INT DEFAULT 0,
+    gamelles_player1 INT DEFAULT 0,
+    gamelles_player2 INT DEFAULT 0,
+    demis_player1 INT DEFAULT 0,
+    demis_player2 INT DEFAULT 0,
     gamelles_player1 INT DEFAULT 0,
     gamelles_player2 INT DEFAULT 0,
     demis_player1 INT DEFAULT 0,
@@ -117,10 +144,39 @@ CREATE TABLE season_stats (
     UNIQUE(user_id, season_id)
 );
 
+CREATE TABLE season_rewards (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    season_id       UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+    player_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ranking_type    VARCHAR(5) NOT NULL CHECK (ranking_type IN ('SOLO', 'TEAM')),
+    tier            VARCHAR(5) NOT NULL CHECK (tier IN ('TOP1', 'TOP3', 'TOP10')),
+    tokens_awarded  INTEGER NOT NULL CHECK (tokens_awarded >= 0),
+    elo_at_end      INTEGER NOT NULL,
+    rank_at_end     INTEGER NOT NULL CHECK (rank_at_end > 0),
+    awarded_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (season_id, player_id, ranking_type)
+);
+
+CREATE TABLE season_stats (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    season_id UUID REFERENCES seasons(id),
+    total_matches INT DEFAULT 0,
+    total_wins INT DEFAULT 0,
+    total_losses INT DEFAULT 0,
+    total_gamelles INT DEFAULT 0,
+    total_demis INT DEFAULT 0,
+    elo_solo INT DEFAULT 1000,
+    elo_team INT DEFAULT 1000,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, season_id)
+);
+
 CREATE TABLE rankings (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID REFERENCES users(id),
     season_id  UUID REFERENCES seasons(id),
+    scope VARCHAR(20),
     scope VARCHAR(20),
     mode       VARCHAR(10) CHECK (mode IN ('SOLO', 'TEAM')),
     score      INT DEFAULT 0,

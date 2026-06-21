@@ -8,6 +8,12 @@ const adm = (url, opts = {}) =>
 /* ------------------------------------------------------------------ */
 /*  Status serveur                                                     */
 /* ------------------------------------------------------------------ */
+const adm = (url, opts = {}) =>
+  fetch(url, { credentials: 'include', ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } })
+
+/* ------------------------------------------------------------------ */
+/*  Status serveur                                                     */
+/* ------------------------------------------------------------------ */
 function StatusMini() {
   const [data, setData] = useState(null)
 
@@ -32,12 +38,14 @@ function StatusMini() {
       <div className={styles.panelTitle}>Status serveur</div>
       {!data ? (
         <div className={styles.statusLoading}>Chargement...</div>
+        <div className={styles.statusLoading}>Chargement...</div>
       ) : (
         <div className={styles.statusRows}>
           {rows.map(r => (
             <div key={r.label} className={styles.statusRow}>
               <span className={styles.statusLabel}>{r.label}</span>
               <span className={`${styles.statusBadge} ${r.val === 'ok' ? styles.statusOk : styles.statusKo}`}>
+                {r.val === 'ok' ? '* OK' : '* KO'}
                 {r.val === 'ok' ? '* OK' : '* KO'}
               </span>
             </div>
@@ -51,12 +59,24 @@ function StatusMini() {
 /* ------------------------------------------------------------------ */
 /*  Saisons                                                            */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  Saisons                                                            */
+/* ------------------------------------------------------------------ */
 function SeasonPanel() {
   const [seasons,  setSeasons]  = useState([])
   const [addOpen,  setAddOpen]  = useState(false)
   const [newName,  setNewName]  = useState('')
+  const [newName,  setNewName]  = useState('')
   const [newStart, setNewStart] = useState('')
   const [newEnd,   setNewEnd]   = useState('')
+  const [actionLoading, setActionLoading] = useState(null)
+
+  const reload = () => adm('/api/admin/seasons/').then(r => r.json()).then(setSeasons).catch(() => {})
+
+  useEffect(() => { reload() }, [])
+
+  const active   = seasons.find(s => s.status === 'ACTIVE')
+  const upcoming = seasons.filter(s => s.status === 'UPCOMING')
   const [actionLoading, setActionLoading] = useState(null)
 
   const reload = () => adm('/api/admin/seasons/').then(r => r.json()).then(setSeasons).catch(() => {})
@@ -87,11 +107,33 @@ function SeasonPanel() {
     })
     setActionLoading(null)
     if (res.ok) reload()
+  const handleAddSeason = async () => {
+    if (!newName || !newStart || !newEnd) return
+    const res = await adm('/api/admin/seasons/', {
+      method: 'POST',
+      body: JSON.stringify({ name: newName, start_date: newStart, end_date: newEnd }),
+    })
+    if (res.ok) {
+      setNewName(''); setNewStart(''); setNewEnd('')
+      setAddOpen(false)
+      reload()
+    }
+  }
+
+  const handleSeasonAction = async (seasonId, action) => {
+    setActionLoading(seasonId + action)
+    const res = await adm(`/api/admin/seasons/${seasonId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action }),
+    })
+    setActionLoading(null)
+    if (res.ok) reload()
   }
 
   return (
     <div className={styles.panel}>
       <div className={styles.panelTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        Saisons
         Saisons
         <button className={styles.addSeasonBtn} onClick={() => setAddOpen(o => !o)}>+ Saison</button>
       </div>
@@ -99,6 +141,8 @@ function SeasonPanel() {
       {addOpen && (
         <div className={styles.addSeasonForm}>
           <div className={styles.addSeasonField}>
+            <label className={styles.addSeasonLabel}>Nom</label>
+            <input className={styles.addSeasonInput} placeholder="Saison 4 - Été" value={newName} onChange={e => setNewName(e.target.value)} />
             <label className={styles.addSeasonLabel}>Nom</label>
             <input className={styles.addSeasonInput} placeholder="Saison 4 - Été" value={newName} onChange={e => setNewName(e.target.value)} />
           </div>
@@ -113,6 +157,7 @@ function SeasonPanel() {
           <div className={styles.addSeasonActions}>
             <button className={styles.seasonCancelBtn} onClick={() => setAddOpen(false)}>Annuler</button>
             <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>Créer</button>
+            <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>Créer</button>
           </div>
         </div>
       )}
@@ -123,7 +168,42 @@ function SeasonPanel() {
           <div style={{ flex: 1 }}>
             <div className={styles.seasonLabel}>Saison en cours</div>
             <div className={styles.seasonName}>{active.name}</div>
+      {active ? (
+        <div className={styles.seasonCurrent}>
+          <span className={styles.seasonIcon}>📅</span>
+          <div style={{ flex: 1 }}>
+            <div className={styles.seasonLabel}>Saison en cours</div>
+            <div className={styles.seasonName}>{active.name}</div>
           </div>
+          <button
+            className={styles.seasonCancelBtn}
+            style={{ marginLeft: 8, fontSize: 11 }}
+            onClick={() => handleSeasonAction(active.id, 'finish')}
+            disabled={actionLoading === active.id + 'finish'}
+          >
+            Terminer
+          </button>
+        </div>
+      ) : (
+        <div className={styles.seasonNext}>Aucune saison active.</div>
+      )}
+
+      {upcoming.length > 0 && (
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {upcoming.map(s => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+              <span style={{ flex: 1, color: 'var(--ink2)' }}>📋 {s.name}</span>
+              <button
+                className={styles.seasonOkBtn}
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => handleSeasonAction(s.id, 'activate')}
+                disabled={actionLoading === s.id + 'activate'}
+              >
+                {actionLoading === s.id + 'activate' ? '...' : 'Activer'}
+              </button>
+            </div>
+          ))}
+        </div>
           <button
             className={styles.seasonCancelBtn}
             style={{ marginLeft: 8, fontSize: 11 }}
@@ -162,6 +242,10 @@ function SeasonPanel() {
 /*  Modal création tournoi                                             */
 /* ------------------------------------------------------------------ */
 function CreateTournamentModal({ onClose, onCreated }) {
+/* ------------------------------------------------------------------ */
+/*  Modal création tournoi                                             */
+/* ------------------------------------------------------------------ */
+function CreateTournamentModal({ onClose, onCreated }) {
   const [name,       setName]       = useState('')
   const [dateStart,  setDateStart]  = useState('')
   const [deadline,   setDeadline]   = useState('')
@@ -188,10 +272,32 @@ function CreateTournamentModal({ onClose, onCreated }) {
       setError(d.detail || d.error || 'Erreur')
     }
   }
+  const [error,      setError]      = useState('')
+
+  const handleCreate = async () => {
+    if (!name) return
+    const res = await adm('/api/tournaments/', {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        start_date: dateStart,
+        deadline: deadline || null,
+        max_players: parseInt(maxPlayers),
+      }),
+    })
+    if (res.ok) {
+      setDone(true)
+      onCreated?.()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setError(d.detail || d.error || 'Erreur')
+    }
+  }
 
   if (done) return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalSuccess}>Tournoi créé</div>
         <div className={styles.modalSuccess}>Tournoi créé</div>
         <button className={styles.modalClose} onClick={onClose}>Fermer</button>
       </div>
@@ -437,6 +543,9 @@ function DeleteUserModal({ player, onClose, onDeleted }) {
 /* ------------------------------------------------------------------ */
 /*  Dashboard principal                                                */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  Dashboard principal                                                */
+/* ------------------------------------------------------------------ */
 function Dashboard({ onLogout }) {
   const [createOpen,      setCreateOpen]      = useState(false)
   const [editEloPlayer,   setEditEloPlayer]   = useState(null)
@@ -508,12 +617,17 @@ function Dashboard({ onLogout }) {
         <div className={styles.dashHeaderRight}>
           <span className={styles.dashAdmin}>Connecté en tant qu'admin</span>
           <button className={styles.logoutBtn} onClick={handleLogout}>Déconnexion</button>
+          <button className={styles.logoutBtn} onClick={handleLogout}>Déconnexion</button>
         </div>
       </header>
 
       <div className={styles.dashContent}>
         {/* Stats */}
+        {/* Stats */}
         <div className={styles.statsRow}>
+          {statCards.length === 0 ? (
+            <div className={styles.emptyState}>Chargement des statistiques...</div>
+          ) : statCards.map(s => (
           {statCards.length === 0 ? (
             <div className={styles.emptyState}>Chargement des statistiques...</div>
           ) : statCards.map(s => (
@@ -527,6 +641,7 @@ function Dashboard({ onLogout }) {
 
         <div className={styles.panels}>
           <div className={styles.panelMain}>
+            {/* Matchs récents */}
             {/* Matchs récents */}
             <div className={styles.panel}>
               <div className={styles.panelTitle}>Matchs récents</div>
@@ -555,12 +670,30 @@ function Dashboard({ onLogout }) {
                             </span>
                           )}
                         </td>
+                        <td>
+                          {m.p1}
+                          {m.is_ranked && m.elo_p1 != null && (
+                            <span style={{ color: m.elo_p1 >= 0 ? '#27ae60' : '#c0392b', fontWeight: 600, fontSize: 12, marginLeft: 4 }}>
+                              {m.elo_p1 >= 0 ? `+${m.elo_p1}` : m.elo_p1}
+                            </span>
+                          )}
+                          <span className={styles.vs}> vs </span>
+                          {m.p2}
+                          {m.is_ranked && m.elo_p2 != null && (
+                            <span style={{ color: m.elo_p2 >= 0 ? '#27ae60' : '#c0392b', fontWeight: 600, fontSize: 12, marginLeft: 4 }}>
+                              {m.elo_p2 >= 0 ? `+${m.elo_p2}` : m.elo_p2}
+                            </span>
+                          )}
+                        </td>
                         <td className={styles.tdScore}>{m.score}</td>
                         <td>
                           <span className={`${styles.pill} ${m.is_ranked ? styles.pillCompet : styles.pillChill}`}>
                             {m.is_ranked ? 'Classé' : 'Libre'}
+                          <span className={`${styles.pill} ${m.is_ranked ? styles.pillCompet : styles.pillChill}`}>
+                            {m.is_ranked ? 'Classé' : 'Libre'}
                           </span>
                         </td>
+                        <td className={styles.tdDate}>{fmtDate(m.played_at)}</td>
                         <td className={styles.tdDate}>{fmtDate(m.played_at)}</td>
                       </tr>
                     ))}
@@ -570,7 +703,18 @@ function Dashboard({ onLogout }) {
             </div>
 
             {/* Joueurs */}
+            {/* Joueurs */}
             <div className={styles.panel}>
+              <div className={styles.panelTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <span>Joueurs ({players.length})</span>
+                <input
+                  className={styles.searchInput}
+                  type="text"
+                  placeholder="Rechercher un joueur..."
+                  value={playerSearch}
+                  onChange={e => setPlayerSearch(e.target.value)}
+                />
+              </div>
               <div className={styles.panelTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                 <span>Joueurs ({players.length})</span>
                 <input
@@ -596,8 +740,16 @@ function Dashboard({ onLogout }) {
                       return p.username.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)
                     }).map(p => (
                       <tr key={p.id}>
+                    {players.filter(p => {
+                      if (!playerSearch) return true
+                      const q = playerSearch.toLowerCase()
+                      return p.username.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)
+                    }).map(p => (
+                      <tr key={p.id}>
                         <td>
                           <div className={styles.playerCell}>
+                            <div className={styles.playerInitials}>{p.username.slice(0, 2).toUpperCase()}</div>
+                            {p.username}
                             <div className={styles.playerInitials}>{p.username.slice(0, 2).toUpperCase()}</div>
                             {p.username}
                           </div>
@@ -709,6 +861,9 @@ function Dashboard({ onLogout }) {
 /* ------------------------------------------------------------------ */
 /*  Page Admin (login + dashboard)                                     */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  Page Admin (login + dashboard)                                     */
+/* ------------------------------------------------------------------ */
 export default function Admin() {
   const navigate = useNavigate()
   const [login,    setLogin]    = useState('')
@@ -724,8 +879,10 @@ export default function Admin() {
     setError('')
     try {
       const res = await fetch('/api/admin/login/', {
+      const res = await fetch('/api/admin/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         credentials: 'include',
         body: JSON.stringify({ login, password }),
       })
@@ -787,6 +944,7 @@ export default function Admin() {
           </div>
           {error && <div className={styles.error}>{error}</div>}
           <button className={styles.btn} type="submit" disabled={loading}>
+            {loading ? 'Connexion...' : 'Se connecter'}
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
