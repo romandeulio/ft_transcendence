@@ -492,6 +492,12 @@ export default function Tournois() {
                 </button>
               )}
               {canManageTournament && (
+                <button className={styles.btnSecondary} onClick={() => document.getElementById('import-players-input-tournois')?.click()}>
+                  Importer une liste de joueurs
+                </button>
+              )}
+              <input id="import-players-input-tournois" type="file" accept=".csv,.txt,.json" style={{ display: 'none' }} onChange={() => {}} />
+              {canManageTournament && (
                 <button className={styles.btnDanger} onClick={handleDeleteTournament} disabled={deleteLoading}>
                   {deleteLoading ? 'Suppression...' : 'Annuler le tournoi'}
                 </button>

@@ -708,12 +708,27 @@ function Dashboard({ onLogout }) {
                         <td className={styles.tdDate}>{fmtDate(tourn.start_date)}</td>
                         <td className={styles.tdActions}>
                           {(tourn.status === 'OPEN' || tourn.status === 'ONGOING') && (
-                            <button
-                              className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
-                              onClick={() => handleCancelTournament(tourn)}
-                            >
-                              {t('admin.btn_cancel_tourn')}
-                            </button>
+                            <>
+                              <button
+                                className={styles.miniBtn}
+                                onClick={() => document.getElementById(`import-players-${tourn.id}`)?.click()}
+                              >
+                                Importer joueurs
+                              </button>
+                              <input
+                                id={`import-players-${tourn.id}`}
+                                type="file"
+                                accept=".csv,.txt,.json"
+                                style={{ display: 'none' }}
+                                onChange={() => {}}
+                              />
+                              <button
+                                className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
+                                onClick={() => handleCancelTournament(tourn)}
+                              >
+                                {t('admin.btn_cancel_tourn')}
+                              </button>
+                            </>
                           )}
                         </td>
                       </tr>

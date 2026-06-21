@@ -20,6 +20,7 @@ import LoginSuccess from './pages/LoginSuccess'
 import Banned         from './pages/Banned'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import ActivateAccount from './pages/ActivateAccount'
 
 function isTokenValid(token) {
   if (!token) return false;
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/status"        element={<PrivateRoute element={<Status />} />} />
             <Route path="/privacy-policy"   element={<PrivateRoute element={<PrivacyPolicy />} />} />
             <Route path="/terms-of-service" element={<PrivateRoute element={<TermsOfService />} />} />
+            <Route path="/activate/:uidb64/:token" element={<ActivateAccount />} />
           </Routes>
         </BrowserRouter>
       </NotifProvider>
