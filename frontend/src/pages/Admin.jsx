@@ -70,16 +70,26 @@ function SeasonPanel() {
   const active   = seasons.find(s => s.status === 'ACTIVE')
   const upcoming = seasons.filter(s => s.status === 'UPCOMING')
 
+  const [seasonError, setSeasonError] = useState('')
+
   const handleAddSeason = async () => {
+    setSeasonError('')
     if (!newName || !newStart || !newEnd) return
+    const today = new Date().toISOString().split('T')[0]
+    if (newStart < today) { setSeasonError('La date de début ne peut pas être dans le passé.'); return }
+    if (newEnd <= newStart) { setSeasonError('La date de fin doit être après la date de début.'); return }
     const res = await adm('/api/admin/seasons/', {
       method: 'POST',
       body: JSON.stringify({ name: newName, start_date: newStart, end_date: newEnd }),
     })
     if (res.ok) {
+      const created = await res.json()
+      setSeasons(prev => [created, ...prev])
       setNewName(''); setNewStart(''); setNewEnd('')
       setAddOpen(false)
-      reload()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setSeasonError(`[${res.status}] ${d.error || d.detail || JSON.stringify(d)}`)
     }
   }
 
@@ -114,8 +124,9 @@ function SeasonPanel() {
             <label className={styles.addSeasonLabel}>{t('admin.season_end_label')}</label>
             <input className={styles.addSeasonInput} type="date" value={newEnd} onChange={e => setNewEnd(e.target.value)} />
           </div>
+          {seasonError && <div className={styles.error} style={{ marginBottom: 8 }}>{seasonError}</div>}
           <div className={styles.addSeasonActions}>
-            <button className={styles.seasonCancelBtn} onClick={() => setAddOpen(false)}>{t('admin.btn_cancel')}</button>
+            <button className={styles.seasonCancelBtn} onClick={() => { setAddOpen(false); setSeasonError('') }}>{t('admin.btn_cancel')}</button>
             <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>{t('admin.btn_create')}</button>
           </div>
         </div>
@@ -348,6 +359,46 @@ function EditEloModal({ player, onClose, onSaved }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Modal modification de jetons (wallet_tokens)                      */
+/* ------------------------------------------------------------------ */
+function EditWalletModal({ player, onClose, onSaved }) {
+  const { t } = useTranslation()
+  const [tokens, setTokens] = useState(player.wallet_tokens ?? 0)
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    const res = await adm(`/api/admin/players/${player.id}/wallet/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ wallet_tokens: tokens }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      onSaved?.({ ...player, wallet_tokens: tokens })
+      onClose()
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalTitle}>Jetons — {player.username}</div>
+        <div className={styles.modalField}>
+          <label className={styles.modalLabel}>Wallet tokens</label>
+          <input className={styles.modalInput} type="number" value={tokens} onChange={e => setTokens(Number(e.target.value))} />
+        </div>
+        <div className={styles.modalActions}>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.modal_elo_cancel')}</button>
+          <button className={styles.modalOkBtn} onClick={handleSave} disabled={saving}>
+            {saving ? t('admin.modal_elo_saving') : t('admin.modal_elo_save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Modal modification de rôle  [NOUVEAU]                             */
 /* ------------------------------------------------------------------ */
 const ROLES = ['user', 'stud', 'bde', 'piscineux', 'alumni', 'bocalien']
@@ -457,6 +508,7 @@ function Dashboard({ onLogout }) {
   const [players,       setPlayers]       = useState([])
   const [tournaments,   setTournaments]   = useState([])
   const [editRolePlayer, setEditRolePlayer] = useState(null)
+  const [editWalletPlayer, setEditWalletPlayer] = useState(null)
   const [deletePlayer, setDeletePlayer] = useState(null)
 
   const loadAll = () => {
@@ -515,7 +567,8 @@ function Dashboard({ onLogout }) {
     <div className={styles.dashboard}>
       {createOpen     && <CreateTournamentModal onClose={() => setCreateOpen(false)} onCreated={loadAll} />}
       {editEloPlayer  && <EditEloModal  player={editEloPlayer}  onClose={() => setEditEloPlayer(null)}  onSaved={handleEloSaved} />}
-      {editRolePlayer && <EditRoleModal player={editRolePlayer} onClose={() => setEditRolePlayer(null)} onSaved={loadAll} />}
+      {editRolePlayer  && <EditRoleModal  player={editRolePlayer}  onClose={() => setEditRolePlayer(null)}  onSaved={loadAll} />}
+      {editWalletPlayer && <EditWalletModal player={editWalletPlayer} onClose={() => setEditWalletPlayer(null)} onSaved={(updated) => { setPlayers(prev => prev.map(u => u.id === updated.id ? updated : u)); setEditWalletPlayer(null) }} />}
       {deletePlayer   && <DeleteUserModal player={deletePlayer} onClose={() => setDeletePlayer(null)}   onDeleted={loadAll} />}
       {banPlayer      && <BanModal       player={banPlayer}     onClose={() => setBanPlayer(null)}      onBanned={loadAll} />}
 
@@ -557,6 +610,7 @@ function Dashboard({ onLogout }) {
                       <th>{t('admin.col_score')}</th>
                       <th>{t('admin.col_mode')}</th>
                       <th>{t('admin.col_date')}</th>
+                      <th>{t('admin.col_actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -584,6 +638,25 @@ function Dashboard({ onLogout }) {
                           </span>
                         </td>
                         <td className={styles.tdDate}>{fmtDate(m.played_at)}</td>
+                        <td>
+                          {m.status === 'CANCELLED' ? (
+                            <span style={{ color: '#999', fontSize: 12 }}>Annulé</span>
+                          ) : (
+                            <button
+                              className={styles.btnDanger}
+                              style={{ fontSize: 11, padding: '3px 8px' }}
+                              onClick={async () => {
+                                if (!confirm('Annuler ce match et restaurer les ELO ?')) return
+                                const res = await adm(`/api/admin/matches/${m.id}/cancel/`, { method: 'POST' })
+                                if (res.ok) {
+                                  setRecentMatches(prev => prev.map(x => x.id === m.id ? { ...x, status: 'CANCELLED', elo_p1: null, elo_p2: null } : x))
+                                }
+                              }}
+                            >
+                              Annuler
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -612,6 +685,7 @@ function Dashboard({ onLogout }) {
                       <th>{t('admin.col_login')}</th>
                       <th>{t('admin.col_elo1v1')}</th>
                       <th>{t('admin.col_elo2v2')}</th>
+                      <th>Jetons</th>
                       <th>role</th>
                       <th>{t('admin.col_status')}</th>
                       <th>{t('admin.col_actions')}</th>
@@ -632,7 +706,8 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td className={styles.tdScore}>{p.elo_solo}</td>
                         <td className={styles.tdScore}>{p.elo_team}</td>
-                        {/* Colonne rôle [NOUVEAU] */}
+                        <td className={styles.tdScore}>{p.wallet_tokens ?? 0}</td>
+                        {/* Colonne rôle */}
                         <td>
                           <span className={`${styles.pill} ${styles.pillChill}`} style={{ fontSize: 11 }}>
                             {p.role ?? 'user'}
@@ -647,6 +722,7 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td className={styles.tdActions}>
                           <button className={styles.miniBtn} onClick={() => setEditEloPlayer(p)}>{t('admin.btn_elo')}</button>
+                          <button className={styles.miniBtn} onClick={() => setEditWalletPlayer(p)}>Jetons</button>
                           {p.is_banned ? (
                             <button className={styles.miniBtn} onClick={() => handleUnban(p)}>{t('admin.btn_unban')}</button>
                           ) : (
