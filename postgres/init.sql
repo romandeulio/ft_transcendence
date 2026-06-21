@@ -250,6 +250,113 @@ CREATE TABLE tournament_matches (
     UNIQUE (tournament_id, round_number, bracket_position)
 );
 
+CREATE TABLE organizations (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name        VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    avatar      VARCHAR(255) NULL,
+    owner_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE organization_members (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    player_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role            VARCHAR(10) NOT NULL DEFAULT 'MEMBER'
+                        CHECK (role IN ('OWNER', 'MEMBER')),
+    joined_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (organization_id, player_id)
+);
+
+CREATE TABLE django_content_type (
+    id        SERIAL PRIMARY KEY,
+    app_label VARCHAR(100) NOT NULL,
+    model     VARCHAR(100) NOT NULL,
+    UNIQUE (app_label, model)
+);
+
+CREATE TABLE auth_permission (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(255) NOT NULL,
+    content_type_id INTEGER NOT NULL REFERENCES django_content_type(id) ON DELETE CASCADE,
+    codename        VARCHAR(100) NOT NULL,
+    UNIQUE (content_type_id, codename)
+);
+
+CREATE TABLE auth_group (
+    id   SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE auth_group_permissions (
+    id            SERIAL PRIMARY KEY,
+    group_id      INTEGER NOT NULL REFERENCES auth_group(id) ON DELETE CASCADE,
+    permission_id INTEGER NOT NULL REFERENCES auth_permission(id) ON DELETE CASCADE,
+    UNIQUE (group_id, permission_id)
+);
+
+CREATE TABLE django_admin_log (
+    id              SERIAL PRIMARY KEY,
+    action_time     TIMESTAMP WITH TIME ZONE NOT NULL,
+    object_id       TEXT NULL,
+    object_repr     VARCHAR(200) NOT NULL,
+    action_flag     SMALLINT NOT NULL CHECK (action_flag > 0),
+    change_message  TEXT NOT NULL,
+    content_type_id INTEGER NULL REFERENCES django_content_type(id) ON DELETE SET NULL,
+    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE django_session (
+    session_key  VARCHAR(40) PRIMARY KEY,
+    session_data TEXT NOT NULL,
+    expire_date  TIMESTAMP WITH TIME ZONE NOT NULL
+);
+CREATE INDEX idx_django_session_expire ON django_session(expire_date);
+
+CREATE TABLE django_migrations (
+    id      SERIAL PRIMARY KEY,
+    app     VARCHAR(255) NOT NULL,
+    name    VARCHAR(255) NOT NULL,
+    applied TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE public_api_apikey (
+    id                  SERIAL PRIMARY KEY,
+    name                VARCHAR(100) NOT NULL,
+    key                 VARCHAR(64) NOT NULL UNIQUE,
+    owner_id            UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+    is_full_access      BOOLEAN NOT NULL DEFAULT FALSE,
+    requests_this_hour  INTEGER NOT NULL DEFAULT 0,
+    rate_limit          INTEGER NOT NULL DEFAULT 200,
+    last_request_at     TIMESTAMP WITH TIME ZONE NULL,
+    expires_at          TIMESTAMP WITH TIME ZONE NULL,
+    created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO django_migrations (app, name, applied) VALUES
+('contenttypes', '0001_initial', NOW()),
+('contenttypes', '0002_remove_content_type_name', NOW()),
+('admin', '0001_initial', NOW()),
+('admin', '0002_logentry_remove_auto_add', NOW()),
+('admin', '0003_logentry_add_action_flag_choices', NOW()),
+('auth', '0001_initial', NOW()),
+('auth', '0002_alter_permission_name_max_length', NOW()),
+('auth', '0003_alter_user_email_max_length', NOW()),
+('auth', '0004_alter_user_username_opts', NOW()),
+('auth', '0005_alter_user_last_login_null', NOW()),
+('auth', '0006_require_contenttypes_0002', NOW()),
+('auth', '0007_alter_validators_add_error_messages', NOW()),
+('auth', '0008_alter_user_username_max_length', NOW()),
+('auth', '0009_alter_user_last_name_max_length', NOW()),
+('auth', '0010_alter_group_name_max_length', NOW()),
+('auth', '0011_update_proxy_permissions', NOW()),
+('auth', '0012_alter_user_first_name_max_length', NOW()),
+('sessions', '0001_initial', NOW());
+
 CREATE OR REPLACE FUNCTION check_no_self_bet()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -309,3 +416,7 @@ CREATE INDEX idx_bracket_tournament_round  ON tournament_matches(tournament_id, 
 CREATE INDEX idx_bracket_status            ON tournament_matches(status);
 CREATE INDEX idx_season_rewards_season ON season_rewards(season_id);
 CREATE INDEX idx_season_rewards_player ON season_rewards(player_id);
+CREATE INDEX idx_org_members_player ON organization_members(player_id);
+CREATE INDEX idx_org_members_org    ON organization_members(organization_id);
+CREATE INDEX idx_public_api_apikey_owner ON public_api_apikey(owner_id);
+CREATE INDEX idx_public_api_apikey_key   ON public_api_apikey(key);

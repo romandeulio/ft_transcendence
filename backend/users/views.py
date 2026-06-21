@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 
 from .models import User
+from stats.models import Stats
 from .serializers import RegisterSerializer, UserSerializer
 
 from rest_framework.views import APIView
@@ -184,7 +185,8 @@ class OAuth42CallbackView(APIView):
                     'role':       role,
                 }
             )
-
+            if created:
+                Stats.objects.get_or_create(user=user)
             if not created:
                 user.role = role
                 user.save(update_fields=['role'])
