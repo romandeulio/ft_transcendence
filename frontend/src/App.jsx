@@ -17,7 +17,9 @@ import Admin       from './pages/Admin'
 import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
 import LoginSuccess from './pages/LoginSuccess'
-import Banned      from './pages/Banned'
+import Banned         from './pages/Banned'
+import PrivacyPolicy  from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 
 function isTokenValid(token) {
   if (!token) return false;
@@ -53,8 +55,10 @@ export default function App() {
             <Route path="/register"      element={<Register />} />
             <Route path="/banned"        element={<Banned />} />
             <Route path="/admin"         element={<Admin />} />
-            <Route path="/ticket"        element={<Ticket />} />
-            <Route path="/status"        element={<Status />} />
+            <Route path="/ticket"        element={<PrivateRoute element={<Ticket />} />} />
+            <Route path="/status"        element={<PrivateRoute element={<Status />} />} />
+            <Route path="/privacy-policy"   element={<PrivateRoute element={<PrivacyPolicy />} />} />
+            <Route path="/terms-of-service" element={<PrivateRoute element={<TermsOfService />} />} />
           </Routes>
         </BrowserRouter>
       </NotifProvider>

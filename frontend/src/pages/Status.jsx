@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 
@@ -32,6 +33,7 @@ function StatusCard({ label, value }) {
 }
 
 export default function Status() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
 
   const check = () => {
@@ -49,10 +51,10 @@ export default function Status() {
 
   return (
     <Shell>
-      <Topbar title="Status" />
+      <Topbar title={t('status.title')} />
       <div style={{ padding: '32px 24px', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {!data ? (
-          <p style={{ color: 'var(--ink2)' }}>Chargement...</p>
+          <p style={{ color: 'var(--ink2)' }}>{t('status.loading')}</p>
         ) : (
           <>
             <StatusCard label="Backend"    value={data.status} />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import styles from './Admin.module.css'
 
 const adm = (url, opts = {}) =>
@@ -9,6 +10,7 @@ const adm = (url, opts = {}) =>
 /*  Status serveur                                                     */
 /* ------------------------------------------------------------------ */
 function StatusMini() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
 
   const check = () =>
@@ -29,9 +31,9 @@ function StatusMini() {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.panelTitle}>Status serveur</div>
+      <div className={styles.panelTitle}>{t('admin.status_server')}</div>
       {!data ? (
-        <div className={styles.statusLoading}>Chargement...</div>
+        <div className={styles.statusLoading}>{t('admin.loading')}</div>
       ) : (
         <div className={styles.statusRows}>
           {rows.map(r => (
@@ -52,6 +54,7 @@ function StatusMini() {
 /*  Saisons                                                            */
 /* ------------------------------------------------------------------ */
 function SeasonPanel() {
+  const { t } = useTranslation()
   const [seasons,  setSeasons]  = useState([])
   const [addOpen,  setAddOpen]  = useState(false)
   const [newName,  setNewName]  = useState('')
@@ -92,27 +95,27 @@ function SeasonPanel() {
   return (
     <div className={styles.panel}>
       <div className={styles.panelTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        Saisons
-        <button className={styles.addSeasonBtn} onClick={() => setAddOpen(o => !o)}>+ Saison</button>
+        {t('admin.seasons_title')}
+        <button className={styles.addSeasonBtn} onClick={() => setAddOpen(o => !o)}>{t('admin.btn_add_season')}</button>
       </div>
 
       {addOpen && (
         <div className={styles.addSeasonForm}>
           <div className={styles.addSeasonField}>
-            <label className={styles.addSeasonLabel}>Nom</label>
-            <input className={styles.addSeasonInput} placeholder="Saison 4 - Été" value={newName} onChange={e => setNewName(e.target.value)} />
+            <label className={styles.addSeasonLabel}>{t('admin.season_name_label')}</label>
+            <input className={styles.addSeasonInput} placeholder={t('admin.season_name_ph')} value={newName} onChange={e => setNewName(e.target.value)} />
           </div>
           <div className={styles.addSeasonField}>
-            <label className={styles.addSeasonLabel}>Début</label>
+            <label className={styles.addSeasonLabel}>{t('admin.season_start_label')}</label>
             <input className={styles.addSeasonInput} type="date" value={newStart} onChange={e => setNewStart(e.target.value)} />
           </div>
           <div className={styles.addSeasonField}>
-            <label className={styles.addSeasonLabel}>Fin</label>
+            <label className={styles.addSeasonLabel}>{t('admin.season_end_label')}</label>
             <input className={styles.addSeasonInput} type="date" value={newEnd} onChange={e => setNewEnd(e.target.value)} />
           </div>
           <div className={styles.addSeasonActions}>
-            <button className={styles.seasonCancelBtn} onClick={() => setAddOpen(false)}>Annuler</button>
-            <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>Créer</button>
+            <button className={styles.seasonCancelBtn} onClick={() => setAddOpen(false)}>{t('admin.btn_cancel')}</button>
+            <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>{t('admin.btn_create')}</button>
           </div>
         </div>
       )}
@@ -121,7 +124,7 @@ function SeasonPanel() {
         <div className={styles.seasonCurrent}>
           <span className={styles.seasonIcon}>📅</span>
           <div style={{ flex: 1 }}>
-            <div className={styles.seasonLabel}>Saison en cours</div>
+            <div className={styles.seasonLabel}>{t('admin.season_current')}</div>
             <div className={styles.seasonName}>{active.name}</div>
           </div>
           <button
@@ -130,11 +133,11 @@ function SeasonPanel() {
             onClick={() => handleSeasonAction(active.id, 'finish')}
             disabled={actionLoading === active.id + 'finish'}
           >
-            Terminer
+            {t('admin.btn_end_season')}
           </button>
         </div>
       ) : (
-        <div className={styles.seasonNext}>Aucune saison active.</div>
+        <div className={styles.seasonNext}>{t('admin.no_active_season')}</div>
       )}
 
       {upcoming.length > 0 && (
@@ -148,7 +151,7 @@ function SeasonPanel() {
                 onClick={() => handleSeasonAction(s.id, 'activate')}
                 disabled={actionLoading === s.id + 'activate'}
               >
-                {actionLoading === s.id + 'activate' ? '...' : 'Activer'}
+                {actionLoading === s.id + 'activate' ? '...' : t('admin.btn_activate')}
               </button>
             </div>
           ))}
@@ -162,6 +165,7 @@ function SeasonPanel() {
 /*  Modal création tournoi                                             */
 /* ------------------------------------------------------------------ */
 function CreateTournamentModal({ onClose, onCreated }) {
+  const { t } = useTranslation()
   const [name,       setName]       = useState('')
   const [dateStart,  setDateStart]  = useState('')
   const [deadline,   setDeadline]   = useState('')
@@ -185,15 +189,15 @@ function CreateTournamentModal({ onClose, onCreated }) {
       onCreated?.()
     } else {
       const d = await res.json().catch(() => ({}))
-      setError(d.detail || d.error || 'Erreur')
+      setError(d.detail || d.error || t('admin.modal_tourn_err'))
     }
   }
 
   if (done) return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalSuccess}>Tournoi créé</div>
-        <button className={styles.modalClose} onClick={onClose}>Fermer</button>
+        <div className={styles.modalSuccess}>{t('admin.modal_tourn_success')}</div>
+        <button className={styles.modalClose} onClick={onClose}>{t('admin.modal_tourn_close')}</button>
       </div>
     </div>
   )
@@ -201,29 +205,29 @@ function CreateTournamentModal({ onClose, onCreated }) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalTitle}>Créer un tournoi</div>
+        <div className={styles.modalTitle}>{t('admin.modal_create_title')}</div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>Nom du tournoi</label>
-          <input className={styles.modalInput} placeholder="Ex: Tournoi du jeudi #5" value={name} onChange={e => setName(e.target.value)} />
+          <label className={styles.modalLabel}>{t('admin.modal_tourn_name')}</label>
+          <input className={styles.modalInput} placeholder={t('admin.modal_tourn_name_ph')} value={name} onChange={e => setName(e.target.value)} />
         </div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>Date et heure</label>
+          <label className={styles.modalLabel}>{t('admin.modal_tourn_date')}</label>
           <input className={styles.modalInput} type="datetime-local" value={dateStart} onChange={e => setDateStart(e.target.value)} />
         </div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>Limite d'inscription</label>
+          <label className={styles.modalLabel}>{t('admin.modal_tourn_deadline')}</label>
           <input className={styles.modalInput} type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
         </div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>Nombre maximum de joueurs</label>
+          <label className={styles.modalLabel}>{t('admin.modal_tourn_max')}</label>
           <select className={styles.modalInput} value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)}>
-            {[16, 32].map(n => <option key={n} value={n}>{n} joueurs</option>)}
+            {[16, 32].map(n => <option key={n} value={n}>{t('admin.modal_tourn_players', { n })}</option>)}
           </select>
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.modalActions}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
-          <button className={styles.modalOkBtn} onClick={handleCreate}>Créer le tournoi</button>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.modal_tourn_cancel')}</button>
+          <button className={styles.modalOkBtn} onClick={handleCreate}>{t('admin.modal_tourn_submit')}</button>
         </div>
       </div>
     </div>
@@ -234,6 +238,7 @@ function CreateTournamentModal({ onClose, onCreated }) {
 /*  Modal ban                                                          */
 /* ------------------------------------------------------------------ */
 function BanModal({ player, onClose, onBanned }) {
+  const { t } = useTranslation()
   const [banType,  setBanType]  = useState('temporary')
   const [hours,    setHours]    = useState(24)
   const [saving,   setSaving]   = useState(false)
@@ -254,39 +259,41 @@ function BanModal({ player, onClose, onBanned }) {
     }
   }
 
+  const durDisplay = hours >= 24
+    ? `${Math.floor(hours / 24)}${t('admin.day_abbr')} ${hours % 24}h`
+    : `${hours}h`
+
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalTitle}>Bannir {player.username}</div>
+        <div className={styles.modalTitle}>{t('admin.modal_ban_title', { username: player.username })}</div>
 
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>Type de ban</label>
+          <label className={styles.modalLabel}>{t('admin.modal_ban_type')}</label>
           <select className={styles.modalInput} value={banType} onChange={e => setBanType(e.target.value)}>
-            <option value="temporary">Temporaire</option>
-            <option value="permanent">Définitif</option>
+            <option value="temporary">{t('admin.modal_ban_temp')}</option>
+            <option value="permanent">{t('admin.modal_ban_perm')}</option>
           </select>
         </div>
 
         {banType === 'temporary' && (
           <div className={styles.modalField}>
-            <label className={styles.modalLabel}>Durée (en heures)</label>
+            <label className={styles.modalLabel}>{t('admin.modal_ban_duration')}</label>
             <input className={styles.modalInput} type="number" min="1" value={hours} onChange={e => setHours(Number(e.target.value))} />
-            <div style={{ fontSize: 12, color: '#8a8475', marginTop: 4 }}>
-              = {hours >= 24 ? `${Math.floor(hours / 24)}j ${hours % 24}h` : `${hours}h`}
-            </div>
+            <div style={{ fontSize: 12, color: '#8a8475', marginTop: 4 }}>= {durDisplay}</div>
           </div>
         )}
 
         {banType === 'permanent' && (
           <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 600, margin: '8px 0' }}>
-            Le joueur ne pourra plus se connecter.
+            {t('admin.modal_ban_warning')}
           </div>
         )}
 
         <div className={styles.modalActions}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.modal_ban_cancel')}</button>
           <button className={styles.modalOkBtn} onClick={handleBan} disabled={saving} style={{ background: '#c0392b', color: '#fff' }}>
-            {saving ? 'Bannissement...' : 'Confirmer le ban'}
+            {saving ? t('admin.modal_ban_doing') : t('admin.modal_ban_confirm')}
           </button>
         </div>
       </div>
@@ -298,6 +305,7 @@ function BanModal({ player, onClose, onBanned }) {
 /*  Modal modification ELO                                             */
 /* ------------------------------------------------------------------ */
 function EditEloModal({ player, onClose, onSaved }) {
+  const { t } = useTranslation()
   const [eloSolo, setEloSolo] = useState(player.elo_solo)
   const [eloTeam, setEloTeam] = useState(player.elo_team)
   const [saving,  setSaving]  = useState(false)
@@ -318,19 +326,19 @@ function EditEloModal({ player, onClose, onSaved }) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalTitle}>Modifier ELO — {player.username}</div>
+        <div className={styles.modalTitle}>{t('admin.modal_elo_title', { username: player.username })}</div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>ELO Solo (1v1)</label>
+          <label className={styles.modalLabel}>{t('admin.modal_elo_solo')}</label>
           <input className={styles.modalInput} type="number" value={eloSolo} onChange={e => setEloSolo(Number(e.target.value))} />
         </div>
         <div className={styles.modalField}>
-          <label className={styles.modalLabel}>ELO Team (2v2)</label>
+          <label className={styles.modalLabel}>{t('admin.modal_elo_team')}</label>
           <input className={styles.modalInput} type="number" value={eloTeam} onChange={e => setEloTeam(Number(e.target.value))} />
         </div>
         <div className={styles.modalActions}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.modal_elo_cancel')}</button>
           <button className={styles.modalOkBtn} onClick={handleSave} disabled={saving}>
-            {saving ? 'Sauvegarde...' : 'Enregistrer'}
+            {saving ? t('admin.modal_elo_saving') : t('admin.modal_elo_save')}
           </button>
         </div>
       </div>
@@ -379,9 +387,9 @@ function EditRoleModal({ player, onClose, onSaved }) {
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.modalActions}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.modal_elo_cancel')}</button>
           <button className={styles.modalOkBtn} onClick={handleSave} disabled={saving}>
-            {saving ? 'Sauvegarde...' : 'Enregistrer'}
+            {saving ? t('admin.modal_elo_saving') : t('admin.modal_elo_save')}
           </button>
         </div>
       </div>
@@ -438,16 +446,15 @@ function DeleteUserModal({ player, onClose, onDeleted }) {
 /*  Dashboard principal                                                */
 /* ------------------------------------------------------------------ */
 function Dashboard({ onLogout }) {
-  const [createOpen,      setCreateOpen]      = useState(false)
-  const [editEloPlayer,   setEditEloPlayer]   = useState(null)
-  const [editRolePlayer,  setEditRolePlayer]  = useState(null)   // [NOUVEAU]
-  const [deletePlayer,    setDeletePlayer]    = useState(null)   // [NOUVEAU]
-  const [banPlayer,       setBanPlayer]       = useState(null)
-  const [playerSearch,    setPlayerSearch]    = useState('')
-  const [stats,           setStats]           = useState(null)
-  const [recentMatches,   setRecentMatches]   = useState([])
-  const [players,         setPlayers]         = useState([])
-  const [tournaments,     setTournaments]     = useState([])
+  const { t } = useTranslation()
+  const [createOpen,    setCreateOpen]    = useState(false)
+  const [editEloPlayer, setEditEloPlayer] = useState(null)
+  const [banPlayer,     setBanPlayer]     = useState(null)
+  const [playerSearch,  setPlayerSearch]  = useState('')
+  const [stats,         setStats]         = useState(null)
+  const [recentMatches, setRecentMatches] = useState([])
+  const [players,       setPlayers]       = useState([])
+  const [tournaments,   setTournaments]   = useState([])
 
   const loadAll = () => {
     adm('/api/admin/stats/').then(r => r.json()).then(setStats).catch(() => {})
@@ -465,11 +472,11 @@ function Dashboard({ onLogout }) {
     }
   }
 
-  const handleCancelTournament = async (t) => {
-    if (!confirm(`Annuler le tournoi "${t.name}" ?`)) return
-    const res = await adm(`/api/admin/tournaments/${t.id}/cancel/`, { method: 'POST' })
+  const handleCancelTournament = async (tourn) => {
+    if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
+    const res = await adm(`/api/admin/tournaments/${tourn.id}/cancel/`, { method: 'POST' })
     if (res.ok) {
-      setTournaments(prev => prev.map(x => x.id === t.id ? { ...x, status: 'CANCELLED' } : x))
+      setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'CANCELLED' } : x))
     }
   }
 
@@ -483,11 +490,17 @@ function Dashboard({ onLogout }) {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 
+  const tournStatus = (status) => ({
+    OPEN: t('admin.status_open'),
+    ONGOING: t('admin.status_ongoing'),
+    CANCELLED: t('admin.status_cancelled'),
+  }[status] ?? t('admin.status_finished'))
+
   const statCards = stats ? [
-    { icon: '👥', value: stats.nb_users,       label: 'Joueurs actifs' },
-    { icon: '⚽', value: stats.nb_matches,      label: 'Matchs joués' },
-    { icon: '🏆', value: stats.nb_tournaments,  label: 'Tournois' },
-    { icon: '📅', value: stats.active_season || '—', label: 'Saison active' },
+    { icon: '👥', value: stats.nb_users,       label: t('admin.stat_players') },
+    { icon: '⚽', value: stats.nb_matches,      label: t('admin.stat_matches') },
+    { icon: '🏆', value: stats.nb_tournaments,  label: t('admin.stat_tournaments') },
+    { icon: '📅', value: stats.active_season || '—', label: t('admin.stat_season') },
   ] : []
 
   const handleLogout = async () => {
@@ -504,10 +517,10 @@ function Dashboard({ onLogout }) {
       {banPlayer      && <BanModal       player={banPlayer}     onClose={() => setBanPlayer(null)}      onBanned={loadAll} />}
 
       <header className={styles.dashHeader}>
-        <div className={styles.dashTitle}>Administration</div>
+        <div className={styles.dashTitle}>{t('admin.title')}</div>
         <div className={styles.dashHeaderRight}>
-          <span className={styles.dashAdmin}>Connecté en tant qu'admin</span>
-          <button className={styles.logoutBtn} onClick={handleLogout}>Déconnexion</button>
+          <span className={styles.dashAdmin}>{t('admin.logged_as')}</span>
+          <button className={styles.logoutBtn} onClick={handleLogout}>{t('admin.logout')}</button>
         </div>
       </header>
 
@@ -515,7 +528,7 @@ function Dashboard({ onLogout }) {
         {/* Stats */}
         <div className={styles.statsRow}>
           {statCards.length === 0 ? (
-            <div className={styles.emptyState}>Chargement des statistiques...</div>
+            <div className={styles.emptyState}>{t('admin.loading_stats')}</div>
           ) : statCards.map(s => (
             <div key={s.label} className={styles.statCard}>
               <div className={styles.statIcon}>{s.icon}</div>
@@ -529,13 +542,18 @@ function Dashboard({ onLogout }) {
           <div className={styles.panelMain}>
             {/* Matchs récents */}
             <div className={styles.panel}>
-              <div className={styles.panelTitle}>Matchs récents</div>
+              <div className={styles.panelTitle}>{t('admin.matches_title')}</div>
               {recentMatches.length === 0 ? (
-                <div className={styles.emptyState}>Aucun match récent.</div>
+                <div className={styles.emptyState}>{t('admin.matches_empty')}</div>
               ) : (
                 <table className={styles.table}>
                   <thead>
-                    <tr><th>Joueurs</th><th>Score</th><th>Mode</th><th>Date</th></tr>
+                    <tr>
+                      <th>{t('admin.col_players')}</th>
+                      <th>{t('admin.col_score')}</th>
+                      <th>{t('admin.col_mode')}</th>
+                      <th>{t('admin.col_date')}</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {recentMatches.map((m, i) => (
@@ -558,7 +576,7 @@ function Dashboard({ onLogout }) {
                         <td className={styles.tdScore}>{m.score}</td>
                         <td>
                           <span className={`${styles.pill} ${m.is_ranked ? styles.pillCompet : styles.pillChill}`}>
-                            {m.is_ranked ? 'Classé' : 'Libre'}
+                            {m.is_ranked ? t('admin.pill_ranked') : t('admin.pill_free')}
                           </span>
                         </td>
                         <td className={styles.tdDate}>{fmtDate(m.played_at)}</td>
@@ -572,22 +590,28 @@ function Dashboard({ onLogout }) {
             {/* Joueurs */}
             <div className={styles.panel}>
               <div className={styles.panelTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <span>Joueurs ({players.length})</span>
+                <span>{t('admin.players_title')} ({players.length})</span>
                 <input
                   className={styles.searchInput}
                   type="text"
-                  placeholder="Rechercher un joueur..."
+                  placeholder={t('admin.players_search')}
                   value={playerSearch}
                   onChange={e => setPlayerSearch(e.target.value)}
                 />
               </div>
               {players.length === 0 ? (
-                <div className={styles.emptyState}>Aucun joueur enregistré.</div>
+                <div className={styles.emptyState}>{t('admin.players_empty')}</div>
               ) : (
                 <table className={styles.table}>
                   <thead>
-                    {/* Ajout des colonnes Rôle et suppression [NOUVEAU] */}
-                    <tr><th>Login</th><th>ELO 1v1</th><th>ELO 2v2</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
+                    <tr>
+                      <th>{t('admin.col_login')}</th>
+                      <th>{t('admin.col_elo1v1')}</th>
+                      <th>{t('admin.col_elo2v2')}</th>
+                      <th>role</th>
+                      <th>{t('admin.col_status')}</th>
+                      <th>{t('admin.col_actions')}</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {players.filter(p => {
@@ -612,21 +636,21 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td>
                           <span className={`${styles.pill} ${p.is_banned ? styles.pillInactif : p.is_active ? styles.pillActif : styles.pillInactif}`}>
-                            {p.is_banned ? (p.ban_permanent ? 'Ban déf.' : 'Ban temp.') : p.is_active ? 'Actif' : 'Inactif'}
+                            {p.is_banned
+                              ? (p.ban_permanent ? t('admin.status_ban_perm') : t('admin.status_ban_temp'))
+                              : p.is_active ? t('admin.status_active') : t('admin.status_inactive')}
                           </span>
                         </td>
                         <td className={styles.tdActions}>
-                          <button className={styles.miniBtn} onClick={() => setEditEloPlayer(p)}>ELO</button>
-                          {/* Bouton rôle [NOUVEAU] */}
-                          <button className={styles.miniBtn} onClick={() => setEditRolePlayer(p)}>Rôle</button>
+                          <button className={styles.miniBtn} onClick={() => setEditEloPlayer(p)}>{t('admin.btn_elo')}</button>
                           {p.is_banned ? (
-                            <button className={styles.miniBtn} onClick={() => handleUnban(p)}>Débannir</button>
+                            <button className={styles.miniBtn} onClick={() => handleUnban(p)}>{t('admin.btn_unban')}</button>
                           ) : (
                             <button
                               className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
                               onClick={() => setBanPlayer(p)}
                             >
-                              Bannir
+                              {t('admin.btn_ban')}
                             </button>
                           )}
                           {/* Bouton supprimer [NOUVEAU] — masqué pour les admins */}
@@ -648,37 +672,43 @@ function Dashboard({ onLogout }) {
 
             {/* Tournois */}
             <div className={styles.panel}>
-              <div className={styles.panelTitle}>Tournois ({tournaments.length})</div>
+              <div className={styles.panelTitle}>{t('admin.tournaments_title')} ({tournaments.length})</div>
               {tournaments.length === 0 ? (
-                <div className={styles.emptyState}>Aucun tournoi.</div>
+                <div className={styles.emptyState}>{t('admin.tournaments_empty')}</div>
               ) : (
                 <table className={styles.table}>
                   <thead>
-                    <tr><th>Nom</th><th>Statut</th><th>Places</th><th>Date</th><th>Actions</th></tr>
+                    <tr>
+                      <th>{t('admin.col_name')}</th>
+                      <th>{t('admin.col_status')}</th>
+                      <th>{t('admin.col_spots')}</th>
+                      <th>{t('admin.col_date')}</th>
+                      <th>{t('admin.col_actions')}</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {tournaments.map(t => (
-                      <tr key={t.id}>
-                        <td>{t.name}</td>
+                    {tournaments.map(tourn => (
+                      <tr key={tourn.id}>
+                        <td>{tourn.name}</td>
                         <td>
                           <span className={`${styles.pill} ${
-                            t.status === 'OPEN' ? styles.pillActif :
-                            t.status === 'ONGOING' ? styles.pillCompet :
-                            t.status === 'CANCELLED' ? styles.pillInactif :
+                            tourn.status === 'OPEN' ? styles.pillActif :
+                            tourn.status === 'ONGOING' ? styles.pillCompet :
+                            tourn.status === 'CANCELLED' ? styles.pillInactif :
                             styles.pillChill
                           }`}>
-                            {t.status}
+                            {tournStatus(tourn.status)}
                           </span>
                         </td>
-                        <td className={styles.tdScore}>{t.max_players}</td>
-                        <td className={styles.tdDate}>{fmtDate(t.start_date)}</td>
+                        <td className={styles.tdScore}>{tourn.max_players}</td>
+                        <td className={styles.tdDate}>{fmtDate(tourn.start_date)}</td>
                         <td className={styles.tdActions}>
-                          {(t.status === 'OPEN' || t.status === 'ONGOING') && (
+                          {(tourn.status === 'OPEN' || tourn.status === 'ONGOING') && (
                             <button
                               className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
-                              onClick={() => handleCancelTournament(t)}
+                              onClick={() => handleCancelTournament(tourn)}
                             >
-                              Annuler
+                              {t('admin.btn_cancel_tourn')}
                             </button>
                           )}
                         </td>
@@ -692,9 +722,9 @@ function Dashboard({ onLogout }) {
 
           <div className={styles.panelSide}>
             <div className={styles.panel}>
-              <div className={styles.panelTitle}>Actions rapides</div>
+              <div className={styles.panelTitle}>{t('admin.quick_title')}</div>
               <div className={styles.actions}>
-                <button className={styles.actionBtn} onClick={() => setCreateOpen(true)}>🏆 Créer un tournoi</button>
+                <button className={styles.actionBtn} onClick={() => setCreateOpen(true)}>{t('admin.btn_create_tourn')}</button>
               </div>
             </div>
             <SeasonPanel />
@@ -710,6 +740,7 @@ function Dashboard({ onLogout }) {
 /*  Page Admin (login + dashboard)                                     */
 /* ------------------------------------------------------------------ */
 export default function Admin() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [login,    setLogin]    = useState('')
   const [password, setPassword] = useState('')
@@ -732,10 +763,10 @@ export default function Admin() {
       if (res.ok) {
         setLoggedIn(true)
       } else {
-        setError('Identifiant ou mot de passe incorrect.')
+        setError(t('admin.err_credentials'))
       }
     } catch {
-      setError('Impossible de contacter le serveur.')
+      setError(t('admin.err_server'))
     } finally {
       setLoading(false)
     }
@@ -745,16 +776,16 @@ export default function Admin() {
 
   return (
     <div className={styles.page}>
-      <button className={styles.backBtn} onClick={() => navigate(-1)}>← Retour</button>
+      <button className={styles.backBtn} onClick={() => navigate(-1)}>{t('admin.back')}</button>
 
       <div className={styles.card}>
         <div className={styles.logo}>⚙️</div>
-        <div className={styles.title}>Administration</div>
-        <div className={styles.subtitle}>Accès réservé aux administrateurs</div>
+        <div className={styles.title}>{t('admin.title')}</div>
+        <div className={styles.subtitle}>{t('admin.subtitle')}</div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
-            <label className={styles.label}>Identifiant</label>
+            <label className={styles.label}>{t('admin.login_label')}</label>
             <input
               className={styles.input}
               type="text"
@@ -765,7 +796,7 @@ export default function Admin() {
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Mot de passe</label>
+            <label className={styles.label}>{t('admin.password_label')}</label>
             <div className={styles.pwdWrap}>
               <input
                 className={styles.input}
@@ -779,7 +810,7 @@ export default function Admin() {
                 type="button"
                 className={styles.eyeBtn}
                 onClick={() => setShowPwd(v => !v)}
-                aria-label={showPwd ? 'Cacher le mot de passe' : 'Voir le mot de passe'}
+                aria-label={showPwd ? t('admin.hide_pwd') : t('admin.show_pwd')}
               >
                 {showPwd ? '🙈' : '👁'}
               </button>
@@ -787,7 +818,7 @@ export default function Admin() {
           </div>
           {error && <div className={styles.error}>{error}</div>}
           <button className={styles.btn} type="submit" disabled={loading}>
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? t('admin.signing_in') : t('admin.sign_in')}
           </button>
         </form>
       </div>
