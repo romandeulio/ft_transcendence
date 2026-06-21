@@ -103,6 +103,7 @@ class AdminPlayersView(APIView):
                 'ban_permanent': u.ban_permanent,
                 'banned_until': u.banned_until.isoformat() if u.banned_until else None,
                 'is_banned': u.is_banned,
+                'wallet_tokens': u.wallet_tokens,
                 'avatar_url': u.avatar_url,
                 'created_at': u.created_at.isoformat() if u.created_at else None,
             })
@@ -233,6 +234,57 @@ class AdminRecentMatchesView(APIView):
         return Response(data)
 
 
+class AdminCancelMatchView(APIView):
+    """Annule un match validé et rollback les ELO des joueurs."""
+    permission_classes = [IsAdminSession]
+
+    def post(self, request, match_id):
+        from stats.models import Stats
+        from django.db import transaction
+
+        try:
+            match = Match.objects.select_related(
+                'player1', 'player2', 'player1_teammate', 'player2_teammate',
+            ).get(pk=match_id)
+        except Match.DoesNotExist:
+            return Response({'error': 'Match introuvable'}, status=404)
+
+        if match.status == 'CANCELLED':
+            return Response({'error': 'Match déjà annulé'}, status=400)
+
+        with transaction.atomic():
+            # Rembourser le delta ELO si match classé
+            if match.is_ranked and match.status == 'VALIDATED':
+                if match.match_type == 'SOLO':
+                    for player, before, after in [
+                        (match.player1, match.elo_solo_player1_before, match.elo_solo_player1_after),
+                        (match.player2, match.elo_solo_player2_before, match.elo_solo_player2_after),
+                    ]:
+                        if player:
+                            delta = after - before  # positif si gagné, négatif si perdu
+                            stats, _ = Stats.objects.get_or_create(user=player)
+                            stats.elo_solo -= delta
+                            stats.save(update_fields=['elo_solo'])
+
+                elif match.match_type == 'TEAM':
+                    for player, before, after in [
+                        (match.player1, match.elo_team_p1_before, match.elo_team_p1_after),
+                        (match.player1_teammate, match.elo_team_p1tm_before, match.elo_team_p1tm_after),
+                        (match.player2, match.elo_team_p2_before, match.elo_team_p2_after),
+                        (match.player2_teammate, match.elo_team_p2tm_before, match.elo_team_p2tm_after),
+                    ]:
+                        if player:
+                            delta = after - before
+                            stats, _ = Stats.objects.get_or_create(user=player)
+                            stats.elo_team -= delta
+                            stats.save(update_fields=['elo_team'])
+
+            match.status = 'CANCELLED'
+            match.save(update_fields=['status'])
+
+        return Response({'detail': 'Match annulé, ELO remboursé.'})
+
+
 # ---------------------------------------------------------------------------
 # Tournois
 # ---------------------------------------------------------------------------
@@ -312,8 +364,8 @@ class AdminSeasonsView(APIView):
             'id': str(season.id),
             'name': season.name,
             'status': season.status,
-            'start_date': season.start_date.isoformat(),
-            'end_date': season.end_date.isoformat(),
+            'start_date': str(season.start_date),
+            'end_date': str(season.end_date),
             'detail': 'Saison créée.',
         }, status=201)
 
@@ -333,15 +385,34 @@ class AdminSeasonDetailView(APIView):
         if action == 'activate':
             if season.status != 'UPCOMING':
                 return Response({'error': f"Statut actuel : '{season.status}'. Seules les saisons UPCOMING peuvent être activées."}, status=400)
+            from seasons.views import _distribute_rewards
+            from seasons.models import SeasonReward
             with transaction.atomic():
-                Season.objects.filter(status='ACTIVE').update(status='FINISHED')
+                # Clore proprement l'ancienne saison active (avec récompenses)
+                old_active = Season.objects.filter(status='ACTIVE').first()
+                if old_active:
+                    old_active.status = 'FINISHED'
+                    old_active.save(update_fields=['status'])
+                    if not old_active.rewards_distributed:
+                        _distribute_rewards(old_active, SeasonReward.RankingType.SOLO)
+                        _distribute_rewards(old_active, SeasonReward.RankingType.TEAM)
+                        old_active.rewards_distributed = True
+                        old_active.save(update_fields=['rewards_distributed'])
                 season.status = 'ACTIVE'
                 season.save(update_fields=['status'])
         elif action == 'finish':
             if season.status != 'ACTIVE':
                 return Response({'error': "Seule une saison ACTIVE peut être terminée."}, status=400)
-            season.status = 'FINISHED'
-            season.save(update_fields=['status'])
+            from seasons.views import _distribute_rewards
+            from seasons.models import SeasonReward
+            with transaction.atomic():
+                season.status = 'FINISHED'
+                season.save(update_fields=['status'])
+                if not season.rewards_distributed:
+                    _distribute_rewards(season, SeasonReward.RankingType.SOLO)
+                    _distribute_rewards(season, SeasonReward.RankingType.TEAM)
+                    season.rewards_distributed = True
+                    season.save(update_fields=['rewards_distributed'])
         else:
             return Response({'error': "Action invalide. Utiliser 'activate' ou 'finish'."}, status=400)
 
@@ -360,6 +431,27 @@ class AdminDeleteUserView(APIView):
         return Response(status=204)
  
  
+class AdminUpdateWalletView(APIView):
+    permission_classes = [IsAdminSession]
+
+    def patch(self, request, user_id):
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Utilisateur introuvable'}, status=404)
+
+        wallet_tokens = request.data.get('wallet_tokens')
+        if wallet_tokens is None:
+            return Response({'error': 'wallet_tokens requis.'}, status=400)
+
+        user.wallet_tokens = int(wallet_tokens)
+        user.save(update_fields=['wallet_tokens'])
+        return Response({
+            'detail': 'Jetons mis à jour.',
+            'wallet_tokens': user.wallet_tokens,
+        })
+
+
 class AdminUpdateUserRoleView(APIView):
     permission_classes = [IsAdminSession]
  

@@ -91,8 +91,9 @@ export default function Profil() {
   useEffect(() => {
     if (!user?.username) return
     authFetch(`/api/performance/stats/?players=${encodeURIComponent(user.username)}`)
-      .then(r => r.json())
+      .then(r => { console.log('[STATS] status:', r.status); return r.json() })
       .then(data => {
+        console.log('[STATS] data:', JSON.stringify(data))
         if (Array.isArray(data) && data.length > 0) {
           const s = data[0]
           setStats(prev => ({
@@ -131,12 +132,6 @@ export default function Profil() {
           if (teammate && !playedWith[teammate]) playedWith[teammate] = m.played_at
         })
         setLastPlayedWith(playedWith)
-        // Compter les gamelles du joueur sur tous ses matchs validés
-        const totalGamelles = validated.reduce((sum, m) => {
-          const asP1 = m.player1?.username === user.username || m.player1 === user.username
-          return sum + (asP1 ? (m.gamelles_player1 || 0) : (m.gamelles_player2 || 0))
-        }, 0)
-        setStats(prev => ({ ...prev, gamelles: totalGamelles }))
       })
       .catch(console.error)
 
@@ -152,18 +147,30 @@ export default function Profil() {
             .then(r => r.json())
             .then(ranking => {
               const entry = ranking.find(e => e.username === user.username)
-              if (entry) setStats({ wins: entry.wins, losses: entry.losses, rank: entry.rank })
+              if (entry) setStats(prev => ({ ...prev, wins: entry.wins, losses: entry.losses, rank: entry.rank }))
             })
             .catch(console.error)
         }
-        const mapped = allSeasons
+        const seasonList = allSeasons
           .filter(s => s.status === 'FINISHED' || s.status === 'ACTIVE')
-          .map(s => {
-            const champion = s.rewards?.find(r => r.ranking_type === 'Solo' && r.tier === 'Top 1')
-            const isMe = s.status === 'ACTIVE'
-            return { season: s.id, name: s.name, prize: isMe ? 'ongoing' : (champion?.player === user.username ? 'gold' : null), rank: '—' }
-          })
-        setSeasons(mapped)
+        // Récupérer le rang 1v1 et 2v2 du joueur dans chaque saison
+        Promise.all(seasonList.map(s =>
+          Promise.all([
+            authFetch(`/api/seasons/${s.id}/ranking/?type=solo`).then(r => r.json()).catch(() => []),
+            authFetch(`/api/seasons/${s.id}/ranking/?type=team`).then(r => r.json()).catch(() => []),
+          ]).then(([soloRaw, teamRaw]) => {
+            const solo = (Array.isArray(soloRaw) ? soloRaw : (soloRaw?.results ?? [])).find(e => e.username === user.username)
+            const team = (Array.isArray(teamRaw) ? teamRaw : (teamRaw?.results ?? [])).find(e => e.username === user.username)
+            return {
+              season: s.id,
+              name: s.name,
+              rankSolo: solo ? `#${solo.rank}` : '—',
+              eloSolo: solo ? solo.elo : null,
+              rankTeam: team ? `#${team.rank}` : '—',
+              eloTeam: team ? team.elo : null,
+            }
+          }).catch(() => ({ season: s.id, name: s.name, rankSolo: '—', eloSolo: null, rankTeam: '—', eloTeam: null }))
+        )).then(mapped => setSeasons(mapped))
       })
       .catch(console.error)
   }, [user?.username])
@@ -623,14 +630,9 @@ export default function Profil() {
               )}
               {seasons.map(s => (
                 <div key={s.season} className={styles.seasonRow}>
-                  <span className={styles.seasonName}>{t('profile.seasonLabel', { num: s.season })}</span>
-                  <span className={styles.seasonRank}>{s.rank}</span>
-                  {s.prize === 'ongoing'
-                    ? <Pill label={t('profile.ongoing')} type="orange" />
-                    : s.prize === 'gold'
-                    ? <Pill label={t('profile.champion')} type="gold" />
-                    : <span className={styles.noPrize}>—</span>
-                  }
+                  <span className={styles.seasonName}>{s.name}</span>
+                  <span className={styles.seasonRank}>1v1 : {s.rankSolo}{s.eloSolo != null ? ` (${s.eloSolo})` : ''}</span>
+                  <span className={styles.seasonRank}>2v2 : {s.rankTeam}{s.eloTeam != null ? ` (${s.eloTeam})` : ''}</span>
                 </div>
               ))}
             </Card>

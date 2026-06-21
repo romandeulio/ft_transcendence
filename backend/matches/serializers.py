@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Match
+from seasons.models import Season
 
 User = get_user_model()
 
@@ -119,6 +120,14 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 			)
 
 		return data
+
+	def create(self, validated_data):
+		# Auto-assign active season if ranked and no season provided
+		if validated_data.get('is_ranked', True) and not validated_data.get('season'):
+			active = Season.get_active()
+			if active:
+				validated_data['season'] = active
+		return super().create(validated_data)
 
 
 class MatchValidateSerializer(serializers.ModelSerializer):
