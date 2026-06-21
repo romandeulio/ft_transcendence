@@ -10,8 +10,9 @@ class SeasonRewardSerializer(serializers.ModelSerializer):
 	"""
 
 	player       = serializers.StringRelatedField(read_only=True)
-	ranking_type = serializers.CharField(source='get_ranking_type_display', read_only=True)
-	tier         = serializers.CharField(source='get_tier_display', read_only=True)
+	ranking_type = serializers.CharField(read_only=True)
+	tier         = serializers.CharField(read_only=True)
+	avatar_url   = serializers.SerializerMethodField()
 
 	class Meta:
 		model  = SeasonReward
@@ -24,8 +25,15 @@ class SeasonRewardSerializer(serializers.ModelSerializer):
 			'elo_at_end',
 			'rank_at_end',
 			'awarded_at',
+			'avatar_url',
 		]
-		read_only_fields = fields
+		read_only_fields = [
+			'id', 'player', 'ranking_type', 'tier',
+			'tokens_awarded', 'elo_at_end', 'rank_at_end', 'awarded_at',
+		]
+
+	def get_avatar_url(self, obj):
+		return obj.player.avatar_url if obj.player else ''
 
 
 class SeasonSerializer(serializers.ModelSerializer):
@@ -89,6 +97,7 @@ class RankingEntrySerializer(serializers.Serializer):
 	elo          = serializers.IntegerField()
 	wins         = serializers.IntegerField()
 	losses       = serializers.IntegerField()
+	avatar_url   = serializers.CharField(allow_blank=True, default='')
 	rank_name    = serializers.SerializerMethodField()
 	rank_color   = serializers.SerializerMethodField()
 	progress_pct = serializers.SerializerMethodField()

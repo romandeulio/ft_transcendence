@@ -27,21 +27,20 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export default function RankingEvolutionChart({ seasonOptions = [], seasonMap = {} }) {
-  const [season, setSeason]   = useState('current')
-  const [data,   setData]     = useState([])
+export default function RankingEvolutionChart({ seasonId }) {
+  const [mode,    setMode]    = useState('solo')
+  const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const seasonId = seasonMap[season]
-    if (!seasonId) return
+    if (!seasonId) { setData([]); return }
     setLoading(true)
-    authFetch(`/api/performance/rank-history/?season=${seasonId}`)
+    authFetch(`/api/performance/rank-history/?season=${seasonId}&type=${mode}`)
       .then(r => r.ok ? r.json() : [])
       .then(d => setData(Array.isArray(d) ? d : []))
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [season, seasonMap])
+  }, [seasonId, mode])
 
   const rankDomain = data.length
     ? [1, Math.max(...data.map(d => d.rank)) + 1]
@@ -53,12 +52,11 @@ export default function RankingEvolutionChart({ seasonOptions = [], seasonMap = 
         <span className={styles.title}>Évolution du classement</span>
         <select
           className={styles.seasonSelect}
-          value={season}
-          onChange={e => setSeason(e.target.value)}
+          value={mode}
+          onChange={e => setMode(e.target.value)}
         >
-          {seasonOptions.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+          <option value="solo">1v1</option>
+          <option value="team">2v2</option>
         </select>
       </div>
 

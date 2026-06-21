@@ -45,7 +45,7 @@ class SeasonListCreateView(generics.ListCreateAPIView):
 		return SeasonSerializer
 
 	def get_queryset(self):
-		return Season.objects.prefetch_related('rewards').all()
+		return Season.objects.prefetch_related('rewards__player').all()
 
 	def create(self, request, *args, **kwargs):
 		if not request.user.is_staff:
@@ -70,7 +70,7 @@ class SeasonDetailView(generics.RetrieveAPIView):
 	"""GET — détail d'une saison avec ses récompenses."""
 	serializer_class   = SeasonSerializer
 	permission_classes = [IsAuthenticated]
-	queryset = Season.objects.prefetch_related('rewards')
+	queryset = Season.objects.prefetch_related('rewards__player')
 
 
 # ---------------------------------------------------------------------------
@@ -250,8 +250,8 @@ def _build_ranking(season, ranking_type: str) -> list:
 		for m in matches:
 			winner = m.get_winner()  # 'player1_side' | 'player2_side' | None
 
-			elo_map[m.player1_id] = (m.player1.username, m.elo_solo_p1_after)
-			elo_map[m.player2_id] = (m.player2.username, m.elo_solo_p2_after)
+			elo_map[m.player1_id] = (m.player1.username, m.elo_solo_player1_after)
+			elo_map[m.player2_id] = (m.player2.username, m.elo_solo_player2_after)
 
 			# Égalité → on n'incrémente ni wins ni losses
 			if winner == 'player1_side':
@@ -307,13 +307,19 @@ def _build_ranking(season, ranking_type: str) -> list:
 				if pid:
 					loss_map[pid] = loss_map.get(pid, 0) + 1
 
+	# Fetch avatar URLs for all players in the ranking
+	avatar_map = dict(
+		User.objects.filter(pk__in=elo_map.keys()).values_list('pk', 'avatar_url')
+	)
+
 	return [
 		{
-			'rank':     i + 1,
-			'username': username,
-			'elo':      elo,
-			'wins':     wins_map.get(pid, 0),
-			'losses':   loss_map.get(pid, 0),
+			'rank':       i + 1,
+			'username':   username,
+			'elo':        elo,
+			'wins':       wins_map.get(pid, 0),
+			'losses':     loss_map.get(pid, 0),
+			'avatar_url': avatar_map.get(pid, ''),
 		}
 		for i, (pid, (username, elo)) in enumerate(
 			sorted(elo_map.items(), key=lambda kv: kv[1][1], reverse=True)

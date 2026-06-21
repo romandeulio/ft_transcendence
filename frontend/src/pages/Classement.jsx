@@ -21,12 +21,14 @@ export default function Classement() {
   const [page,      setPage]      = useState(0)
   const [page2v2,   setPage2v2]   = useState(0)
   const [hallOrder, setHallOrder] = useState('recent')
+  const [hallMode,  setHallMode]  = useState('SOLO')
 
   const [players,     setPlayers]     = useState([])
   const [teams2v2,    setTeams2v2]    = useState([])
   const [pastSeasons, setPastSeasons] = useState([])
   const [hallRecords, setHallRecords] = useState([])
   const [seasonMap,   setSeasonMap]   = useState({}) // value → season id
+  const [allSeasonData, setAllSeasonData] = useState([])
 
   useEffect(() => {
     authFetch('/api/seasons/')
@@ -47,17 +49,60 @@ export default function Classement() {
         setSeasonOptions(opts)
         setSeasonMap(smap)
 
-        // Hall of Fame : champions des saisons terminées
-        const finished = allSeasons.filter(s => s.status === 'FINISHED' && s.rewards_distributed)
-        const champions = finished.map(s => {
-          const reward = s.rewards?.find(r => r.ranking_type === 'SOLO' && r.tier === 'TOP1')
-          if (!reward) return null
-          return { season: s.id, name: reward.player, initials: reward.player?.[0]?.toUpperCase() ?? '?', elo: reward.elo_at_end }
-        }).filter(Boolean)
-        setPastSeasons(champions)
+        setAllSeasonData(allSeasons)
       })
       .catch(console.error)
   }, [])
+
+  // Hall of Fame : recalcul quand le mode (1v1/2v2) ou les données changent
+  useEffect(() => {
+    const finished = allSeasonData.filter(s => s.status === 'FINISHED' && s.rewards_distributed)
+    const rankType = hallMode === 'SOLO' ? 'SOLO' : 'TEAM'
+
+    // Champions par saison
+    const champions = finished.map(s => {
+      const reward = s.rewards?.find(r => r.ranking_type === rankType && r.tier === 'TOP1')
+      if (!reward) return null
+      return {
+        seasonId: s.id,
+        seasonName: s.name,
+        name: reward.player,
+        initials: reward.player?.[0]?.toUpperCase() ?? '?',
+        elo: reward.elo_at_end,
+        avatar_url: reward.avatar_url || null,
+      }
+    }).filter(Boolean)
+    setPastSeasons(champions)
+
+    // Record all-time : plus haut ELO parmi rewards ET classement saison active
+    const allCandidates = []
+
+    // Candidats des saisons terminées (rewards)
+    finished.forEach(s => {
+      (s.rewards || []).filter(r => r.ranking_type === rankType).forEach(r => {
+        allCandidates.push({ player: r.player, elo: r.elo_at_end, seasonName: s.name })
+      })
+    })
+
+    // Candidats de la saison active (classement en cours)
+    const currentPlayers = hallMode === 'SOLO' ? players : teams2v2
+    const activeSeason = allSeasonData.find(s => s.status === 'ACTIVE')
+    currentPlayers.forEach(p => {
+      allCandidates.push({ player: p.name, elo: p.elo, seasonName: activeSeason?.name || 'Saison en cours' })
+    })
+
+    if (allCandidates.length > 0) {
+      const best = allCandidates.reduce((a, b) => (b.elo > a.elo ? b : a))
+      setHallRecords([{
+        icon: '👑',
+        label: hallMode === 'SOLO' ? 'Plus haut ELO 1v1' : 'Plus haut ELO 2v2',
+        value: best.player,
+        stat: `${best.elo} ELO — saison : ${best.seasonName}`,
+      }])
+    } else {
+      setHallRecords([])
+    }
+  }, [hallMode, allSeasonData, players, teams2v2])
 
   useEffect(() => {
     const seasonId = seasonMap[season]
@@ -69,13 +114,14 @@ export default function Classement() {
         const ranking = Array.isArray(raw) ? raw : (raw?.results ?? [])
         if (!ranking.length && !Array.isArray(raw)) return
         setPlayers(ranking.map(e => ({
-          id:     e.username,
-          name:   e.username,
-          isMe:   e.username === user?.username,
-          wins:   e.wins,
-          losses: e.losses,
-          elo:    e.elo,
-          rank:   e.rank,
+          id:         e.username,
+          name:       e.username,
+          avatar_url: e.avatar_url || null,
+          isMe:       e.username === user?.username,
+          wins:       e.wins,
+          losses:     e.losses,
+          elo:        e.elo,
+          rank:       e.rank,
         })))
       })
       .catch(console.error)
@@ -86,13 +132,14 @@ export default function Classement() {
         const ranking = Array.isArray(raw) ? raw : (raw?.results ?? [])
         if (!ranking.length && !Array.isArray(raw)) return
         setTeams2v2(ranking.map(e => ({
-          id:     e.username,
-          team:   [e.username, ''],
-          isMe:   e.username === user?.username,
-          wins:   e.wins,
-          losses: e.losses,
-          elo:    e.elo,
-          rank:   e.rank,
+          id:         e.username,
+          name:       e.username,
+          avatar_url: e.avatar_url || null,
+          isMe:       e.username === user?.username,
+          wins:       e.wins,
+          losses:     e.losses,
+          elo:        e.elo,
+          rank:       e.rank,
         })))
       })
       .catch(console.error)
@@ -104,7 +151,9 @@ export default function Classement() {
   const pageSlice2v2 = teams2v2.slice(page2v2 * PAGE_SIZE, page2v2 * PAGE_SIZE + PAGE_SIZE)
 
   const sortedSeasons = [...pastSeasons].sort((a, b) =>
-    hallOrder === 'recent' ? b.season - a.season : a.season - b.season
+    hallOrder === 'recent'
+      ? a.seasonName.localeCompare(b.seasonName) * -1
+      : a.seasonName.localeCompare(b.seasonName)
   )
 
   return (
@@ -118,7 +167,7 @@ export default function Classement() {
       <div className={styles.content}>
 
         <div className={styles.seasonRow}>
-          <label className={styles.seasonLabel}>{t('ranking.show')}</label>
+          <label className={styles.seasonLabel}>Saison :</label>
           <select
             className={styles.seasonSelect}
             value={season}
@@ -150,7 +199,7 @@ export default function Classement() {
               )}
               {pageSlice.map(p => (
                 <div key={p.id} className={`${styles.playerRow} ${p.isMe ? styles.playerRowMe : ''}`}>
-                  <Avatar initials={p.name} size={28} bg={p.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round />
+                  <Avatar initials={p.name} size={28} bg={p.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round src={p.avatar_url} />
                   <span className={styles.playerName}>{p.name}</span>
                   <span className={styles.playerVd}>{p.wins} · {p.losses}</span>
                   <span className={styles.playerEloVal}>{p.elo}</span>
@@ -180,27 +229,24 @@ export default function Classement() {
             </div>
             <div className={styles.eloBody}>
               <div className={styles.colHead}>
-                <span className={styles.headTeam}>{t('ranking.team')}</span>
-                <span className={styles.headVd}>V · D</span>
+                <span className={styles.headName}>{t('ranking.player')}</span>
+                <span className={styles.headVd}>{t('ranking.winsLosses')}</span>
                 <span className={styles.headElo}>ELO</span>
-                <span className={styles.headRank}>Rang</span>
+                <span className={styles.headRank}>{t('ranking.rank')}</span>
               </div>
               {pageSlice2v2.length === 0 && (
                 <div className={styles.emptyState}>{t('ranking.noData')}</div>
               )}
-              {pageSlice2v2.map(t => (
-                <div key={t.id} className={`${styles.playerRow} ${t.isMe ? styles.playerRowMe : ''}`}>
-                  <div className={styles.teamAvatars}>
-                    <Avatar initials={t.team[0]} size={20} bg={t.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round />
-                    <Avatar initials={t.team[1]} size={20} bg={t.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round />
-                  </div>
-                  <span className={styles.playerName}>{t.team[0]} & {t.team[1]}</span>
-                  <span className={styles.playerVd}>{t.wins} · {t.losses}</span>
-                  <span className={styles.playerEloVal}>{t.elo}</span>
+              {pageSlice2v2.map(p => (
+                <div key={p.id} className={`${styles.playerRow} ${p.isMe ? styles.playerRowMe : ''}`}>
+                  <Avatar initials={p.name} size={28} bg={p.isMe ? 'var(--orange-pale)' : 'var(--beige)'} round src={p.avatar_url} />
+                  <span className={styles.playerName}>{p.name}</span>
+                  <span className={styles.playerVd}>{p.wins} · {p.losses}</span>
+                  <span className={styles.playerEloVal}>{p.elo}</span>
                   <span className={styles.rankColCell}>
-                    {t.rank <= 3
-                      ? <span className={styles.medal}>{RANK_MEDALS[t.rank - 1]}</span>
-                      : <span className={styles.rankNum}>#{t.rank}</span>
+                    {p.rank <= 3
+                      ? <span className={styles.medal}>{RANK_MEDALS[p.rank - 1]}</span>
+                      : <span className={styles.rankNum}>#{p.rank}</span>
                     }
                   </span>
                 </div>
@@ -218,11 +264,21 @@ export default function Classement() {
         </div>
 
         {/* ── Évolution du classement ── */}
-        <RankingEvolutionChart seasonOptions={seasonOptions} seasonMap={seasonMap} />
+        <RankingEvolutionChart seasonId={seasonMap[season]} />
 
         {/* ── Hall of Fame ── */}
         <div className={styles.hallCard}>
-          <div className={styles.hallHeader}>{t('ranking.hallOfFame')}</div>
+          <div className={styles.hallHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{t('ranking.hallOfFame')}</span>
+            <select
+              className={styles.hallOrderSelect}
+              value={hallMode}
+              onChange={e => setHallMode(e.target.value)}
+            >
+              <option value="SOLO">1v1</option>
+              <option value="TEAM">2v2</option>
+            </select>
+          </div>
           <div className={styles.hallSplit}>
 
             <div className={styles.hallLeft}>
@@ -261,9 +317,9 @@ export default function Classement() {
                   <div className={styles.emptyState}>{t('ranking.noData')}</div>
                 )}
                 {sortedSeasons.map(s => (
-                  <div key={s.season} className={styles.hallEntry}>
-                    <div className={styles.hallSeasonLabel}>{t('ranking.seasonLabel', { num: s.season })}</div>
-                    <Avatar initials={s.initials} size={44} bg="var(--yellow-pale)" round />
+                  <div key={s.seasonId} className={styles.hallEntry}>
+                    <div className={styles.hallSeasonLabel}>{s.seasonName}</div>
+                    <Avatar initials={s.initials} size={44} bg="var(--yellow-pale)" round src={s.avatar_url} />
                     <div className={styles.hallName}>{s.name}</div>
                     <div className={styles.hallElo}>{s.elo} ELO</div>
                     <Pill label={t('ranking.champion')} type="gold" />

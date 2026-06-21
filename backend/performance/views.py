@@ -198,37 +198,61 @@ class PerformanceHistoryView(APIView):
 
 
 class RankHistoryView(APIView):
+    """
+    Évolution du classement du joueur connecté pour une saison donnée.
+    Calcule directement depuis les matchs (pas de dépendance à RankingHistory).
+    ?season=<id>&type=solo|team (défaut: solo)
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from matches.models_ranking import RankingHistory
+        from matches.models import Match
+
         season_id = request.query_params.get('season', '').strip()
+        if not season_id:
+            return Response([])
 
-        qs = RankingHistory.objects.filter(
-            user=request.user,
-            mode='SOLO',
-            scope='season',
-        ).order_by('recorded_at')
+        mode = request.query_params.get('type', 'solo').upper()
+        if mode not in ('SOLO', 'TEAM'):
+            return Response([])
 
-        if season_id:
-            qs = qs.filter(season_id=season_id)
+        user = request.user
 
-        entries = list(qs)
-        result = []
-        for i, rh in enumerate(entries):
-            rank = RankingHistory.objects.filter(
-                mode='SOLO',
-                scope='season',
-                season=rh.season,
-                recorded_at__lte=rh.recorded_at,
-            ).values('user').annotate(
-                latest=Max('score_after')
-            ).filter(latest__gt=rh.score_after).count() + 1
+        all_matches = Match.objects.filter(
+            season_id=season_id,
+            status='VALIDATED',
+            is_ranked=True,
+            match_type=mode,
+        ).select_related(
+            'player1', 'player2', 'player1_teammate', 'player2_teammate',
+        ).order_by('played_at')
 
-            result.append({
-                'match': i + 1,
-                'elo':   rh.score_after,
-                'rank':  rank,
-            })
+        elo_snapshot = {}
+        user_history = []
+        user_match_idx = 0
 
-        return Response(result)
+        for m in all_matches:
+            if mode == 'SOLO':
+                elo_snapshot[m.player1_id] = m.elo_solo_player1_after
+                elo_snapshot[m.player2_id] = m.elo_solo_player2_after
+                involved = {m.player1_id, m.player2_id}
+            else:
+                elo_snapshot[m.player1_id] = m.elo_team_p1_after
+                if m.player1_teammate_id:
+                    elo_snapshot[m.player1_teammate_id] = m.elo_team_p1tm_after
+                elo_snapshot[m.player2_id] = m.elo_team_p2_after
+                if m.player2_teammate_id:
+                    elo_snapshot[m.player2_teammate_id] = m.elo_team_p2tm_after
+                involved = {m.player1_id, m.player1_teammate_id, m.player2_id, m.player2_teammate_id}
+
+            if user.id in involved:
+                user_match_idx += 1
+                user_elo = elo_snapshot.get(user.id, 1000)
+                rank = sum(1 for elo in elo_snapshot.values() if elo > user_elo) + 1
+                user_history.append({
+                    'match': user_match_idx,
+                    'elo':   user_elo,
+                    'rank':  rank,
+                })
+
+        return Response(user_history)
