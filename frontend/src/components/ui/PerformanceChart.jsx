@@ -1,40 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { useState, useEffect, useRef } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { authFetch } from '../../services/api'
-import { authFetch } from '../../services/api'
 import styles from './PerformanceChart.module.css'
-
-function exportCSV(chartData, selected, yAxis) {
-  if (!chartData.length) return
-  const header = ['period', ...selected.map(p => p.login)].join(',')
-  const rows = chartData.map(row =>
-    [row.period, ...selected.map(p => row[p.login] ?? '')].join(',')
-  )
-  const csv = [header, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `performance_${yAxis}_${new Date().toISOString().slice(0,10)}.csv`
-  a.click()
-}
-
-async function exportPDF(chartRef, yAxis) {
-  if (!chartRef.current) return
-  const { default: html2canvas } = await import('html2canvas')
-  const { jsPDF } = await import('jspdf')
-  const canvas = await html2canvas(chartRef.current, { scale: 2, backgroundColor: '#ffffff' })
-  const img = canvas.toDataURL('image/png')
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width / 2, canvas.height / 2 + 40] })
-  pdf.setFontSize(14)
-  pdf.text(`Performance — ${yAxis}`, 20, 24)
-  pdf.addImage(img, 'PNG', 0, 36, canvas.width / 2, canvas.height / 2)
-  pdf.save(`performance_${yAxis}_${new Date().toISOString().slice(0,10)}.pdf`)
-}
 
 function exportCSV(chartData, selected, yAxis) {
   if (!chartData.length) return
@@ -144,109 +115,8 @@ function CustomTooltip({ active, payload }) {
   )
 }
 
-const FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
-
-function pyWeekKey(date) {
-  const d = new Date(date); d.setHours(12, 0, 0, 0)
-  const year = d.getFullYear()
-  const jan1 = new Date(year, 0, 1); jan1.setHours(12, 0, 0, 0)
-  const jan1DowMon = (jan1.getDay() + 6) % 7
-  const dayOfYear = Math.floor((d - jan1) / 86400000)
-  const weekNum = Math.floor((dayOfYear + jan1DowMon) / 7)
-  return `${year}-W${String(weekNum).padStart(2, '0')}`
-}
-
-function buildWeekSlots() {
-  const now = new Date()
-  const slots = []
-  for (let i = 7; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i * 7)
-    slots.push({ key: pyWeekKey(d), label: i === 0 ? 'SA' : `S-${i}` })
-  }
-  return slots
-}
-
-function buildDaySlots(dateFrom, dateTo) {
-  const start = new Date(dateFrom + 'T00:00:00')
-  const end   = new Date(dateTo   + 'T00:00:00')
-  const slots = []
-  const cur = new Date(start)
-  while (cur <= end) {
-    const yyyy = cur.getFullYear()
-    const mm   = String(cur.getMonth() + 1).padStart(2, '0')
-    const dd   = String(cur.getDate()).padStart(2, '0')
-    slots.push({ key: `${yyyy}-${mm}-${dd}`, dateLabel: `${dd}/${mm}` })
-    cur.setDate(cur.getDate() + 1)
-  }
-  return slots
-}
-
-function buildMonthSlots() {
-  const now = new Date()
-  const slots = []
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    slots.push({ key, label: FR_MONTHS[d.getMonth()] })
-  }
-  return slots
-}
-
-function CustomTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div style={{
-      background: 'var(--white)',
-      border: '1.5px solid var(--beige)',
-      borderRadius: 12,
-      padding: '8px 14px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-    }}>
-      {payload.map((entry, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: entry.color, flexShrink: 0,
-          }} />
-          <span style={{ color: entry.color, fontWeight: 700, fontSize: 12 }}>
-            {entry.name}
-          </span>
-          <span style={{ color: 'var(--ink)', fontWeight: 600, fontSize: 12 }}>
-            {entry.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export default function PerformanceChart() {
   const { t } = useTranslation()
-  const chartRef = useRef(null)
-  const [xAxis,     setXAxis]     = useState('matches')
-  const [yAxis,     setYAxis]     = useState('elo')
-  const [dateFrom,  setDateFrom]  = useState('')
-  const [dateTo,    setDateTo]    = useState('')
-  const [search,    setSearch]    = useState('')
-  const [selected,  setSelected]  = useState([])
-  const [players,   setPlayers]   = useState([])
-  const [chartData, setChartData] = useState([])
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
-  const downloadRef = useRef(null)
-
-  useEffect(() => {
-    if (!showDownloadMenu) return
-    const close = (e) => {
-      if (downloadRef.current && !downloadRef.current.contains(e.target)) {
-        setShowDownloadMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [showDownloadMenu])
   const chartRef = useRef(null)
   const [xAxis,     setXAxis]     = useState('matches')
   const [yAxis,     setYAxis]     = useState('elo')
@@ -272,18 +142,8 @@ export default function PerformanceChart() {
 
   const X_OPTIONS = [
     { value: 'matches', label: t('performance.x.matches') },
-    { value: 'matches', label: t('performance.x.matches') },
     { value: 'weeks',   label: t('performance.x.weeks')   },
     { value: 'months',  label: t('performance.x.months')  },
-    { value: 'fixed',   label: t('performance.x.fixed')   },
-  ]
-
-  const Y_OPTIONS = [
-    { value: 'elo',     label: t('performance.y.elo')     },
-    { value: 'wins',    label: t('performance.y.wins')    },
-    { value: 'losses',  label: t('performance.y.losses')  },
-    { value: 'winrate', label: t('performance.y.winrate') },
-    { value: 'goals',   label: t('performance.y.goals')   },
     { value: 'fixed',   label: t('performance.x.fixed')   },
   ]
 
@@ -381,31 +241,7 @@ export default function PerformanceChart() {
   const togglePlayer = (player) => {
     setSelected(prev => {
       if (prev.some(p => p.login === player.login)) return prev.filter(p => p.login !== player.login)
-      if (prev.some(p => p.login === player.login)) return prev.filter(p => p.login !== player.login)
       if (prev.length >= 4) return prev
-      return [...prev, player]
-    })
-  }
-
-  const fixedStep = xAxis === 'fixed' && chartData.length > 0
-    ? Math.max(1, Math.ceil(chartData.length / 15))
-    : 1
-  const fixedTicks = xAxis === 'fixed' && chartData.length > 0
-    ? chartData.filter((_, i) => i % fixedStep === 0).map(r => r.period)
-    : undefined
-  const todayLabel = (() => {
-    const n = new Date()
-    return `${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}`
-  })()
-
-  const renderFixedTick = ({ x, y, payload }) => {
-    const isToday = payload.value === todayLabel
-    return (
-      <text x={x} y={y + 12} textAnchor="middle" fontSize={10}
-        fill={isToday ? '#CD3122' : '#aaa'} fontWeight={isToday ? 700 : 400}>
-        {payload.value}
-      </text>
-    )
       return [...prev, player]
     })
   }
@@ -457,28 +293,6 @@ export default function PerformanceChart() {
             )}
           </div>
         )}
-        {chartData.length > 0 && (
-          <div className={styles.downloadWrapper} ref={downloadRef}>
-            <button
-              className={styles.exportBtn}
-              onClick={() => setShowDownloadMenu(v => !v)}
-            >
-              ↓ Télécharger
-            </button>
-            {showDownloadMenu && (
-              <div className={styles.downloadMenu}>
-                <button
-                  className={styles.downloadMenuItem}
-                  onClick={() => { exportCSV(chartData, selected, yAxis); setShowDownloadMenu(false) }}
-                >CSV</button>
-                <button
-                  className={styles.downloadMenuItem}
-                  onClick={() => { exportPDF(chartRef, yAxis); setShowDownloadMenu(false) }}
-                >PDF</button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className={styles.controls}>
@@ -494,26 +308,6 @@ export default function PerformanceChart() {
             {Y_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </label>
-        {xAxis === 'fixed' && (<>
-          <label className={styles.controlLabel}>
-            {t('performance.dateFrom')}
-            <input
-              type="date"
-              className={styles.controlSelect}
-              value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
-            />
-          </label>
-          <label className={styles.controlLabel}>
-            {t('performance.dateTo')}
-            <input
-              type="date"
-              className={styles.controlSelect}
-              value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
-            />
-          </label>
-        </>)}
         {xAxis === 'fixed' && (<>
           <label className={styles.controlLabel}>
             {t('performance.dateFrom')}
@@ -590,57 +384,8 @@ export default function PerformanceChart() {
             </div>
           </div>
         </div>
-        <div className={styles.pickerBody}>
-          <div className={styles.selectedPanel}>
-            {selected.length === 0
-              ? <span className={styles.pickerEmpty}>{t('performance.noSelected')}</span>
-              : selected.map((p, i) => {
-                  const color = COLORS[i]
-                  return (
-                    <span key={p.login} className={`${styles.playerChip} ${styles.playerChipOn}`}
-                      style={{ borderColor: color, background: color + '18', color }}>
-                      <span className={styles.chipDot} style={{ background: color }} />
-                      {p.display}
-                      <span className={styles.chipX} onClick={() => togglePlayer(p)}>✕</span>
-                    </span>
-                  )
-                })
-            }
-          </div>
-
-          <div className={styles.searchPanel}>
-            <input
-              className={styles.pickerSearch}
-              type="text"
-              placeholder={t('performance.searchPlayer')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            <div className={styles.searchResults}>
-              {players.filter(p => !selected.some(s => s.login === p.login)).map((p) => {
-                const disabled = selected.length >= 4
-                return (
-                  <button
-                    key={p.login}
-                    className={`${styles.resultItem} ${disabled ? styles.playerChipDisabled : ''}`}
-                    onClick={() => !disabled && togglePlayer(p)}
-                    disabled={disabled}
-                  >
-                    {p.display}
-                  </button>
-                )
-              })}
-              {players.length === 0 && (
-                <span className={styles.pickerEmpty}>
-                  {!search.trim() ? t('performance.searchHint') : t('performance.noPlayer')}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {selected.length === 0 ? (
       {selected.length === 0 ? (
         <div className={styles.emptyChart}>
           {t('performance.selectPlayer')}

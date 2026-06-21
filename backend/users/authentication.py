@@ -56,7 +56,6 @@ class CookieJWTAuthentication(JWTAuthentication):
 
         raw_token = request.COOKIES.get(settings.JWT_ACCESS_COOKIE_NAME)
         if not raw_token:
-        if not raw_token:
             return None
 
         try:
