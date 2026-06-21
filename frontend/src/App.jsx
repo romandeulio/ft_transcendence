@@ -18,6 +18,7 @@ import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
 import LoginSuccess from './pages/LoginSuccess'
 import Banned         from './pages/Banned'
+import Achievements   from './pages/Achievements'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/planning"      element={<PrivateRoute element={<Planning />} />} />
             <Route path="/tournois"      element={<PrivateRoute element={<Tournois />} />} />
             <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
+            <Route path="/achievements" element={<PrivateRoute element={<Achievements />} />} />
             <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
             <Route path="/login"         element={<Login />} />
             <Route path="/login-success" element={<LoginSuccess />} />

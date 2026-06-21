@@ -42,6 +42,7 @@ urlpatterns = [
 	# ===========================================================================
 	path('api/performance/', include('performance.urls')),
 	path('api/bets/', include('bets.urls')),
+	path('api/achievements/', include('achievements.urls')),
 
 	# Dashboard admin
 	path('api/admin/', include('app.admin_urls')),

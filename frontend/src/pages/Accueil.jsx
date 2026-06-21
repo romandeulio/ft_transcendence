@@ -383,7 +383,7 @@ export default function Accueil() {
       .map(([login, count]) => ({ login, count }))
   }, [matches])
 
-  const handleMatchComplete = async (scoreRed, scoreBlue, gamellesRed = 0, gamellesBlue = 0) => {
+  const handleMatchComplete = async (scoreRed, scoreBlue, gamellesRed = 0, gamellesBlue = 0, demisRed = 0, demisBlue = 0) => {
     setJouerOpen(false)
     const rawSlot = selectedMatch?._slot
     // Relire le slot depuis mySlots pour obtenir player2 à jour (cas takeWin)
@@ -428,6 +428,8 @@ export default function Accueil() {
         score_player2:     scoreRed,
         gamelles_player1:  gamellesBlue,
         gamelles_player2:  gamellesRed,
+        demis_player1:     demisBlue,
+        demis_player2:     demisRed,
         ...(slot.player1_teammate ? { player1_teammate: slot.player1_teammate } : {}),
         ...(slot.player2_teammate ? { player2_teammate: slot.player2_teammate } : {}),
       }

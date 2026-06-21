@@ -153,6 +153,13 @@ def season_close(request, pk):
 		season.rewards_distributed = True
 		season.save(update_fields=['rewards_distributed', 'updated_at'])
 
+	# Achievements saison (hors transaction)
+	try:
+		from achievements.service import check_season_achievements
+		check_season_achievements(season)
+	except Exception:
+		pass
+
 	return Response(SeasonSerializer(season).data)
 
 
