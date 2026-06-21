@@ -17,12 +17,15 @@ class TournamentSerializer(serializers.ModelSerializer):
         ]
 
     def get_registered(self, obj):
-        return obj.registrations.count() + obj.registrations.filter(player2__isnull=False).count()
+        # Nombre de joueurs inscrits : solo = 1, duo = 2
+        solo  = obj.registrations.filter(player2__isnull=True).count()
+        duos  = obj.registrations.filter(player2__isnull=False).count()
+        return solo + duos * 2
 
     def get_teams_count(self, obj):
-        started_teams = obj.teams.count()
-        if started_teams:
-            return started_teams
+        started = obj.teams.count()
+        if started:
+            return started
         return obj.registrations.filter(player2__isnull=False).count()
 
     def get_date_label(self, obj):
@@ -47,11 +50,11 @@ class TournamentUpdateSerializer(serializers.ModelSerializer):
         model = Tournament
         fields = ['name', 'start_date', 'deadline', 'max_players', 'prize']
         extra_kwargs = {
-            'name': {'required': False},
-            'start_date': {'required': False},
-            'deadline': {'required': False, 'allow_null': True},
+            'name':        {'required': False},
+            'start_date':  {'required': False},
+            'deadline':    {'required': False, 'allow_null': True},
             'max_players': {'required': False},
-            'prize': {'required': False, 'allow_blank': True},
+            'prize':       {'required': False, 'allow_blank': True},
         }
 
 
@@ -70,10 +73,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
 class TournamentTeamSerializer(serializers.ModelSerializer):
     player1 = serializers.CharField(source='player1.username')
     player2 = serializers.CharField(source='player2.username')
-    label = serializers.SerializerMethodField()
+    label   = serializers.SerializerMethodField()
 
     class Meta:
-        model = TournamentTeam
+        model  = TournamentTeam
         fields = ['id', 'seed', 'player1', 'player2', 'label']
 
     def get_label(self, obj):
@@ -81,13 +84,13 @@ class TournamentTeamSerializer(serializers.ModelSerializer):
 
 
 class TournamentMatchSerializer(serializers.ModelSerializer):
-    team1 = TournamentTeamSerializer(read_only=True)
-    team2 = TournamentTeamSerializer(read_only=True)
-    winner = TournamentTeamSerializer(read_only=True)
+    team1          = TournamentTeamSerializer(read_only=True)
+    team2          = TournamentTeamSerializer(read_only=True)
+    winner         = TournamentTeamSerializer(read_only=True)
     queue_entry_id = serializers.PrimaryKeyRelatedField(source='queue_entry', read_only=True)
 
     class Meta:
-        model = TournamentMatch
+        model  = TournamentMatch
         fields = [
             'id', 'round_number', 'bracket_position',
             'team1', 'team2', 'winner',

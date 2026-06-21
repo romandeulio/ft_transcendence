@@ -1,7 +1,6 @@
 import random
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
@@ -27,26 +26,17 @@ from .serializers import (
 
 User = get_user_model()
 
-BDE_PASSWORD = getattr(settings, 'BDE_PASSWORD', 'bde42')
-
-
 def _has_bde_access(request):
     if getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False):
         return True
-    if getattr(request.user, 'role', '').lower() in ('bde', 'bocalien'):
-        return True
-    return request.data.get('bde_password') == BDE_PASSWORD
+    role = getattr(request.user, 'role', '') or ''
+    return role.lower() in ('bde', 'bocalien')
 
 
 def _require_bde(request):
     if _has_bde_access(request):
         return None
     return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
-
-
-def _next_power_of_two(value):
-    return 1 << (value - 1).bit_length()
-
 
 def _total_rounds(bracket_size):
     rounds = 0
@@ -59,7 +49,6 @@ def _total_rounds(bracket_size):
 def _schedule_ready_match(match):
     if not match.is_ready or match.queue_entry_id:
         return match
-
     entry = QueueEntry.objects.create(
         player1=match.team1.player1,
         player1_teammate=match.team1.player2,
@@ -125,7 +114,6 @@ def _slot_resolved_empty(match, slot):
 def _auto_advance_bye(match):
     if match.status == TournamentMatch.Status.DONE or match.queue_entry_id:
         return False
-
     if match.team1_id and not match.team2_id:
         if not _slot_resolved_empty(match, 'team2'):
             return False
@@ -136,7 +124,6 @@ def _auto_advance_bye(match):
         match.winner = match.team2
     else:
         return False
-
     match.status = TournamentMatch.Status.DONE
     match.save(update_fields=['winner', 'status'])
     _advance_winner(match)
@@ -174,7 +161,6 @@ def _propagate_byes(tournament):
                 continue
             if _auto_advance_bye(match):
                 changed = True
-
     _schedule_tournament_ready_matches(tournament)
 
 
@@ -188,12 +174,9 @@ def _build_and_start_tournament(tournament):
     if len(complete_regs) < 2:
         return 'Il faut au moins deux équipes complètes pour lancer le tournoi.'
 
-    if tournament.registrations.filter(player2__isnull=True).exists():
-        return 'Des joueurs sont encore inscrits sans partenaire.'
-
     max_teams = tournament.max_players // 2
     if len(complete_regs) > max_teams:
-        return 'Il y a trop d’équipes inscrites pour la capacité du tournoi.'
+        return 'Il y a trop d\u2019équipes inscrites pour la capacité du tournoi.'
 
     random.shuffle(complete_regs)
     bracket_size = max_teams
@@ -229,27 +212,14 @@ def _build_and_start_tournament(tournament):
     tournament.save(update_fields=['status'])
 
     _propagate_byes(tournament)
-
     return None
-
-
-# ---------------------------------------------------------------------------
-# POST /api/tournaments/bde-unlock/
-# ---------------------------------------------------------------------------
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def bde_unlock(request):
-    pwd = request.data.get('password', '')
-    if pwd == BDE_PASSWORD:
+    if _has_bde_access(request):
         return Response({'ok': True})
-    return Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
-
-
-# ---------------------------------------------------------------------------
-# GET  /api/tournaments/   → tournoi courant jusqu'à suppression BDE
-# POST /api/tournaments/   → créer un tournoi (BDE uniquement)
-# ---------------------------------------------------------------------------
+    return Response({'detail': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
 
 class TournamentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -282,8 +252,7 @@ class TournamentListCreateView(APIView):
         return Response(TournamentSerializer(tournament).data)
 
     def post(self, request):
-        bde_pwd = request.data.get('bde_password', '')
-        if bde_pwd != BDE_PASSWORD:
+        if not _has_bde_access(request):
             return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
         active_exists = Tournament.objects.filter(
@@ -299,12 +268,6 @@ class TournamentListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         tournament = serializer.save(created_by=request.user)
         return Response(TournamentSerializer(tournament).data, status=status.HTTP_201_CREATED)
-
-
-# ---------------------------------------------------------------------------
-# PATCH  /api/tournaments/<pk>/
-# DELETE /api/tournaments/<pk>/
-# ---------------------------------------------------------------------------
 
 @api_view(['PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
@@ -345,11 +308,6 @@ def update_tournament(request, pk):
     tournament = serializer.save()
     return Response(TournamentSerializer(tournament).data)
 
-
-# ---------------------------------------------------------------------------
-# POST /api/tournaments/<pk>/start/
-# ---------------------------------------------------------------------------
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def start_tournament(request, pk):
@@ -372,24 +330,12 @@ def start_tournament(request, pk):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    solo_count = tournament.registrations.filter(player2__isnull=True).count()
-    if solo_count:
-        return Response(
-            {'detail': 'Des joueurs sont encore inscrits sans partenaire.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
     with transaction.atomic():
         error = _build_and_start_tournament(tournament)
         if error:
             return Response({'detail': error}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(TournamentSerializer(tournament).data)
-
-
-# ---------------------------------------------------------------------------
-# GET /api/tournaments/<pk>/bracket/
-# ---------------------------------------------------------------------------
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -414,11 +360,6 @@ def tournament_bracket(request, pk):
         ],
     })
 
-
-# ---------------------------------------------------------------------------
-# POST /api/tournaments/<pk>/register/
-# ---------------------------------------------------------------------------
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def register_to_tournament(request, pk):
@@ -427,8 +368,12 @@ def register_to_tournament(request, pk):
     if tournament.status != Tournament.Status.OPEN:
         return Response({'detail': 'Les inscriptions sont fermées.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if tournament.deadline and tournament.deadline < timezone.now():
-        return Response({'detail': "La date limite d'inscription est dépassée."}, status=status.HTTP_400_BAD_REQUEST)
+    if tournament.deadline:
+        deadline = tournament.deadline
+        if timezone.is_naive(deadline):
+            deadline = timezone.make_aware(deadline)
+        if deadline < timezone.now():
+            return Response({'detail': "La date limite d'inscription est dépassée."}, status=status.HTTP_400_BAD_REQUEST)
 
     already = TournamentRegistration.objects.filter(
         tournament=tournament
@@ -461,11 +406,6 @@ def register_to_tournament(request, pk):
         player2=player2,
     )
     return Response(RegistrationSerializer(reg).data, status=status.HTTP_201_CREATED)
-
-
-# ---------------------------------------------------------------------------
-# POST /api/tournaments/<pk>/force-team/
-# ---------------------------------------------------------------------------
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -514,11 +454,6 @@ def force_team(request, pk):
 
     return Response(RegistrationSerializer(reg).data)
 
-
-# ---------------------------------------------------------------------------
-# DELETE /api/tournaments/<pk>/registrations/<reg_id>/
-# ---------------------------------------------------------------------------
-
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def remove_registration(request, pk, reg_id):
@@ -533,11 +468,6 @@ def remove_registration(request, pk, reg_id):
     reg = get_object_or_404(TournamentRegistration, pk=reg_id, tournament=tournament)
     reg.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# ---------------------------------------------------------------------------
-# POST /api/tournaments/<pk>/accept-invite/  → J2 accepte l'invite d'équipe de J1
-# ---------------------------------------------------------------------------
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -582,22 +512,12 @@ def accept_teammate_invite(request, pk):
 
     return Response(RegistrationSerializer(reg).data, status=status.HTTP_200_OK)
 
-
-# ---------------------------------------------------------------------------
-# GET /api/tournaments/<pk>/registrations/  → liste d'attente complète
-# ---------------------------------------------------------------------------
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def tournament_registrations(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     regs = tournament.registrations.select_related('player1', 'player2').all()
     return Response(RegistrationSerializer(regs, many=True).data)
-
-
-# ---------------------------------------------------------------------------
-# GET /api/tournaments/<pk>/solo/  → inscrits sans partenaire (hors moi)
-# ---------------------------------------------------------------------------
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -614,12 +534,7 @@ def tournament_solo(request, pk):
     ]
     return Response(data)
 
-
-# ---------------------------------------------------------------------------
-# GET /api/tournaments/<pk>/my-registration/
-# ---------------------------------------------------------------------------
-
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def my_registration(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
@@ -628,12 +543,10 @@ def my_registration(request, pk):
     ).filter(Q(player1=request.user) | Q(player2=request.user)).first()
     if not reg:
         return Response(None)
+    if request.method == 'DELETE':
+        reg.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     return Response(RegistrationSerializer(reg).data)
-
-
-# ---------------------------------------------------------------------------
-# PATCH /api/tournaments/matches/<match_id>/result/
-# ---------------------------------------------------------------------------
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
@@ -653,11 +566,11 @@ def tournament_match_result(request, match_id):
         return Response({'detail': 'Ce match est déjà terminé.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if not match.team1_id or not match.team2_id:
-        return Response({'detail': 'Ce match n’a pas encore deux équipes.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': "Ce match n'a pas encore deux équipes."}, status=status.HTTP_400_BAD_REQUEST)
 
     score_team1 = request.data.get('score_team1')
     score_team2 = request.data.get('score_team2')
-    winner_id = request.data.get('winner_team')
+    winner_id   = request.data.get('winner_team')
 
     if score_team1 is not None and score_team2 is not None:
         try:
@@ -693,11 +606,6 @@ def tournament_match_result(request, match_id):
         _propagate_byes(match.tournament)
 
     return Response(TournamentMatchSerializer(match).data)
-
-
-# ---------------------------------------------------------------------------
-# PATCH /api/tournaments/matches/<match_id>/postpone/
-# ---------------------------------------------------------------------------
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])

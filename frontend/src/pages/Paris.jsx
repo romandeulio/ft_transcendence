@@ -320,6 +320,7 @@ export default function Paris() {
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>{t('bets.yourBetStats')}</span>
               </div>
+              {(bestGain || biggestLoss) && (
               <div className={styles.statsBody}>
                 {bestGain ? (
                   <div className={styles.glassRow}>
@@ -336,6 +337,7 @@ export default function Paris() {
                   </div>
                 ) : null}
               </div>
+              )}
               <div className={styles.chartSection}>
                 <div className={styles.chartLabel}>
                   {t('bets.balanceEvolution')}

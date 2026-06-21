@@ -1,8 +1,11 @@
 from django.conf import settings
 from django.db import models
+import uuid
 
 
 class Tournament(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Status(models.TextChoices):
         OPEN      = 'OPEN',      'Inscriptions ouvertes'
         ONGOING   = 'ONGOING',   'En cours'
@@ -12,19 +15,17 @@ class Tournament(models.Model):
     name        = models.CharField(max_length=100)
     start_date  = models.DateTimeField()
     deadline    = models.DateTimeField(null=True, blank=True)
-    max_players = models.IntegerField(
-        choices=[(16, '16'), (32, '32')],
-        default=16,
-    )
-    prize      = models.CharField(max_length=200, blank=True, default='')
-    status     = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
-    created_by = models.ForeignKey(
+    max_players = models.IntegerField(choices=[(16, '16'), (32, '32')], default=16)
+    prize       = models.CharField(max_length=200, blank=True, default='')
+    status      = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
+    created_by  = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='created_tournaments',
+        db_column='created_by',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed  = False
@@ -36,24 +37,16 @@ class Tournament(models.Model):
 
 
 class TournamentRegistration(models.Model):
-    tournament    = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='registrations')
-    player1       = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='tournament_registrations_as_p1',
-    )
-    player2       = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='tournament_registrations_as_p2',
-    )
+    id         = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='registrations', db_column='tournament_id')
+    player1    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tournament_registrations_as_p1', db_column='player1_id')
+    player2    = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tournament_registrations_as_p2', db_column='player2_id')
     registered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed      = False
-        db_table     = 'tournament_registrations'
-        ordering     = ['registered_at']
+        managed         = False
+        db_table        = 'tournament_registrations'
+        ordering        = ['registered_at']
         unique_together = [('tournament', 'player1')]
 
     def __str__(self):
@@ -62,29 +55,18 @@ class TournamentRegistration(models.Model):
 
 
 class TournamentTeam(models.Model):
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
-    registration = models.OneToOneField(
-        TournamentRegistration,
-        on_delete=models.CASCADE,
-        related_name='team',
-    )
-    player1 = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='tournament_teams_as_p1',
-    )
-    player2 = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='tournament_teams_as_p2',
-    )
-    seed = models.PositiveIntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    id           = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tournament   = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams', db_column='tournament_id')
+    registration = models.OneToOneField(TournamentRegistration, on_delete=models.CASCADE, related_name='team', db_column='registration_id')
+    player1      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tournament_teams_as_p1', db_column='player1_id')
+    player2      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tournament_teams_as_p2', db_column='player2_id')
+    seed         = models.PositiveIntegerField()
+    created_at   = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed  = False
-        db_table = 'tournament_teams'
-        ordering = ['seed']
+        managed         = False
+        db_table        = 'tournament_teams'
+        ordering        = ['seed']
         unique_together = [
             ('tournament', 'seed'),
             ('tournament', 'player1'),
@@ -96,47 +78,29 @@ class TournamentTeam(models.Model):
 
 
 class TournamentMatch(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'En attente'
-        DONE = 'DONE', 'Terminé'
+        DONE    = 'DONE',    'Terminé'
 
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='bracket_matches')
-    round_number = models.PositiveIntegerField()
+    tournament       = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='bracket_matches', db_column='tournament_id')
+    round_number     = models.PositiveIntegerField()
     bracket_position = models.PositiveIntegerField()
-    team1 = models.ForeignKey(
-        TournamentTeam,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='matches_as_team1',
-    )
-    team2 = models.ForeignKey(
-        TournamentTeam,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='matches_as_team2',
-    )
-    winner = models.ForeignKey(
-        TournamentTeam,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='won_tournament_matches',
-    )
-    score_team1 = models.PositiveIntegerField(null=True, blank=True)
-    score_team2 = models.PositiveIntegerField(null=True, blank=True)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    queue_entry = models.OneToOneField(
-        'planning.QueueEntry',
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='tournament_match',
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    team1            = models.ForeignKey(TournamentTeam, null=True, blank=True, on_delete=models.SET_NULL, related_name='matches_as_team1', db_column='team1_id')
+    team2            = models.ForeignKey(TournamentTeam, null=True, blank=True, on_delete=models.SET_NULL, related_name='matches_as_team2', db_column='team2_id')
+    winner           = models.ForeignKey(TournamentTeam, null=True, blank=True, on_delete=models.SET_NULL, related_name='won_tournament_matches', db_column='winner_id')
+    score_team1      = models.PositiveIntegerField(null=True, blank=True)
+    score_team2      = models.PositiveIntegerField(null=True, blank=True)
+    status           = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    queue_entry      = models.OneToOneField('planning.QueueEntry', null=True, blank=True, on_delete=models.SET_NULL, related_name='tournament_match', db_column='queue_entry_id')
+    created_at       = models.DateTimeField(auto_now_add=True)
+    updated_at       = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed  = False
-        db_table = 'tournament_matches'
-        ordering = ['round_number', 'bracket_position']
+        managed         = False
+        db_table        = 'tournament_matches'
+        ordering        = ['round_number', 'bracket_position']
         unique_together = [('tournament', 'round_number', 'bracket_position')]
 
     def __str__(self):
@@ -144,4 +108,4 @@ class TournamentMatch(models.Model):
 
     @property
     def is_ready(self):
-        return bool(self.team1_id and self.team2_id and self.status == self.Status.PENDING)
+        return bool(self.team1 and self.team2 and self.status == self.Status.PENDING)

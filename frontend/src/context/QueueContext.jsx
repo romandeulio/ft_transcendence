@@ -60,6 +60,7 @@ export function QueueProvider({ children }) {
   const [liveGames, setLiveGames] = useState({})             // gameId → game state (scores, players)
   const [pendingInvites, setPendingInvites] = useState([])   // received invites (J2 side)
   const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (J1 side)
+  const [friendNotifications, setFriendNotifications] = useState([]) // friend-added notifications
   const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
   const pendingInvitesRef = useRef([])                       // mirror of pendingInvites for non-stale reads in effects
   const acceptedInviteFromsRef = useRef({})                  // inviteId → from, for 2v2 partial-accept tracking
@@ -311,6 +312,11 @@ export function QueueProvider({ children }) {
           partial: true, count: nowAccepted.length, total: invite.targets.length,
         })
       }
+    } else if (data.type === 'friend_added') {
+      setFriendNotifications(prev => {
+        if (prev.find(n => n.from === data.from)) return prev
+        return [...prev, { id: `fn-${data.from}-${Date.now()}`, from: data.from }]
+      })
     }
   }
 
@@ -394,6 +400,7 @@ export function QueueProvider({ children }) {
       setQueue([])
       setPendingInvites([])
       setInviteResults([])
+      setFriendNotifications([])
       invitesSentRef.current = []
     }
   }, [user?.username])
@@ -521,6 +528,10 @@ export function QueueProvider({ children }) {
     setInviteResults(prev => prev.filter(i => i.inviteId !== inviteId))
   }
 
+  const dismissFriendNotification = (id) => {
+    setFriendNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
   return (
     <QueueContext.Provider value={{
       queue,
@@ -545,6 +556,8 @@ export function QueueProvider({ children }) {
       cancelAsP2,
       respondToInvite,
       dismissInviteResult,
+      friendNotifications,
+      dismissFriendNotification,
       connected,
       superseded,
     }}>

@@ -110,3 +110,70 @@
 }
 
 .dismissBtn:hover { opacity: 1; }
+
+.friendCard {
+  background: var(--white);
+  border: 1.5px solid var(--beige);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.friendCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.friendCardTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink3);
+}
+
+.friendCardFrom {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.friendCardText {
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+.friendCardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.addBackBtn {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 8px;
+  background: var(--primary, #001A57);
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.addBackBtn:hover { opacity: 0.88; }
+.addBackBtn:disabled { opacity: 0.45; cursor: default; }
+
+.friendDismissBtn {
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink3);
+  border: 1.5px solid var(--beige);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.friendDismissBtn:hover { background: var(--bg2); }

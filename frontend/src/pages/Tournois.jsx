@@ -87,13 +87,14 @@ export default function Tournois() {
   const [editError,      setEditError]      = useState('')
 
   // ── Inscription modal ──
-  const [registerOpen,  setRegisterOpen]  = useState(false)
-  const [registered,    setRegistered]    = useState(false)
-  const [partner,       setPartner]       = useState('')
-  const [registerError, setRegisterError] = useState('')
-  const [registerLoading, setRegisterLoading] = useState(false)
-  const [showRecruit,   setShowRecruit]   = useState(false)
-  const [invitedSet,    setInvitedSet]    = useState(new Set())
+  const [registerOpen,      setRegisterOpen]      = useState(false)
+  const [registered,        setRegistered]        = useState(false)
+  const [myRegistrationId,  setMyRegistrationId]  = useState(null)
+  const [partner,           setPartner]           = useState('')
+  const [registerError,     setRegisterError]     = useState('')
+  const [registerLoading,   setRegisterLoading]   = useState(false)
+  const [showRecruit,       setShowRecruit]       = useState(false)
+  const [invitedSet,        setInvitedSet]        = useState(new Set())
 
   // ── Données backend ──
   const [tournament,  setTournament]  = useState(null)
@@ -143,9 +144,20 @@ export default function Tournois() {
     const data = await res.json()
     if (data) {
       setRegistered(true)
+      setMyRegistrationId(data.id)
       if (!data.player2) setShowRecruit(true)
     }
   }, [])
+
+  const handleSelfUnregister = async () => {
+    if (!tournament || !myRegistrationId) return
+    const res = await authFetch(`/api/tournaments/${tournament.id}/my-registration/`, { method: 'DELETE' })
+    if (res.ok) {
+      setRegistered(false)
+      setMyRegistrationId(null)
+      setShowRecruit(false)
+    }
+  }
 
   const fetchBracket = useCallback(async (id) => {
     const res = await authFetch(`/api/tournaments/${id}/bracket/`)
@@ -189,17 +201,14 @@ export default function Tournois() {
     setBdeLoading(true)
     setBdeError('')
     try {
-      const res = await authFetch('/api/tournaments/bde-unlock/', {
-        method: 'POST',
-        body:   JSON.stringify({ password: bdeInput }),
-      })
+      const res = await authFetch('/api/tournaments/bde-unlock/', { method: 'POST' })
       if (res.ok) {
         setBdeUnlocked(true)
         setBdeOpen(false)
-      } else if (res.status === 401) {
-        setBdeError('Session expirée — reconnecte-toi.')
+      } else if (res.status === 403) {
+        setBdeError("Vous n'avez pas les droits BDE.")
       } else {
-        setBdeError(t('tournaments.incorrectPwd'))
+        setBdeError('Erreur inattendue.')
       }
     } catch {
       setBdeError('Erreur réseau.')
@@ -546,6 +555,15 @@ export default function Tournois() {
           </div>
         )}
 
+        {tournament?.status === 'OPEN' && registered && (
+          <div className={styles.registerBanner}>
+            <span>Tu es inscrit au tournoi.</span>
+            <button className={styles.unregisterBtn} onClick={handleSelfUnregister}>
+              Se désinscrire
+            </button>
+          </div>
+        )}
+
         {registered && showRecruit && (
           <div className={styles.recruitPanel}>
             <div className={styles.recruitHeader}>
@@ -722,15 +740,7 @@ export default function Tournois() {
       {/* ── Modal Accès BDE ── */}
       <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError('') }} title={t('tournaments.bdeAccess')}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t('tournaments.bdePwd')}</label>
-          <input
-            className={styles.input}
-            type="password"
-            placeholder="••••••••"
-            value={bdeInput}
-            onChange={e => { setBdeInput(e.target.value); setBdeError('') }}
-            onKeyDown={e => e.key === 'Enter' && handleBdeSubmit()}
-          />
+          <div className={styles.adminSub}>Vérifie ton accès BDE via ton compte.</div>
           {bdeError && <div className={styles.bdeError}>{bdeError}</div>}
         </div>
         <div className={styles.modalFooter}>
