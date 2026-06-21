@@ -198,6 +198,24 @@
   opacity: 0.88;
 }
 
+.unregisterBtn {
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--red, #e05252);
+  border: 1.5px solid var(--red, #e05252);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.unregisterBtn:hover {
+  background: var(--red, #e05252);
+  color: white;
+}
+
 .bracketWrap {
   background: var(--white);
   border: 1px solid var(--beige);

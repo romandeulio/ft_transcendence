@@ -35,12 +35,18 @@ function CustomTooltip({ active, payload }) {
   )
 }
 
-export default function ComparisonBarChart() {
+export default function ComparisonBarChart({ externalSelected }) {
   const [metric,   setMetric]   = useState('elo_solo')
   const [search,   setSearch]   = useState('')
   const [players,  setPlayers]  = useState([])
   const [selected, setSelected] = useState([])
   const [chartData, setChartData] = useState([])
+
+  useEffect(() => {
+    if (externalSelected && externalSelected.length > 0) {
+      setSelected(externalSelected.slice(0, 4))
+    }
+  }, [externalSelected])
 
   useEffect(() => {
     if (!search.trim()) { setPlayers([]); return }

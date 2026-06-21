@@ -260,13 +260,41 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 8px 4px;
   border-bottom: 1px solid var(--bg2);
+  border-radius: 7px;
+  transition: background 0.1s;
 }
 
 .teammateRow:last-child {
   border-bottom: none;
 }
+
+.teammateRowChecked {
+  background: rgba(64, 104, 219, 0.07);
+}
+
+.compareCheck {
+  width: 15px;
+  height: 15px;
+  accent-color: #4068DB;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.compareCheck:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.compareBtn {
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: #4068DB;
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.compareBtn:hover { opacity: 0.88; }
 
 .teammateName {
   flex: 1;
@@ -298,12 +326,135 @@
 }
 .removeBtn:hover { background: #fee; border-color: #CD3122; color: #CD3122; }
 
+.friendList {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
 .addTeammate {
+  margin-top: 4px;
+}
+
+.addTeammateDivider {
+  height: 1px;
+  background: var(--beige-dark, #d4cec8);
+  margin: 14px 0 14px;
+}
+
+.addTeammateRow {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+}
+
+.friendControls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.friendSearch {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--white);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--ink);
+}
+.friendSearch:focus { outline: none; border-color: var(--orange-light); }
+
+.friendSort {
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--ink2);
+  cursor: pointer;
+}
+
+.avatarOnlineWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.onlineDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid var(--white);
+}
+
+.offlineDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--white);
+}
+
+.friendPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   padding-top: 10px;
-  border-top: 1.5px dashed var(--beige-dark);
+  margin-top: 4px;
+  border-top: 1px solid var(--beige);
+  flex-wrap: wrap;
+}
+
+.pageNavBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pageNavBtn:hover:not(:disabled) { background: var(--beige); }
+.pageNavBtn:disabled { opacity: 0.3; cursor: default; }
+
+.pageNumBtn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  cursor: pointer;
+}
+.pageNumBtn:hover { background: var(--beige); }
+
+.pageNumActive {
+  background: var(--primary, #001A57) !important;
+  color: #fff !important;
+  border-color: var(--primary, #001A57) !important;
+}
+
+.addError {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .addInput {
@@ -466,6 +617,37 @@
 
 .matchSearch {
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matchFilters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1.5px solid var(--beige);
+  background: var(--bg2);
+  color: var(--ink3);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.filterChip:hover { background: var(--beige); color: var(--ink2); }
+
+.filterChipOn {
+  background: var(--primary, #001A57);
+  color: #fff;
+  border-color: var(--primary, #001A57);
 }
 
 .searchInput {

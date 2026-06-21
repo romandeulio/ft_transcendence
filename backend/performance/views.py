@@ -195,3 +195,40 @@ class PerformanceHistoryView(APIView):
             buckets[p]['goals']  += goals
 
         return {p: pick(buckets[p], y) for p in sorted(buckets)}
+
+
+class RankHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from matches.models_ranking import RankingHistory
+        season_id = request.query_params.get('season', '').strip()
+
+        qs = RankingHistory.objects.filter(
+            user=request.user,
+            mode='SOLO',
+            scope='season',
+        ).order_by('recorded_at')
+
+        if season_id:
+            qs = qs.filter(season_id=season_id)
+
+        entries = list(qs)
+        result = []
+        for i, rh in enumerate(entries):
+            rank = RankingHistory.objects.filter(
+                mode='SOLO',
+                scope='season',
+                season=rh.season,
+                recorded_at__lte=rh.recorded_at,
+            ).values('user').annotate(
+                latest=Max('score_after')
+            ).filter(latest__gt=rh.score_after).count() + 1
+
+            result.append({
+                'match': i + 1,
+                'elo':   rh.score_after,
+                'rank':  rank,
+            })
+
+        return Response(result)

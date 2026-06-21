@@ -308,6 +308,88 @@ class UserListView(APIView):
             users = users.values('username', 'avatar_url')
         return Response([{'login': u['username'], 'name': u['username'], 'avatar_url': u['avatar_url']} for u in users])
 
+class OnlineUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from realtime.state import online_users
+        return Response(list(online_users))
+
+
+class MyStatsCardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Q, Max, Count
+        from django.db.models.functions import TruncMonth
+        from matches.models import Match
+        from matches.models_ranking import RankingHistory
+        from stats.models import Stats
+
+        user = request.user
+        try:
+            stats = Stats.objects.get(user=user)
+        except Stats.DoesNotExist:
+            stats = None
+
+        best_elo = RankingHistory.objects.filter(
+            user=user, mode='SOLO'
+        ).aggregate(m=Max('score_after'))['m'] or (stats.elo_solo if stats else 0)
+
+        total_matches = stats.total_matches if stats else 0
+        best_streak   = stats.series_wins   if stats else 0
+
+        from django.db.models import F
+        wins_by_month = (
+            Match.objects.filter(
+                Q(player1=user, score_player1__gt=F('score_player2')) |
+                Q(player2=user, score_player2__gt=F('score_player1')),
+                status='VALIDATED',
+            )
+            .annotate(month=TruncMonth('played_at'))
+            .values('month')
+            .annotate(cnt=Count('id'))
+            .order_by('-cnt')
+            .first()
+        )
+        FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
+        best_month = '—'
+        if wins_by_month and wins_by_month['month']:
+            m = wins_by_month['month']
+            best_month = f"{FR_MONTHS[m.month - 1]}. {m.year}"
+
+        return Response({
+            'login':         user.username,
+            'best_elo':      best_elo,
+            'total_matches': total_matches,
+            'best_streak':   best_streak,
+            'max_tokens':    user.wallet_tokens or 0,
+            'best_month':    best_month,
+        })
+
+
+class FriendAddNotifyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target = request.data.get('target', '').strip()
+        if not target:
+            return Response({'error': 'target required'}, status=400)
+        if not User.objects.filter(username=target, is_active=True).exists():
+            return Response({'error': 'user not found'}, status=404)
+        try:
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{target}",
+                {"type": "friend_added", "from": request.user.username},
+            )
+        except Exception:
+            pass
+        return Response({'detail': 'ok'})
+
+
 class AvatarUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser, FormParser]

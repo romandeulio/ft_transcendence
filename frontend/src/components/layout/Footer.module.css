@@ -51,14 +51,30 @@
   font-size: 11px;
   color: rgba(255, 255, 255, 0.25);
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bottomLink {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: color 0.15s;
+  text-decoration: none;
+}
+.bottomLink:hover { color: #ffffff; }
+
+@media (max-width: 1024px) {
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
 @media (max-width: 768px) {
-  .columns {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
   .inner {
     padding: 0 24px;
   }

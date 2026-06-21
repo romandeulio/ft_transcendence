@@ -534,7 +534,7 @@ def tournament_solo(request, pk):
     ]
     return Response(data)
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def my_registration(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
@@ -543,6 +543,9 @@ def my_registration(request, pk):
     ).filter(Q(player1=request.user) | Q(player2=request.user)).first()
     if not reg:
         return Response(None)
+    if request.method == 'DELETE':
+        reg.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     return Response(RegistrationSerializer(reg).data)
 
 @api_view(['PATCH'])
