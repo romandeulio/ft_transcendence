@@ -455,6 +455,8 @@ function Dashboard({ onLogout }) {
   const [recentMatches, setRecentMatches] = useState([])
   const [players,       setPlayers]       = useState([])
   const [tournaments,   setTournaments]   = useState([])
+  const [editRolePlayer, setEditRolePlayer] = useState(null)
+  const [deletePlayer, setDeletePlayer] = useState(null)
 
   const loadAll = () => {
     adm('/api/admin/stats/').then(r => r.json()).then(setStats).catch(() => {})
