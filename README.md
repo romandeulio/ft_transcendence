@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by cprot, ltcherep, LuThaTha, rdeulio, scavallin.*
+*This project has been created as part of the 42 curriculum by cprot, ltcherep, tvandoor, rodeulio, scavalli.*
 
 ---
 
@@ -140,8 +140,8 @@ No browser console errors or warnings in production mode.
 | Coraline | `cprot` | PM / Scrum Master, DevOps | Organized sprints and team coordination; designed and maintained the full Docker/Nginx infrastructure; implemented i18n, RTL, Privacy Policy and Terms of Service page, documentation, tests QA, help frontend. |
 | Léa | `ltcherep` | Product Owner, Tech Lead Frontend | Defined frontend product vision; developed the core React interfaces (ranking, profile, betting, admin); built the design system (22+ components) and analytics dashboard. |
 | Thaïs | `tvandoor` | Product Owner, Tech Lead Backend | Defined backend product vision; designed the full DB schema; implemented authentication (email/password, OAuth 42, 2FA), advanced permissions, and GDPR compliance. |
-| Roman | `rdeulio` | Fullstack Developer (Real-time) | Implemented all WebSocket consumers (live queue, notifications, ranking); developed the full betting system backend (bets, wallet, transactions). |
-| Sydney | `scavallin` | Backend Developer, API | Implemented match logic and ELO calculation, seasons, planning, tournaments, and the public API with key authentication and rate limiting. |
+| Roman | `rodeulio` | Fullstack Developer (Real-time) | Implemented all WebSocket consumers (live queue, notifications, ranking); developed the full betting system backend (bets, wallet, transactions). |
+| Sydney | `scavalli` | Backend Developer, API | Implemented match logic and ELO calculation, seasons, planning, tournaments, and the public API with key authentication and rate limiting. |
 
 ---
 
