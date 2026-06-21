@@ -32,7 +32,8 @@ class StatsView(APIView):
 
                 # Récupérer tous les matchs validés du joueur (ordre chrono)
                 matches = Match.objects.filter(
-                    Q(player1__username=login) | Q(player2__username=login),
+                    Q(player1__username=login) | Q(player2__username=login)
+                    | Q(player1_teammate__username=login) | Q(player2_teammate__username=login),
                     status='VALIDATED'
                 ).select_related(
                     'player1', 'player1_teammate',
@@ -202,7 +203,8 @@ class PerformanceHistoryView(APIView):
         from matches.models import Match
         qs = (
             Match.objects.filter(status='VALIDATED')
-            .filter(Q(player1__username=login) | Q(player2__username=login))
+            .filter(Q(player1__username=login) | Q(player2__username=login)
+                    | Q(player1_teammate__username=login) | Q(player2_teammate__username=login))
             .order_by('played_at')
         )
         if date_from:
@@ -210,16 +212,18 @@ class PerformanceHistoryView(APIView):
         if date_to:
             qs = qs.filter(played_at__date__lte=date_to)
         qs = qs.values(
-                'player1__username', 'score_player1', 'score_player2',
+                'player1__username', 'player1_teammate__username',
+                'score_player1', 'score_player2',
                 'gamelles_player1', 'gamelles_player2',
                 'played_at', 'season__name',
             )
 
         def extract(e):
-            is_p1  = e['player1__username'] == login
-            my     = e['score_player1']    if is_p1 else e['score_player2']
-            their  = e['score_player2']    if is_p1 else e['score_player1']
-            goals  = e['gamelles_player1'] if is_p1 else e['gamelles_player2']
+            # Côté 1 si le joueur est player1 OU son coéquipier (2v2).
+            on_team1 = login in (e['player1__username'], e['player1_teammate__username'])
+            my     = e['score_player1']    if on_team1 else e['score_player2']
+            their  = e['score_player2']    if on_team1 else e['score_player1']
+            goals  = e['gamelles_player1'] if on_team1 else e['gamelles_player2']
             return my > their, goals
 
         def pick(d, y):

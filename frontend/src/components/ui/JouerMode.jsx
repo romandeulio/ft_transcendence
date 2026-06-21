@@ -7,13 +7,17 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
 
   const slot    = match?._slot
   const is2v2   = slot?.format === '2v2' || slot?.match_type === 'TEAM'
-  // team1 = côté bleu (player1), team2 = côté rouge (player2)
-  const labelBlue = is2v2 && slot?.team1?.filter(Boolean).length
-    ? slot.team1.filter(Boolean).join(' & ')
-    : slot?.player1 || t('game.blue')
-  const labelRed  = is2v2 && slot?.team2?.filter(Boolean).length
-    ? slot.team2.filter(Boolean).join(' & ')
-    : slot?.player2 || slot?.p2 || t('game.red')
+  // team1 = côté bleu (player1), team2 = côté rouge (player2).
+  // Fallback sur player+coéquipier si le tableau team n'est pas (encore) présent
+  // — ex. takeWin 2v2 où le gagnant rempli n'a synchronisé que player2_teammate.
+  const blueArr = (slot?.team1?.filter(Boolean).length
+    ? slot.team1
+    : [slot?.player1 || slot?.p1, slot?.player1_teammate]).filter(Boolean)
+  const redArr  = (slot?.team2?.filter(Boolean).length
+    ? slot.team2
+    : [slot?.player2 || slot?.p2, slot?.player2_teammate]).filter(Boolean)
+  const labelBlue = is2v2 ? (blueArr.join(' & ') || t('game.blue')) : (slot?.player1 || t('game.blue'))
+  const labelRed  = is2v2 ? (redArr.join(' & ')  || t('game.red'))  : (slot?.player2 || slot?.p2 || t('game.red'))
   const [scoreRed,  setScoreRed]  = useState(extRed  ?? 0)
   const [scoreBlue, setScoreBlue] = useState(extBlue ?? 0)
   const [elapsed,   setElapsed]   = useState(() =>

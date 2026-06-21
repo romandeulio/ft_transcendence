@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from matches.models import Match
+from stats.service import reset_all_elo
 from .models import Season, SeasonReward
 from .serializers import (
 	RankingEntrySerializer,
@@ -99,10 +100,10 @@ def season_activate(request, pk):
 		)
 
 	with transaction.atomic():
-		# Clore la saison active courante s'il y en a une
-		Season.objects.filter(status=Season.Status.ACTIVE).update(
-			status=Season.Status.FINISHED
-		)
+		# Clore proprement la saison active courante s'il y en a une :
+		# distribution des récompenses + reset de l'ELO, comme un season_close.
+		for current in Season.objects.filter(status=Season.Status.ACTIVE):
+			_close_season(current)
 		season.status = Season.Status.ACTIVE
 		season.save(update_fields=['status', 'updated_at'])
 
@@ -144,16 +145,33 @@ def season_close(request, pk):
 		)
 
 	with transaction.atomic():
-		season.status = Season.Status.FINISHED
-		season.save(update_fields=['status', 'updated_at'])
+		_close_season(season)
 
+	return Response(SeasonSerializer(season).data)
+
+
+def _close_season(season) -> None:
+	"""
+	Clôture une saison : FINISHED + distribution des récompenses + reset de l'ELO.
+
+	Utilisé par season_close (action explicite de l'admin) et par season_activate
+	(clôture automatique de l'ancienne saison au démarrage d'une nouvelle).
+
+	Idempotent : si les récompenses ont déjà été distribuées, on ne les distribue
+	pas une seconde fois et on ne reset pas l'ELO.
+	"""
+	season.status = Season.Status.FINISHED
+	if not season.rewards_distributed:
 		_distribute_rewards(season, SeasonReward.RankingType.SOLO)
 		_distribute_rewards(season, SeasonReward.RankingType.TEAM)
 
-		season.rewards_distributed = True
-		season.save(update_fields=['rewards_distributed', 'updated_at'])
+		# Remet l'ELO de tous les joueurs à 1000 : la prochaine saison repart à zéro.
+		# (l'ELO de cette saison reste consultable via le classement saisonnier,
+		# reconstruit depuis les matchs, et les lignes Ranking de scope SEASON.)
+		reset_all_elo()
 
-	return Response(SeasonSerializer(season).data)
+		season.rewards_distributed = True
+	season.save(update_fields=['status', 'rewards_distributed', 'updated_at'])
 
 
 def _distribute_rewards(season, ranking_type: str) -> None:

@@ -108,6 +108,8 @@ export function QueueProvider({ children }) {
               player2: qs.player2 || s.player2,
               ...(qs.player1_teammate ? { player1_teammate: qs.player1_teammate } : {}),
               ...(qs.player2_teammate ? { player2_teammate: qs.player2_teammate } : {}),
+              ...(qs.team1?.filter(Boolean).length ? { team1: qs.team1 } : {}),
+              ...(qs.team2?.filter(Boolean).length ? { team2: qs.team2 } : {}),
             }
           }
           return s
@@ -145,9 +147,11 @@ export function QueueProvider({ children }) {
               ...(fillBlue ? {
                 player1: data.winner,
                 ...(data.winner_teammate ? { player1_teammate: data.winner_teammate } : {}),
+                team1: [data.winner, data.winner_teammate].filter(Boolean),
               } : {
                 player2: data.winner,
                 ...(data.winner_teammate ? { player2_teammate: data.winner_teammate } : {}),
+                team2: [data.winner, data.winner_teammate].filter(Boolean),
               }),
             }
           })
