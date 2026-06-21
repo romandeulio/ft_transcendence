@@ -11,6 +11,7 @@ _AUTH_SKIP_BAN = (
     '/api/auth/token/refresh/',
     '/api/auth/logout/',
     '/api/auth/ticket/',
+    '/api/auth/2fa/verify/',
     '/api/admin/',
 )
 

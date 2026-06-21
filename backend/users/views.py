@@ -1,8 +1,11 @@
 import requests
 import os
 import uuid
+import random
 from urllib.parse import urlencode
 from django.conf import settings
+from django.core.cache import cache
+from django.core.mail import send_mail
 
 from .models import User
 from .serializers import RegisterSerializer, UserSerializer
@@ -75,13 +78,12 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-        totp_code = request.data.get('totp_code')
         try:
             user = User.objects.get(email=email)
             if not user.is_active:
                 return Response({'error': 'Account not activated'}, status=403)
         except User.DoesNotExist:
-            return Response({'error': 'Bad email or password'}, status= 401)
+            return Response({'error': 'Bad email or password'}, status=401)
 
         if not user.check_password(password):
             return Response({'error': 'Bad email or password'}, status=401)
@@ -92,13 +94,65 @@ class LoginView(APIView):
             return Response({'error': 'banned', 'ban': ban}, status=403)
 
         if user.is_2fa_enabled:
-            if not totp_code:
-                return Response({'requires_2fa': True}, status=200)
-            if not user.verify_totp(totp_code):
-                return Response({'error': 'Code 2FA invalide'}, status=401)
+            # Générer un code 6 chiffres, stocker dans Redis, envoyer par mail
+            code = f"{random.randint(0, 999999):06d}"
+            cache_key = f"2fa_code_{user.id}"
+            cache.set(cache_key, code, timeout=300)  # 5 minutes
+
+            # Masquer l'email : s***@gmail.com
+            parts = user.email.split('@')
+            email_hint = f"{parts[0][0]}***@{parts[1]}"
+
+            try:
+                send_mail(
+                    subject="Code de vérification 2FA",
+                    message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception:
+                return Response({'error': 'Erreur envoi du code'}, status=500)
+
+            return Response({
+                'requires_2fa': True,
+                'email_hint': email_hint,
+                'user_id': str(user.id),
+            })
 
         response = Response({'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
+
+class Verify2FACodeView(APIView):
+    """Valide le code 2FA reçu par email et émet les JWT."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        code = request.data.get('code', '').strip()
+
+        if not user_id or not code:
+            return Response({'error': 'user_id et code requis'}, status=400)
+
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Utilisateur introuvable'}, status=404)
+
+        cache_key = f"2fa_code_{user.id}"
+        stored_code = cache.get(cache_key)
+
+        if stored_code is None:
+            return Response({'error': 'Code expiré, reconnectez-vous'}, status=401)
+
+        if stored_code != code:
+            return Response({'error': 'Code invalide'}, status=401)
+
+        # Code valide — supprimer du cache et connecter
+        cache.delete(cache_key)
+        response = Response({'detail': 'Login successful'})
+        return set_auth_cookies(response, get_tokens(user))
+
 
 class OAuth42LoginView(APIView):
     permission_classes = [AllowAny]
@@ -172,6 +226,29 @@ class OAuth42CallbackView(APIView):
                         f"{settings.SITE_URL}/banned?type=temporary&until={ban['until']}"
                     )
 
+            # 2FA par email
+            if user.is_2fa_enabled:
+                code = f"{random.randint(0, 999999):06d}"
+                cache_key = f"2fa_code_{user.id}"
+                cache.set(cache_key, code, timeout=300)
+
+                parts = user.email.split('@')
+                email_hint = f"{parts[0][0]}***@{parts[1]}"
+
+                try:
+                    send_mail(
+                        subject="Code de vérification 2FA",
+                        message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except Exception:
+                    pass
+
+                params = urlencode({'2fa': 'true', 'uid': str(user.id), 'hint': email_hint})
+                return django_redirect(f"{settings.SITE_URL}/login?{params}")
+
             tokens = get_tokens(user)
             response = django_redirect(f"{settings.SITE_URL}/login-success")
             return set_auth_cookies(response, get_tokens(user))
@@ -213,29 +290,22 @@ class LogoutView(APIView):
     def post(self, request):
         return delete_auth_cookies(Response({'detail': 'Logged out'}))
 
-# 2FA
+# 2FA — simple toggle email
 class Enable2FAView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """Active le 2FA par email"""
         user = request.user
-        secret = user.generate_totp_secret()
-        return Response({'totp_uri': user.get_totp_uri(), 'secret': secret})
-
-    def put(self, request):
-        """Confirmer le 2FA avec un premier code valide"""
-        code = request.data.get('code')
-        if not request.user.verify_totp(code):
-            return Response({'error': 'Code invalide'}, status=400)
-        request.user.is_2fa_enabled = True
-        request.user.save()
+        user.is_2fa_enabled = True
+        user.save(update_fields=['is_2fa_enabled'])
         return Response({'status': '2FA activé'})
 
     def delete(self, request):
-        """Désactiver le 2FA"""
-        request.user.is_2fa_enabled = False
-        request.user.totp_secret = None
-        request.user.save()
+        """Désactive le 2FA"""
+        user = request.user
+        user.is_2fa_enabled = False
+        user.save(update_fields=['is_2fa_enabled'])
         return Response({'status': '2FA désactivé'})
 
 # Activation par email
@@ -458,6 +528,5 @@ class Disable2FAView(APIView):
     def post(self, request):
         user = request.user
         user.is_2fa_enabled = False
-        user.totp_secret    = None
-        user.save(update_fields=['is_2fa_enabled', 'totp_secret'])
+        user.save(update_fields=['is_2fa_enabled'])
         return Response({'status': '2FA désactivé'})
