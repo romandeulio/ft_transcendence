@@ -251,6 +251,17 @@ class QueueConsumer(
         if g["player1"] and g["player2"]:
             await self._ensure_reservation_for_game(g)
             await self._broadcast_bet_market(g)
+
+        # Si ce takeWin vient d'être complété (coéquipier accepté) et que son match
+        # parent est déjà terminé, on envoie maintenant l'invitation au(x) gagnant(s)
+        # mémorisée à la fin du match parent (équipe alors incomplète).
+        if slot.get("takeWin") and not slot.get("p2") and self._takewin_team_ready(slot):
+            parent = slot.get("parentSlotId")
+            res = state.takewin_pending_results.get(parent)
+            if res and res.get("match_type") == slot.get("match_type", "SOLO"):
+                state.takewin_pending_results.pop(parent, None)
+                await self._send_win_invites(slot, res["winner"], res.get("winner_teammate"))
+
         await self._broadcast_queue()
 
     async def _on_leave(self, data):
@@ -264,8 +275,14 @@ class QueueConsumer(
             if not (s.get("id") == slot_id and s.get("ownerId") == self.user_id)
         ]
         if leaving_slot:
+            # Marque le slot terminal : empêche son ré-ajout via un re-`join`
+            # tardif (reconnexion d'un participant dont le front a gardé le slot).
+            state.completed_game_ids.add(slot_id)
+            await self._cancel_win_invites_for_slots({slot_id})
+            # Cibles déjà prévenues par invite_cancelled → exclues du match_cancelled.
+            invited = (await self._cancel_invites_for_slots({slot_id})).get(slot_id, set())
             cancel_id = str(uuid.uuid4())
-            for participant in self._slot_participants(leaving_slot, {self.username}):
+            for participant in self._slot_participants(leaving_slot, {self.username} | invited):
                 await self._notify(
                     participant,
                     {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
@@ -365,7 +382,17 @@ class QueueConsumer(
                 if (slot.get("takeWin") and not slot.get("p2")
                         and slot.get("match_type", "SOLO") == ended_match_type
                         and slot.get("parentSlotId") == game_id):
-                    await self._send_win_invites(slot, winner, winner_teammate)
+                    if self._takewin_team_ready(slot):
+                        await self._send_win_invites(slot, winner, winner_teammate)
+                    else:
+                        # Équipe takeWin incomplète (coéquipier pas encore accepté) :
+                        # on mémorise le résultat pour inviter le(s) gagnant(s) dès
+                        # que l'équipe sera prête (cf. _commit_slot).
+                        state.takewin_pending_results[game_id] = {
+                            "winner":          winner,
+                            "winner_teammate": winner_teammate,
+                            "match_type":      ended_match_type,
+                        }
         if g:
             closed_id = await self._close_reservation_for_game(g, refund=not is_completed)
             if closed_id:
@@ -449,6 +476,18 @@ class QueueConsumer(
         if not accepted:
             # Un refus annule l'invitation pour tout le monde
             state.invites.pop(invite_id, None)
+            # Si c'était un takeWin déjà présent dans la file (ajout immédiat à
+            # l'invitation), on retire le créneau orphelin, on le marque terminal
+            # et on propage l'annulation aux takeWin en aval.
+            if inv and (inv.get("slot") or {}).get("takeWin"):
+                sid = (inv["slot"].get("_localId") or invite_id)
+                if any(s.get("id") == sid for s in state.queue):
+                    match_type = inv["slot"].get("match_type", "SOLO")
+                    state.queue = [s for s in state.queue if s.get("id") != sid]
+                    state.completed_game_ids.add(sid)
+                    await self._cancel_win_invites_for_slots({sid})
+                    await self._cascade_cancel_takewins(sid, match_type)
+                    await self._broadcast_queue()
         elif inv:
             if self.username not in inv["accepted"]:
                 inv["accepted"].append(self.username)
@@ -456,8 +495,10 @@ class QueueConsumer(
             # créneau à la file (indépendant de l'état de connexion de J1) : tout
             # joueur connecté le voit alors et peut lancer le match.
             if len(inv["accepted"]) >= len(inv["targets"]):
-                await self._activate_invite_slot(inv)
+                # Pop AVANT activation : sans invite en attente, _takewin_team_ready
+                # voit l'équipe comme complète et peut déclencher le win-invite mémorisé.
                 state.invites.pop(invite_id, None)
+                await self._activate_invite_slot(inv)
 
         if from_user:
             payload = {"inviteId": invite_id, "accepted": accepted, "responder": self.username}
@@ -489,12 +530,24 @@ class QueueConsumer(
         invite_id = data.get("inviteId")
         if not target:
             return
-        state.invites.pop(invite_id, None)
+        inv = state.invites.pop(invite_id, None)
         self._remove_pending(target, invite_id)
         await self.channel_layer.group_send(
             f"user_{target}",
             {"type": "cancel_invite_msg", "inviteId": invite_id},
         )
+        # Si l'invite portait un takeWin ajouté immédiatement à la file (côté
+        # inviteur), retirer le créneau orphelin, le marquer terminal et propager
+        # l'annulation aux takeWin en aval.
+        if inv and (inv.get("slot") or {}).get("takeWin"):
+            sid = inv["slot"].get("_localId") or invite_id
+            if any(s.get("id") == sid for s in state.queue):
+                match_type = inv["slot"].get("match_type", "SOLO")
+                state.queue = [s for s in state.queue if s.get("id") != sid]
+                state.completed_game_ids.add(sid)
+                await self._cancel_win_invites_for_slots({sid})
+                await self._cascade_cancel_takewins(sid, match_type)
+                await self._broadcast_queue()
 
     async def _on_win_claim_response(self, data):
         invite_id = data.get("inviteId")
@@ -510,7 +563,12 @@ class QueueConsumer(
             cancelled_slot = next((s for s in state.queue if s.get("id") == slot_id), None)
             cancelled_match_type = (cancelled_slot.get("match_type", "SOLO") if cancelled_slot else "SOLO")
             state.queue = [s for s in state.queue if s.get("id") != slot_id]
-            del state.win_invites[invite_id]
+            # Marque le slot comme terminal : empêche son ré-ajout si le proprio
+            # (J3) se reconnecte et que son front re-`join` ses slots locaux.
+            state.completed_game_ids.add(slot_id)
+            # Annule le win_invite pour TOUS les co-gagnants (en ligne et hors-ligne),
+            # pas seulement ceux connectés.
+            await self._cancel_win_invites_for_slots({slot_id})
             await self._notify(
                 invite["owner"],
                 {"type": "win_claim_declined_msg", "slotId": slot_id},
@@ -524,13 +582,6 @@ class QueueConsumer(
                         mate,
                         {"type": "win_claim_declined_msg", "slotId": slot_id},
                         {"win_claim_declined": True, "slotId": slot_id},
-                    )
-            # Annuler pour les autres co-gagnants en ligne (leur pending déjà retiré à leur réponse)
-            for t in invite["targets"]:
-                if t != self.username and t in state.online_users:
-                    await self.channel_layer.group_send(
-                        f"user_{t}",
-                        {"type": "cancel_invite_msg", "inviteId": invite_id},
                     )
             await self._cascade_cancel_takewins(slot_id, cancelled_match_type)
             await self._broadcast_queue()
@@ -570,6 +621,9 @@ class QueueConsumer(
         target_slot = next((s for s in state.queue if s.get("id") == slot_id), None)
         state.queue = [s for s in state.queue if s.get("id") != slot_id]
         if target_slot:
+            # Marque le slot terminal : empêche son ré-ajout si le proprio (J1)
+            # se reconnecte et que son front re-`join` ses slots locaux.
+            state.completed_game_ids.add(slot_id)
             owner_username = target_slot.get("p1")
             if owner_username:
                 await self._notify(
@@ -577,8 +631,11 @@ class QueueConsumer(
                     {"type": "p2_left_msg", "slotId": slot_id, "cancelledBy": self.username},
                     {"p2_left": True, "slotId": slot_id, "cancelledBy": self.username},
                 )
+            await self._cancel_win_invites_for_slots({slot_id})
+            # Cibles déjà prévenues par invite_cancelled → exclues du match_cancelled.
+            invited = (await self._cancel_invites_for_slots({slot_id})).get(slot_id, set())
             cancel_id = str(uuid.uuid4())
-            for participant in self._slot_participants(target_slot, {self.username, owner_username}):
+            for participant in self._slot_participants(target_slot, {self.username, owner_username} | invited):
                 await self._notify(
                     participant,
                     {"type": "match_cancelled_msg", "cancelledBy": self.username, "cancelId": cancel_id},
@@ -590,6 +647,63 @@ class QueueConsumer(
         await self._broadcast_queue()
 
     # ── Helpers internes ────────────────────────────────────────────────────
+
+    async def _cancel_win_invites_for_slots(self, slot_ids):
+        """Annule (serveur + clients, en ligne ET hors-ligne) les win_invites en
+        attente dont le slotId est dans slot_ids.
+
+        Empêche qu'un gagnant garde une invitation « reprise de gagne » vers un
+        créneau qui vient d'être retiré de la file (départ du proprio, annulation…).
+        """
+        stale_invite_ids = [k for k, v in state.win_invites.items() if v["slotId"] in slot_ids]
+        for inv_id in stale_invite_ids:
+            inv = state.win_invites.pop(inv_id, None)
+            if not inv:
+                continue
+            for t in inv.get("targets", []):
+                # Retire le win_invite obsolète de la file hors-ligne (sans toucher aux autres)
+                if t in state.pending_invites:
+                    state.pending_invites[t] = [
+                        i for i in state.pending_invites[t]
+                        if not (i.get("win_invite") and i.get("inviteId") == inv_id)
+                    ]
+                    if not state.pending_invites[t]:
+                        del state.pending_invites[t]
+                if t in state.online_users:
+                    await self.channel_layer.group_send(
+                        f"user_{t}",
+                        {"type": "cancel_invite_msg", "inviteId": inv_id},
+                    )
+
+    async def _cancel_invites_for_slots(self, slot_ids):
+        """Annule les invitations directes (coéquipier) EN ATTENTE dont le créneau
+        est dans slot_ids : la/les cible(s) ne doivent pas garder une invitation à
+        rejoindre un créneau qui vient d'être retiré de la file.
+
+        Pour un takeWin, l'inviteId == l'id du slot (== _localId), donc on retrouve
+        l'invitation directement par l'id du créneau.
+
+        Retourne {slot_id: set(cibles notifiées)} pour permettre la déduplication
+        des notifications (ne pas envoyer aussi un match_cancelled à une cible déjà
+        prévenue par invite_cancelled).
+        """
+        notified = {}
+        for sid in slot_ids:
+            inv = state.invites.pop(sid, None)
+            if not inv:
+                continue
+            targets = set()
+            for target in inv.get("targets", []):
+                self._remove_pending(target, sid)
+                targets.add(target)
+                if target in state.online_users:
+                    await self.channel_layer.group_send(
+                        f"user_{target}",
+                        {"type": "cancel_invite_msg", "inviteId": sid},
+                    )
+            if targets:
+                notified[sid] = targets
+        return notified
 
     async def _cascade_cancel_takewins(self, cancelled_slot_id, match_type):
         """Annule uniquement les takeWin qui dépendent DIRECTEMENT de
@@ -608,26 +722,12 @@ class QueueConsumer(
             return
         cancel_ids = {s["id"] for s in to_cancel}
         state.queue = [s for s in state.queue if s.get("id") not in cancel_ids]
-        # Annule les win_invites en attente qui ciblent ces slots
-        stale_invite_ids = [k for k, v in state.win_invites.items() if v["slotId"] in cancel_ids]
-        for inv_id in stale_invite_ids:
-            inv = state.win_invites.pop(inv_id, None)
-            if not inv:
-                continue
-            for t in inv.get("targets", []):
-                # Retire de la file hors-ligne le win_invite obsolète (sans toucher aux autres)
-                if t in state.pending_invites:
-                    state.pending_invites[t] = [
-                        i for i in state.pending_invites[t]
-                        if not (i.get("win_invite") and i.get("inviteId") == inv_id)
-                    ]
-                    if not state.pending_invites[t]:
-                        del state.pending_invites[t]
-                if t in state.online_users:
-                    await self.channel_layer.group_send(
-                        f"user_{t}",
-                        {"type": "cancel_invite_msg", "inviteId": inv_id},
-                    )
+        # Marque ces slots comme terminaux : empêche leur ré-ajout si un proprio
+        # se reconnecte et que son front re-`join` ses slots locaux.
+        state.completed_game_ids |= cancel_ids
+        # Annule les win_invites ET les invitations coéquipier en attente de ces slots
+        await self._cancel_win_invites_for_slots(cancel_ids)
+        invited_by_slot = await self._cancel_invites_for_slots(cancel_ids)
         # Notifie le propriétaire ET ses coéquipiers, puis récurse dans les dépendants.
         # Même cancelId pour tous → la dédup côté front (seenCancelIds) reste correcte
         # (chaque client est un user distinct, il ne voit que sa propre notif).
@@ -635,7 +735,9 @@ class QueueConsumer(
             owner = slot.get("p1")
             slot_id = slot.get("id")
             cancel_id = str(uuid.uuid4())
-            for recipient in ({owner} | self._slot_participants(slot, {owner})):
+            # Cibles déjà prévenues par invite_cancelled → exclues du match_cancelled.
+            already = invited_by_slot.get(slot_id, set())
+            for recipient in ({owner} | self._slot_participants(slot, {owner})) - already:
                 await self._notify(
                     recipient,
                     {"type": "match_cancelled_msg", "cancelledBy": "", "slotId": slot_id, "chain": True, "cancelId": cancel_id},
@@ -664,6 +766,19 @@ class QueueConsumer(
             ]
             if not state.pending_invites[username]:
                 del state.pending_invites[username]
+
+    @staticmethod
+    def _takewin_team_ready(slot):
+        """Un takeWin 2v2 (TEAM) n'est « prêt » que lorsque son invitation coéquipier
+        n'est plus en attente (le coéquipier a accepté → l'invite a été retirée de
+        state.invites). Un takeWin 1v1 (SOLO) est toujours prêt (pas de coéquipier).
+
+        Source de vérité côté serveur : insensible à un flag front périmé renvoyé
+        par un re-`join` à la reconnexion.
+        """
+        if slot.get("match_type", "SOLO") == "TEAM":
+            return slot.get("id") not in state.invites
+        return True
 
     @staticmethod
     def _slot_participants(slot, exclude=()):
