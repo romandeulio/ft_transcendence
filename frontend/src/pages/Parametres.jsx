@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -10,8 +10,6 @@ import Toggle from '../components/ui/Toggle'
 import { authFetch } from '../services/api'
 import styles from './Parametres.module.css'
 
-const NOTIF_IDS = ['turn', 'bet', 'tourney', 'season', 'invite']
-
 export default function Parametres() {
   const { user, logout, login } = useAuth()
   const navigate = useNavigate()
@@ -21,7 +19,6 @@ export default function Parametres() {
   const TABS = [
     { key: 'profile',  label: t('settings.tabs.profile') },
     { key: 'security', label: t('settings.tabs.security') },
-    { key: 'notifs',   label: t('settings.tabs.notifications') },
     { key: 'language', label: t('settings.tabs.language') },
     { key: 'account',  label: t('settings.tabs.account') },
     { key: 'notice',   label: t('settings.tabs.notice') },
@@ -48,11 +45,6 @@ export default function Parametres() {
   // ── OAuth toggle ──
   const [oauth, setOauth] = useState(true)
 
-  // ── Notifications (localStorage) ──
-  const [notifs, setNotifs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('notifPrefs')) || { turn: true, bet: true, tourney: false, season: true, invite: true } } catch { return { turn: true, bet: true, tourney: false, season: true, invite: true } }
-  })
-
   // ── Email ──
   const [email, setEmail] = useState(user?.email ?? '')
 
@@ -63,11 +55,18 @@ export default function Parametres() {
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [avatarError,   setAvatarError]   = useState('')
 
-  const toggleNotif = (id) => {
-    const next = { ...notifs, [id]: !notifs[id] }
-    setNotifs(next)
-    localStorage.setItem('notifPrefs', JSON.stringify(next))
-  }
+  // ── GDPR modal ──
+  const [gdprModal,   setGdprModal]   = useState(null)
+  const [gdprCode,    setGdprCode]    = useState(['', '', '', '', '', ''])
+  const [gdprError,   setGdprError]   = useState('')
+  const [gdprLoading, setGdprLoading] = useState(false)
+  const codeRef0 = useRef()
+  const codeRef1 = useRef()
+  const codeRef2 = useRef()
+  const codeRef3 = useRef()
+  const codeRef4 = useRef()
+  const codeRef5 = useRef()
+  const codeRefs = [codeRef0, codeRef1, codeRef2, codeRef3, codeRef4, codeRef5]
 
   const handleLang = (code) => {
     i18n.changeLanguage(code)
@@ -88,26 +87,6 @@ export default function Parametres() {
     setAvatarPreview(null)
     setAvatarFile(null)
     setAvatarDeleted(true)
-  }
-
-  const handleExport = async () => {
-    const res = await fetch('/api/auth/gdpr/export/?format=json', { credentials: 'include' })
-    if (!res.ok) { alert('Erreur export'); return }
-    const blob = await res.blob()
-    const url  = window.URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = 'my_data.json'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
-  const handleDeleteAccount = async () => {
-    if (!window.confirm('Supprimer définitivement votre compte ?')) return
-    const res = await fetch('/api/auth/gdpr/delete/', { method: 'DELETE', credentials: 'include' })
-    if (!res.ok) { alert('Erreur suppression'); return }
-    logout()
-    navigate('/login')
   }
 
   const handleSave = async () => {
@@ -165,6 +144,85 @@ export default function Parametres() {
     setTfaLoading(false)
   }
 
+  // ── GDPR modal helpers ──
+  const openGdprModal = async (action) => {
+    setGdprCode(['', '', '', '', '', ''])
+    setGdprError('')
+    setGdprModal({ action })
+    await authFetch('/api/auth/gdpr/request/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    })
+    setTimeout(() => codeRefs[0].current?.focus(), 50)
+  }
+
+  const handleCodeInput = (i, val) => {
+    if (!/^\d?$/.test(val)) return
+    const next = [...gdprCode]
+    next[i] = val
+    setGdprCode(next)
+    if (val && i < 5) codeRefs[i + 1].current?.focus()
+  }
+
+  const handleCodeKeyDown = (i, e) => {
+    if (e.key === 'Backspace' && !gdprCode[i] && i > 0) {
+      codeRefs[i - 1].current?.focus()
+    }
+  }
+
+  const handleGdprConfirm = async () => {
+    const code = gdprCode.join('')
+    if (code.length < 6) { setGdprError('Saisissez les 6 chiffres'); return }
+    setGdprLoading(true)
+    setGdprError('')
+
+    const { action } = gdprModal
+
+    if (action === 'export') {
+      const res = await authFetch('/api/auth/gdpr/export/?format=json', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setGdprError(d.error || 'Code invalide')
+        setGdprLoading(false)
+        return
+      }
+      const blob = await res.blob()
+      const url  = window.URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = 'my_data.json'
+      a.click()
+      window.URL.revokeObjectURL(url)
+      setGdprModal(null)
+    }
+
+    if (action === 'delete') {
+      const res = await authFetch('/api/auth/gdpr/delete/', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setGdprError(d.error || 'Code invalide')
+        setGdprLoading(false)
+        return
+      }
+      logout()
+      navigate('/login')
+    }
+
+    setGdprLoading(false)
+  }
+
+  const handleExport        = () => openGdprModal('export')
+  const handleDeleteAccount = () => openGdprModal('delete')
+
   return (
     <Shell>
       <Topbar title={t('topbar.settings')} titleSize={30} />
@@ -186,6 +244,8 @@ export default function Parametres() {
         </div>
 
         <div className={styles.panel}>
+
+          {/* ── Profil ── */}
           {activeTab === 'profile' && (
             <div>
               <div className={styles.section}>
@@ -211,7 +271,7 @@ export default function Parametres() {
               </div>
               <div className={styles.section}>
                 <label className={styles.label}>{t('settings.profile.login42')}</label>
-                <input className={styles.inputLocked} value={user?.login ?? ''} readOnly />
+                <div className={styles.inputLocked}>{user?.username ?? '—'}</div>
               </div>
               <div className={styles.section}>
                 <label className={styles.label}>{t('settings.profile.email')}</label>
@@ -221,6 +281,7 @@ export default function Parametres() {
             </div>
           )}
 
+          {/* ── Sécurité ── */}
           {activeTab === 'security' && (
             <div>
               {!user?.oauth_42_id && (
@@ -268,6 +329,7 @@ export default function Parametres() {
                 </div>
                 <Toggle on={oauth} onChange={setOauth} />
               </div>
+
               <div className={styles.section}>
                 <div className={styles.sectionTitle}>{t('settings.security.activeSessions')}</div>
                 <button className={styles.btnDanger}>{t('settings.security.disconnectAll')}</button>
@@ -275,17 +337,7 @@ export default function Parametres() {
             </div>
           )}
 
-          {activeTab === 'notifs' && (
-            <div>
-              {NOTIF_IDS.map(id => (
-                <div key={id} className={styles.toggleRow}>
-                  <div className={styles.toggleLabel}>{t(`settings.notifications.${id}`)}</div>
-                  <Toggle on={notifs[id]} onChange={() => toggleNotif(id)} />
-                </div>
-              ))}
-            </div>
-          )}
-
+          {/* ── Langue ── */}
           {activeTab === 'language' && (
             <div>
               <div className={styles.section}>
@@ -299,6 +351,7 @@ export default function Parametres() {
             </div>
           )}
 
+          {/* ── Compte ── */}
           {activeTab === 'account' && (
             <div>
               <div className={styles.section}>
@@ -319,6 +372,7 @@ export default function Parametres() {
             </div>
           )}
 
+          {/* ── Notice ── */}
           {activeTab === 'notice' && (
             <div>
               <div className={styles.noticeIntro}>
@@ -332,8 +386,92 @@ export default function Parametres() {
               ))}
             </div>
           )}
+
         </div>
       </div>
+
+      {/* ── Modal GDPR ── */}
+      {gdprModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }}>
+          <div style={{
+            background: 'var(--color-background-primary)',
+            borderRadius: 'var(--border-radius-lg)',
+            border: '0.5px solid var(--color-border-tertiary)',
+            padding: '1.5rem 1.75rem',
+            width: 340,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontSize: 15, fontWeight: 500 }}>Confirmation requise</span>
+              <button
+                onClick={() => setGdprModal(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 18, color: 'var(--color-text-secondary)', lineHeight: 1 }}
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 1rem', lineHeight: 1.6 }}>
+              Un code a été envoyé à{' '}
+              <strong style={{ color: 'var(--color-text-primary)' }}>{user?.email}</strong>.
+              Saisissez-le pour confirmer{gdprModal.action === 'delete' ? ' la suppression de votre compte' : " l'export"}.
+            </p>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: '0.75rem' }}>
+              {gdprCode.map((v, i) => (
+                <input
+                  key={i}
+                  ref={codeRefs[i]}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={v}
+                  onChange={e => handleCodeInput(i, e.target.value)}
+                  onKeyDown={e => handleCodeKeyDown(i, e)}
+                  style={{
+                    width: 38, height: 46,
+                    textAlign: 'center', fontSize: 20, fontWeight: 500,
+                    borderRadius: 'var(--border-radius-md)',
+                  }}
+                />
+              ))}
+            </div>
+
+            {gdprError && (
+              <p style={{ color: 'var(--color-text-danger)', fontSize: 13, textAlign: 'center', margin: '0 0 0.75rem' }}>
+                {gdprError}
+              </p>
+            )}
+
+            <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center', margin: '0 0 1rem' }}>
+              Valable 15 min ·{' '}
+              <span
+                style={{ color: 'var(--color-text-info)', cursor: 'pointer' }}
+                onClick={() => openGdprModal(gdprModal.action)}
+              >
+                Renvoyer
+              </span>
+            </p>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className={styles.btnSecondary} style={{ flex: 1 }} onClick={() => setGdprModal(null)}>
+                Annuler
+              </button>
+              <button
+                className={gdprModal.action === 'delete' ? styles.btnDangerFill : styles.btnPrimary}
+                style={{ flex: 1 }}
+                onClick={handleGdprConfirm}
+                disabled={gdprLoading || gdprCode.join('').length < 6}
+              >
+                {gdprLoading ? '...' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   )
 }

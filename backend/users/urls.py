@@ -16,6 +16,7 @@ urlpatterns = [
     path("activate/<uidb64>/<token>/", views.ActivateAccountView.as_view(), name="activate"),
     path("oauth/42/login/", views.OAuth42LoginView.as_view()),
     path('avatar/', views.AvatarUploadView.as_view()),
+    path('gdpr/request', RGPD.GDPRRequestCodeView.as_view()),
     path('gdpr/export/',      RGPD.GDPRExportView.as_view()),
     path('gdpr/delete/',      RGPD.GDPRDeleteView.as_view()),
     path("profile/update/", views.UpdateProfileView.as_view()),
