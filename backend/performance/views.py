@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Max
 from django.db.models.functions import TruncWeek, TruncMonth, TruncDate
+from django.utils import timezone
 
 from stats.models import Stats
 from stats.serializers import StatsSerializer
@@ -190,7 +191,7 @@ class PerformanceHistoryView(APIView):
             return result
 
         trunc = TruncWeek if x == 'weeks' else TruncMonth
-        fmt   = '%Y-W%W'  if x == 'weeks' else '%Y-%m'
+        fmt   = '%G-W%V'  if x == 'weeks' else '%Y-%m'
         entries = (
             qs.annotate(p=trunc('recorded_at'))
               .values('p')
@@ -221,9 +222,9 @@ class PerformanceHistoryView(APIView):
         def extract(e):
             # Côté 1 si le joueur est player1 OU son coéquipier (2v2).
             on_team1 = login in (e['player1__username'], e['player1_teammate__username'])
-            my     = e['score_player1']    if on_team1 else e['score_player2']
-            their  = e['score_player2']    if on_team1 else e['score_player1']
-            goals  = e['gamelles_player1'] if on_team1 else e['gamelles_player2']
+            my     = e['score_player1'] if on_team1 else e['score_player2']
+            their  = e['score_player2'] if on_team1 else e['score_player1']
+            goals  = my  # buts marqués = score du joueur
             return my > their, goals
 
         def pick(d, y):
@@ -255,7 +256,7 @@ class PerformanceHistoryView(APIView):
                 return e['season__name'] or 'Hors saison'
             played = timezone.localtime(e['played_at']) if timezone.is_aware(e['played_at']) else e['played_at']
             if x == 'weeks':
-                return played.strftime('%Y-W%W')
+                return played.strftime('%G-W%V')
             if x == 'days':
                 return str(played.date())
             return played.strftime('%Y-%m')
