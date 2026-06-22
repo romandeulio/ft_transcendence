@@ -63,6 +63,8 @@ class APIKey(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		db_table = 'api_keys'
+		managed = False
 		ordering = ['-created_at']
 		verbose_name     = 'Clé API'
 		verbose_name_plural = 'Clés API'

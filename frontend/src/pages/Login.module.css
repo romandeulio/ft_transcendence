@@ -21,6 +21,7 @@
   user-select: none;
   animation: floatBg 5s ease-in-out infinite;
   opacity: 0.18;
+  z-index: 0;
 }
 
 .langBar {
@@ -46,6 +47,8 @@
   align-items: center;
   gap: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 1;
 }
 
 .logo {

@@ -38,13 +38,14 @@ const COLORS = ['#CD3122', '#4068DB', '#57722F', '#E6B447', '#9B59B6', '#1ABC9C'
 
 const FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
 
-function pyWeekKey(date) {
+function isoWeekKey(date) {
   const d = new Date(date); d.setHours(12, 0, 0, 0)
-  const year = d.getFullYear()
-  const jan1 = new Date(year, 0, 1); jan1.setHours(12, 0, 0, 0)
-  const jan1DowMon = (jan1.getDay() + 6) % 7
-  const dayOfYear = Math.floor((d - jan1) / 86400000)
-  const weekNum = Math.floor((dayOfYear + jan1DowMon) / 7)
+  // ISO: Thursday determines the week's year
+  const thu = new Date(d)
+  thu.setDate(thu.getDate() + 3 - ((thu.getDay() + 6) % 7))
+  const year = thu.getFullYear()
+  const jan1 = new Date(year, 0, 1)
+  const weekNum = 1 + Math.round(((thu - jan1) / 86400000 - 3 + ((jan1.getDay() + 6) % 7)) / 7)
   return `${year}-W${String(weekNum).padStart(2, '0')}`
 }
 
@@ -53,7 +54,7 @@ function buildWeekSlots() {
   const slots = []
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now); d.setDate(d.getDate() - i * 7)
-    slots.push({ key: pyWeekKey(d), label: i === 0 ? 'SA' : `S-${i}` })
+    slots.push({ key: isoWeekKey(d), label: i === 0 ? 'SA' : `S-${i}` })
   }
   return slots
 }

@@ -18,13 +18,7 @@
     "queue": "File d'attente",
     "tournaments": "Tournois",
     "profile": "Mon Profil",
-    "settings": "Parametres",
-    "admin": "Admin",
-    "ticket": "Ticket"
-  },
-  "sidebar": {
-    "tokens": "🪙 {{count}} jetons",
-    "close": "Fermer"
+    "settings": "Parametres"
   },
   "login": {
     "title": "BABYFOOT 42",
@@ -43,9 +37,6 @@
     "scheduledMatch": "📋 Match prévu",
     "addMatch": "Ajouter un match",
     "play": "Jouer",
-    "selectToPlay": "Sélectionne un match pour activer",
-    "notParticipant": "Tu n'es pas participant de ce match",
-    "awaitingConfirmation": "En attente de confirmation des autres joueurs",
     "myMatches": "Mes matchs",
     "favFriends": "Adversaires favoris",
     "favFriendsNote": "Top 5 des adversaires contre lesquels tu as le plus joué",
@@ -53,9 +44,6 @@
     "searchLogin": "Rechercher un login...",
     "noMatch": "Aucun match trouvé",
     "addQueue": "Inviter à jouer",
-    "addPlayer": "+ Ajouter",
-    "loginPlayer": "Login joueur...",
-    "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mes matchs prévus",
     "noScheduled": "Aucun match prévu. Ajoute-toi à la file d'attente.",
     "cancelMatch": "Annuler ce match",
@@ -63,19 +51,14 @@
     "or": "OU",
     "waiting": "En attente",
     "maxMatches": "Tu as déjà 3 matchs en attente, annules-en un avant d'en créer un nouveau.",
-    "targetMaxMatches": "{{player}} a déjà 3 matchs en attente et ne peut pas être invité(e).",
     "pendingInvites": "Invitations en cours",
     "noPendingInvites": "Aucune invitation en attente"
   },
   "ranking": {
     "currentSeason": "Saison actuelle",
-    "season": "Saison {{num}}",
-    "annualRanking": "Classement annuel",
-    "show": "Afficher :",
     "palmares1v1": "PALMARÈS 1v1",
     "palmares2v2": "PALMARÈS 2v2",
     "player": "Joueur",
-    "team": "Équipe",
     "winsLosses": "V · D",
     "rank": "Rang",
     "noData": "Aucune donnée disponible",
@@ -98,28 +81,19 @@
     "seasonBalance": "Bilan saison",
     "netTokens": "jetons net",
     "availableBets": "Paris disponibles",
-    "betCount_one": "{{count}} pari",
-    "betCount_other": "{{count}} paris",
     "noBets": "Aucun paris disponible pour le moment.",
     "cancel": "Annuler",
     "bet": "Miser",
     "whoDoYouBet": "Sur qui pariez-vous ?",
-    "betPlacedOn": "Mise placée sur {{player}} :",
     "change": "changer",
-    "amount": "Mise : {{amount}} jetons",
-    "confirm": "Confirmer — {{amount}} jetons",
     "history": "Historique des paris",
     "noHistory": "Aucun historique disponible.",
-    "bettedOn": "Parié sur {{player}} · {{date}}",
-    "won": "gagné",
-    "lost": "perdu",
     "yourBetStats": "Tes stats de paris",
     "bestGain": "Meilleur gain",
     "biggestLoss": "Plus grosse perte",
     "balanceEvolution": "Évolution du solde",
     "noChartData": "Aucun historique à afficher.",
-    "hoverHint": "Survolez un point pour voir le détail",
-    "pctOn": "— {{pct}}% sur {{player}}"
+    "hoverHint": "Survolez un point pour voir le détail"
   },
   "queue": {
     "joinQueue": "+ S'ajouter à la file",
@@ -136,22 +110,14 @@
     "noMatch": "Pas de match prévu",
     "noLive": "Aucun match en cours",
     "betOn": "Parier →",
-    "editSlot": "Modifier",
     "cancelSlot": "✕ Annuler mon créneau",
-    "modifyPlayers": "✏️ Modifier les joueurs",
-    "me": "Toi",
-    "opponent": "Adversaire",
-    "save": "Enregistrer",
     "mySlotTitle": "Mon créneau",
     "betModalTitle": "Parier sur ce match",
     "betOn2": "Parier sur",
     "betAmount": "Montant de la mise",
-    "confirmBet": "Confirmer — {{amount}} jetons",
-    "loginPlaceholder": "Login...",
     "waitingWinner": "En attente du gagnant...",
     "pendingAccept": "En cours d'acceptation",
     "noPending": "Aucune invitation en cours",
-    "pendingVs": "vs {{opponent}}",
     "cancelInvite": "✕ Annuler"
   },
   "tournaments": {
@@ -162,14 +128,9 @@
     "findTeammate": "Trouve un coéquipier",
     "findTeammateSub": "Ces joueurs sont seuls en liste d'attente pour ce tournoi. Envoie-leur une invitation d'équipe.",
     "noWaiting": "Aucun joueur en attente pour le moment.",
-    "waitingSince": "En attente depuis {{since}}",
     "invited": "✓ Invitation envoyée",
     "invite": "Inviter",
     "waitingList": "LISTE D'ATTENTE",
-    "teams": "{{count}} équipe",
-    "teams_plural": "{{count}} équipes",
-    "noTeams": "Aucune équipe en attente",
-    "confirmedTeam": "Équipe confirmée",
     "searchingPartner": "En recherche de partenaire",
     "confirmedTeams": "ÉQUIPES CONFIRMÉES",
     "noConfirmedTeams": "Aucune équipe confirmée pour l'instant",
@@ -180,24 +141,19 @@
     "hours": "H",
     "minutes": "M",
     "seconds": "S",
-    "bdePwd": "Mot de passe BDE",
-    "incorrectPwd": "Mot de passe incorrect",
     "verifying": "Vérification…",
     "access": "Accéder",
     "createTournament": "Créer un tournoi",
-    "planNextTournament": "Planifier un nouveau tournoi",
     "tournamentName": "Nom du tournoi",
     "tournamentNamePlaceholder": "Ex: Tournoi du jeudi #5",
     "dateTime": "Date et heure",
     "registrationDeadline": "Limite d'inscription",
     "maxPlayers": "Nombre maximum de joueurs",
-    "playersCount": "{{count}} joueurs",
     "createBtn": "Créer le tournoi",
     "registerTitle": "S'inscrire au tournoi",
     "myLogin": "Mon login",
     "partner": "Partenaire",
     "partnerPlaceholder": "Login joueur... (optionnel)",
-    "partnerNote": "✓ {{partner}} sera invité et inscrit directement avec toi.",
     "partnerEmpty": "Laisse vide pour être associé à un partenaire aléatoirement.",
     "soloNote": "Si tu es seul, tu entres en liste d'attente. La liste d'attente sera affichée et tu pourras envoyer une demande d'équipe aux autres joueurs en attente.",
     "confirmRegister": "Confirmer l'inscription",
@@ -274,44 +230,32 @@
     "errCreate": "Erreur lors de la création."
   },
   "profile": {
-    "myBadge": "Mon badge : {{label}}",
     "ratio": "Ratio",
     "winLoss": "V · D",
     "streak": "Série en cours",
     "streakSub": "victoires d'affilée",
     "tokensWon": "Jetons gagnés",
     "tokensSub": "bilan saison",
-    "losses": "Gamelles",
-    "lossesSub": "effectuées cette saison",
     "gamesPerMonth": "Parties / mois",
     "gamesPerMonthSub": "ce mois ci",
     "gamelles": "Gamelles",
     "gamellesSub": "buts en gamelle",
     "favoriteTeammates": "Coéquipiers favoris",
-    "teammateNote": "(ajoutés automatiquement selon le nombre de parties jouées ensemble)",
     "noTeammate": "Aucun coéquipier enregistré.",
     "planGame": "Planifier une partie",
     "frequentOpponents": "Adversaires fréquents",
     "noData": "Aucune donnée disponible.",
-    "winrate": "{{pct}}% victoires",
     "fearOpponents": "Adversaires redoutables",
     "fearNote": "Joueurs contre qui tu perds le plus souvent",
-    "lossrate": "{{pct}}% défaites",
     "myMatches": "Mes matchs",
     "searchLogin": "Rechercher un login...",
     "noMatch": "Aucun match trouvé",
     "seasonHistory": "Historique des saisons",
     "noSeason": "Aucune saison disponible.",
-    "ongoing": "En cours",
-    "champion": "Champion 🏆",
-    "seasonLabel": "Saison {{num}}",
-    "logout": "Déconnexion",
     "photo": "📷 Photo",
     "profilePhoto": "Photo de profil",
     "clickToChoose": "Cliquer pour choisir une image",
-    "removePhoto": "Supprimer la photo",
     "close": "Fermer",
-    "counter": "{{count}} / 5 max",
     "loginPlayerPlaceholder": "Login joueur...",
     "addBtn": "+ Ajouter"
   },
@@ -338,7 +282,6 @@
     "security": {
       "changePassword": "Changer le mot de passe",
       "tfa": "Authentification 2FA",
-      "tfaSub": "Code par application ou SMS",
       "oauth": "OAuth 42",
       "oauthSub": "Connexion via compte 42",
       "activeSessions": "Sessions actives",
@@ -371,10 +314,6 @@
     "account": {
       "export": "Exporter mes données (RGPD) → JSON",
       "privacy": "Politique de confidentialité",
-      "dangerZone": "Zone dangereuse",
-      "resetStats": "Réinitialiser mes stats",
-      "resetStatsSub": "Supprime ton historique de matchs et ELO",
-      "reset": "Réinitialiser",
       "deleteAccount": "Supprimer mon compte",
       "deleteAccountSub": "Confirmation envoyée par email",
       "delete": "Supprimer"
@@ -420,19 +359,10 @@
     }
   },
   "invite": {
-    "received": "t'invite à un match {{format}} · {{mode}}",
     "accept": "Accepter ✓",
     "decline": "Refuser",
-    "accepted": "{{player}} a accepté ton invitation ✓",
-    "acceptedPartial": "{{player}} a accepté · {{count}}/{{total}} confirmé(s)",
-    "declined": "{{player}} a refusé ton invitation",
-    "sent": "✅ Invitation envoyée à {{player}}",
     "pendingLabel": "En attente d'acceptation",
-    "matchCancelled": "{{player}} a annulé le match",
-    "offline": "{{player}} n'est pas connecté(e), invitation annulée",
-    "winClaimReceived": "{{player}} t'invite à reprendre ta gagne dans son prochain match",
     "winClaimDeclined": "Un gagnant a refusé de reprendre la gagne — le match a été annulé",
-    "inviteCancelled": "{{player}} a annulé son invitation",
     "chainCancelled": "Un match de la chaîne a été annulé — ton créneau a été supprimé",
     "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi",
     "acceptError": "Impossible d'accepter l'invitation (inscriptions fermées ou joueur introuvable)."
@@ -441,9 +371,7 @@
     "title": "Ajouter un match",
     "step1": "Étape 1 / 4 — Mode de jeu",
     "step2": "Étape 2 / 4 — Format",
-    "step3Players": "Étape 3 / 4 — Joueurs",
     "step3Queue": "Étape 3 / 3 — File d'attente",
-    "step4": "Étape 4 / 4 — Reprendre la gagne ?",
     "competition": "🏆 Compétition",
     "chill": "😎 Chill",
     "competNote": "ELO pris en compte · Résultats officiels",
@@ -457,8 +385,6 @@
     "blueTeam": "🔵 Équipe Bleue",
     "redPlayer": "Login joueur rouge...",
     "bluePlayer": "Login joueur bleu...",
-    "redPlayer2v2": "Joueur rouge {{num}}...",
-    "bluePlayer2v2": "Joueur bleu {{num}}...",
     "takeWinQuestion": "Voulez-vous reprendre la gagne de l'équipe qui joue actuellement avant vous ?",
     "no": "Non",
     "yes": "Oui ✓",
@@ -482,21 +408,13 @@
     "quit": "✕ Quitter",
     "endMatch": "Fin de\npartie",
     "half": "Demi ×2",
-    "removeRed": "−1 Rouge",
-    "removeBlue": "−1 Bleu",
     "gamelle": "Gamelle",
     "tie": "Égalité !",
     "tieCancelWarning": "Ce match va être annulé — les reprises de gagne associées seront supprimées.",
-    "wins": "{{color}} gagne !",
-    "duration": "Durée : {{time}}",
     "close": "Terminer et fermer"
   },
   "common": {
-    "victory": "Victoire",
-    "defeat": "Défaite",
-    "vs": "vs",
-    "loading": "Chargement…",
-    "noData": "Aucune donnée disponible"
+    "vs": "vs"
   },
   "performance": {
     "title": "PERFORMANCE",
@@ -516,12 +434,7 @@
       "wins": "Victoires",
       "losses": "Défaites",
       "winrate": "Win rate (%)",
-      "goals": "Buts marqués",
-      "goals_against": "Buts encaissés",
-      "bets_won": "Paris gagnés",
-      "bets_lost": "Paris perdus",
-      "tournaments_won": "Tournois remportés",
-      "streak": "Série en cours"
+      "goals": "Buts marqués"
     },
     "x": {
       "matches": "Matchs joués (30 derniers)",
@@ -550,6 +463,7 @@
     "ticket": "Envoyer un ticket",
     "status": "Status",
     "rgpd": "RGPD",
+    "terms": "Conditions d'utilisation",
     "copyright": "© {{year}} ft_transcendence — Tous droits réservés"
   },
   "register": {
@@ -567,148 +481,11 @@
   },
   "privacy": {
     "title": "Politique de confidentialité",
-    "updated": "Dernière mise à jour : juin 2026",
-    "s1": {
-      "title": "1. Qui sommes-nous ?",
-      "body": "Babyfoot42 est une plateforme interne à l'École 42 permettant de gérer les parties de babyfoot : planning, classement ELO par saison, paris en jetons virtuels et tournois organisés par le BDE. Cette politique décrit quelles données sont collectées, comment elles sont utilisées et quels sont vos droits."
-    },
-    "s2": {
-      "title": "2. Données collectées",
-      "items": [
-        "Compte — identifiant (login 42 ou choisi librement), adresse e-mail, mot de passe hashé et salé (PBKDF2).",
-        "Profil — avatar (optionnel), statut en ligne.",
-        "Authentification — identifiant OAuth 42 (si connexion via l'intranet 42), secret TOTP chiffré (si 2FA activée).",
-        "Activité de jeu — historique des parties, scores, variations ELO, statistiques (victoires, défaites, gamelles, demis).",
-        "Paris — mises placées, gains/pertes, solde du portefeuille en jetons, historique des transactions.",
-        "Planning — créneaux réservés, positions dans la file d'attente.",
-        "Tournois — inscriptions, résultats de matchs de tournoi.",
-        "Logs techniques — adresse IP, horodatage des connexions (conservation limitée à 30 jours)."
-      ]
-    },
-    "s3": {
-      "title": "3. Finalités du traitement",
-      "items": [
-        "Fournir les fonctionnalités de la plateforme (classement, planning, paris, tournois).",
-        "Assurer la sécurité des comptes (authentification, 2FA, détection d'abus).",
-        "Calculer et afficher le classement ELO en temps réel.",
-        "Gérer le portefeuille de jetons virtuels et les transactions associées.",
-        "Modérer la plateforme (rôle admin/BDE)."
-      ]
-    },
-    "s4": {
-      "title": "4. Base légale",
-      "body": "Le traitement repose sur votre consentement lors de la création de compte et sur l'intérêt légitime de la plateforme pour la sécurité et le bon fonctionnement du service."
-    },
-    "s5": {
-      "title": "5. Stockage et sécurité",
-      "items": [
-        "Les données sont stockées dans une base PostgreSQL hébergée localement sur les serveurs de l'École 42.",
-        "Les mots de passe ne sont jamais stockés en clair (PBKDF2 + sel).",
-        "Toutes les communications sont chiffrées via HTTPS (TLS 1.2/1.3).",
-        "Des sauvegardes automatiques sont effectuées chaque nuit.",
-        "L'accès à la base de données est restreint aux services internes."
-      ]
-    },
-    "s6": {
-      "title": "6. Partage des données",
-      "body": "Vos données ne sont ni vendues, ni transmises à des tiers. Seul l'OAuth 42 implique un échange d'informations avec l'intranet 42 (login, e-mail) lors de la connexion initiale."
-    },
-    "s7": {
-      "title": "7. Vos droits (RGPD)",
-      "items": [
-        "Accès et export — exportez toutes vos données (profil, parties, paris, transactions) en JSON ou CSV depuis vos paramètres.",
-        "Rectification — modifiez votre nom d'utilisateur et votre avatar depuis vos paramètres.",
-        "Suppression — demandez la suppression de votre compte depuis vos paramètres. Vos données personnelles seront anonymisées.",
-        "Opposition — désactivez la 2FA et révoquez la connexion OAuth depuis vos paramètres."
-      ]
-    },
-    "s8": {
-      "title": "8. Cookies",
-      "body": "La plateforme utilise un cookie de session JWT (HttpOnly, Secure, SameSite=Lax) strictement nécessaire à l'authentification. Aucun cookie publicitaire ou de tracking tiers n'est utilisé."
-    },
-    "s9": {
-      "title": "9. Contact",
-      "body": "Pour toute question relative à vos données, utilisez le formulaire de ticket disponible dans le footer ou contactez l'équipe via l'intranet 42."
-    }
+    "updated": "Dernière mise à jour : juin 2026"
   },
   "terms": {
     "title": "Conditions d'utilisation",
-    "updated": "Dernière mise à jour : juin 2026",
-    "s1": {
-      "title": "1. Objet",
-      "body": "Les présentes conditions régissent l'utilisation de Babyfoot42, plateforme interne à l'École 42 dédiée à la gestion des parties de babyfoot. En créant un compte, vous acceptez ces conditions dans leur intégralité."
-    },
-    "s2": {
-      "title": "2. Accès à la plateforme",
-      "items": [
-        "La plateforme est réservée aux étudiants, anciens élèves et membres du staff de l'École 42.",
-        "Chaque personne ne peut posséder qu'un seul compte. La création de comptes multiples est interdite.",
-        "Vous êtes responsable de la confidentialité de vos identifiants.",
-        "La plateforme est accessible via HTTPS uniquement."
-      ]
-    },
-    "s3": {
-      "title": "3. Règles de fair-play",
-      "items": [
-        "Il est interdit de parier sur ses propres matchs.",
-        "Toute tentative de manipulation des résultats, du classement ou du système de paris est interdite.",
-        "Les résultats de matchs doivent être saisis honnêtement. Toute fraude peut entraîner une suspension.",
-        "Le respect des autres joueurs est obligatoire. Les comportements abusifs seront sanctionnés."
-      ]
-    },
-    "s4": {
-      "title": "4. Jetons virtuels et paris",
-      "items": [
-        "Les jetons sont une monnaie virtuelle sans valeur monétaire réelle. Ils ne peuvent pas être échangés, vendus ou convertis en argent.",
-        "Chaque nouveau compte reçoit un solde initial de jetons.",
-        "Des jetons supplémentaires peuvent être gagnés en remportant des paris ou en finissant dans le top du classement à la fin d'une saison.",
-        "Les paris sont définitifs une fois placés. Remboursement uniquement en cas d'annulation du match par un administrateur."
-      ]
-    },
-    "s5": {
-      "title": "5. Classement et saisons",
-      "items": [
-        "Le classement est basé sur l'ELO calculé à partir des parties validées.",
-        "Les saisons sont créées et clôturées par les administrateurs. La clôture déclenche la distribution des récompenses et la remise à zéro du classement.",
-        "Les historiques de saisons passées sont conservés et consultables."
-      ]
-    },
-    "s6": {
-      "title": "6. Planning et réservations",
-      "items": [
-        "Les créneaux de réservation sont limités afin d'assurer un accès équitable à tous.",
-        "Une réservation non honorée peut entraîner une pénalité (perte de place dans la file).",
-        "La file d'attente est gérée automatiquement et visible par tous les utilisateurs connectés."
-      ]
-    },
-    "s7": {
-      "title": "7. Tournois",
-      "items": [
-        "Les tournois sont organisés par le BDE (Bureau Des Élèves) de l'École 42.",
-        "L'inscription à un tournoi engage le participant à être disponible pour tous ses matchs.",
-        "Les résultats des matchs de tournoi sont enregistrés par l'organisateur et ne sont pas modifiables par les joueurs."
-      ]
-    },
-    "s8": {
-      "title": "8. Modération et sanctions",
-      "items": [
-        "Les administrateurs peuvent suspendre temporairement ou bannir définitivement tout compte en cas de violation des présentes conditions.",
-        "En cas de ban, le solde de jetons et l'historique sont conservés mais le compte n'est plus accessible.",
-        "Toute contestation peut être soumise via le formulaire de ticket."
-      ]
-    },
-    "s9": {
-      "title": "9. Disponibilité du service",
-      "body": "La plateforme est fournie sans garantie de disponibilité continue. Des maintenances peuvent être effectuées sans préavis."
-    },
-    "s10": {
-      "title": "10. Modification des conditions",
-      "body": "Ces conditions peuvent être mises à jour à tout moment. Les utilisateurs sont informés via une notification in-app en cas de modification substantielle."
-    },
-    "s11": {
-      "title": "11. Contact",
-      "body": "Pour toute question ou réclamation, utilisez le formulaire de ticket disponible dans le footer ou contactez l'équipe via l'intranet 42."
-    }
+    "updated": "Dernière mise à jour : juin 2026"
   },
   "ticket": {
     "title": "Envoyer un ticket",
@@ -728,17 +505,7 @@
     "success_sub": "Merci pour ton retour. L'équipe en prendra connaissance rapidement.",
     "back": "← Retour",
     "err_server": "Erreur serveur",
-    "err_network": "Erreur réseau",
-    "pages": [
-      "Accueil",
-      "Classement",
-      "Paris",
-      "File d'attente",
-      "Tournois",
-      "Mon profil",
-      "Paramètres",
-      "Admin"
-    ]
+    "err_network": "Erreur réseau"
   },
   "status": {
     "title": "Statut",
@@ -797,7 +564,6 @@
     "status_cancelled": "Annulé",
     "status_finished": "Terminé",
     "btn_cancel_tourn": "Annuler",
-    "confirm_cancel_tourn": "Annuler le tournoi \"{{name}}\" ?",
     "quick_title": "Actions rapides",
     "btn_create_tourn": "🏆 Créer un tournoi",
     "seasons_title": "Saisons",
@@ -818,13 +584,11 @@
     "modal_tourn_date": "Date et heure",
     "modal_tourn_deadline": "Limite d'inscription",
     "modal_tourn_max": "Nombre maximum de joueurs",
-    "modal_tourn_players": "{{n}} joueurs",
     "modal_tourn_cancel": "Annuler",
     "modal_tourn_submit": "Créer le tournoi",
     "modal_tourn_err": "Erreur",
     "modal_tourn_success": "Tournoi créé",
     "modal_tourn_close": "Fermer",
-    "modal_ban_title": "Bannir {{username}}",
     "modal_ban_type": "Type de ban",
     "modal_ban_temp": "Temporaire",
     "modal_ban_perm": "Définitif",
@@ -834,7 +598,6 @@
     "modal_ban_doing": "Bannissement...",
     "modal_ban_confirm": "Confirmer le ban",
     "day_abbr": "j",
-    "modal_elo_title": "Modifier ELO — {{username}}",
     "modal_elo_solo": "ELO Solo (1v1)",
     "modal_elo_team": "ELO Team (2v2)",
     "modal_elo_cancel": "Annuler",
@@ -842,3 +605,4 @@
     "modal_elo_save": "Enregistrer"
   }
 }
+

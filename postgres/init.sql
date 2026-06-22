@@ -492,5 +492,23 @@ CREATE INDEX idx_season_rewards_season      ON season_rewards(season_id);
 CREATE INDEX idx_season_rewards_player      ON season_rewards(player_id);
 CREATE INDEX idx_org_members_player         ON organization_members(player_id);
 CREATE INDEX idx_org_members_org            ON organization_members(organization_id);
-CREATE INDEX idx_public_api_apikey_owner    ON public_api_apikey(owner_id);
-CREATE INDEX idx_public_api_apikey_key      ON public_api_apikey(key);
+
+-- ── Public API Keys ───────────────────────────────────────────────────────
+CREATE TABLE api_keys (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL,
+    key             VARCHAR(64) NOT NULL UNIQUE,
+    owner_id        UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    is_full_access  BOOLEAN NOT NULL DEFAULT FALSE,
+    requests_this_hour INT NOT NULL DEFAULT 0,
+    rate_limit      INT NOT NULL DEFAULT 200,
+    last_request_at TIMESTAMPTZ NULL,
+    expires_at      TIMESTAMPTZ NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_api_keys_owner ON api_keys(owner_id);
+CREATE INDEX idx_api_keys_key   ON api_keys(key);
+
