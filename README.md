@@ -381,9 +381,9 @@ tournaments ──< tournament_matches
 
 ## Modules
 
-Total: **27 points** (minimum required: 14)
+Total: **28 points** (minimum required: 14)
 
-### Web — 10 pts
+### Web — 11 pts
 
 | Module | Type | Pts | Implementation |
 |---|---|---|---|
@@ -391,6 +391,7 @@ Total: **27 points** (minimum required: 14)
 | ORM (Django ORM) | Minor | 1 | All database interactions go through Django's ORM. No raw SQL in application code. Models: User, Match, Bet, Wallet, Season, Reservation, Tournament. |
 | Real-time WebSockets | Major | 2 | Django Channels + Redis channel layer. Live queue updates, real-time notifications, live ranking refresh after each match. Graceful handling of connection/disconnection. |
 | Notification system | Minor | 1 | Real-time in-app notifications via WebSocket: game invitation received (`invite_received`), invitation accepted/declined (`invite_response`), invitation cancelled (`cancel_invite`), win claim sent to opponent (`win_invite`), win claim declined (`win_claim_declined`), match cancelled (`match_cancelled`), opponent left (`p2_left`), game ended with result (`game_ended`), betting market updated (`market_update`), betting market closed when game starts (`market_closed`), duplicate session detected (`session_superseded`). Undelivered notifications are queued and replayed on reconnect. |
+| Real-time collaborative features | Minor | 1 | Shared live match state edited collaboratively over WebSocket: both players act on the same `game_id` session (`state.games[game_id]`), sending `score_update` actions that mutate a shared score and rebroadcast `game_state` to every connected client in real time. Includes collaborative game flow events — invitations (`invite_received`/`invite_response`), win claims requiring opponent confirmation (`win_invite`/`win_claim_declined`), and synchronized game end (`game_ended`). Built on Django Channels + Redis with a shared in-memory game state. |
 | Advanced search | Minor | 1 | User search with filters integrated in the Profile page friends panel: search players by username, see real-time online/offline status, add or remove friends, paginated results. |
 | Public API | Major | 2 | Documented API secured with `X-API-Key` header and rate limiting. 5 endpoints covering GET/POST/PUT/DELETE on matches and GET on rankings. |
 | Custom design system | Minor | 1 | 22+ reusable components with a coherent color palette, typography, and icon set. Minimum 10 reusable components exceeded. |
