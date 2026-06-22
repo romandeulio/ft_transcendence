@@ -259,7 +259,18 @@
     "confirmRemove": "Retirer cette inscription du tournoi ?",
     "errNetwork": "Erreur réseau.",
     "errNotEnoughTeams": "Il faut au moins {{count}} équipes complètes pour lancer ce format.",
-    "errStart": "Erreur lors du lancement."
+    "errStart": "Erreur lors du lancement.",
+    "closeRegistrations": "Fermer les inscriptions",
+    "closing": "Fermeture…",
+    "reopenRegistrations": "Rouvrir les inscriptions",
+    "reopening": "Réouverture…",
+    "status_CLOSED": "Inscriptions fermées",
+    "status_ONGOING": "En cours",
+    "status_DONE": "Terminé",
+    "status_CANCELLED": "Annulé",
+    "errPastDate": "La date de début doit être dans le futur.",
+    "errEdit": "Erreur lors de la modification.",
+    "errCreate": "Erreur lors de la création."
   },
   "profile": {
     "myBadge": "Mon badge : {{label}}",
@@ -393,7 +404,8 @@
     "winClaimDeclined": "Un gagnant a refusé de reprendre la gagne — le match a été annulé",
     "inviteCancelled": "{{player}} a annulé son invitation",
     "chainCancelled": "Un match de la chaîne a été annulé — ton créneau a été supprimé",
-    "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi"
+    "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi",
+    "acceptError": "Impossible d'accepter l'invitation (inscriptions fermées ou joueur introuvable)."
   },
   "addMatch": {
     "title": "Ajouter un match",
@@ -494,7 +506,8 @@
     "semis": "Demi-finales",
     "final": "Finale",
     "tbd": "À déterminer",
-    "round": "Round {{n}}"
+    "round": "Round {{n}}",
+    "bye": "Aucun"
   },
   "footer": {
     "explore": "Explorer",

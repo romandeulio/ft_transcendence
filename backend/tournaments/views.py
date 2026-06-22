@@ -49,12 +49,10 @@ def _make_queue_entry(team1, team2, team_size):
 
 
 def _schedule_ready_match(match):
-    if not match.is_ready or match.queue_entry_id or match.is_bye:
-        return match
-    team_size = match.tournament.team_size
-    entry = _make_queue_entry(match.team1, match.team2, team_size)
-    match.queue_entry = entry
-    match.save(update_fields=['queue_entry'])
+    # Les matchs de tournoi ne passent PLUS par la file d'attente : ils se jouent
+    # hors-ligne (babyfoot) et seul le BDE valide le gagnant via le bracket. On ne
+    # crée donc plus de QueueEntry pour eux. Le matchmaking classique (app planning)
+    # n'est pas concerné par cette fonction.
     return match
 
 
@@ -466,12 +464,17 @@ def _parse_import_file(file):
                     pairs.append((item.strip(), None))
     else:
         reader = csv.reader(io.StringIO(content))
+        first = True
         for row in reader:
             row = [c.strip() for c in row if c.strip()]
             if not row:
                 continue
-            if row[0].lower() in ('player1', 'player', 'login'):
-                continue
+            # On ne saute l'en-tête que sur la PREMIÈRE ligne non vide, sinon un
+            # joueur réellement nommé "player1" serait pris pour un en-tête.
+            if first:
+                first = False
+                if row[0].lower() in ('player1', 'player', 'player2', 'login', 'username'):
+                    continue
             p1 = row[0]
             p2 = row[1] if len(row) > 1 else None
             pairs.append((p1, p2))
@@ -490,25 +493,23 @@ class TournamentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        due = Tournament.objects.filter(
-            status=Tournament.Status.OPEN,
-            start_date__lte=timezone.now(),
-        ).order_by('start_date').first()
-        if due:
-            with transaction.atomic():
-                if not due.bracket_matches.exists():
-                    _build_and_start_tournament(due)
-
+        # Le démarrage est désormais 100 % manuel (BDE) : on ne lance plus
+        # automatiquement un tournoi dont la date de début est atteinte.
         tournament = (
             Tournament.objects
             .filter(status__in=[
                 Tournament.Status.OPEN,
+                Tournament.Status.CLOSED,
                 Tournament.Status.ONGOING,
                 Tournament.Status.DONE,
             ])
             .annotate(
                 status_priority=Case(
-                    When(status__in=[Tournament.Status.OPEN, Tournament.Status.ONGOING], then=Value(0)),
+                    When(status__in=[
+                        Tournament.Status.OPEN,
+                        Tournament.Status.CLOSED,
+                        Tournament.Status.ONGOING,
+                    ], then=Value(0)),
                     default=Value(1),
                     output_field=IntegerField(),
                 )
@@ -525,7 +526,7 @@ class TournamentListCreateView(APIView):
             return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
         active_exists = Tournament.objects.filter(
-            status__in=[Tournament.Status.OPEN, Tournament.Status.ONGOING]
+            status__in=[Tournament.Status.OPEN, Tournament.Status.CLOSED, Tournament.Status.ONGOING]
         ).exists()
         if active_exists:
             return Response(
@@ -586,9 +587,13 @@ def start_tournament(request, pk):
     if not _has_bde_access(request):
         return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
-    if tournament.status != Tournament.Status.OPEN:
+    # Démarrage en 2 temps : il faut d'abord fermer les inscriptions (CLOSED).
+    if tournament.status != Tournament.Status.CLOSED:
         return Response(
-            {'detail': 'Le tournoi a déjà été lancé ou fermé.'},
+            {
+                'detail': "Ferme d'abord les inscriptions avant de lancer le tournoi.",
+                'code': 'NOT_CLOSED',
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -610,6 +615,42 @@ def start_tournament(request, pk):
         if error:
             return Response({'detail': error}, status=status.HTTP_400_BAD_REQUEST)
 
+    return Response(TournamentSerializer(tournament).data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def close_registrations(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    if not _has_bde_access(request):
+        return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
+
+    if tournament.status != Tournament.Status.OPEN:
+        return Response(
+            {'detail': 'Les inscriptions ne sont pas ouvertes.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    tournament.status = Tournament.Status.CLOSED
+    tournament.save(update_fields=['status'])
+    return Response(TournamentSerializer(tournament).data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reopen_registrations(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    if not _has_bde_access(request):
+        return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
+
+    if tournament.status != Tournament.Status.CLOSED:
+        return Response(
+            {'detail': 'Les inscriptions ne sont pas fermées.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    tournament.status = Tournament.Status.OPEN
+    tournament.save(update_fields=['status'])
     return Response(TournamentSerializer(tournament).data)
 
 
@@ -886,18 +927,9 @@ def postpone_tournament_match(request, match_id):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    with transaction.atomic():
-        if not match.queue_entry_id:
-            _schedule_ready_match(match)
-        latest = QueueEntry.objects.filter(
-            status=QueueEntry.Status.WAITING
-        ).order_by('-joined_at').first()
-        match.queue_entry.status    = QueueEntry.Status.WAITING
-        match.queue_entry.joined_at = (
-            (latest.joined_at if latest else timezone.now()) + timedelta(seconds=1)
-        )
-        match.queue_entry.save(update_fields=['status', 'joined_at'])
-
+    # Les matchs de tournoi ne sont plus mis en file d'attente : la replanification
+    # n'a plus d'objet (le match se joue hors-ligne, le BDE valide le résultat).
+    # On répond sans rien modifier pour ne pas casser l'appel côté front.
     return Response(TournamentMatchSerializer(match).data)
 
 

@@ -255,7 +255,21 @@
     "confirmRemove": "להסיר את ההרשמה מהטורניר?",
     "errNetwork": "שגיאת רשת.",
     "errNotEnoughTeams": "צריך לפחות {{count}} קבוצות מלאות כדי להתחיל פורמט זה.",
-    "errStart": "שגיאה בעת התחלת הטורניר."
+    "errStart": "שגיאה בעת התחלת הטורניר.",
+    "searchingPartner": "מחפש שותף",
+    "confirmedTeams": "קבוצות מאושרות",
+    "noConfirmedTeams": "אין עדיין קבוצות מאושרות",
+    "closeRegistrations": "סגור הרשמות",
+    "closing": "סוגר…",
+    "reopenRegistrations": "פתח הרשמות מחדש",
+    "reopening": "פותח מחדש…",
+    "status_CLOSED": "ההרשמות סגורות",
+    "status_ONGOING": "מתקיים",
+    "status_DONE": "הסתיים",
+    "status_CANCELLED": "בוטל",
+    "errPastDate": "תאריך ההתחלה חייב להיות בעתיד.",
+    "errEdit": "שגיאה בעת העריכה.",
+    "errCreate": "שגיאה בעת היצירה."
   },
   "profile": {
     "myBadge": "התג שלי: {{label}}",
@@ -388,7 +402,8 @@
     "winClaimReceived": "{{player}} מזמין אותך לשאת את הניצחון שלך למשחק הבא שלו",
     "winClaimDeclined": "מנצח סירב להעביר את הניצחון — המשחק בוטל",
     "inviteCancelled": "{{player}} ביטל את ההזמנה",
-    "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר"
+    "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר",
+    "acceptError": "לא ניתן לקבל את ההזמנה (ההרשמות סגורות או שהשחקן לא נמצא)."
   },
   "addMatch": {
     "title": "הוסף משחק",
@@ -489,7 +504,8 @@
     "semis": "חצי גמר",
     "final": "גמר",
     "tbd": "לא נקבע",
-    "round": "סבב {{n}}"
+    "round": "סבב {{n}}",
+    "bye": "אין"
   },
   "footer": {
     "explore": "חקור",

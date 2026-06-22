@@ -255,7 +255,21 @@
     "confirmRemove": "¿Quitar esta inscripción del torneo?",
     "errNetwork": "Error de red.",
     "errNotEnoughTeams": "Se necesitan al menos {{count}} equipos completos para iniciar este formato.",
-    "errStart": "Error al iniciar el torneo."
+    "errStart": "Error al iniciar el torneo.",
+    "searchingPartner": "En busca de compañero",
+    "confirmedTeams": "EQUIPOS CONFIRMADOS",
+    "noConfirmedTeams": "Aún no hay equipos confirmados",
+    "closeRegistrations": "Cerrar inscripciones",
+    "closing": "Cerrando…",
+    "reopenRegistrations": "Reabrir inscripciones",
+    "reopening": "Reabriendo…",
+    "status_CLOSED": "Inscripciones cerradas",
+    "status_ONGOING": "En curso",
+    "status_DONE": "Finalizado",
+    "status_CANCELLED": "Cancelado",
+    "errPastDate": "La fecha de inicio debe estar en el futuro.",
+    "errEdit": "Error al modificar.",
+    "errCreate": "Error al crear."
   },
   "profile": {
     "myBadge": "Mi insignia: {{label}}",
@@ -388,7 +402,8 @@
     "winClaimReceived": "{{player}} te invita a llevar tu victoria a su próximo partido",
     "winClaimDeclined": "Un ganador rechazó continuar — el partido ha sido cancelado",
     "inviteCancelled": "{{player}} canceló su invitación",
-    "chainCancelled": "Un partido de la cadena fue cancelado — tu plaza ha sido eliminada"
+    "chainCancelled": "Un partido de la cadena fue cancelado — tu plaza ha sido eliminada",
+    "acceptError": "No se pudo aceptar la invitación (inscripciones cerradas o jugador no encontrado)."
   },
   "addMatch": {
     "title": "Agregar un partido",
@@ -489,7 +504,8 @@
     "semis": "Semifinales",
     "final": "Final",
     "tbd": "Por determinar",
-    "round": "Ronda {{n}}"
+    "round": "Ronda {{n}}",
+    "bye": "Ninguno"
   },
   "footer": {
     "explore": "Explorar",

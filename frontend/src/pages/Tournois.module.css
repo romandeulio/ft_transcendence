@@ -277,6 +277,13 @@
   gap: 6px;
 }
 
+/* chaque "item" = (": " optionnel) + bloc chiffre, côte à côte sur une ligne */
+.countdownItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .countdownPart {
   display: flex;
   flex-direction: column;
@@ -309,8 +316,8 @@
   font-size: 2rem;
   font-weight: 800;
   color: #3bbfad;
-  line-height: 1;
-  padding-top: 4px;
+  /* hauteur = celle du chiffre (2.4rem) pour centrer le ":" sur le nombre */
+  line-height: 2.4rem;
 }
 
 .countdownSub {

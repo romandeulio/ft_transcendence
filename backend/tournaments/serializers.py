@@ -34,15 +34,26 @@ class TournamentSerializer(serializers.ModelSerializer):
             return obj.registrations.count()
         return obj.registrations.filter(player2__isnull=False).count()
 
+    @staticmethod
+    def _local(dt):
+        # La colonne est un TIMESTAMP sans fuseau : Django la relit en datetime
+        # naïf. On le rattache au fuseau courant avant tout affichage local,
+        # sinon timezone.localtime() lève "cannot be applied to a naive datetime".
+        if dt is None:
+            return None
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_current_timezone())
+        return timezone.localtime(dt)
+
     def get_date_label(self, obj):
         if not obj.start_date:
             return ''
-        return timezone.localtime(obj.start_date).strftime('%d/%m/%Y à %H:%M')
+        return self._local(obj.start_date).strftime('%d/%m/%Y à %H:%M')
 
     def get_deadline_label(self, obj):
         if not obj.deadline:
             return None
-        return timezone.localtime(obj.deadline).strftime('%d/%m/%Y')
+        return self._local(obj.deadline).strftime('%d/%m/%Y')
 
 
 class TournamentCreateSerializer(serializers.ModelSerializer):
@@ -62,6 +73,11 @@ class TournamentCreateSerializer(serializers.ModelSerializer):
     def validate_team_size(self, value):
         if value not in (1, 2):
             raise serializers.ValidationError("team_size doit être 1 ou 2.")
+        return value
+
+    def validate_start_date(self, value):
+        if value and value <= timezone.now():
+            raise serializers.ValidationError("La date de début doit être dans le futur.")
         return value
 
     def validate(self, data):
@@ -96,6 +112,11 @@ class TournamentUpdateSerializer(serializers.ModelSerializer):
     def validate_format(self, value):
         if value not in VALID_FORMATS:
             raise serializers.ValidationError(f"Format invalide. Choix : {VALID_FORMATS}")
+        return value
+
+    def validate_start_date(self, value):
+        if value and value <= timezone.now():
+            raise serializers.ValidationError("La date de début doit être dans le futur.")
         return value
 
 

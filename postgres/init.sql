@@ -195,7 +195,7 @@ CREATE TABLE tournaments (
     deadline    TIMESTAMP,
     max_players INTEGER NOT NULL DEFAULT 16 CHECK (max_players IN (16, 32)),
     prize       VARCHAR(200) NOT NULL DEFAULT '',
-    status      VARCHAR(15) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'ONGOING', 'DONE', 'CANCELLED')),
+    status      VARCHAR(15) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED', 'ONGOING', 'DONE', 'CANCELLED')),
     created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at  TIMESTAMP DEFAULT NOW()
 );

@@ -259,7 +259,18 @@
     "confirmRemove": "Remove this registration from the tournament?",
     "errNetwork": "Network error.",
     "errNotEnoughTeams": "You need at least {{count}} full teams to start this format.",
-    "errStart": "Error while starting the tournament."
+    "errStart": "Error while starting the tournament.",
+    "closeRegistrations": "Close registrations",
+    "closing": "Closing…",
+    "reopenRegistrations": "Reopen registrations",
+    "reopening": "Reopening…",
+    "status_CLOSED": "Registrations closed",
+    "status_ONGOING": "Ongoing",
+    "status_DONE": "Finished",
+    "status_CANCELLED": "Cancelled",
+    "errPastDate": "The start date must be in the future.",
+    "errEdit": "Error while editing.",
+    "errCreate": "Error while creating."
   },
   "profile": {
     "myBadge": "My badge: {{label}}",
@@ -393,7 +404,8 @@
     "winClaimDeclined": "A winner declined to carry the win — the match has been cancelled",
     "inviteCancelled": "{{player}} cancelled their invitation",
     "chainCancelled": "A match in the chain was cancelled — your slot has been removed",
-    "tournamentTeammate": "invites you to team up for the next tournament"
+    "tournamentTeammate": "invites you to team up for the next tournament",
+    "acceptError": "Could not accept the invite (registrations closed or player not found)."
   },
   "addMatch": {
     "title": "Add a match",
@@ -494,7 +506,8 @@
     "semis": "Semi-finals",
     "final": "Final",
     "tbd": "To be determined",
-    "round": "Round {{n}}"
+    "round": "Round {{n}}",
+    "bye": "None"
   },
   "footer": {
     "explore": "Explore",

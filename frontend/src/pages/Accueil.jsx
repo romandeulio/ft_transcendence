@@ -713,11 +713,21 @@ export default function Accueil() {
                     onClick={async () => {
                       if (inv.slot?.type === 'tournament_teammate' && inv.slot?.tournamentId) {
                         try {
-                          await authFetch(`/api/tournaments/${inv.slot.tournamentId}/accept-invite/`, {
+                          const res = await authFetch(`/api/tournaments/${inv.slot.tournamentId}/accept-invite/`, {
                             method: 'POST',
                             body: JSON.stringify({ inviter: inv.from }),
                           })
-                        } catch {}
+                          if (!res.ok) {
+                            const text = await res.text().catch(() => '')
+                            let detail = ''
+                            try { detail = text ? JSON.parse(text).detail : '' } catch {}
+                            window.alert(detail || t('invite.acceptError'))
+                            return
+                          }
+                        } catch {
+                          window.alert(t('invite.acceptError'))
+                          return
+                        }
                       }
                       respondToInvite(inv.inviteId, true, inv.slot, inv.from, inv.isWinClaim, inv.slotId)
                     }}

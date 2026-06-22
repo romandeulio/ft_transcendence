@@ -8,6 +8,7 @@ class Tournament(models.Model):
 
     class Status(models.TextChoices):
         OPEN      = 'OPEN',      'Inscriptions ouvertes'
+        CLOSED    = 'CLOSED',    'Inscriptions fermées'
         ONGOING   = 'ONGOING',   'En cours'
         DONE      = 'DONE',      'Terminé'
         CANCELLED = 'CANCELLED', 'Annulé'

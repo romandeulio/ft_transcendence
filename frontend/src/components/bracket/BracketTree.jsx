@@ -42,7 +42,8 @@ function MatchBlock({ match, isFinal = false, canReport = false, onWinner, onPos
         name={p1}
         winner={done && winner === p1}
         eliminated={done && p1 && winner !== p1}
-        tbd={!p1}
+        tbd={!p1 && !match.is_bye}
+        bye={!p1 && match.is_bye}
         onClick={canSelectWinner ? () => onWinner?.(match, match.team1.id) : undefined}
       />
       <div className={styles.sep} />
@@ -50,7 +51,8 @@ function MatchBlock({ match, isFinal = false, canReport = false, onWinner, onPos
         name={p2}
         winner={done && winner === p2}
         eliminated={done && p2 && winner !== p2}
-        tbd={!p2}
+        tbd={!p2 && !match.is_bye}
+        bye={!p2 && match.is_bye}
         onClick={canSelectWinner ? () => onWinner?.(match, match.team2.id) : undefined}
       />
     </div>
