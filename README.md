@@ -437,15 +437,11 @@ Total: **27 points** (minimum required: 14)
 
 We chose to implement a virtual betting system as our "Module of Choice" at Major level for the following reasons:
 
-1. **Technical complexity**: the betting system involves multiple interconnected concerns — real-time WebSocket events to open/close betting windows, atomic database transactions to prevent race conditions on concurrent bets, proportional winnings calculation, anti-cheat logic (players cannot bet on their own matches), and automatic refunds on cancelled matches. This required careful design across both the backend (`bets/` app, `wallet_transactions` table) and the frontend (live bet UI, wallet display).
+1. **Technical complexity**: the betting system involves multiple interconnected concerns — a dynamic odds engine computing live odds from each player's Elo rating and the distribution of other players' bets, real-time WebSocket events to open/close betting windows, atomic database transactions to prevent race conditions on concurrent bets, proportional winnings calculation, anti-cheat logic (players cannot bet on their own matches), and automatic refunds on cancelled matches. The dynamic odds calculation was by far the hardest part, since odds must recalculate in real time and stay balanced as new bets come in. This required careful design across both the backend (`bets/` app, `wallet_transactions` table) and the frontend (live bet UI, wallet display).
 
 2. **Value added to the project**: betting adds a compelling social and competitive layer. Users have a stake in every match they watch, which increases engagement. The wallet system (with tokens earned from season rewards and betting) creates an economy that ties together the Planning, Ranking, and Tournament modules.
 
-3. **Real-time dimension**: bets are placed on *live* matches, meaning the system must coordinate tightly with WebSockets (`realtime/` consumer) to ensure betting windows open and close in sync with actual match state changes.
-
-4. **Security considerations**: all wallet mutations are wrapped in database transactions with row-level locking to ensure no tokens are created or destroyed accidentally. Anti-cheat guards are enforced server-side.
-
-This module goes well beyond a simple CRUD feature and represents a complete sub-system worthy of Major status.
+3. **Real-time dimension**: bets are placed on *live* matches, meaning the system must coordinate tightly with WebSockets (`realtime/` consumer) to ensure betting windows open and close in sync with actual match state changes. Betting windows close automatically after five points, and bets are settled or fully refunded depending on the outcome (refund on cancelled or aborted matches).
 
 ---
 
