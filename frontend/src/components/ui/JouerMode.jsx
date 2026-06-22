@@ -27,6 +27,8 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
   const [ended,       setEnded]       = useState(false)
   const [gamellesRed,  setGamellesRed]  = useState(0)
   const [gamellesBlue, setGamellesBlue] = useState(0)
+  const [demisRed,     setDemisRed]     = useState(0)
+  const [demisBlue,    setDemisBlue]    = useState(0)
   const intervalRef = useRef(null)
   const localUpdate = useRef(false)
   const prevStartTime = useRef(startTime)
@@ -59,8 +61,10 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
 
   const addRed = () => {
     if (ended) return
-    const inc = fois > 0 ? fois : 1
+    const isDemi = fois > 0
+    const inc = isDemi ? fois : 1
     const next = Math.min(19, scoreRed + inc)
+    if (isDemi) setDemisRed(d => d + 1)
     localUpdate.current = true
     setScoreRed(next)
     setFois(0)
@@ -69,8 +73,10 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
   }
   const addBlue = () => {
     if (ended) return
-    const inc = fois > 0 ? fois : 1
+    const isDemi = fois > 0
+    const inc = isDemi ? fois : 1
     const next = Math.min(19, scoreBlue + inc)
+    if (isDemi) setDemisBlue(d => d + 1)
     localUpdate.current = true
     setScoreBlue(next)
     setFois(0)
@@ -146,7 +152,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
               if (onTieCancel) onTieCancel()
               else onClose()
             } else {
-              if (onComplete) onComplete(scoreRed, scoreBlue, gamellesRed, gamellesBlue)
+              if (onComplete) onComplete(scoreRed, scoreBlue, gamellesRed, gamellesBlue, demisRed, demisBlue)
               else onClose()
             }
           }}>
@@ -173,6 +179,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelRed}</div>
           <div className={styles.sideScore}>{scoreRed}</div>
           {gamellesRed > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesRed}</div>}
+          {demisRed > 0 && <div className={styles.gamelleIndicator}>🍺 ×{demisRed}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
@@ -211,6 +218,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelBlue}</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
           {gamellesBlue > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesBlue}</div>}
+          {demisBlue > 0 && <div className={styles.gamelleIndicator}>🍺 ×{demisBlue}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 

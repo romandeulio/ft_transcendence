@@ -177,6 +177,14 @@ def match_validate(request, pk):
 			resolve_for_match(match)
 		except Exception:
 			logger.exception("Échec de la résolution des paris pour le match %s", match.id)
+
+	# Achievements (hors transaction pour ne pas bloquer la validation)
+	try:
+		from achievements.service import check_achievements_after_match
+		check_achievements_after_match(match)
+	except Exception:
+		logger.exception("Échec du check achievements pour le match %s", match.id)
+
 	return Response(MatchSerializer(match).data)
 
 

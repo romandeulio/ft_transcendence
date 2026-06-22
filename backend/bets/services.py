@@ -336,6 +336,16 @@ def resolve_for_match(match):
             bet.result = Bet.Result.LOST
             bet.payout = 0
         bet.save(update_fields=['match', 'result', 'payout'])
+
+        # Achievements paris
+        try:
+            from achievements.service import check_bet_achievements
+            from django.contrib.auth import get_user_model
+            fresh_user = get_user_model().objects.get(pk=bet.user_id)
+            check_bet_achievements(fresh_user, bet)
+        except Exception:
+            pass
+
     _broadcast_closed(reservation)
     return len(bets)
 

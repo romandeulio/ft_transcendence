@@ -386,6 +386,72 @@ CREATE TRIGGER trigger_tournament_matches_updated_at
 BEFORE UPDATE ON tournament_matches
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- ── Achievements ──────────────────────────────────────────────────────────
+CREATE TABLE achievements (
+    id          VARCHAR(40) PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    icon        VARCHAR(10) NOT NULL DEFAULT '🏆',
+    category    VARCHAR(20) NOT NULL CHECK (category IN ('GAMELLES', 'DEMIS', 'MATCH', 'SERIE', 'ELO', 'SAISON', 'EQUIPE', 'ECONOMIE')),
+    sort_order  INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE user_achievements (
+    id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    achievement_id VARCHAR(40) NOT NULL REFERENCES achievements(id) ON DELETE CASCADE,
+    unlocked_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id, achievement_id)
+);
+
+CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
+
+-- Seed achievements
+INSERT INTO achievements (id, name, description, icon, category, sort_order) VALUES
+-- Gamelles & Demis
+('first_gamelle',    'Première gamelle',    'Marquer 1 gamelle',              '🪣', 'GAMELLES', 1),
+('gamelleur',        'Gamelleur',           'Marquer 5 gamelles au total',    '🪣', 'GAMELLES', 2),
+('roi_gamelle',      'Roi de la gamelle',   'Marquer 20 gamelles au total',   '👑', 'GAMELLES', 3),
+('first_demi',       'Premier demi',        'Marquer 1 demi',                 '🍺', 'DEMIS',    4),
+('barman',           'Barman',              'Marquer 10 demis au total',      '🍺', 'DEMIS',    5),
+('patron_bar',       'Patron du bar',       'Marquer 50 demis au total',      '🍻', 'DEMIS',    6),
+-- Scores & Matchs
+('bapteme',          'Baptême du feu',      'Jouer son tout premier match',   '🔥', 'MATCH',    10),
+('first_win',        'Première victoire',   'Gagner un match',                '✅', 'MATCH',    11),
+('ecrasante',        'Victoire écrasante',  'Gagner 10-0',                    '💀', 'MATCH',    12),
+('serre',            'Match serré',         'Gagner 10-9',                    '😰', 'MATCH',    13),
+('muraille',         'Muraille',            'Gagner sans encaisser (hors 10-0)', '🧱', 'MATCH', 14),
+('comeback',         'Comeback',            'Gagner alors que l''adversaire avait 7+ points', '🔄', 'MATCH', 15),
+('wins_10',          '10 victoires',        'Gagner 10 matchs',               '⭐', 'MATCH',    16),
+('wins_50',          '50 victoires',        'Gagner 50 matchs',               '🌟', 'MATCH',    17),
+('wins_100',         '100 victoires',       'Gagner 100 matchs',              '💫', 'MATCH',    18),
+('matches_10',       'Joueur régulier',     'Jouer 10 matchs',                '🎮', 'MATCH',    19),
+('matches_50',       'Vétéran',             'Jouer 50 matchs',                '🎖️', 'MATCH',    20),
+('matches_100',      'Légende',             'Jouer 100 matchs',               '🏅', 'MATCH',    21),
+-- Séries
+('serie_3',          'En feu',              '3 victoires d''affilée',         '🔥', 'SERIE',    30),
+('serie_5',          'Inarrêtable',         '5 victoires d''affilée',         '⚡', 'SERIE',    31),
+('serie_10',         'Machine',             '10 victoires d''affilée',        '🤖', 'SERIE',    32),
+('resilient',        'Résilient',           'Gagner après 5 défaites d''affilée', '💪', 'SERIE', 33),
+-- ELO
+('elo_1100',         'Grimpeur',            'Atteindre 1100 ELO',             '📈', 'ELO',      40),
+('elo_1200',         'Compétiteur',         'Atteindre 1200 ELO',             '📊', 'ELO',      41),
+('elo_1500',         'Élite',               'Atteindre 1500 ELO',             '🏆', 'ELO',      42),
+('elo_2000',         'Légende vivante',     'Atteindre 2000 ELO',             '👑', 'ELO',      43),
+-- Saisons
+('first_season',     'Première saison',     'Participer à une saison classée', '📅', 'SAISON',  50),
+('top3_season',      'Top 3',               'Finir dans le top 3 d''une saison', '🥉', 'SAISON', 51),
+('champion_season',  'Champion',            'Finir #1 d''une saison',         '🥇', 'SAISON',   52),
+('multi_champion',   'Multi-champion',      'Finir #1 dans 3 saisons',        '👑', 'SAISON',   53),
+-- 2v2
+('first_2v2',        'Coéquipier',          'Jouer un match en 2v2',          '🤝', 'EQUIPE',   60),
+('duo_choc',         'Duo de choc',         'Gagner 10 matchs en 2v2',        '💪', 'EQUIPE',   61),
+('capitaine',        'Capitaine',           'Gagner 25 matchs en 2v2',        '🫡', 'EQUIPE',   62),
+-- Économie
+('first_bet',        'Premier pari',        'Placer un pari',                 '🎰', 'ECONOMIE', 70),
+('jackpot',          'Jackpot',             'Gagner un pari de 1000+ jetons', '💰', 'ECONOMIE', 71),
+('millionnaire',     'Millionnaire',        'Atteindre 50 000 jetons',        '🤑', 'ECONOMIE', 72);
+
 CREATE INDEX idx_django_session_expire      ON django_session(expire_date);
 CREATE INDEX idx_rankings_scope             ON rankings(scope, mode, score DESC);
 CREATE INDEX idx_history_user               ON ranking_history(user_id, recorded_at DESC);
