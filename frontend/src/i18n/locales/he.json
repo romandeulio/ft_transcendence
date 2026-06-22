@@ -323,7 +323,9 @@
     "privacy": "מדיניות פרטיות",
     "ticket": "שלח כרטיס",
     "status": "סטטוס",
-    "rgpd": "GDPR"
+    "rgpd": "GDPR",
+    "terms": "תנאי שימוש",
+    "copyright": "© {{year}} ft_transcendence — כל הזכויות שמורות"
   },
   "register": {
     "title": "BABYFOOT 42",

@@ -323,7 +323,9 @@
     "privacy": "Política de privacidad",
     "ticket": "Enviar un ticket",
     "status": "Estado",
-    "rgpd": "RGPD"
+    "rgpd": "RGPD",
+    "terms": "Condiciones de uso",
+    "copyright": "© {{year}} ft_transcendence — Todos los derechos reservados"
   },
   "register": {
     "title": "BABYFOOT 42",

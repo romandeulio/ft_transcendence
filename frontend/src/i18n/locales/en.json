@@ -327,7 +327,9 @@
     "privacy": "Privacy policy",
     "ticket": "Submit a ticket",
     "status": "Status",
-    "rgpd": "GDPR"
+    "rgpd": "GDPR",
+    "terms": "Terms of Service",
+    "copyright": "© {{year}} ft_transcendence — All rights reserved"
   },
   "register": {
     "title": "BABYFOOT 42",
