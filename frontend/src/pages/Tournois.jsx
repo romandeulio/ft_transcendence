@@ -27,6 +27,17 @@ function toTimestamp(value) {
   return Number.isFinite(ts) ? ts : null
 }
 
+// Convertit une date ISO (renvoyée en UTC par l'API) en valeur locale
+// "YYYY-MM-DDTHH:mm" pour un <input type="datetime-local">, sinon l'heure
+// pré-remplie serait décalée du fuseau horaire.
+function toLocalInput(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function splitCountdown(ms) {
   return {
     d: Math.floor(ms / 86400000),
@@ -53,21 +64,18 @@ function mapTournament(data) {
   }
 }
 
-const FORMAT_LABELS = {
-  SINGLE_ELIMINATION: '🏆 Élimination directe',
-  ROUND_ROBIN:        '🔄 Round Robin',
-  SWISS:              '🇨🇭 Tournoi Suisse',
+const FORMAT_LABEL_KEYS = {
+  SINGLE_ELIMINATION: 'tournaments.fmtSingle',
+  ROUND_ROBIN:        'tournaments.fmtRoundRobin',
+  SWISS:              'tournaments.fmtSwiss',
 }
 
-const FORMAT_OPTIONS = [
-  { value: 'SINGLE_ELIMINATION', label: 'Élimination directe' },
-  { value: 'ROUND_ROBIN',        label: 'Round Robin' },
-  { value: 'SWISS',              label: 'Tournoi Suisse' },
-]
+const FORMAT_OPTIONS = ['SINGLE_ELIMINATION', 'ROUND_ROBIN', 'SWISS']
 
 function StandingsTable({ standings, format }) {
+  const { t } = useTranslation()
   if (!standings || standings.length === 0) return (
-    <p className={styles.waitingListEmpty}>Aucun classement disponible.</p>
+    <p className={styles.waitingListEmpty}>{t('tournaments.noStandings')}</p>
   )
 
   return (
@@ -75,10 +83,10 @@ function StandingsTable({ standings, format }) {
       <thead>
         <tr>
           <th className={styles.standingsTh}>#</th>
-          <th className={styles.standingsTh}>Équipe</th>
-          <th className={styles.standingsTh}>V</th>
-          <th className={styles.standingsTh}>D</th>
-          {format === 'ROUND_ROBIN' && <th className={styles.standingsTh}>Pts</th>}
+          <th className={styles.standingsTh}>{t('tournaments.standingsTeam')}</th>
+          <th className={styles.standingsTh}>{t('tournaments.standingsWins')}</th>
+          <th className={styles.standingsTh}>{t('tournaments.standingsLosses')}</th>
+          {format === 'ROUND_ROBIN' && <th className={styles.standingsTh}>{t('tournaments.standingsPoints')}</th>}
         </tr>
       </thead>
       <tbody>
@@ -230,12 +238,12 @@ export default function Tournois() {
       const data = JSON.parse(text)
 
       if (data) {
-        const t = mapTournament(data)
-        setTournament(t)
-        fetchWaitingList(t.id)
-        fetchSoloWaiting(t.id)
-        checkMyRegistration(t.id)
-        if (t.status !== 'OPEN') fetchBracket(t.id)
+        const mapped = mapTournament(data)
+        setTournament(mapped)
+        fetchWaitingList(mapped.id)
+        fetchSoloWaiting(mapped.id)
+        checkMyRegistration(mapped.id)
+        if (mapped.status !== 'OPEN') fetchBracket(mapped.id)
       }
     }
     load()
@@ -250,7 +258,7 @@ export default function Tournois() {
       if (res.ok) { setBdeUnlocked(true); setBdeOpen(false) }
       else if (res.status === 403) setBdeError("Vous n'avez pas les droits BDE.")
       else setBdeError('Erreur inattendue.')
-    } catch { setBdeError('Erreur réseau.') }
+    } catch { setBdeError(t('tournaments.errNetwork')) }
     finally  { setBdeLoading(false) }
   }
 
@@ -262,19 +270,26 @@ export default function Tournois() {
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/start/`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setStartError(data.detail || 'Erreur lors du lancement.'); return }
-      const t = mapTournament(data)
-      setTournament(t)
-      fetchWaitingList(t.id)
-      fetchSoloWaiting(t.id)
-      fetchBracket(t.id)
-    } catch { setStartError('Erreur réseau.') }
+      if (!res.ok) {
+        setStartError(
+          data.code === 'NOT_ENOUGH_TEAMS'
+            ? t('tournaments.errNotEnoughTeams', { count: data.needed })
+            : (data.detail || t('tournaments.errStart'))
+        )
+        return
+      }
+      const mapped = mapTournament(data)
+      setTournament(mapped)
+      fetchWaitingList(mapped.id)
+      fetchSoloWaiting(mapped.id)
+      fetchBracket(mapped.id)
+    } catch { setStartError(t('tournaments.errNetwork')) }
     finally  { setStartLoading(false) }
   }
 
 
   const handleDeleteTournament = async () => {
-    if (!tournament || !window.confirm('Annuler et supprimer ce tournoi ?')) return
+    if (!tournament || !window.confirm(t('tournaments.confirmDelete'))) return
     setDeleteLoading(true)
     setStartError('')
     try {
@@ -292,13 +307,13 @@ export default function Tournois() {
       setRegistered(false)
       setShowRecruit(false)
       setInvitedSet(new Set())
-    } catch { setStartError('Erreur réseau.') }
+    } catch { setStartError(t('tournaments.errNetwork')) }
     finally  { setDeleteLoading(false) }
   }
 
 
   const handleMatchWinner = async (match, winnerTeamId) => {
-    if (!window.confirm('Confirmer le gagnant de ce match ?')) return
+    if (!window.confirm(t('tournaments.confirmWinner'))) return
     try {
       const res = await authFetch(`/api/tournaments/matches/${match.id}/result/`, {
         method: 'PATCH',
@@ -311,7 +326,7 @@ export default function Tournois() {
       }
       fetchBracket(tournament.id)
       fetchWaitingList(tournament.id)
-    } catch { setStartError('Erreur réseau.') }
+    } catch { setStartError(t('tournaments.errNetwork')) }
   }
 
   const handlePostponeMatch = async (match) => {
@@ -323,7 +338,7 @@ export default function Tournois() {
         return
       }
       fetchBracket(tournament.id)
-    } catch { setStartError('Erreur réseau.') }
+    } catch { setStartError(t('tournaments.errNetwork')) }
   }
 
 
@@ -336,7 +351,7 @@ export default function Tournois() {
       const data = await res.json()
       if (!res.ok) { setSwissNextError(data.detail || 'Erreur.'); return }
       fetchBracket(tournament.id)
-    } catch { setSwissNextError('Erreur réseau.') }
+    } catch { setSwissNextError(t('tournaments.errNetwork')) }
     finally  { setSwissNextLoading(false) }
   }
 
@@ -344,8 +359,8 @@ export default function Tournois() {
   const openEditModal = () => {
     if (!tournament) return
     setEditName(tournament.name || '')
-    setEditStart(tournament.startDate ? tournament.startDate.slice(0, 16) : '')
-    setEditDeadline(tournament.deadlineRaw ? tournament.deadlineRaw.slice(0, 16) : '')
+    setEditStart(toLocalInput(tournament.startDate))
+    setEditDeadline(toLocalInput(tournament.deadlineRaw))
     setEditPrize(tournament.prize || '')
     setEditFormat(tournament.format || 'SINGLE_ELIMINATION')
     setEditTeamSize(String(tournament.teamSize || 2))
@@ -375,7 +390,7 @@ export default function Tournois() {
       if (!res.ok) { setEditError(data.detail || 'Erreur lors de la modification.'); return }
       setTournament(mapTournament(data))
       setEditOpen(false)
-    } catch { setEditError('Erreur réseau.') }
+    } catch { setEditError(t('tournaments.errNetwork')) }
     finally  { setEditLoading(false) }
   }
 
@@ -407,7 +422,7 @@ export default function Tournois() {
       } else {
         setCreateError(data.detail || data.name?.[0] || 'Erreur lors de la création.')
       }
-    } catch { setCreateError('Erreur réseau.') }
+    } catch { setCreateError(t('tournaments.errNetwork')) }
     finally  { setCreateLoading(false) }
   }
 
@@ -439,7 +454,7 @@ export default function Tournois() {
           if (td) setTournament(mapTournament(td))
         }
       }
-    } catch { setImportResult({ error: 'Erreur réseau.' }) }
+    } catch { setImportResult({ error: t('tournaments.errNetwork') }) }
     finally  { setImportLoading(false); setImportOpen(true) }
   }
 
@@ -466,7 +481,7 @@ export default function Tournois() {
       } else {
         setRegisterError(data.detail || "Erreur lors de l'inscription.")
       }
-    } catch { setRegisterError('Erreur réseau.') }
+    } catch { setRegisterError(t('tournaments.errNetwork')) }
     finally  { setRegisterLoading(false) }
   }
 
@@ -498,12 +513,12 @@ export default function Tournois() {
         const td = await tournamentRes.json()
         setTournament(td ? mapTournament(td) : null)
       }
-    } catch { setTeamAdminError('Erreur réseau.') }
+    } catch { setTeamAdminError(t('tournaments.errNetwork')) }
     finally  { setTeamAdminLoading(false) }
   }
 
   const handleRemoveRegistration = async (registrationId, playerCount = 1) => {
-    if (!tournament || !window.confirm('Retirer cette inscription du tournoi ?')) return
+    if (!tournament || !window.confirm(t('tournaments.confirmRemove'))) return
     setTeamAdminError('')
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/registrations/${registrationId}/`, { method: 'DELETE' })
@@ -515,7 +530,7 @@ export default function Tournois() {
       fetchWaitingList(tournament.id)
       fetchSoloWaiting(tournament.id)
       setTournament(prev => prev ? { ...prev, registered: Math.max(0, (prev.registered ?? 0) - playerCount) } : prev)
-    } catch { setTeamAdminError('Erreur réseau.') }
+    } catch { setTeamAdminError(t('tournaments.errNetwork')) }
   }
 
   const soloList      = waitingList.filter(t => !t.player2)
@@ -540,8 +555,8 @@ export default function Tournois() {
         {bdeUnlocked && (
           <div className={styles.adminPanel}>
             <div>
-              <div className={styles.adminTitle}>Mode admin BDE</div>
-              <div className={styles.adminSub}>Création, édition, équipes, validation et replanification.</div>
+              <div className={styles.adminTitle}>{t('tournaments.adminMode')}</div>
+              <div className={styles.adminSub}>{t('tournaments.adminModeSub')}</div>
             </div>
             <div className={styles.adminActions}>
               {canPlanTournament && (
@@ -551,7 +566,7 @@ export default function Tournois() {
               )}
               {canManageTournament && (
                 <button className={styles.btnSecondary} onClick={openEditModal}>
-                  Modifier le tournoi
+                  {t('tournaments.editTournament')}
                 </button>
               )}
               {canManageTournament && (
@@ -561,7 +576,7 @@ export default function Tournois() {
                     onClick={() => importInputRef.current?.click()}
                     disabled={importLoading}
                   >
-                    {importLoading ? 'Import...' : 'Importer une liste de joueurs'}
+                    {importLoading ? t('tournaments.importing') : t('tournaments.importPlayers')}
                   </button>
                   <input
                     ref={importInputRef}
@@ -579,13 +594,13 @@ export default function Tournois() {
                   onClick={handleSwissNextRound}
                   disabled={swissNextLoading}
                 >
-                  {swissNextLoading ? 'Génération...' : 'Round suivant (Suisse)'}
+                  {swissNextLoading ? t('tournaments.generating') : t('tournaments.swissNextRoundLong')}
                 </button>
               )}
               {swissNextError && <span className={styles.bdeError}>{swissNextError}</span>}
               {canManageTournament && (
                 <button className={styles.btnDanger} onClick={handleDeleteTournament} disabled={deleteLoading}>
-                  {deleteLoading ? 'Suppression...' : 'Annuler le tournoi'}
+                  {deleteLoading ? t('tournaments.deleting') : t('tournaments.cancelTournament')}
                 </button>
               )}
             </div>
@@ -600,12 +615,12 @@ export default function Tournois() {
                 <div className={styles.tcName}>{tournament.name}</div>
                 {tournament.dateLabel && (
                   <div className={styles.tcDate}>
-                    <span className={styles.tcDateLabel}>Date de l'évènement :</span> {tournament.dateLabel}
+                    <span className={styles.tcDateLabel}>{t('tournaments.eventDate')}</span> {tournament.dateLabel}
                   </div>
                 )}
                 {tournament.prize && (
                   <div className={styles.tcDate}>
-                    <span className={styles.tcDateLabel}>🏆 Récompenses :</span> {tournament.prize}
+                    <span className={styles.tcDateLabel}>{t('tournaments.rewards')}</span> {tournament.prize}
                   </div>
                 )}
               </div>
@@ -613,11 +628,11 @@ export default function Tournois() {
             <div className={styles.tcMeta}>
               {/* Format + team size */}
               <Pill
-                label={`${FORMAT_LABELS[tournament.format] ?? tournament.format} · ${tournament.teamSize === 1 ? '1v1' : '2v2'}`}
+                label={`${FORMAT_LABEL_KEYS[tournament.format] ? t(FORMAT_LABEL_KEYS[tournament.format]) : tournament.format} · ${tournament.teamSize === 1 ? '1v1' : '2v2'}`}
                 type="season"
               />
               {tournament.deadline && (
-                <Pill label={`Inscriptions jusqu'au ${tournament.deadline}`} type="live" />
+                <Pill label={t('tournaments.inscriptions', { date: tournament.deadline })} type="live" />
               )}
               {tournament.status !== 'OPEN' && (
                 <Pill
@@ -635,7 +650,7 @@ export default function Tournois() {
             {bdeUnlocked && tournament.status === 'OPEN' && (
               <div className={styles.bdeActions}>
                 <button className={styles.confirmBtn} onClick={handleStartTournament} disabled={startLoading}>
-                  {startLoading ? 'Lancement...' : 'Lancer le tournoi'}
+                  {startLoading ? t('tournaments.starting') : t('tournaments.startTournament')}
                 </button>
                 {startError && <span className={styles.bdeError}>{startError}</span>}
               </div>
@@ -663,9 +678,9 @@ export default function Tournois() {
         )}
         {tournament?.status === 'OPEN' && registered && (
           <div className={styles.registerBanner}>
-            <span>Tu es inscrit au tournoi.</span>
+            <span>{t('tournaments.youAreRegistered')}</span>
             <button className={styles.unregisterBtn} onClick={handleSelfUnregister}>
-              Se désinscrire
+              {t('tournaments.unregister')}
             </button>
           </div>
         )}
@@ -730,7 +745,7 @@ export default function Tournois() {
                   <Pill label={t('tournaments.searchingPartner')} type="season" />
                   {bdeUnlocked && tournament?.status === 'OPEN' && (
                     <button className={styles.inlineDanger} onClick={() => handleRemoveRegistration(team.id, 1)}>
-                      Retirer
+                      {t('tournaments.remove')}
                     </button>
                   )}
                 </div>
@@ -743,12 +758,12 @@ export default function Tournois() {
         <div className={styles.confirmedTeamsBox}>
           <div className={styles.waitingListHeader}>
             <span className={styles.waitingListTitle}>
-              {is1v1 ? 'Joueurs inscrits' : t('tournaments.confirmedTeams')}
+              {is1v1 ? t('tournaments.registeredPlayers') : t('tournaments.confirmedTeams')}
             </span>
           </div>
           {confirmedList.length === 0 && soloList.length === 0 ? (
             <p className={styles.waitingListEmpty}>
-              {is1v1 ? 'Aucun joueur inscrit.' : t('tournaments.noConfirmedTeams')}
+              {is1v1 ? t('tournaments.noRegisteredPlayers') : t('tournaments.noConfirmedTeams')}
             </p>
           ) : (
             (is1v1 ? waitingList : confirmedList).map(team => (
@@ -768,7 +783,7 @@ export default function Tournois() {
                     className={styles.inlineDanger}
                     onClick={() => handleRemoveRegistration(team.id, is1v1 ? 1 : 2)}
                   >
-                    Retirer
+                    {t('tournaments.remove')}
                   </button>
                 )}
               </div>
@@ -781,26 +796,23 @@ export default function Tournois() {
           <div className={styles.adminPanel}>
             <div>
               <div className={styles.adminTitle}>
-                {is1v1 ? 'Inscrire un joueur' : 'Forcer une équipe'}
+                {is1v1 ? t('tournaments.registerPlayer') : t('tournaments.forceTeam')}
               </div>
               <div className={styles.adminSub}>
-                {is1v1
-                  ? 'Inscrit un joueur directement.'
-                  : 'Associe deux logins et retire leurs anciennes inscriptions si besoin.'
-                }
+                {is1v1 ? t('tournaments.registerPlayerSub') : t('tournaments.forceTeamSub')}
               </div>
             </div>
             <div className={styles.forceTeamForm}>
               <input
                 className={styles.input}
-                placeholder="login joueur 1"
+                placeholder={t('tournaments.playerLogin1')}
                 value={teamPlayer1}
                 onChange={e => setTeamPlayer1(e.target.value)}
               />
               {!is1v1 && (
                 <input
                   className={styles.input}
-                  placeholder="login joueur 2"
+                  placeholder={t('tournaments.playerLogin2')}
                   value={teamPlayer2}
                   onChange={e => setTeamPlayer2(e.target.value)}
                 />
@@ -810,7 +822,7 @@ export default function Tournois() {
                 onClick={handleForceTeam}
                 disabled={teamAdminLoading || !teamPlayer1 || (!is1v1 && !teamPlayer2)}
               >
-                {teamAdminLoading ? '...' : is1v1 ? 'Inscrire' : 'Associer'}
+                {teamAdminLoading ? '…' : is1v1 ? t('tournaments.doRegister') : t('tournaments.associate')}
               </button>
             </div>
             {teamAdminError && <div className={styles.bdeError}>{teamAdminError}</div>}
@@ -823,7 +835,7 @@ export default function Tournois() {
           {hasStandings && (
             <div className={styles.standingsBar}>
               <button className={styles.btnSecondary} onClick={() => setStandingsOpen(true)}>
-                Voir le classement
+                {t('tournaments.viewStandings')}
               </button>
               {/* Bouton round suivant Swiss aussi ici */}
               {bdeUnlocked && isSwiss && tournament.status === 'ONGOING' && (
@@ -833,7 +845,7 @@ export default function Tournois() {
                   disabled={swissNextLoading}
                   style={{ marginLeft: 8 }}
                 >
-                  {swissNextLoading ? 'Génération...' : 'Round suivant'}
+                  {swissNextLoading ? t('tournaments.generating') : t('tournaments.swissNextRound')}
                 </button>
               )}
               {swissNextError && <span className={styles.bdeError}>{swissNextError}</span>}
@@ -882,6 +894,7 @@ export default function Tournois() {
           <BracketTree
             rounds={bracketRounds.length ? bracketRounds : undefined}
             maxPlayers={tournament?.maxPlayers ?? 16}
+            format={tournament?.format ?? 'SINGLE_ELIMINATION'}
             canReport={bdeUnlocked && tournament?.status === 'ONGOING'}
             onWinner={handleMatchWinner}
             onPostpone={handlePostponeMatch}
@@ -892,7 +905,7 @@ export default function Tournois() {
       {/* ── Accès BDE ── */}
       <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError('') }} title={t('tournaments.bdeAccess')}>
         <div className={styles.formGroup}>
-          <div className={styles.adminSub}>Vérifie ton accès BDE via ton compte.</div>
+          <div className={styles.adminSub}>{t('tournaments.bdeCheckSub')}</div>
           {bdeError && <div className={styles.bdeError}>{bdeError}</div>}
         </div>
         <div className={styles.modalFooter}>
@@ -914,15 +927,15 @@ export default function Tournois() {
           />
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Format</label>
+          <label className={styles.label}>{t('tournaments.formatLabel')}</label>
           <select className={styles.input} value={createFormat} onChange={e => setCreateFormat(e.target.value)}>
             {FORMAT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o} value={o}>{t(FORMAT_LABEL_KEYS[o])}</option>
             ))}
           </select>
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Mode</label>
+          <label className={styles.label}>{t('tournaments.modeLabel')}</label>
           <select className={styles.input} value={createTeamSize} onChange={e => setCreateTeamSize(e.target.value)}>
             <option value="1">1v1</option>
             <option value="2">2v2</option>
@@ -945,25 +958,25 @@ export default function Tournois() {
           </select>
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Prix (optionnel)</label>
-          <input className={styles.input} placeholder="ex: Couverture offerte" value={createPrize} onChange={e => setCreatePrize(e.target.value)} />
+          <label className={styles.label}>{t('tournaments.prizeOptional')}</label>
+          <input className={styles.input} placeholder={t('tournaments.prizePlaceholder')} value={createPrize} onChange={e => setCreatePrize(e.target.value)} />
         </div>
         {createError && <div className={styles.bdeError}>{createError}</div>}
         <div className={styles.modalFooter}>
           <button className={styles.confirmBtn} onClick={handleCreateSubmit} disabled={createLoading || !createName || !createStart}>
-            {createLoading ? 'Création...' : t('tournaments.createBtn')}
+            {createLoading ? t('tournaments.creating') : t('tournaments.createBtn')}
           </button>
         </div>
       </Modal>
 
       {/* ── Modifier le tournoi ── */}
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Modifier le tournoi">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('tournaments.editTournament')}>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.tournamentName')}</label>
           <input className={styles.input} value={editName} onChange={e => setEditName(e.target.value)} />
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Format</label>
+          <label className={styles.label}>{t('tournaments.formatLabel')}</label>
           <select
             className={styles.input}
             value={editFormat}
@@ -971,12 +984,12 @@ export default function Tournois() {
             disabled={tournament?.status !== 'OPEN'}
           >
             {FORMAT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o} value={o}>{t(FORMAT_LABEL_KEYS[o])}</option>
             ))}
           </select>
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Mode</label>
+          <label className={styles.label}>{t('tournaments.modeLabel')}</label>
           <select
             className={styles.input}
             value={editTeamSize}
@@ -1004,13 +1017,13 @@ export default function Tournois() {
           </select>
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Prix (optionnel)</label>
+          <label className={styles.label}>{t('tournaments.prizeOptional')}</label>
           <input className={styles.input} value={editPrize} onChange={e => setEditPrize(e.target.value)} />
         </div>
         {editError && <div className={styles.bdeError}>{editError}</div>}
         <div className={styles.modalFooter}>
           <button className={styles.confirmBtn} onClick={handleEditSubmit} disabled={editLoading || !editName || !editStart}>
-            {editLoading ? 'Enregistrement...' : 'Enregistrer'}
+            {editLoading ? t('tournaments.saving') : t('tournaments.save')}
           </button>
         </div>
       </Modal>
@@ -1048,7 +1061,7 @@ export default function Tournois() {
 
         {is1v1 && (
           <div className={styles.soloNote}>
-            Ce tournoi est en 1v1 — tu t'inscriras seul.
+            {t('tournaments.is1v1Note')}
           </div>
         )}
 
@@ -1064,20 +1077,20 @@ export default function Tournois() {
       <Modal
         open={standingsOpen}
         onClose={() => setStandingsOpen(false)}
-        title={isSwiss ? 'Classement Suisse' : 'Classement Round Robin'}
+        title={isSwiss ? t('tournaments.standingsSwiss') : t('tournaments.standingsRoundRobin')}
       >
         <StandingsTable standings={standings} format={tournament?.format} />
       </Modal>
 
       {/* ── Résultat import ── */}
-      <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Résultat de l'import">
+      <Modal open={importOpen} onClose={() => setImportOpen(false)} title={t('tournaments.importResultTitle')}>
         {importResult?.error ? (
           <div className={styles.bdeError}>{importResult.error}</div>
         ) : (
           <div className={styles.importResult}>
             {importResult?.created?.length > 0 && (
               <div className={styles.importSection}>
-                <div className={styles.importSectionTitle}>✅ Inscrits ({importResult.created.length})</div>
+                <div className={styles.importSectionTitle}>✅ {t('tournaments.importRegistered')} ({importResult.created.length})</div>
                 {importResult.created.map((name, i) => (
                   <div key={i} className={styles.importRow}>{name}</div>
                 ))}
@@ -1085,7 +1098,7 @@ export default function Tournois() {
             )}
             {importResult?.skipped?.length > 0 && (
               <div className={styles.importSection}>
-                <div className={styles.importSectionTitle}>⏭️ Ignorés ({importResult.skipped.length})</div>
+                <div className={styles.importSectionTitle}>⏭️ {t('tournaments.importSkipped')} ({importResult.skipped.length})</div>
                 {importResult.skipped.map((name, i) => (
                   <div key={i} className={styles.importRow}>{name}</div>
                 ))}
@@ -1093,7 +1106,7 @@ export default function Tournois() {
             )}
             {importResult?.errors?.length > 0 && (
               <div className={styles.importSection}>
-                <div className={styles.importSectionTitle}>⚠️ Erreurs ({importResult.errors.length})</div>
+                <div className={styles.importSectionTitle}>⚠️ {t('tournaments.importErrors')} ({importResult.errors.length})</div>
                 {importResult.errors.map((msg, i) => (
                   <div key={i} className={styles.importRow}>{msg}</div>
                 ))}
@@ -1102,7 +1115,7 @@ export default function Tournois() {
           </div>
         )}
         <div className={styles.modalFooter}>
-          <button className={styles.confirmBtn} onClick={() => setImportOpen(false)}>Fermer</button>
+          <button className={styles.confirmBtn} onClick={() => setImportOpen(false)}>{t('tournaments.close')}</button>
         </div>
       </Modal>
     </Shell>

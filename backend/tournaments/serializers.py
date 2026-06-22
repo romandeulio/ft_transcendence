@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Tournament, TournamentMatch, TournamentRegistration, TournamentTeam, TournamentSwissStandings, TournamentRoundRobinsStandings
 
 VALID_FORMATS = ['SINGLE_ELIMINATION', 'ROUND_ROBIN', 'SWISS']
@@ -36,12 +37,12 @@ class TournamentSerializer(serializers.ModelSerializer):
     def get_date_label(self, obj):
         if not obj.start_date:
             return ''
-        return obj.start_date.strftime('%d/%m/%Y à %H:%M')
+        return timezone.localtime(obj.start_date).strftime('%d/%m/%Y à %H:%M')
 
     def get_deadline_label(self, obj):
         if not obj.deadline:
             return None
-        return obj.deadline.strftime('%d/%m/%Y')
+        return timezone.localtime(obj.deadline).strftime('%d/%m/%Y')
 
 
 class TournamentCreateSerializer(serializers.ModelSerializer):

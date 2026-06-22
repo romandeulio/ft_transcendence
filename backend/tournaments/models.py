@@ -61,7 +61,7 @@ class TournamentTeam(models.Model):
     tournament   = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams', db_column='tournament_id')
     registration = models.OneToOneField(TournamentRegistration, on_delete=models.CASCADE, related_name='team', db_column='registration_id')
     player1      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tournament_teams_as_p1', db_column='player1_id')
-    player2      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tournament_registrations_as_p2', db_column='player2_id')
+    player2      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tournament_teams_as_p2', db_column='player2_id')
     seed         = models.PositiveIntegerField()
     created_at   = models.DateTimeField(auto_now_add=True)
 

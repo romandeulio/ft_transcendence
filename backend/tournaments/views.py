@@ -172,8 +172,13 @@ def _propagate_byes(tournament):
 
 
 def _build_single_elimination(tournament, teams):
-    max_teams    = tournament.max_players // tournament.team_size
-    bracket_size = max_teams
+    # Taille du bracket = plus petite puissance de 2 >= au nombre d'équipes
+    # réellement inscrites (et non au maximum théorique), pour éviter les
+    # rounds entiers de matchs vides quand il y a moins de joueurs que prévu.
+    team_count   = max(2, len(teams))
+    bracket_size = 1
+    while bracket_size < team_count:
+        bracket_size *= 2
     rounds       = _total_rounds(bracket_size)
 
     for round_number in range(1, rounds + 1):
@@ -592,7 +597,11 @@ def start_tournament(request, pk):
     needed = min_teams.get(tournament.format, 2)
     if len(regs) < needed:
         return Response(
-            {'detail': f'Il faut au moins {needed} équipes complètes pour lancer ce format.'},
+            {
+                'detail': f'Il faut au moins {needed} équipes complètes pour lancer ce format.',
+                'code': 'NOT_ENOUGH_TEAMS',
+                'needed': needed,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 

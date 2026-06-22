@@ -57,16 +57,21 @@ function MatchBlock({ match, isFinal = false, canReport = false, onWinner, onPos
   )
 }
 
-function roundLabel(t, round, totalRounds) {
+function roundLabel(t, round, totalRounds, format) {
+  // Swiss / Round Robin : pas de phases finales, on numérote les rounds.
+  if (format === 'SWISS' || format === 'ROUND_ROBIN') {
+    return t('bracket.round', { n: round })
+  }
   if (round === totalRounds) return t('bracket.final')
   if (round === totalRounds - 1) return t('bracket.semis')
   if (round === totalRounds - 2) return t('bracket.quarters')
   if (round === totalRounds - 3) return t('bracket.eighths')
-  return `R${round}`
+  return t('bracket.round', { n: round })
 }
 
-export default function BracketTree({ rounds, maxPlayers = 16, canReport = false, onWinner, onPostpone }) {
+export default function BracketTree({ rounds, maxPlayers = 16, format = 'SINGLE_ELIMINATION', canReport = false, onWinner, onPostpone }) {
   const { t } = useTranslation()
+  const isElimination = format === 'SINGLE_ELIMINATION'
   const treeRef = useRef(null)
   const matchRefs = useRef(new Map())
   const [connectorState, setConnectorState] = useState({ width: 0, height: 0, paths: [] })
@@ -177,7 +182,7 @@ export default function BracketTree({ rounds, maxPlayers = 16, canReport = false
       )}
       {displayedRounds.map((round, roundIndex) => (
         <div className={styles.round} key={round.round} style={{ '--match-count': round.matches.length }}>
-          <div className={styles.roundLabel}>{roundLabel(t, round.round, totalRounds)}</div>
+          <div className={styles.roundLabel}>{roundLabel(t, round.round, totalRounds, format)}</div>
           <div className={styles.slots}>
             {round.matches.map(match => (
               <div
@@ -187,7 +192,7 @@ export default function BracketTree({ rounds, maxPlayers = 16, canReport = false
               >
                 <MatchBlock
                   match={match}
-                  isFinal={roundIndex === totalRounds - 1}
+                  isFinal={isElimination && roundIndex === totalRounds - 1}
                   canReport={canReport}
                   onWinner={onWinner}
                   onPostpone={onPostpone}

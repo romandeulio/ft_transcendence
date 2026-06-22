@@ -256,8 +256,8 @@ OAUTH_42_CLIENT_SECRET = config("OAUTH_42_CLIENT_SECRET")
 OAUTH_42_REDIRECT_URI = config("OAUTH_42_REDIRECT_URI")
 
 # mail verification
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = "smtp.gmail.com"   # serveur SMTP d'Outlook
 EMAIL_PORT = 587                    # port TLS
 EMAIL_USE_TLS = True
