@@ -131,3 +131,32 @@ class User(AbstractBaseUser):
         return pyotp.totp.TOTP(self.totp_secret).provisioning_uri(
             name=self.email, issuer_name='ft_transcendence'
         )
+
+    def anonymize(self):
+        """Anonymise le compte (RGPD) au lieu d'un hard delete.
+
+        On conserve la ligne et son id pour ne pas casser l'historique des matchs
+        (FK SET_NULL → '?') : le compte devient inactif, ses données personnelles
+        sont effacées et son pseudo remplacé par un identifiant neutre. Utilisé
+        par la suppression RGPD (self-service) ET par la suppression admin.
+        """
+        import os
+        from django.conf import settings
+
+        if self.avatar_url:
+            path = os.path.join(settings.MEDIA_ROOT, self.avatar_url.replace('/media/', ''))
+            if os.path.exists(path):
+                os.remove(path)
+
+        self.username = f"del{str(self.id)[:5]}"
+        self.email = f"{uuid.uuid4()}@deleted.invalid"
+        self.set_unusable_password()
+        self.avatar_url = None
+        self.oauth_42_id = None
+        self.totp_secret = None
+        self.is_2fa_enabled = False
+        self.is_active = False
+        self.last_login = None
+        self.banned_until = None
+        self.gdpr_deleted = True
+        self.save()

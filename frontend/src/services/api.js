@@ -27,6 +27,11 @@ async function refreshAuthCookie() {
   if (!res.ok) throw new Error('Session expired')
 }
 
+// Rafraîchit le cookie JWT — utilisé par AuthContext
+export function apiRefresh() {
+  return refreshAuthCookie()
+}
+
 // Fetch authentifié — les JWT HttpOnly sont envoyés via cookies same-origin.
 {/*export function authFetch(url, options = {}) {
   return fetch(url, buildFetchOptions(options)).then(async res => {
@@ -135,7 +140,8 @@ export function matchToRow(m, username) {
   const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
 
   const isDraw = myScore != null && theirScore != null && myScore === theirScore
-  return { vs: vs ?? '?', score: `${myScore ?? '?'}-${theirScore ?? '?'}`, result: isDraw ? 'Egalité' : (isWin ? 'Victoire' : 'Défaite'), elo: eloStr, date }
+  // `result` est une CLÉ stable (win/loss/draw) — traduite à l'affichage via i18n.
+  return { vs: vs ?? '?', score: `${myScore ?? '?'}-${theirScore ?? '?'}`, result: isDraw ? 'draw' : (isWin ? 'win' : 'loss'), elo: eloStr, date }
 }
 
 

@@ -196,9 +196,10 @@ export default function Parametres() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         })
-        if (!res.ok) {
-          const d = await res.json().catch(() => ({}))
-          setGdprError(d.error || t('settings.gdpr.invalidCode'))
+        // Code invalide : le backend répond 200 + en-tête X-GDPR-Code-Valid=false
+        // (évite une ligne rouge dans la console). Sinon, vraie erreur HTTP.
+        if (res.headers.get('X-GDPR-Code-Valid') === 'false' || !res.ok) {
+          setGdprError(t('settings.gdpr.invalidCode'))
           return
         }
         const blob = await res.blob()
@@ -217,9 +218,9 @@ export default function Parametres() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         })
-        if (!res.ok) {
-          const d = await res.json().catch(() => ({}))
-          setGdprError(d.error || t('settings.gdpr.invalidCode'))
+        // Code invalide : 200 + en-tête X-GDPR-Code-Valid=false (pas de 400 → console propre)
+        if (res.headers.get('X-GDPR-Code-Valid') === 'false' || !res.ok) {
+          setGdprError(t('settings.gdpr.invalidCode'))
           return
         }
         logout()

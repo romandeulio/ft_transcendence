@@ -262,8 +262,8 @@ export default function Tournois() {
     try {
       const res = await authFetch('/api/tournaments/bde-unlock/', { method: 'POST' })
       if (res.ok) { setBdeUnlocked(true); setBdeOpen(false) }
-      else if (res.status === 403) setBdeError("Vous n'avez pas les droits BDE.")
-      else setBdeError('Erreur inattendue.')
+      else if (res.status === 403) setBdeError(t('tournaments.errNoBde'))
+      else setBdeError(t('tournaments.errUnexpected'))
     } catch { setBdeError(t('tournaments.errNetwork')) }
     finally  { setBdeLoading(false) }
   }
@@ -317,7 +317,7 @@ export default function Tournois() {
       const res = await authFetch(`/api/tournaments/${tournament.id}/`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setStartError(data.detail || 'Erreur lors de la suppression du tournoi.')
+        setStartError(data.detail || t('tournaments.errDeleteTournament'))
         return
       }
       setTournament(null)
@@ -342,7 +342,7 @@ export default function Tournois() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setStartError(data.detail || 'Erreur lors de la validation du match.')
+        setStartError(data.detail || t('tournaments.errValidateMatch'))
         return
       }
       fetchBracket(tournament.id)
@@ -355,7 +355,7 @@ export default function Tournois() {
       const res = await authFetch(`/api/tournaments/matches/${match.id}/postpone/`, { method: 'PATCH' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setStartError(data.detail || 'Erreur lors de la replanification.')
+        setStartError(data.detail || t('tournaments.errReschedule'))
         return
       }
       fetchBracket(tournament.id)
@@ -370,7 +370,7 @@ export default function Tournois() {
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/swiss-next-round/`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setSwissNextError(data.detail || 'Erreur.'); return }
+      if (!res.ok) { setSwissNextError(data.detail || t('tournaments.errGeneric')); return }
       fetchBracket(tournament.id)
     } catch { setSwissNextError(t('tournaments.errNetwork')) }
     finally  { setSwissNextLoading(false) }
@@ -503,7 +503,7 @@ export default function Tournois() {
         const increment = is1v1 ? 1 : (partner.trim() ? 2 : 1)
         setTournament(prev => prev ? { ...prev, registered: (prev.registered ?? 0) + increment } : prev)
       } else {
-        setRegisterError(data.detail || "Erreur lors de l'inscription.")
+        setRegisterError(data.detail || t('tournaments.errRegister'))
       }
     } catch { setRegisterError(t('tournaments.errNetwork')) }
     finally  { setRegisterLoading(false) }
@@ -528,7 +528,7 @@ export default function Tournois() {
         body: JSON.stringify(body),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setTeamAdminError(data.detail || 'Erreur lors de la modification des équipes.'); return }
+      if (!res.ok) { setTeamAdminError(data.detail || t('tournaments.errEditTeams')); return }
       setTeamPlayer1(''); setTeamPlayer2('')
       fetchWaitingList(tournament.id)
       fetchSoloWaiting(tournament.id)
@@ -548,7 +548,7 @@ export default function Tournois() {
       const res = await authFetch(`/api/tournaments/${tournament.id}/registrations/${registrationId}/`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setTeamAdminError(data.detail || 'Erreur lors de la suppression.')
+        setTeamAdminError(data.detail || t('tournaments.errDelete'))
         return
       }
       fetchWaitingList(tournament.id)

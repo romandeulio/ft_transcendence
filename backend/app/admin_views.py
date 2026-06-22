@@ -422,7 +422,10 @@ class AdminDeleteUserView(APIView):
  
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        user.delete()
+        # Anonymisation (comme la suppression RGPD) plutôt qu'un hard delete : on
+        # préserve l'historique des matchs (FK SET_NULL → '?') et l'intégrité des
+        # données liées (paris, classements…).
+        user.anonymize()
         return Response(status=204)
  
  

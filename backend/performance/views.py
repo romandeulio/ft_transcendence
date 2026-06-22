@@ -204,15 +204,15 @@ class PerformanceHistoryView(APIView):
                     result[m.season.name] = elo
             return result
 
-        trunc = TruncWeek if x == 'weeks' else TruncMonth
-        fmt   = '%G-W%V'  if x == 'weeks' else '%Y-%m'
-        entries = (
-            qs.annotate(p=trunc('recorded_at'))
-              .values('p')
-              .annotate(elo=Max('score_after'))
-              .order_by('p')
-        )
-        return {e['p'].strftime(fmt): e['elo'] for e in entries}
+        # weeks / months : on regroupe par période à partir des (match, elo) déjà
+        # calculés (entries triées par played_at) — la dernière valeur de la période
+        # l'emporte. Pas de requête sur des champs inexistants du modèle Match.
+        fmt = '%G-W%V' if x == 'weeks' else '%Y-%m'
+        result = {}
+        for m, elo in entries:
+            played = timezone.localtime(m.played_at) if timezone.is_aware(m.played_at) else m.played_at
+            result[played.strftime(fmt)] = elo
+        return result
 
     def _match_series(self, login, x, y, date_from=None, date_to=None, limit=None):
         from matches.models import Match

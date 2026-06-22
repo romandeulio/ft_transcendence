@@ -101,7 +101,7 @@ class QueueConsumer(
         if not self.username or self.username not in state.pending_invites:
             return
         to_deliver = list(state.pending_invites[self.username])
-        ONE_SHOT_KEYS = ("match_cancelled", "win_claim_declined", "invite_response", "p2_left", "game_ended")
+        ONE_SHOT_KEYS = ("match_cancelled", "win_claim_declined", "invite_response", "p2_left", "game_ended", "friend_added")
         state.pending_invites[self.username] = [
             inv for inv in to_deliver
             if not any(inv.get(k) for k in ONE_SHOT_KEYS)
@@ -141,6 +141,11 @@ class QueueConsumer(
                     "gameId":          inv["gameId"],
                     "winner":          inv.get("winner"),
                     "winner_teammate": inv.get("winner_teammate"),
+                }))
+            elif inv.get("friend_added"):
+                await self.send(text_data=json.dumps({
+                    "type": "friend_added",
+                    "from": inv["from"],
                 }))
             elif inv.get("win_invite"):
                 await self.send(text_data=json.dumps({

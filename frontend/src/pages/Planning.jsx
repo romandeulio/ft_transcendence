@@ -117,7 +117,7 @@ export default function Planning() {
       }
     }
     if (!reservationId) {
-      setBetMsg('Les paris ouvriront quand la partie démarrera.')
+      setBetMsg(t('queue.betsWillOpen'))
       return
     }
     try {
@@ -127,7 +127,7 @@ export default function Planning() {
       setBetTeam(null)
       setBetMsg(null)
     } catch (e) {
-      setBetMsg(e.message || 'Pari refusé.')
+      setBetMsg(e.message || t('bets.betRejected'))
     }
   }
 

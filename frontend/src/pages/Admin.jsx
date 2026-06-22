@@ -402,7 +402,7 @@ function EditRoleModal({ player, onClose, onSaved }) {
       onClose()
     } else {
       const d = await res.json().catch(() => ({}))
-      setError(d.error || 'Erreur lors de la mise à jour du rôle.')
+      setError(d.error || t('admin.err_role_update'))
     }
   }
 
@@ -434,6 +434,7 @@ function EditRoleModal({ player, onClose, onSaved }) {
 /*  Modal confirmation suppression  [NOUVEAU]                         */
 /* ------------------------------------------------------------------ */
 function DeleteUserModal({ player, onClose, onDeleted }) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
 
@@ -447,27 +448,27 @@ function DeleteUserModal({ player, onClose, onDeleted }) {
       onClose()
     } else {
       const d = await res.json().catch(() => ({}))
-      setError(d.error || 'Impossible de supprimer cet utilisateur.')
+      setError(d.error || t('admin.err_delete_user'))
     }
   }
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalTitle}>Supprimer {player.username}</div>
+        <div className={styles.modalTitle}>{t('admin.delete_title', { username: player.username })}</div>
         <div style={{ fontSize: 13, color: '#c0392b', fontWeight: 600, margin: '8px 0 16px' }}>
-          Cette action est irréversible. Toutes les données du joueur seront supprimées.
+          {t('admin.delete_warning')}
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.modalActions}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Annuler</button>
+          <button className={styles.modalCancelBtn} onClick={onClose}>{t('admin.delete_cancel')}</button>
           <button
             className={styles.modalOkBtn}
             onClick={handleDelete}
             disabled={saving}
             style={{ background: '#c0392b', color: '#fff' }}
           >
-            {saving ? 'Suppression...' : 'Supprimer définitivement'}
+            {saving ? t('admin.deleting') : t('admin.delete_permanently')}
           </button>
         </div>
       </div>
@@ -621,13 +622,13 @@ function Dashboard({ onLogout }) {
                         <td className={styles.tdDate}>{fmtDate(m.played_at)}</td>
                         <td>
                           {m.status === 'CANCELLED' ? (
-                            <span style={{ color: '#999', fontSize: 12 }}>Annulé</span>
+                            <span style={{ color: '#999', fontSize: 12 }}>{t('admin.match_cancelled')}</span>
                           ) : (
                             <button
                               className={styles.btnDanger}
                               style={{ fontSize: 11, padding: '3px 8px' }}
                               onClick={async () => {
-                                if (!confirm('Annuler ce match et restaurer les ELO ?')) return
+                                if (!confirm(t('admin.confirm_cancel_match'))) return
                                 const res = await adm(`/api/admin/matches/${m.id}/cancel/`, { method: 'POST' })
                                 if (res.ok) {
                                   setRecentMatches(prev => prev.map(x => x.id === m.id ? { ...x, status: 'CANCELLED', elo_p1: null, elo_p2: null } : x))

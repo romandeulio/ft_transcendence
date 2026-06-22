@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import styles from './Banned.module.css'
 
 function formatRemaining(seconds) {
@@ -8,13 +10,14 @@ function formatRemaining(seconds) {
   const h = Math.floor((seconds % 86400) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   const parts = []
-  if (d > 0) parts.push(`${d} jour${d > 1 ? 's' : ''}`)
-  if (h > 0) parts.push(`${h} heure${h > 1 ? 's' : ''}`)
-  if (m > 0) parts.push(`${m} minute${m > 1 ? 's' : ''}`)
-  return parts.join(', ') || 'moins d\'une minute'
+  if (d > 0) parts.push(i18n.t('banned.days', { count: d }))
+  if (h > 0) parts.push(i18n.t('banned.hours', { count: h }))
+  if (m > 0) parts.push(i18n.t('banned.minutes', { count: m }))
+  return parts.join(', ') || i18n.t('banned.lessThanMinute')
 }
 
 export default function Banned() {
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const type = params.get('type')
@@ -46,31 +49,31 @@ export default function Banned() {
 
         {type === 'permanent' ? (
           <>
-            <h1 className={styles.title}>Compte banni</h1>
+            <h1 className={styles.title}>{t('banned.permTitle')}</h1>
             <p className={styles.text}>
-              Votre compte a été banni définitivement par un administrateur.
+              {t('banned.permText')}
             </p>
           </>
         ) : (
           <>
-            <h1 className={styles.title}>Compte suspendu</h1>
+            <h1 className={styles.title}>{t('banned.tempTitle')}</h1>
             <p className={styles.text}>
-              Votre compte est temporairement suspendu.
+              {t('banned.tempText')}
             </p>
             {remaining > 0 && (
               <div className={styles.timer}>
-                Temps restant : <strong>{formatRemaining(remaining)}</strong>
+                {t('banned.timeLeft')} <strong>{formatRemaining(remaining)}</strong>
               </div>
             )}
           </>
         )}
 
         <p className={styles.sub}>
-          Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur à l'adresse babyfoot42nice@gmail.com .
+          {t('banned.contact', { email: 'babyfoot42nice@gmail.com' })}
         </p>
 
         <button className={styles.btn} onClick={() => navigate('/login')}>
-          Retour à la connexion
+          {t('banned.backToLogin')}
         </button>
       </div>
     </div>

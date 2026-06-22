@@ -12,6 +12,7 @@ import styles from './Paris.module.css'
 const HIST_PER_PAGE = 3
 
 function BetsChart({ history, yRange }) {
+  const { t } = useTranslation()
   if (!history.length) return null
 
   const vals = history.reduce((acc, h) => {
@@ -62,7 +63,7 @@ function BetsChart({ history, yRange }) {
       {vals.map((v, i) => (
         <g key={i}>
           <circle cx={x(i)} cy={y(v)} r="2" fill={color} />
-          <title>{history[i]?.date} : {v >= 0 ? '+' : ''}{v} jetons</title>
+          <title>{history[i]?.date} : {v >= 0 ? '+' : ''}{v} {t('bets.tokensWord')}</title>
         </g>
       ))}
       {history.map((h, i) =>
@@ -100,7 +101,7 @@ export default function Paris() {
       setShowSlider(null)
       setBetChoices(prev => { const n = { ...prev }; delete n[bet.id]; return n })
     } catch (e) {
-      setBetError({ id: bet.id, msg: e.message || 'Pari refusé.' })
+      setBetError({ id: bet.id, msg: e.message || t('bets.betRejected') })
     }
   }
 
@@ -267,7 +268,7 @@ export default function Paris() {
                     {hasBet && (
                       <div className={styles.myBetRow}>
                         <span className={styles.myBetLabel}>{t('bets.betPlacedOn', { player: bet.myBet.player })}</span>
-                        <span className={styles.myBetVal}>{bet.myBet.amount} jetons</span>
+                        <span className={styles.myBetVal}>{bet.myBet.amount} {t('bets.tokensWord')}</span>
                       </div>
                     )}
 
@@ -302,7 +303,7 @@ export default function Paris() {
                       <span className={h.delta > 0 ? styles.win : styles.loss}>
                         {h.delta > 0 ? '+' : ''}{h.delta}
                       </span>
-                      <Pill label={h.result} type={h.result === 'gagné' ? 'win' : 'loss'} />
+                      <Pill label={t(`bets.result.${h.result}`)} type={h.result === 'won' ? 'win' : h.result === 'refunded' ? 'draw' : 'loss'} />
                     </div>
                   </div>
                 ))}
@@ -342,7 +343,7 @@ export default function Paris() {
                 <div className={styles.chartLabel}>
                   {t('bets.balanceEvolution')}
                   <span className={chartBalance >= 0 ? styles.chartPos : styles.chartNeg}>
-                    {chartBalance >= 0 ? '+' : ''}{chartBalance} jetons
+                    {chartBalance >= 0 ? '+' : ''}{chartBalance} {t('bets.tokensWord')}
                   </span>
                 </div>
                 <div className={styles.chartFilters}>

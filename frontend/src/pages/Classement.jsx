@@ -96,7 +96,7 @@ export default function Classement() {
     const currentPlayers = hallMode === 'SOLO' ? players : teams2v2
     const activeSeason = allSeasonData.find(s => s.status === 'ACTIVE')
     currentPlayers.forEach(p => {
-      allCandidates.push({ player: p.name, elo: p.elo, seasonName: activeSeason?.name || 'Saison en cours' })
+      allCandidates.push({ player: p.name, elo: p.elo, seasonName: activeSeason?.name || t('ranking.currentSeason') })
     })
 
     if (allCandidates.length > 0) {

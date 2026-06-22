@@ -31,7 +31,10 @@
     "error": "Email ou mot de passe incorrect.",
     "networkError": "Erreur réseau, réessaie plus tard.",
     "noAccount": "Pas encore de compte ?",
-    "registerLink": "S'inscrire"
+    "registerLink": "S'inscrire",
+    "codePlaceholder": "Code à 6 chiffres",
+    "verifying": "Vérification...",
+    "validate": "Valider"
   },
   "home": {
     "scheduledMatch": "📋 Match prévu",
@@ -52,7 +55,14 @@
     "waiting": "En attente",
     "maxMatches": "Tu as déjà 3 matchs en attente, annules-en un avant d'en créer un nouveau.",
     "pendingInvites": "Invitations en cours",
-    "noPendingInvites": "Aucune invitation en attente"
+    "noPendingInvites": "Aucune invitation en attente",
+    "tableReserved": "✅ Table réservée ! À vous de jouer.",
+    "addedToQueue": "✅ Ajouté à la file d'attente !",
+    "unknownError": "Erreur inconnue",
+    "networkError": "Erreur réseau, réessaie.",
+    "matchCreateError": "Erreur création match",
+    "networkValidationError": "Erreur réseau lors de la validation.",
+    "targetMaxMatches": "{{player}} a déjà 3 matchs en attente."
   },
   "ranking": {
     "currentSeason": "Saison actuelle",
@@ -93,7 +103,21 @@
     "biggestLoss": "Plus grosse perte",
     "balanceEvolution": "Évolution du solde",
     "noChartData": "Aucun historique à afficher.",
-    "hoverHint": "Survolez un point pour voir le détail"
+    "hoverHint": "Survolez un point pour voir le détail",
+    "ranked": "classé",
+    "free": "libre",
+    "betRejected": "Pari refusé.",
+    "result": {
+      "won": "gagné",
+      "lost": "perdu",
+      "refunded": "remboursé",
+      "pending": "en cours"
+    },
+    "tokensWord": "jetons",
+    "amount": "{{amount}} jetons",
+    "betPlacedOn": "Pari sur {{player}}",
+    "bettedOn": "Parié sur {{player}} · {{date}}",
+    "confirm": "Confirmer ({{amount}} jetons)"
   },
   "queue": {
     "joinQueue": "+ S'ajouter à la file",
@@ -118,7 +142,10 @@
     "waitingWinner": "En attente du gagnant...",
     "pendingAccept": "En cours d'acceptation",
     "noPending": "Aucune invitation en cours",
-    "cancelInvite": "✕ Annuler"
+    "cancelInvite": "✕ Annuler",
+    "confirmBet": "Confirmer le pari ({{amount}} jetons)",
+    "pendingVs": "En attente vs {{opponent}}",
+    "betsWillOpen": "Les paris ouvriront quand la partie démarrera."
   },
   "tournaments": {
     "bdeAccess": "Accès BDE",
@@ -227,7 +254,19 @@
     "status_CANCELLED": "Annulé",
     "errPastDate": "La date de début doit être dans le futur.",
     "errEdit": "Erreur lors de la modification.",
-    "errCreate": "Erreur lors de la création."
+    "errCreate": "Erreur lors de la création.",
+    "partnerNote": "En duo avec {{partner}}",
+    "playersCount": "{{count}} joueurs",
+    "waitingSince": "En attente depuis {{since}}",
+    "errNoBde": "Vous n'avez pas les droits BDE.",
+    "errUnexpected": "Erreur inattendue.",
+    "errDeleteTournament": "Erreur lors de la suppression du tournoi.",
+    "errValidateMatch": "Erreur lors de la validation du match.",
+    "errReschedule": "Erreur lors de la replanification.",
+    "errGeneric": "Erreur.",
+    "errRegister": "Erreur lors de l'inscription.",
+    "errEditTeams": "Erreur lors de la modification des équipes.",
+    "errDelete": "Erreur lors de la suppression."
   },
   "profile": {
     "ratio": "Ratio",
@@ -257,7 +296,34 @@
     "clickToChoose": "Cliquer pour choisir une image",
     "close": "Fermer",
     "loginPlayerPlaceholder": "Login joueur...",
-    "addBtn": "+ Ajouter"
+    "addBtn": "+ Ajouter",
+    "myBadge": "Badge : {{label}}",
+    "myStatsCard": "Ma carte stats",
+    "elo1v1": "ELO 1v1",
+    "elo2v2": "ELO 2v2",
+    "cantAddSelf": "Tu ne peux pas t'ajouter toi-même.",
+    "playerNotFound": "Joueur introuvable dans la base de données.",
+    "tableReserved": "✅ Table réservée ! À vous de jouer.",
+    "reservationError": "Erreur lors de la réservation.",
+    "noResult": "Aucun résultat.",
+    "filterWins": "Victoires",
+    "filterLosses": "Défaites",
+    "filterLowScore": "< 5 pts marqués",
+    "result": {
+      "win": "Victoire",
+      "loss": "Défaite",
+      "draw": "Égalité"
+    },
+    "compare": "Comparer ({{count}})",
+    "searchFriend": "Rechercher un ami…",
+    "sortOnline": "En ligne d'abord",
+    "sortRecent": "Récemment joué",
+    "rankBadge": "#{{rank}} Classement",
+    "winsBadge_one": "{{count}} Victoire",
+    "winsBadge_other": "{{count}} Victoires",
+    "winrate": "{{pct}}% de victoires",
+    "lossrate": "{{pct}}% de défaites",
+    "uploadError": "Erreur upload"
   },
   "settings": {
     "tabs": {
@@ -365,7 +431,15 @@
     "winClaimDeclined": "Un gagnant a refusé de reprendre la gagne — le match a été annulé",
     "chainCancelled": "Un match de la chaîne a été annulé — ton créneau a été supprimé",
     "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi",
-    "acceptError": "Impossible d'accepter l'invitation (inscriptions fermées ou joueur introuvable)."
+    "acceptError": "Impossible d'accepter l'invitation (inscriptions fermées ou joueur introuvable).",
+    "received": "t'invite pour un match {{format}} ({{mode}})",
+    "winClaimReceived": "{{player}} t'invite à reprendre la gagne",
+    "accepted": "{{player}} a accepté ton invitation ✓",
+    "acceptedPartial": "{{player}} a accepté ({{count}}/{{total}})",
+    "declined": "{{player}} a refusé ton invitation",
+    "matchCancelled": "{{player}} a annulé le match",
+    "inviteCancelled": "{{player}} a annulé son invitation",
+    "sent": "Invitation envoyée à {{player}}"
   },
   "addMatch": {
     "title": "Ajouter un match",
@@ -400,7 +474,10 @@
     "opponentLocked": "Adversaire : gagnant du match ci-dessous",
     "missingPlayers": "Tous les joueurs doivent être renseignés.",
     "duplicatePlayer": "Un joueur ne peut apparaître qu'une seule fois.",
-    "takeWinWarning": "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé."
+    "takeWinWarning": "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé.",
+    "redPlayer2v2": "Login joueur rouge {{num}}...",
+    "bluePlayer2v2": "Login joueur bleu {{num}}...",
+    "playerInPrevMatch": "Ce joueur fait déjà partie du match précédent."
   },
   "game": {
     "red": "Rouge",
@@ -411,10 +488,13 @@
     "gamelle": "Gamelle",
     "tie": "Égalité !",
     "tieCancelWarning": "Ce match va être annulé — les reprises de gagne associées seront supprimées.",
-    "close": "Terminer et fermer"
+    "close": "Terminer et fermer",
+    "duration": "Durée : {{time}}",
+    "wins": "{{color}} gagne !"
   },
   "common": {
-    "vs": "vs"
+    "vs": "vs",
+    "close": "Fermer"
   },
   "performance": {
     "title": "PERFORMANCE",
@@ -481,11 +561,148 @@
   },
   "privacy": {
     "title": "Politique de confidentialité",
-    "updated": "Dernière mise à jour : juin 2026"
+    "updated": "Dernière mise à jour : juin 2026",
+    "s1": {
+      "title": "1. Qui sommes-nous ?",
+      "body": "Babyfoot42 est une plateforme interne à l'École 42 permettant de gérer les parties de babyfoot : planning, classement ELO par saison, paris en jetons virtuels et tournois organisés par le BDE. Cette politique décrit quelles données sont collectées, comment elles sont utilisées et quels sont vos droits."
+    },
+    "s2": {
+      "title": "2. Données collectées",
+      "items": [
+        "Compte — identifiant (login 42 ou choisi librement), adresse e-mail, mot de passe hashé et salé (PBKDF2).",
+        "Profil — avatar (optionnel), statut en ligne.",
+        "Authentification — identifiant OAuth 42 (si connexion via l'intranet 42), secret TOTP chiffré (si 2FA activée).",
+        "Activité de jeu — historique des parties, scores, variations ELO, statistiques (victoires, défaites, gamelles, demis).",
+        "Paris — mises placées, gains/pertes, solde du portefeuille en jetons, historique des transactions.",
+        "Planning — créneaux réservés, positions dans la file d'attente.",
+        "Tournois — inscriptions, résultats de matchs de tournoi.",
+        "Logs techniques — adresse IP, horodatage des connexions (conservation limitée à 30 jours)."
+      ]
+    },
+    "s3": {
+      "title": "3. Finalités du traitement",
+      "items": [
+        "Fournir les fonctionnalités de la plateforme (classement, planning, paris, tournois).",
+        "Assurer la sécurité des comptes (authentification, 2FA, détection d'abus).",
+        "Calculer et afficher le classement ELO en temps réel.",
+        "Gérer le portefeuille de jetons virtuels et les transactions associées.",
+        "Modérer la plateforme (rôle admin/BDE)."
+      ]
+    },
+    "s4": {
+      "title": "4. Base légale",
+      "body": "Le traitement repose sur votre consentement lors de la création de compte et sur l'intérêt légitime de la plateforme pour la sécurité et le bon fonctionnement du service."
+    },
+    "s5": {
+      "title": "5. Stockage et sécurité",
+      "items": [
+        "Les données sont stockées dans une base PostgreSQL hébergée localement sur les serveurs de l'École 42.",
+        "Les mots de passe ne sont jamais stockés en clair (PBKDF2 + sel).",
+        "Toutes les communications sont chiffrées via HTTPS (TLS 1.2/1.3).",
+        "Des sauvegardes automatiques sont effectuées chaque nuit.",
+        "L'accès à la base de données est restreint aux services internes."
+      ]
+    },
+    "s6": {
+      "title": "6. Partage des données",
+      "body": "Vos données ne sont ni vendues, ni transmises à des tiers. Seul l'OAuth 42 implique un échange d'informations avec l'intranet 42 (login, e-mail) lors de la connexion initiale."
+    },
+    "s7": {
+      "title": "7. Vos droits (RGPD)",
+      "items": [
+        "Accès et export — exportez toutes vos données (profil, parties, paris, transactions) en JSON ou CSV depuis vos paramètres.",
+        "Rectification — modifiez votre nom d'utilisateur et votre avatar depuis vos paramètres.",
+        "Suppression — demandez la suppression de votre compte depuis vos paramètres. Vos données personnelles seront anonymisées.",
+        "Opposition — désactivez la 2FA et révoquez la connexion OAuth depuis vos paramètres."
+      ]
+    },
+    "s8": {
+      "title": "8. Cookies",
+      "body": "La plateforme utilise un cookie de session JWT (HttpOnly, Secure, SameSite=Lax) strictement nécessaire à l'authentification. Aucun cookie publicitaire ou de tracking tiers n'est utilisé."
+    },
+    "s9": {
+      "title": "9. Contact",
+      "body": "Pour toute question relative à vos données, utilisez le formulaire de ticket disponible dans le footer ou contactez l'équipe via l'intranet 42."
+    }
   },
   "terms": {
     "title": "Conditions d'utilisation",
-    "updated": "Dernière mise à jour : juin 2026"
+    "updated": "Dernière mise à jour : juin 2026",
+    "s1": {
+      "title": "1. Objet",
+      "body": "Les présentes conditions régissent l'utilisation de Babyfoot42, plateforme interne à l'École 42 dédiée à la gestion des parties de babyfoot. En créant un compte, vous acceptez ces conditions dans leur intégralité."
+    },
+    "s2": {
+      "title": "2. Accès à la plateforme",
+      "items": [
+        "La plateforme est réservée aux étudiants, anciens élèves et membres du staff de l'École 42.",
+        "Chaque personne ne peut posséder qu'un seul compte. La création de comptes multiples est interdite.",
+        "Vous êtes responsable de la confidentialité de vos identifiants.",
+        "La plateforme est accessible via HTTPS uniquement."
+      ]
+    },
+    "s3": {
+      "title": "3. Règles de fair-play",
+      "items": [
+        "Il est interdit de parier sur ses propres matchs.",
+        "Toute tentative de manipulation des résultats, du classement ou du système de paris est interdite.",
+        "Les résultats de matchs doivent être saisis honnêtement. Toute fraude peut entraîner une suspension.",
+        "Le respect des autres joueurs est obligatoire. Les comportements abusifs seront sanctionnés."
+      ]
+    },
+    "s4": {
+      "title": "4. Jetons virtuels et paris",
+      "items": [
+        "Les jetons sont une monnaie virtuelle sans valeur monétaire réelle. Ils ne peuvent pas être échangés, vendus ou convertis en argent.",
+        "Chaque nouveau compte reçoit un solde initial de jetons.",
+        "Des jetons supplémentaires peuvent être gagnés en remportant des paris ou en finissant dans le top du classement à la fin d'une saison.",
+        "Les paris sont définitifs une fois placés. Remboursement uniquement en cas d'annulation du match par un administrateur."
+      ]
+    },
+    "s5": {
+      "title": "5. Classement et saisons",
+      "items": [
+        "Le classement est basé sur l'ELO calculé à partir des parties validées.",
+        "Les saisons sont créées et clôturées par les administrateurs. La clôture déclenche la distribution des récompenses et la remise à zéro du classement.",
+        "Les historiques de saisons passées sont conservés et consultables."
+      ]
+    },
+    "s6": {
+      "title": "6. Planning et réservations",
+      "items": [
+        "Les créneaux de réservation sont limités afin d'assurer un accès équitable à tous.",
+        "Une réservation non honorée peut entraîner une pénalité (perte de place dans la file).",
+        "La file d'attente est gérée automatiquement et visible par tous les utilisateurs connectés."
+      ]
+    },
+    "s7": {
+      "title": "7. Tournois",
+      "items": [
+        "Les tournois sont organisés par le BDE (Bureau Des Élèves) de l'École 42.",
+        "L'inscription à un tournoi engage le participant à être disponible pour tous ses matchs.",
+        "Les résultats des matchs de tournoi sont enregistrés par l'organisateur et ne sont pas modifiables par les joueurs."
+      ]
+    },
+    "s8": {
+      "title": "8. Modération et sanctions",
+      "items": [
+        "Les administrateurs peuvent suspendre temporairement ou bannir définitivement tout compte en cas de violation des présentes conditions.",
+        "En cas de ban, le solde de jetons et l'historique sont conservés mais le compte n'est plus accessible.",
+        "Toute contestation peut être soumise via le formulaire de ticket."
+      ]
+    },
+    "s9": {
+      "title": "9. Disponibilité du service",
+      "body": "La plateforme est fournie sans garantie de disponibilité continue. Des maintenances peuvent être effectuées sans préavis."
+    },
+    "s10": {
+      "title": "10. Modification des conditions",
+      "body": "Ces conditions peuvent être mises à jour à tout moment. Les utilisateurs sont informés via une notification in-app en cas de modification substantielle."
+    },
+    "s11": {
+      "title": "11. Contact",
+      "body": "Pour toute question ou réclamation, utilisez le formulaire de ticket disponible dans le footer ou contactez l'équipe via l'intranet 42."
+    }
   },
   "ticket": {
     "title": "Envoyer un ticket",
@@ -505,7 +722,18 @@
     "success_sub": "Merci pour ton retour. L'équipe en prendra connaissance rapidement.",
     "back": "← Retour",
     "err_server": "Erreur serveur",
-    "err_network": "Erreur réseau"
+    "err_network": "Erreur réseau",
+    "pages": [
+      "Accueil",
+      "Classement",
+      "Paris",
+      "Tournois",
+      "Profil",
+      "Planning",
+      "Paramètres",
+      "Autre"
+    ],
+    "max_files": "Maximum {{max}} fichiers."
   },
   "status": {
     "title": "Statut",
@@ -602,7 +830,87 @@
     "modal_elo_team": "ELO Team (2v2)",
     "modal_elo_cancel": "Annuler",
     "modal_elo_saving": "Sauvegarde...",
-    "modal_elo_save": "Enregistrer"
+    "modal_elo_save": "Enregistrer",
+    "modal_tourn_players": "{{n}} joueurs",
+    "confirm_cancel_tourn": "Annuler le tournoi « {{name}} » ?",
+    "modal_ban_title": "Bannir {{username}}",
+    "modal_elo_title": "Modifier l'ELO de {{username}}",
+    "err_role_update": "Erreur lors de la mise à jour du rôle.",
+    "err_delete_user": "Impossible de supprimer cet utilisateur.",
+    "deleting": "Suppression...",
+    "delete_permanently": "Supprimer définitivement",
+    "confirm_cancel_match": "Annuler ce match et restaurer les ELO ?",
+    "match_cancelled": "Annulé",
+    "delete_title": "Supprimer {{username}}",
+    "delete_warning": "Cette action est irréversible. Toutes les données du joueur seront supprimées.",
+    "delete_cancel": "Annuler"
+  },
+  "sidebar": {
+    "tokens": "{{count}} jetons"
+  },
+  "comparison": {
+    "title": "Comparaison joueurs",
+    "elo": "ELO",
+    "gamelles": "Gamelles",
+    "winStreak": "Série victoires",
+    "matchesMonth": "Parties / mois",
+    "selectUp": "Sélectionne jusqu'à 4 joueurs",
+    "searchLogin": "Rechercher un login…",
+    "noPlayer": "Aucun joueur trouvé",
+    "emptyHint": "Recherche et sélectionne des joueurs pour comparer"
+  },
+  "friend": {
+    "added": "Ami ajouté",
+    "addedYou": "t'a ajouté en coéquipier favori.",
+    "alreadyAdded": "Déjà ajouté",
+    "addBack": "Ajouter en retour",
+    "ignore": "Ignorer"
+  },
+  "statsCard": {
+    "bestElo": "Meilleur ELO",
+    "matchesPlayed": "Matchs joués",
+    "currentStreak": "Série actuelle",
+    "currentWealth": "Richesse actuelle",
+    "currentRatio": "Ratio actuel",
+    "titleOf": "Stats de {{login}}",
+    "titleMine": "Mes stats",
+    "exporting": "Export…",
+    "download": "↓ Télécharger (.png)"
+  },
+  "rankEvolution": {
+    "title": "Évolution du classement",
+    "loading": "Chargement…",
+    "noData": "Aucune donnée pour cette saison.",
+    "rankPosition": "Position dans le classement",
+    "matchesPlayed": "Matchs joués",
+    "rank": "Rang"
+  },
+  "banned": {
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "hours_one": "{{count}} heure",
+    "hours_other": "{{count}} heures",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "lessThanMinute": "moins d'une minute",
+    "permTitle": "Compte banni",
+    "permText": "Votre compte a été banni définitivement par un administrateur.",
+    "tempTitle": "Compte suspendu",
+    "tempText": "Votre compte est temporairement suspendu.",
+    "timeLeft": "Temps restant :",
+    "contact": "Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur à l'adresse {{email}} .",
+    "backToLogin": "Retour à la connexion"
+  },
+  "achievements": {
+    "cat": {
+      "GAMELLES": "🪣 Gamelles",
+      "DEMIS": "🍺 Demis",
+      "MATCH": "🏓 Matchs",
+      "SERIE": "🔥 Séries",
+      "ELO": "📈 ELO",
+      "SAISON": "🏆 Saisons",
+      "EQUIPE": "🤝 Équipe",
+      "ECONOMIE": "💰 Économie"
+    }
   }
 }
-

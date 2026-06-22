@@ -16,6 +16,16 @@ def _generate_code():
     return ''.join(random.choices(string.digits, k=6))
 
 
+def _invalid_code_response():
+    """Réponse « code invalide » en HTTP 200 (au lieu de 400) pour éviter une
+    ligne d'erreur réseau rouge dans la console du navigateur. Le front détecte
+    le cas via l'en-tête X-GDPR-Code-Valid (robuste même quand l'export renvoie
+    un fichier) et/ou le champ JSON `valid`."""
+    resp = Response({'valid': False}, status=status.HTTP_200_OK)
+    resp['X-GDPR-Code-Valid'] = 'false'
+    return resp
+
+
 def _send_verification_mail(user, action: str, code: str):
     labels = {
         'export': 'exporting your data',
@@ -62,10 +72,7 @@ class GDPRExportView(APIView):
         expected = cache.get(cache_key)
 
         if not expected or code != expected:
-            return Response(
-                {'error': 'Code invalide ou expiré'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _invalid_code_response()
         cache.delete(cache_key)
 
         data = {
@@ -140,31 +147,9 @@ class GDPRDeleteView(APIView):
         expected = cache.get(cache_key)
 
         if not expected or code != expected:
-            return Response(
-                {'error': 'Code invalide ou expiré'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _invalid_code_response()
         cache.delete(cache_key)
 
-        if user.avatar_url:
-            path = os.path.join(
-                settings.MEDIA_ROOT,
-                user.avatar_url.replace('/media/', ''),
-            )
-            if os.path.exists(path):
-                os.remove(path)
+        user.anonymize()
 
-        user.username = f"del{str(user.id)[:5]}"
-        user.email = f"{uuid.uuid4()}@deleted.invalid"
-        user.set_unusable_password()
-        user.avatar_url = None
-        user.oauth_42_id = None
-        user.totp_secret = None
-        user.is_2fa_enabled = False
-        user.is_active = False
-        user.last_login = None
-        user.banned_until = None
-        user.gdpr_deleted = True
-        user.save()
-
-        return Response({'status': 'Compte anonymisé'})
+        return Response({'valid': True, 'status': 'Compte anonymisé'})

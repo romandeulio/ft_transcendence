@@ -5,17 +5,6 @@ import Topbar from '../components/layout/Topbar'
 import { authFetch } from '../services/api'
 import styles from './Achievements.module.css'
 
-const CATEGORY_LABELS = {
-  GAMELLES:  '🪣 Gamelles',
-  DEMIS:     '🍺 Demis',
-  MATCH:     '🏓 Matchs',
-  SERIE:     '🔥 Séries',
-  ELO:       '📈 ELO',
-  SAISON:    '🏆 Saisons',
-  EQUIPE:    '🤝 Équipe',
-  ECONOMIE:  '💰 Économie',
-}
-
 const CATEGORY_ORDER = ['GAMELLES', 'DEMIS', 'MATCH', 'SERIE', 'ELO', 'SAISON', 'EQUIPE', 'ECONOMIE']
 
 export default function Achievements() {
@@ -65,7 +54,7 @@ export default function Achievements() {
               return (
                 <div key={cat} className={styles.category}>
                   <div className={styles.categoryTitle}>
-                    {CATEGORY_LABELS[cat] || cat}
+                    {t(`achievements.cat.${cat}`)}
                   </div>
                   <div className={styles.grid}>
                     {items.map(a => (

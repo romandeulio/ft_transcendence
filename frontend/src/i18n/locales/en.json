@@ -31,7 +31,10 @@
     "error": "Invalid email or password.",
     "networkError": "Network error, please try again.",
     "noAccount": "No account yet?",
-    "registerLink": "Sign up"
+    "registerLink": "Sign up",
+    "codePlaceholder": "6-digit code",
+    "verifying": "Verifying...",
+    "validate": "Submit"
   },
   "home": {
     "scheduledMatch": "📋 Scheduled match",
@@ -52,7 +55,14 @@
     "waiting": "Waiting",
     "maxMatches": "You already have 3 pending matches, cancel one before creating a new one.",
     "pendingInvites": "Pending invitations",
-    "noPendingInvites": "No pending invitations"
+    "noPendingInvites": "No pending invitations",
+    "tableReserved": "✅ Table reserved! Your turn to play.",
+    "addedToQueue": "✅ Added to the queue!",
+    "unknownError": "Unknown error",
+    "networkError": "Network error, try again.",
+    "matchCreateError": "Match creation error",
+    "networkValidationError": "Network error during validation.",
+    "targetMaxMatches": "{{player}} already has 3 pending matches."
   },
   "ranking": {
     "currentSeason": "Current season",
@@ -93,7 +103,21 @@
     "biggestLoss": "Biggest loss",
     "balanceEvolution": "Balance evolution",
     "noChartData": "No history to display.",
-    "hoverHint": "Hover a point to see details"
+    "hoverHint": "Hover a point to see details",
+    "ranked": "ranked",
+    "free": "free",
+    "betRejected": "Bet rejected.",
+    "result": {
+      "won": "won",
+      "lost": "lost",
+      "refunded": "refunded",
+      "pending": "pending"
+    },
+    "tokensWord": "tokens",
+    "amount": "{{amount}} tokens",
+    "betPlacedOn": "Bet on {{player}}",
+    "bettedOn": "Bet on {{player}} · {{date}}",
+    "confirm": "Confirm ({{amount}} tokens)"
   },
   "queue": {
     "joinQueue": "+ Join the queue",
@@ -118,7 +142,10 @@
     "waitingWinner": "Waiting for winner...",
     "pendingAccept": "Awaiting acceptance",
     "noPending": "No pending invitations",
-    "cancelInvite": "✕ Cancel"
+    "cancelInvite": "✕ Cancel",
+    "confirmBet": "Confirm bet ({{amount}} tokens)",
+    "pendingVs": "Waiting vs {{opponent}}",
+    "betsWillOpen": "Bets will open when the match starts."
   },
   "tournaments": {
     "bdeAccess": "BDE Access",
@@ -227,7 +254,19 @@
     "status_CANCELLED": "Cancelled",
     "errPastDate": "The start date must be in the future.",
     "errEdit": "Error while editing.",
-    "errCreate": "Error while creating."
+    "errCreate": "Error while creating.",
+    "partnerNote": "Teamed up with {{partner}}",
+    "playersCount": "{{count}} players",
+    "waitingSince": "Waiting since {{since}}",
+    "errNoBde": "You don't have BDE rights.",
+    "errUnexpected": "Unexpected error.",
+    "errDeleteTournament": "Error deleting the tournament.",
+    "errValidateMatch": "Error validating the match.",
+    "errReschedule": "Error rescheduling.",
+    "errGeneric": "Error.",
+    "errRegister": "Error during registration.",
+    "errEditTeams": "Error editing the teams.",
+    "errDelete": "Error during deletion."
   },
   "profile": {
     "ratio": "Ratio",
@@ -257,7 +296,34 @@
     "clickToChoose": "Click to choose an image",
     "close": "Close",
     "loginPlayerPlaceholder": "Player login...",
-    "addBtn": "+ Add"
+    "addBtn": "+ Add",
+    "myBadge": "Badge: {{label}}",
+    "myStatsCard": "My Stats Card",
+    "elo1v1": "ELO 1v1",
+    "elo2v2": "ELO 2v2",
+    "cantAddSelf": "You can't add yourself.",
+    "playerNotFound": "Player not found in the database.",
+    "tableReserved": "✅ Table reserved! Your turn to play.",
+    "reservationError": "Error during reservation.",
+    "noResult": "No result.",
+    "filterWins": "Wins",
+    "filterLosses": "Losses",
+    "filterLowScore": "< 5 pts scored",
+    "result": {
+      "win": "Win",
+      "loss": "Loss",
+      "draw": "Draw"
+    },
+    "compare": "Compare ({{count}})",
+    "searchFriend": "Search a friend…",
+    "sortOnline": "Online first",
+    "sortRecent": "Recently played",
+    "rankBadge": "#{{rank}} Ranking",
+    "winsBadge_one": "{{count}} Win",
+    "winsBadge_other": "{{count}} Wins",
+    "winrate": "{{pct}}% wins",
+    "lossrate": "{{pct}}% losses",
+    "uploadError": "Upload error"
   },
   "settings": {
     "tabs": {
@@ -285,7 +351,20 @@
       "oauth": "42 OAuth",
       "oauthSub": "Sign in with 42 account",
       "activeSessions": "Active sessions",
-      "disconnectAll": "Disconnect all"
+      "disconnectAll": "Disconnect all",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "passwordChanged": "Password changed ✓",
+      "saving": "Saving...",
+      "passwordMismatch": "Passwords don't match",
+      "passwordMin": "Minimum 8 characters",
+      "error": "Error",
+      "tfaOnSub": "A verification code will be sent by email on each login.",
+      "tfaOffSub": "Enable two-factor email authentication to secure your account.",
+      "disable2fa": "Disable 2FA",
+      "enable2fa": "Enable email 2FA",
+      "tfaEnabled": "2FA enabled ✓"
     },
     "notifications": {
       "turn": "It's your turn at the table",
@@ -352,7 +431,15 @@
     "winClaimDeclined": "A winner declined to carry the win — the match has been cancelled",
     "chainCancelled": "A match in the chain was cancelled — your slot has been removed",
     "tournamentTeammate": "invites you to team up for the next tournament",
-    "acceptError": "Could not accept the invite (registrations closed or player not found)."
+    "acceptError": "Could not accept the invite (registrations closed or player not found).",
+    "received": "invites you to a {{format}} match ({{mode}})",
+    "winClaimReceived": "{{player}} invites you to take the winner spot",
+    "accepted": "{{player}} accepted your invitation ✓",
+    "acceptedPartial": "{{player}} accepted ({{count}}/{{total}})",
+    "declined": "{{player}} declined your invitation",
+    "matchCancelled": "{{player}} cancelled the match",
+    "inviteCancelled": "{{player}} cancelled their invitation",
+    "sent": "Invitation sent to {{player}}"
   },
   "addMatch": {
     "title": "Add a match",
@@ -387,7 +474,10 @@
     "opponentLocked": "Opponent: winner of the match below",
     "missingPlayers": "All players must be filled in.",
     "duplicatePlayer": "A player can only appear once.",
-    "takeWinWarning": "⚠️ Warning: if the winner(s) don't accept your invitation, the match will be cancelled."
+    "takeWinWarning": "⚠️ Warning: if the winner(s) don't accept your invitation, the match will be cancelled.",
+    "redPlayer2v2": "Red player {{num}} login...",
+    "bluePlayer2v2": "Blue player {{num}} login...",
+    "playerInPrevMatch": "This player is already in the previous match."
   },
   "game": {
     "red": "Red",
@@ -398,10 +488,13 @@
     "gamelle": "Bucket",
     "tie": "Draw!",
     "tieCancelWarning": "This match will be cancelled — any takeWin chains will be removed.",
-    "close": "Finish and close"
+    "close": "Finish and close",
+    "duration": "Duration: {{time}}",
+    "wins": "{{color}} wins!"
   },
   "common": {
-    "vs": "vs"
+    "vs": "vs",
+    "close": "Close"
   },
   "performance": {
     "title": "PERFORMANCE",
@@ -468,11 +561,148 @@
   },
   "privacy": {
     "title": "Privacy Policy",
-    "updated": "Last updated: June 2026"
+    "updated": "Last updated: June 2026",
+    "s1": {
+      "title": "1. Who are we?",
+      "body": "Babyfoot42 is an internal platform at École 42 for managing foosball: planning, seasonal ELO rankings, virtual token betting, and BDE-organized tournaments. This policy describes what data is collected, how it is used, and what your rights are."
+    },
+    "s2": {
+      "title": "2. Data collected",
+      "items": [
+        "Account — username (42 login or chosen freely), email address, hashed and salted password (PBKDF2).",
+        "Profile — avatar (optional), online status.",
+        "Authentication — 42 OAuth ID (if logging in via the 42 intranet), encrypted TOTP secret (if 2FA is enabled).",
+        "Game activity — match history, scores, ELO changes, statistics (wins, losses, gamelles, demis).",
+        "Betting — bets placed, winnings/losses, token wallet balance, transaction history.",
+        "Planning — reserved slots, queue positions.",
+        "Tournaments — registrations, tournament match results.",
+        "Technical logs — IP address, login timestamps (retained for 30 days maximum)."
+      ]
+    },
+    "s3": {
+      "title": "3. Purposes",
+      "items": [
+        "Provide the platform features (ranking, planning, betting, tournaments).",
+        "Ensure account security (authentication, 2FA, abuse detection).",
+        "Calculate and display the ELO ranking in real time.",
+        "Manage the virtual token wallet and associated transactions.",
+        "Moderate the platform (admin/BDE role)."
+      ]
+    },
+    "s4": {
+      "title": "4. Legal basis",
+      "body": "Processing is based on your consent at account creation and on the platform's legitimate interest in security and proper service operation."
+    },
+    "s5": {
+      "title": "5. Storage and security",
+      "items": [
+        "Data is stored in a PostgreSQL database hosted locally on École 42 servers.",
+        "Passwords are never stored in plain text (PBKDF2 + salt).",
+        "All communications are encrypted via HTTPS (TLS 1.2/1.3).",
+        "Automatic backups are performed every night.",
+        "Database access is restricted to internal services only."
+      ]
+    },
+    "s6": {
+      "title": "6. Data sharing",
+      "body": "Your data is never sold or shared with third parties. Only the 42 OAuth flow involves exchanging information with the 42 intranet (login, email) at initial sign-in."
+    },
+    "s7": {
+      "title": "7. Your rights (GDPR)",
+      "items": [
+        "Access and export — export all your data (profile, matches, bets, transactions) as JSON or CSV from your settings.",
+        "Rectification — change your username and avatar from your settings.",
+        "Deletion — request account deletion from your settings. Your personal data will be anonymised.",
+        "Opposition — disable 2FA and revoke OAuth login from your settings."
+      ]
+    },
+    "s8": {
+      "title": "8. Cookies",
+      "body": "The platform uses a single JWT session cookie (HttpOnly, Secure, SameSite=Lax) strictly necessary for authentication. No advertising or third-party tracking cookies are used."
+    },
+    "s9": {
+      "title": "9. Contact",
+      "body": "For any questions about your data, use the ticket form in the footer or contact the team via the 42 intranet."
+    }
   },
   "terms": {
     "title": "Terms of Service",
-    "updated": "Last updated: June 2026"
+    "updated": "Last updated: June 2026",
+    "s1": {
+      "title": "1. Purpose",
+      "body": "These terms govern the use of Babyfoot42, an internal platform at École 42 for managing foosball. By creating an account, you agree to these terms in full."
+    },
+    "s2": {
+      "title": "2. Access to the platform",
+      "items": [
+        "The platform is reserved for students, alumni, and staff of École 42.",
+        "Each person may only have one account. Creating multiple accounts is prohibited.",
+        "You are responsible for keeping your credentials confidential.",
+        "The platform is accessible via HTTPS only."
+      ]
+    },
+    "s3": {
+      "title": "3. Fair play rules",
+      "items": [
+        "Betting on your own matches is prohibited.",
+        "Any attempt to manipulate results, the ranking, or the betting system is prohibited.",
+        "Match results must be entered honestly. Cheating may result in a suspension.",
+        "Respect for other players is mandatory. Abusive behaviour will be sanctioned."
+      ]
+    },
+    "s4": {
+      "title": "4. Virtual tokens and betting",
+      "items": [
+        "Tokens are a virtual currency with no real monetary value. They cannot be exchanged, sold, or converted into money.",
+        "Each new account receives an initial token balance.",
+        "Additional tokens can be earned by winning bets or finishing in the top of the leaderboard at the end of a season.",
+        "Bets are final once placed. Refunds are only issued if a match is cancelled by an administrator."
+      ]
+    },
+    "s5": {
+      "title": "5. Rankings and seasons",
+      "items": [
+        "The ranking is based on ELO calculated from validated matches.",
+        "Seasons are created and closed by administrators. Closing a season triggers reward distribution and an ELO reset.",
+        "Past season histories are preserved and viewable."
+      ]
+    },
+    "s6": {
+      "title": "6. Planning and reservations",
+      "items": [
+        "Reservation slots are limited to ensure fair access for everyone.",
+        "A no-show reservation may result in a penalty (loss of queue position).",
+        "The waiting queue is managed automatically and visible to all connected users."
+      ]
+    },
+    "s7": {
+      "title": "7. Tournaments",
+      "items": [
+        "Tournaments are organized by the BDE (student association) of École 42.",
+        "Registering for a tournament commits the participant to being available for all their matches.",
+        "Tournament match results are recorded by the organizer and cannot be modified by players."
+      ]
+    },
+    "s8": {
+      "title": "8. Moderation and sanctions",
+      "items": [
+        "Administrators may temporarily suspend or permanently ban any account for violation of these terms.",
+        "In case of a ban, the token balance and history are retained but the account is no longer accessible.",
+        "Any dispute may be submitted via the ticket form."
+      ]
+    },
+    "s9": {
+      "title": "9. Service availability",
+      "body": "The platform is provided as-is, without guarantee of continuous availability. Maintenance may be performed without notice."
+    },
+    "s10": {
+      "title": "10. Changes to terms",
+      "body": "These terms may be updated at any time. Users are notified via an in-app notification in case of substantial changes."
+    },
+    "s11": {
+      "title": "11. Contact",
+      "body": "For any questions or complaints, use the ticket form in the footer or contact the team via the 42 intranet."
+    }
   },
   "ticket": {
     "title": "Submit a ticket",
@@ -492,7 +722,18 @@
     "success_sub": "Thanks for your feedback. The team will look into it shortly.",
     "back": "← Back",
     "err_server": "Server error",
-    "err_network": "Network error"
+    "err_network": "Network error",
+    "pages": [
+      "Home",
+      "Ranking",
+      "Bets",
+      "Tournaments",
+      "Profile",
+      "Planning",
+      "Settings",
+      "Other"
+    ],
+    "max_files": "Maximum {{max}} files."
   },
   "status": {
     "title": "Status",
@@ -589,6 +830,87 @@
     "modal_elo_team": "ELO Team (2v2)",
     "modal_elo_cancel": "Cancel",
     "modal_elo_saving": "Saving...",
-    "modal_elo_save": "Save"
+    "modal_elo_save": "Save",
+    "modal_tourn_players": "{{n}} players",
+    "confirm_cancel_tourn": "Cancel tournament \"{{name}}\"?",
+    "modal_ban_title": "Ban {{username}}",
+    "modal_elo_title": "Edit {{username}}'s ELO",
+    "err_role_update": "Error updating the role.",
+    "err_delete_user": "Unable to delete this user.",
+    "deleting": "Deleting...",
+    "delete_permanently": "Delete permanently",
+    "confirm_cancel_match": "Cancel this match and restore ELO?",
+    "match_cancelled": "Cancelled",
+    "delete_title": "Delete {{username}}",
+    "delete_warning": "This action is irreversible. All the player’s data will be deleted.",
+    "delete_cancel": "Cancel"
+  },
+  "sidebar": {
+    "tokens": "{{count}} tokens"
+  },
+  "comparison": {
+    "title": "Player comparison",
+    "elo": "ELO",
+    "gamelles": "Gamelles",
+    "winStreak": "Win streak",
+    "matchesMonth": "Matches / month",
+    "selectUp": "Select up to 4 players",
+    "searchLogin": "Search a login…",
+    "noPlayer": "No player found",
+    "emptyHint": "Search and select players to compare"
+  },
+  "friend": {
+    "added": "Friend added",
+    "addedYou": "added you as a favorite teammate.",
+    "alreadyAdded": "Already added",
+    "addBack": "Add back",
+    "ignore": "Ignore"
+  },
+  "statsCard": {
+    "bestElo": "Best ELO",
+    "matchesPlayed": "Matches played",
+    "currentStreak": "Current streak",
+    "currentWealth": "Current wealth",
+    "currentRatio": "Current ratio",
+    "titleOf": "{{login}}'s Stats",
+    "titleMine": "My Stats",
+    "exporting": "Export…",
+    "download": "↓ Download (.png)"
+  },
+  "rankEvolution": {
+    "title": "Ranking evolution",
+    "loading": "Loading…",
+    "noData": "No data for this season.",
+    "rankPosition": "Rank position",
+    "matchesPlayed": "Matches played",
+    "rank": "Rank"
+  },
+  "banned": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "lessThanMinute": "less than a minute",
+    "permTitle": "Account banned",
+    "permText": "Your account has been permanently banned by an administrator.",
+    "tempTitle": "Account suspended",
+    "tempText": "Your account is temporarily suspended.",
+    "timeLeft": "Time left:",
+    "contact": "If you think this is a mistake, contact an administrator at {{email}} .",
+    "backToLogin": "Back to login"
+  },
+  "achievements": {
+    "cat": {
+      "GAMELLES": "🪣 Gamelles",
+      "DEMIS": "🍺 Halves",
+      "MATCH": "🏓 Matches",
+      "SERIE": "🔥 Streaks",
+      "ELO": "📈 ELO",
+      "SAISON": "🏆 Seasons",
+      "EQUIPE": "🤝 Team",
+      "ECONOMIE": "💰 Economy"
+    }
   }
 }

@@ -179,7 +179,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelRed}</div>
           <div className={styles.sideScore}>{scoreRed}</div>
           {gamellesRed > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesRed}</div>}
-          {demisRed > 0 && <div className={styles.gamelleIndicator}>🍺 ×{demisRed}</div>}
+          {demisRed > 0 && <div className={`${styles.gamelleIndicator} ${styles.demiCount}`}>🍺 ×{demisRed}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
@@ -218,7 +218,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelBlue}</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
           {gamellesBlue > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesBlue}</div>}
-          {demisBlue > 0 && <div className={styles.gamelleIndicator}>🍺 ×{demisBlue}</div>}
+          {demisBlue > 0 && <div className={`${styles.gamelleIndicator} ${styles.demiCount}`}>🍺 ×{demisBlue}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 

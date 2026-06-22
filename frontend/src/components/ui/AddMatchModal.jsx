@@ -86,7 +86,7 @@ export default function AddMatchModal({ open, onClose, onConfirm, user, prevTeam
         ...(prevTeam?.team2?.filter(Boolean) || []),
       ]
       if (prevPlayers.includes(teammate)) {
-        setValidationError('Ce joueur fait déjà partie du match précédent.')
+        setValidationError(t('addMatch.playerInPrevMatch'))
         return
       }
     }

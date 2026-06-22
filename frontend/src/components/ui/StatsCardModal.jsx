@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { authFetch } from '../../services/api'
 import styles from './StatsCardModal.module.css'
 
 export default function StatsCardModal({ onClose, knownStats = {} }) {
+  const { t } = useTranslation()
   const [remote,    setRemote]    = useState(null)
   const [dlLoading, setDlLoading] = useState(false)
   const cardRef = useRef(null)
@@ -22,11 +24,11 @@ export default function StatsCardModal({ onClose, knownStats = {} }) {
   const bestRatio   = remote?.best_ratio       ?? '…'
 
   const ROWS = [
-    { icon: '⭐', label: 'Meilleur ELO',       value: bestElo     },
-    { icon: '🎮', label: 'Matchs joués',        value: totalMatchs  },
-    { icon: '🔥', label: 'Série actuelle',         value: bestStreak  },
-    { icon: '💰', label: 'Richesse actuelle',     value: maxTokens   },
-    { icon: '📊', label: 'Ratio actuel',          value: bestRatio   },
+    { icon: '⭐', label: t('statsCard.bestElo'),      value: bestElo     },
+    { icon: '🎮', label: t('statsCard.matchesPlayed'), value: totalMatchs },
+    { icon: '🔥', label: t('statsCard.currentStreak'), value: bestStreak  },
+    { icon: '💰', label: t('statsCard.currentWealth'), value: maxTokens   },
+    { icon: '📊', label: t('statsCard.currentRatio'),  value: bestRatio   },
   ]
 
   const download = async () => {
@@ -54,7 +56,7 @@ export default function StatsCardModal({ onClose, knownStats = {} }) {
 
         <div className={styles.card} ref={cardRef}>
           <div className={styles.cardTitle}>
-            {login ? `${login}'s Stats` : 'My Stats'}
+            {login ? t('statsCard.titleOf', { login }) : t('statsCard.titleMine')}
           </div>
           <div className={styles.rows}>
             {ROWS.map((r, i) => (
@@ -69,9 +71,9 @@ export default function StatsCardModal({ onClose, knownStats = {} }) {
 
         <div className={styles.actions}>
           <button className={styles.dlBtn} onClick={download} disabled={dlLoading}>
-            {dlLoading ? 'Export…' : '↓ Télécharger (.png)'}
+            {dlLoading ? t('statsCard.exporting') : t('statsCard.download')}
           </button>
-          <button className={styles.closeBtn} onClick={onClose}>Fermer</button>
+          <button className={styles.closeBtn} onClick={onClose}>{t('common.close')}</button>
         </div>
       </div>
     </div>

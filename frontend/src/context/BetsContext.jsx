@@ -2,12 +2,13 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useAuth } from '../hooks/useAuth'
 import { authFetch } from '../services/api'
+import i18n from '../i18n'
 
 const BetsContext = createContext(null)
 
 function formatLabel(matchType, isRanked) {
   const fmt = matchType === 'TEAM' ? '2v2' : matchType === 'TWO_V_ONE' ? '2v1' : '1v1'
-  return `${fmt} · ${isRanked ? 'classé' : 'libre'}`
+  return `${fmt} · ${isRanked ? i18n.t('bets.ranked') : i18n.t('bets.free')}`
 }
 
 function mapMarketToBet(m) {
@@ -39,10 +40,8 @@ function mapMarketToBet(m) {
 }
 
 function mapHistory(b) {
-  const result = b.result === 'won' ? 'gagné'
-    : b.result === 'lost' ? 'perdu'
-    : b.result === 'refunded' ? 'remboursé'
-    : 'en cours'
+  // `result` est une CLÉ stable (won/lost/refunded/pending) — traduite à l'affichage.
+  const result = ['won', 'lost', 'refunded'].includes(b.result) ? b.result : 'pending'
   const d = b.created_at ? new Date(b.created_at) : null
   const date = d
     ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -121,7 +120,7 @@ export function BetsProvider({ children }) {
       body: JSON.stringify({ reservation: reservationId, side, amount }),
     })
     if (!res.ok) {
-      let detail = 'Pari refusé.'
+      let detail = i18n.t('bets.betRejected')
       try { detail = (await res.json()).detail || detail } catch {}
       throw new Error(detail)
     }

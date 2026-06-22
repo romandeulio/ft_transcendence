@@ -228,6 +228,11 @@
   border-radius: 20px;
 }
 
+/* Indicateur demi (🍺) empilé au-dessus de la gamelle (🪣) pour éviter le chevauchement */
+.demiCount {
+  bottom: 56px;
+}
+
 /* ── Écran de fin ── */
 .endScreen {
   display: flex;

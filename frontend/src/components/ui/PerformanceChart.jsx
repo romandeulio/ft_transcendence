@@ -4,6 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 import { authFetch } from '../../services/api'
 import styles from './PerformanceChart.module.css'
 
@@ -36,7 +37,6 @@ async function exportPDF(chartRef, yAxis) {
 
 const COLORS = ['#CD3122', '#4068DB', '#57722F', '#E6B447', '#9B59B6', '#1ABC9C', '#E67E22', '#2C3E50']
 
-const FR_MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc']
 
 function isoWeekKey(date) {
   const d = new Date(date); d.setHours(12, 0, 0, 0)
@@ -80,7 +80,7 @@ function buildMonthSlots() {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    slots.push({ key, label: FR_MONTHS[d.getMonth()] })
+    slots.push({ key, label: d.toLocaleString(i18n.language, { month: 'short' }) })
   }
   return slots
 }

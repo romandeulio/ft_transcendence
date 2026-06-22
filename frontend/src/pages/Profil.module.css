@@ -201,6 +201,16 @@
   text-align: right;
 }
 
+.eloRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+}
+
+.eloBlock {
+  text-align: center;
+}
+
 .eloVal {
   font-size: 34px;
   font-weight: 800;

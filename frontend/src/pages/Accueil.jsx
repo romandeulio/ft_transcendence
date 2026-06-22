@@ -63,7 +63,7 @@ export default function Accueil() {
         vs,
         vsColor,
         format:   s.format || '1v1',
-        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        mode:     s.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
         label:    s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
         cancelFn: s.type === 'pending_invite'
           ? () => cancelInvite(s._localId)
@@ -99,7 +99,7 @@ export default function Accueil() {
         vs,
         vsColor,
         format:   s.format || '1v1',
-        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        mode:     s.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
         label:    t('home.waiting'),
         cancelFn: () => cancelAsP2(s.id || s._localId),
         _slot:    s,
@@ -129,7 +129,7 @@ export default function Accueil() {
           : (activeGame.player1 || '?'),
         vsColor: activeGame.player1 === user.username ? 'red' : 'blue',
         format: activeGame.match_type === 'TEAM' ? '2v2' : '1v1',
-        mode: 'Chill',
+        mode: t('addMatch.chill'),
         label: t('home.waiting'),
         cancelFn: () => {},
         _slot: {
@@ -305,7 +305,7 @@ export default function Accueil() {
 
       if (resv.ok) {
         const resvData = await resv.json().catch(() => ({}))
-        setMatchError('✅ Table réservée ! À vous de jouer.')
+        setMatchError(t('home.tableReserved'))
         joinQueue({ ...baseSlot, reservationId: resvData.id, type: 'live' })
         return
       }
@@ -322,22 +322,22 @@ export default function Accueil() {
         body: JSON.stringify(body),
       })
       if (queueRes.ok) {
-        setMatchError('✅ Ajouté à la file d\'attente !')
+        setMatchError(t('home.addedToQueue'))
         joinQueue({ ...baseSlot, type: 'waiting' })
       } else {
         const err = await queueRes.json().catch(() => ({}))
         const errMsg = Object.values(err).flat().join(' ') || ''
         const alreadyQueued = errMsg.toLowerCase().includes('déjà') || errMsg.toLowerCase().includes('already')
         if (alreadyQueued) {
-          setMatchError('✅ Ajouté à la file d\'attente !')
+          setMatchError(t('home.addedToQueue'))
           joinQueue({ ...baseSlot, type: 'waiting' })
         } else {
-          setMatchError(errMsg || 'Erreur inconnue')
+          setMatchError(errMsg || t('home.unknownError'))
         }
       }
     } catch (err) {
       console.error(err)
-      setMatchError('Erreur réseau, réessaie.')
+      setMatchError(t('home.networkError'))
     }
   }
 
@@ -439,7 +439,7 @@ export default function Accueil() {
       })
       if (!matchRes.ok) {
         const err = await matchRes.json().catch(() => ({}))
-        setMatchError(Object.values(err).flat().join(' ') || 'Erreur création match')
+        setMatchError(Object.values(err).flat().join(' ') || t('home.matchCreateError'))
         doCleanup()
         return
       }
@@ -480,7 +480,7 @@ export default function Accueil() {
         .catch(console.error)
     } catch (err) {
       console.error(err)
-      setMatchError('Erreur réseau lors de la validation.')
+      setMatchError(t('home.networkValidationError'))
       doCleanup()
     }
   }
@@ -631,7 +631,7 @@ export default function Accueil() {
               </div>
               {pageSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>
-                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : m.result === 'Egalité' ? 'draw' : 'loss'} />
+                  <Pill label={t(`profile.result.${m.result}`)} type={m.result} />
                   <div className={styles.matchInfo}>
                     <span className={styles.matchVs}>vs {m.vs}</span>
                     <span className={styles.matchScore}>{m.score}</span>

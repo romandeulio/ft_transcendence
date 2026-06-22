@@ -22,6 +22,10 @@ from .serializers import RegistrationSerializer, TournamentCreateSerializer, Tou
 User = get_user_model()
 
 def _has_bde_access(request):
+    # Le panneau d'administration s'authentifie par session (is_admin) et non via
+    # request.user (JWT) : on lui accorde donc l'accès BDE complet.
+    if request.session.get('is_admin', False):
+        return True
     if getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False):
         return True
     role = getattr(request.user, 'role', '') or ''

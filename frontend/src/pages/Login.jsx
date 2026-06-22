@@ -159,7 +159,7 @@ export default function Login() {
             <form onSubmit={handleVerify2FA}>
               <input
                 className={styles.input}
-                placeholder="Code à 6 chiffres"
+                placeholder={t('login.codePlaceholder')}
                 type="text"
                 maxLength={6}
                 value={tfaCode}
@@ -169,7 +169,7 @@ export default function Login() {
               />
               {error && <div className={styles.error}>{error}</div>}
               <button className={styles.btnLogin} type="submit" disabled={tfaCode.length < 6 || tfaLoading}>
-                {tfaLoading ? 'Vérification...' : 'Valider'}
+                {tfaLoading ? t('login.verifying') : t('login.validate')}
               </button>
             </form>
             <button

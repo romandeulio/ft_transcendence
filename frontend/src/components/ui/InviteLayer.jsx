@@ -98,25 +98,27 @@ export default function InviteLayer() {
       {friendNotifications.map(notif => (
         <div key={notif.id} className={styles.friendCard}>
           <div className={styles.friendCardHeader}>
-            <span className={styles.friendCardTitle}>Ami ajouté</span>
+            <span className={styles.friendCardTitle}>{t('friend.added')}</span>
             <button className={styles.dismissBtn} onClick={() => dismissFriendNotification(notif.id)}>✕</button>
           </div>
           <div className={styles.friendCardFrom}>{notif.from}</div>
           <div className={styles.friendCardText}>
-            t'a ajouté en coéquipier favori.
+            {t('friend.addedYou')}
           </div>
           <div className={styles.friendCardActions}>
             <button
               className={styles.addBackBtn}
               disabled={addedFriends[notif.from] || isFriend(notif.from)}
               onClick={() => {
-                if (addFriend(notif.from)) setAddedFriends(p => ({ ...p, [notif.from]: true }))
+                addFriend(notif.from)
+                setAddedFriends(p => ({ ...p, [notif.from]: true }))
+                dismissFriendNotification(notif.id)
               }}
             >
-              {addedFriends[notif.from] || isFriend(notif.from) ? 'Déjà ajouté' : 'Ajouter en retour'}
+              {addedFriends[notif.from] || isFriend(notif.from) ? t('friend.alreadyAdded') : t('friend.addBack')}
             </button>
             <button className={styles.friendDismissBtn} onClick={() => dismissFriendNotification(notif.id)}>
-              Ignorer
+              {t('friend.ignore')}
             </button>
           </div>
         </div>

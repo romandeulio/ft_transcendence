@@ -491,11 +491,20 @@ class FriendAddNotifyView(APIView):
         try:
             from channels.layers import get_channel_layer
             from asgiref.sync import async_to_sync
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                f"user_{target}",
-                {"type": "friend_added", "from": request.user.username},
-            )
+            from realtime import state
+            sender = request.user.username
+            if target in state.online_users:
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target}",
+                    {"type": "friend_added", "from": sender},
+                )
+            else:
+                # Cible hors-ligne : on stocke la notif pour la livrer à sa
+                # prochaine connexion (cf. QueueConsumer._deliver_pending).
+                pending = state.pending_invites.setdefault(target, [])
+                if not any(p.get("friend_added") and p.get("from") == sender for p in pending):
+                    pending.append({"friend_added": True, "from": sender})
         except Exception:
             pass
         return Response({'detail': 'ok'})
