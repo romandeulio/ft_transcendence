@@ -641,3 +641,68 @@
   .bdeBtnIcon { display: inline; font-size: 16px; }
   .bdeBtn { padding: 8px 10px; }
 }
+
+.standingsBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.standingsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.standingsTh {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.standingsTd {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.standingsRowEven {
+  background: rgba(255,255,255,0.02);
+}
+
+.standingsRowOdd {
+  background: transparent;
+}
+
+/* Import résultat */
+.importResult {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.importSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.importSectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.importRow {
+  font-size: 13px;
+  padding: 3px 0;
+  opacity: 0.7;
+}

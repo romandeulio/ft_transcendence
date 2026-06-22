@@ -189,6 +189,8 @@ CREATE TABLE bets (
 CREATE TABLE tournaments (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name        VARCHAR(100) NOT NULL,
+    format           VARCHAR(20) DEFAULT 'SINGLE_ELIMINATION' CHECK (format IN ('SINGLE_ELIMINATION', 'ROUND_ROBIN', 'SWISS')),
+    team_size        INTEGER DEFAULT 2 CHECK (team_size IN (1, 2)),
     start_date  TIMESTAMP NOT NULL,
     deadline    TIMESTAMP,
     max_players INTEGER NOT NULL DEFAULT 16 CHECK (max_players IN (16, 32)),
@@ -212,7 +214,7 @@ CREATE TABLE tournament_teams (
     tournament_id   UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
     registration_id UUID NOT NULL UNIQUE REFERENCES tournament_registrations(id) ON DELETE CASCADE,
     player1_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    player2_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    player2_id      UUID REFERENCES users(id) ON DELETE SET NULL,
     seed            INTEGER NOT NULL CHECK (seed > 0),
     created_at      TIMESTAMP DEFAULT NOW(),
     UNIQUE (tournament_id, seed),
@@ -232,9 +234,30 @@ CREATE TABLE tournament_matches (
     score_team2      INTEGER CHECK (score_team2 >= 0),
     status           VARCHAR(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'DONE')),
     queue_entry_id   UUID UNIQUE REFERENCES queue(id) ON DELETE SET NULL,
+    swiss_round      INTEGER,
+    is_bye           BOOLEAN DEFAULT FALSE,
     created_at       TIMESTAMP DEFAULT NOW(),
     updated_at       TIMESTAMP DEFAULT NOW(),
     UNIQUE (tournament_id, round_number, bracket_position)
+);
+
+CREATE TABLE tournament_swiss_standings (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+    team_id       UUID NOT NULL REFERENCES tournament_teams(id) ON DELETE CASCADE,
+    wins          INTEGER NOT NULL DEFAULT 0,
+    losses        INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (tournament_id, team_id)
+);
+
+CREATE TABLE tournament_round_robin_standings (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+    team_id       UUID NOT NULL REFERENCES tournament_teams(id) ON DELETE CASCADE,
+    wins          INTEGER NOT NULL DEFAULT 0,
+    losses        INTEGER NOT NULL DEFAULT 0,
+    points        INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (tournament_id, team_id)
 );
 
 CREATE TABLE organizations (
