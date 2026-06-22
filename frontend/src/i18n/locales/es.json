@@ -17,13 +17,7 @@
     "queue": "Cola",
     "tournaments": "Torneos",
     "profile": "Mi Perfil",
-    "settings": "Ajustes",
-    "admin": "Admin",
-    "ticket": "Ticket"
-  },
-  "sidebar": {
-    "tokens": "🪙 {{count}} fichas",
-    "close": "Cerrar"
+    "settings": "Ajustes"
   },
   "login": {
     "title": "BABYFOOT 42",
@@ -42,9 +36,6 @@
     "scheduledMatch": "📋 Partido programado",
     "addMatch": "Agregar partido",
     "play": "Jugar",
-    "selectToPlay": "Selecciona un partido para activar",
-    "notParticipant": "No eres participante de este partido",
-    "awaitingConfirmation": "Esperando confirmación de los otros jugadores",
     "myMatches": "Mis partidos",
     "favFriends": "Adversarios favoritos",
     "favFriendsNote": "Top 5 adversarios contra los que más has jugado",
@@ -52,9 +43,6 @@
     "searchLogin": "Buscar un login...",
     "noMatch": "No se encontró ningún partido",
     "addQueue": "Invitar a jugar",
-    "addPlayer": "+ Agregar",
-    "loginPlayer": "Login del jugador...",
-    "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mis partidos programados",
     "noScheduled": "Ningún partido programado. Únete a la cola.",
     "cancelMatch": "Cancelar este partido",
@@ -62,19 +50,14 @@
     "or": "O",
     "waiting": "En espera",
     "maxMatches": "Ya tienes 3 partidos pendientes, cancela uno antes de crear uno nuevo.",
-    "targetMaxMatches": "{{player}} ya tiene 3 partidos pendientes y no puede ser invitado/a.",
     "pendingInvites": "Invitaciones pendientes",
     "noPendingInvites": "Sin invitaciones pendientes"
   },
   "ranking": {
     "currentSeason": "Temporada actual",
-    "season": "Temporada {{num}}",
-    "annualRanking": "Clasificación anual",
-    "show": "Mostrar:",
     "palmares1v1": "PALMARÉS 1v1",
     "palmares2v2": "PALMARÉS 2v2",
     "player": "Jugador",
-    "team": "Equipo",
     "winsLosses": "V · D",
     "rank": "Rango",
     "noData": "No hay datos disponibles",
@@ -84,7 +67,6 @@
     "recentFirst": "Más reciente primero",
     "oldestFirst": "Más antiguo primero",
     "champion": "🏆 Campeón",
-    "seasonLabel": "Temporada {{num}}",
     "seasonBadge": "Temporada actual"
   },
   "bets": {
@@ -96,28 +78,19 @@
     "seasonBalance": "Balance de temporada",
     "netTokens": "fichas netas",
     "availableBets": "Apuestas disponibles",
-    "betCount_one": "{{count}} apuesta",
-    "betCount_other": "{{count}} apuestas",
     "noBets": "No hay apuestas disponibles por el momento.",
     "cancel": "Cancelar",
     "bet": "Apostar",
     "whoDoYouBet": "¿A quién apuestas?",
-    "betPlacedOn": "Apuesta colocada en {{player}}:",
     "change": "cambiar",
-    "amount": "Apuesta: {{amount}} fichas",
-    "confirm": "Confirmar — {{amount}} fichas",
     "history": "Historial de apuestas",
     "noHistory": "No hay historial disponible.",
-    "bettedOn": "Apostado a {{player}} · {{date}}",
-    "won": "ganado",
-    "lost": "perdido",
     "yourBetStats": "Tus estadísticas de apuestas",
     "bestGain": "Mejor ganancia",
     "biggestLoss": "Mayor pérdida",
     "balanceEvolution": "Evolución del saldo",
     "noChartData": "No hay historial que mostrar.",
-    "hoverHint": "Pasa el cursor sobre un punto para ver detalles",
-    "pctOn": "— {{pct}}% en {{player}}"
+    "hoverHint": "Pasa el cursor sobre un punto para ver detalles"
   },
   "queue": {
     "joinQueue": "+ Unirse a la cola",
@@ -134,22 +107,14 @@
     "noMatch": "Sin partido programado",
     "noLive": "Ningún partido en curso",
     "betOn": "Apostar →",
-    "editSlot": "Editar",
     "cancelSlot": "✕ Cancelar mi espacio",
-    "modifyPlayers": "✏️ Editar jugadores",
-    "me": "Yo",
-    "opponent": "Adversario",
-    "save": "Guardar",
     "mySlotTitle": "Mi espacio",
     "betModalTitle": "Apostar en este partido",
     "betOn2": "Apostar en",
     "betAmount": "Cantidad de la apuesta",
-    "confirmBet": "Confirmar — {{amount}} fichas",
-    "loginPlaceholder": "Login...",
     "waitingWinner": "Esperando al ganador...",
     "pendingAccept": "Pendiente de aceptación",
     "noPending": "Sin invitaciones pendientes",
-    "pendingVs": "vs {{opponent}}",
     "cancelInvite": "✕ Cancelar"
   },
   "tournaments": {
@@ -160,14 +125,9 @@
     "findTeammate": "Encuentra un compañero",
     "findTeammateSub": "Estos jugadores están solos en la lista de espera. Envíales una invitación de equipo.",
     "noWaiting": "Ningún jugador en espera por el momento.",
-    "waitingSince": "En espera desde {{since}}",
     "invited": "✓ Invitación enviada",
     "invite": "Invitar",
     "waitingList": "LISTA DE ESPERA",
-    "teams": "{{count}} equipo",
-    "teams_plural": "{{count}} equipos",
-    "noTeams": "Ningún equipo en espera",
-    "confirmedTeam": "Equipo confirmado",
     "tournamentStartsIn": "El torneo comienza en",
     "bracketReveal": "El bracket se revelará al inicio",
     "noTournamentPlanned": "Ningún torneo planificado",
@@ -175,69 +135,50 @@
     "hours": "H",
     "minutes": "M",
     "seconds": "S",
-    "bdePwd": "Contraseña BDE",
-    "incorrectPwd": "Contraseña incorrecta",
     "verifying": "Verificando…",
     "access": "Acceder",
     "createTournament": "Crear un torneo",
-    "planNextTournament": "Planificar un nuevo torneo",
     "tournamentName": "Nombre del torneo",
     "tournamentNamePlaceholder": "Ej: Torneo del jueves #5",
     "dateTime": "Fecha y hora",
     "registrationDeadline": "Límite de inscripción",
     "maxPlayers": "Número máximo de jugadores",
-    "playersCount": "{{count}} jugadores",
     "createBtn": "Crear el torneo",
     "registerTitle": "Inscribirse al torneo",
     "myLogin": "Mi login",
     "partner": "Compañero",
     "partnerPlaceholder": "Login del jugador... (opcional)",
-    "partnerNote": "✓ {{partner}} será invitado e inscrito directamente contigo.",
     "partnerEmpty": "Deja vacío para ser emparejado con un compañero aleatorio.",
     "soloNote": "Si estás solo, entras en la lista de espera. La lista se mostrará y podrás enviar una solicitud de equipo a otros jugadores en espera.",
-    "confirmRegister": "Confirmar inscripción",
-    "inscriptions": "Inscripciones hasta el {{date}}",
-    "registered": "{{count}} / {{max}} inscritos"
+    "confirmRegister": "Confirmar inscripción"
   },
   "profile": {
-    "myBadge": "Mi insignia: {{label}}",
     "ratio": "Ratio",
     "winLoss": "V · D",
     "streak": "Racha actual",
     "streakSub": "victorias seguidas",
     "tokensWon": "Fichas ganadas",
     "tokensSub": "balance de temporada",
-    "losses": "Derrotas",
-    "lossesSub": "esta temporada",
     "gamesPerMonth": "Partidos / mes",
     "gamesPerMonthSub": "promedio este mes",
     "gamelles": "Gamelles 🪣",
     "gamellesSub": "goles en gamelle",
     "favoriteTeammates": "Compañeros favoritos",
-    "teammateNote": "(añadidos automáticamente según el número de partidos jugados juntos)",
     "noTeammate": "Ningún compañero registrado.",
     "planGame": "Planificar una partida",
     "frequentOpponents": "Adversarios frecuentes",
     "noData": "No hay datos disponibles.",
-    "winrate": "{{pct}}% victorias",
     "fearOpponents": "Adversarios difíciles",
     "fearNote": "Jugadores contra quienes pierdes más a menudo",
-    "lossrate": "{{pct}}% derrotas",
     "myMatches": "Mis partidos",
     "searchLogin": "Buscar un login...",
     "noMatch": "No se encontró ningún partido",
     "seasonHistory": "Historial de temporadas",
     "noSeason": "No hay temporada disponible.",
-    "ongoing": "En curso",
-    "champion": "Campeón 🏆",
-    "seasonLabel": "Temporada {{num}}",
-    "logout": "Cerrar sesión",
     "photo": "📷 Foto",
     "profilePhoto": "Foto de perfil",
     "clickToChoose": "Haz clic para elegir una imagen",
-    "removePhoto": "Eliminar foto",
     "close": "Cerrar",
-    "counter": "{{count}} / 5 máx.",
     "loginPlayerPlaceholder": "Login del jugador...",
     "addBtn": "+ Agregar"
   },
@@ -262,18 +203,10 @@
     "security": {
       "changePassword": "Cambiar contraseña",
       "tfa": "Autenticación 2FA",
-      "tfaSub": "Código por aplicación o SMS",
       "oauth": "OAuth 42",
       "oauthSub": "Iniciar sesión con cuenta 42",
       "activeSessions": "Sesiones activas",
       "disconnectAll": "Desconectar todo"
-    },
-    "notifications": {
-      "turn": "Es tu turno en el futbolín",
-      "bet": "Resultado de apuesta",
-      "tourney": "Torneo — recordatorio",
-      "season": "Fin de temporada",
-      "invite": "Solicitud de partida"
     },
     "language": {
       "title": "Idioma",
@@ -282,63 +215,26 @@
     "account": {
       "export": "Exportar mis datos (RGPD) → JSON",
       "privacy": "Política de privacidad",
-      "dangerZone": "Zona peligrosa",
-      "resetStats": "Restablecer mis estadísticas",
-      "resetStatsSub": "Elimina tu historial de partidos y ELO",
-      "reset": "Restablecer",
       "deleteAccount": "Eliminar mi cuenta",
       "deleteAccountSub": "Confirmación enviada por correo",
       "delete": "Eliminar"
     },
     "notice": {
-      "intro": "Bienvenido a Transcendance — el sistema de gestión de partidos de futbolín de la promo 42. Aquí te explicamos cómo usar el sitio.",
-      "sections": [
-        {
-          "title": "🏓 Jugar un partido",
-          "body": "Únete a la cola desde la página \"Cola\". Elige tu modo (Chill o Competición), tu formato (1v1, 2v2 o Solo), luego espera a que haya un adversario disponible. Una notificación te avisará cuando empiece tu partido."
-        },
-        {
-          "title": "🪙 Las fichas",
-          "body": "Ganas fichas jugando y ganando partidos. Puedes usarlas para apostar en los partidos de otros jugadores desde la página Apuestas. Las fichas ganadas en apuestas se acreditan de inmediato."
-        },
-        {
-          "title": "🏆 Los torneos",
-          "body": "Los torneos son organizados por el BDE. Puedes inscribirte solo (lista de espera para formar un equipo) o con un compañero. El formato es de equipos de 2. El bracket se revela al inicio del torneo."
-        },
-        {
-          "title": "📊 El ELO",
-          "body": "El ELO es tu puntuación de clasificación. Aumenta cuando ganas y disminuye cuando pierdes. Los partidos en modo Chill no afectan el ELO. Las clasificaciones 1v1 y 2v2 son independientes."
-        },
-        {
-          "title": "📅 La Cola",
-          "body": "Desde la página Cola, puedes ver los partidos en curso y los próximos. El lápiz en tu espacio te permite modificar o cancelar tu partido. También puedes apostar en los partidos de otros pasando el cursor por encima."
-        }
-      ]
+      "intro": "Bienvenido a Transcendance — el sistema de gestión de partidos de futbolín de la promo 42. Aquí te explicamos cómo usar el sitio."
     }
   },
   "invite": {
-    "received": "te invita a un partido {{format}} · {{mode}}",
     "accept": "Aceptar ✓",
     "decline": "Rechazar",
-    "accepted": "{{player}} aceptó tu invitación ✓",
-    "acceptedPartial": "{{player}} aceptó · {{count}}/{{total}} confirmado(s)",
-    "declined": "{{player}} rechazó tu invitación",
-    "sent": "✅ Invitación enviada a {{player}}",
     "pendingLabel": "Esperando aceptación",
-    "matchCancelled": "{{player}} canceló el partido",
-    "offline": "{{player}} no está conectado/a, invitación cancelada",
-    "winClaimReceived": "{{player}} te invita a llevar tu victoria a su próximo partido",
     "winClaimDeclined": "Un ganador rechazó continuar — el partido ha sido cancelado",
-    "inviteCancelled": "{{player}} canceló su invitación",
     "chainCancelled": "Un partido de la cadena fue cancelado — tu plaza ha sido eliminada"
   },
   "addMatch": {
     "title": "Agregar un partido",
     "step1": "Paso 1 / 4 — Modo de juego",
     "step2": "Paso 2 / 4 — Formato",
-    "step3Players": "Paso 3 / 4 — Jugadores",
     "step3Queue": "Paso 3 / 3 — Cola",
-    "step4": "Paso 4 / 4 — ¿Tomar la victoria?",
     "competition": "🏆 Competición",
     "chill": "😎 Chill",
     "competNote": "ELO contado · Resultados oficiales",
@@ -352,8 +248,6 @@
     "blueTeam": "🔵 Equipo Azul",
     "redPlayer": "Login jugador rojo...",
     "bluePlayer": "Login jugador azul...",
-    "redPlayer2v2": "Jugador rojo {{num}}...",
-    "bluePlayer2v2": "Jugador azul {{num}}...",
     "takeWinQuestion": "¿Quieres tomar la victoria del equipo que juega actualmente antes que tú?",
     "no": "No",
     "yes": "Sí ✓",
@@ -377,21 +271,13 @@
     "quit": "✕ Salir",
     "endMatch": "Fin de\npartido",
     "half": "Mitad ×2",
-    "removeRed": "−1 Rojo",
-    "removeBlue": "−1 Azul",
     "gamelle": "Gamelle",
     "tie": "¡Empate!",
     "tieCancelWarning": "Este partido será cancelado — las cadenas de reprise serán eliminadas.",
-    "wins": "¡{{color}} gana!",
-    "duration": "Duración: {{time}}",
     "close": "Terminar y cerrar"
   },
   "common": {
-    "victory": "Victoria",
-    "defeat": "Derrota",
-    "vs": "vs",
-    "loading": "Cargando…",
-    "noData": "No hay datos disponibles"
+    "vs": "vs"
   },
   "performance": {
     "title": "RENDIMIENTO",
@@ -411,12 +297,7 @@
       "wins": "Victorias",
       "losses": "Derrotas",
       "winrate": "Win rate (%)",
-      "goals": "Goles marcados",
-      "goals_against": "Goles encajados",
-      "bets_won": "Apuestas ganadas",
-      "bets_lost": "Apuestas perdidas",
-      "tournaments_won": "Torneos ganados",
-      "streak": "Racha actual"
+      "goals": "Goles marcados"
     },
     "x": {
       "matches": "Partidos jugados (últimos 30)",
@@ -442,8 +323,7 @@
     "privacy": "Política de privacidad",
     "ticket": "Enviar un ticket",
     "status": "Estado",
-    "rgpd": "RGPD",
-    "copyright": "© {{year}} ft_transcendence — Todos los derechos reservados"
+    "rgpd": "RGPD"
   },
   "register": {
     "title": "BABYFOOT 42",
@@ -460,148 +340,11 @@
   },
   "privacy": {
     "title": "Política de privacidad",
-    "updated": "Última actualización: junio 2026",
-    "s1": {
-      "title": "1. ¿Quiénes somos?",
-      "body": "Babyfoot42 es una plataforma interna de la École 42 para gestionar el futbolín: planning, clasificación ELO por temporada, apuestas en fichas virtuales y torneos organizados por el BDE. Esta política describe qué datos se recogen, cómo se utilizan y cuáles son tus derechos."
-    },
-    "s2": {
-      "title": "2. Datos recopilados",
-      "items": [
-        "Cuenta — nombre de usuario (login 42 o elegido libremente), dirección de correo, contraseña hasheada y salada (PBKDF2).",
-        "Perfil — avatar (opcional), estado en línea.",
-        "Autenticación — ID OAuth 42 (si se inicia sesión mediante la intranet 42), secreto TOTP cifrado (si el 2FA está activado).",
-        "Actividad de juego — historial de partidas, puntuaciones, variaciones de ELO, estadísticas (victorias, derrotas, gamelles, demis).",
-        "Apuestas — apuestas realizadas, ganancias/pérdidas, saldo del monedero en fichas, historial de transacciones.",
-        "Planning — franjas reservadas, posiciones en la cola.",
-        "Torneos — inscripciones, resultados de partidas de torneo.",
-        "Registros técnicos — dirección IP, marcas de tiempo de conexión (conservación máxima de 30 días)."
-      ]
-    },
-    "s3": {
-      "title": "3. Finalidades del tratamiento",
-      "items": [
-        "Proporcionar las funcionalidades de la plataforma (clasificación, planning, apuestas, torneos).",
-        "Garantizar la seguridad de las cuentas (autenticación, 2FA, detección de abusos).",
-        "Calcular y mostrar la clasificación ELO en tiempo real.",
-        "Gestionar el monedero de fichas virtuales y las transacciones asociadas.",
-        "Moderar la plataforma (rol admin/BDE)."
-      ]
-    },
-    "s4": {
-      "title": "4. Base jurídica",
-      "body": "El tratamiento se basa en tu consentimiento al crear la cuenta y en el interés legítimo de la plataforma para su seguridad y correcto funcionamiento."
-    },
-    "s5": {
-      "title": "5. Almacenamiento y seguridad",
-      "items": [
-        "Los datos se almacenan en una base de datos PostgreSQL alojada localmente en los servidores de la École 42.",
-        "Las contraseñas nunca se almacenan en texto claro (PBKDF2 + sal).",
-        "Todas las comunicaciones están cifradas mediante HTTPS (TLS 1.2/1.3).",
-        "Se realizan copias de seguridad automáticas cada noche.",
-        "El acceso a la base de datos está restringido a los servicios internos."
-      ]
-    },
-    "s6": {
-      "title": "6. Compartición de datos",
-      "body": "Tus datos no se venden ni se transmiten a terceros. Solo el OAuth 42 implica un intercambio de información con la intranet 42 (login, correo) en el inicio de sesión inicial."
-    },
-    "s7": {
-      "title": "7. Tus derechos (RGPD)",
-      "items": [
-        "Acceso y exportación — exporta todos tus datos (perfil, partidas, apuestas, transacciones) en JSON o CSV desde tus ajustes.",
-        "Rectificación — modifica tu nombre de usuario y avatar desde tus ajustes.",
-        "Supresión — solicita la eliminación de tu cuenta desde tus ajustes. Tus datos personales serán anonimizados.",
-        "Oposición — desactiva el 2FA y revoca la conexión OAuth desde tus ajustes."
-      ]
-    },
-    "s8": {
-      "title": "8. Cookies",
-      "body": "La plataforma utiliza una única cookie de sesión JWT (HttpOnly, Secure, SameSite=Lax) estrictamente necesaria para la autenticación. No se utilizan cookies publicitarias ni de rastreo de terceros."
-    },
-    "s9": {
-      "title": "9. Contacto",
-      "body": "Para cualquier pregunta sobre tus datos, utiliza el formulario de ticket disponible en el pie de página o contacta al equipo a través de la intranet 42."
-    }
+    "updated": "Última actualización: junio 2026"
   },
   "terms": {
     "title": "Términos de uso",
-    "updated": "Última actualización: junio 2026",
-    "s1": {
-      "title": "1. Objeto",
-      "body": "Las presentes condiciones rigen el uso de Babyfoot42, plataforma interna de la École 42 para la gestión de partidas de futbolín. Al crear una cuenta, aceptas estas condiciones en su totalidad."
-    },
-    "s2": {
-      "title": "2. Acceso a la plataforma",
-      "items": [
-        "La plataforma está reservada a estudiantes, exalumnos y personal de la École 42.",
-        "Cada persona solo puede tener una cuenta. La creación de cuentas múltiples está prohibida.",
-        "Eres responsable de la confidencialidad de tus credenciales.",
-        "La plataforma es accesible únicamente mediante HTTPS."
-      ]
-    },
-    "s3": {
-      "title": "3. Reglas de juego limpio",
-      "items": [
-        "Está prohibido apostar en tus propias partidas.",
-        "Cualquier intento de manipular los resultados, la clasificación o el sistema de apuestas está prohibido.",
-        "Los resultados de las partidas deben introducirse honestamente. El fraude puede conllevar una suspensión.",
-        "El respeto hacia los demás jugadores es obligatorio. Los comportamientos abusivos serán sancionados."
-      ]
-    },
-    "s4": {
-      "title": "4. Fichas virtuales y apuestas",
-      "items": [
-        "Las fichas son una moneda virtual sin valor monetario real. No pueden intercambiarse, venderse ni convertirse en dinero.",
-        "Cada nueva cuenta recibe un saldo inicial de fichas.",
-        "Se pueden ganar fichas adicionales ganando apuestas o terminando en lo alto de la clasificación al final de una temporada.",
-        "Las apuestas son definitivas una vez realizadas. Solo se reembolsan si un administrador cancela la partida."
-      ]
-    },
-    "s5": {
-      "title": "5. Clasificación y temporadas",
-      "items": [
-        "La clasificación se basa en el ELO calculado a partir de las partidas validadas.",
-        "Las temporadas son creadas y cerradas por los administradores. El cierre desencadena la distribución de recompensas y el reinicio del ELO.",
-        "Los historiales de temporadas pasadas se conservan y pueden consultarse."
-      ]
-    },
-    "s6": {
-      "title": "6. Planning y reservas",
-      "items": [
-        "Las franjas de reserva son limitadas para garantizar un acceso equitativo a todos.",
-        "Una reserva no cumplida puede conllevar una penalización (pérdida de posición en la cola).",
-        "La cola de espera se gestiona automáticamente y es visible para todos los usuarios conectados."
-      ]
-    },
-    "s7": {
-      "title": "7. Torneos",
-      "items": [
-        "Los torneos son organizados por el BDE (Bureau Des Élèves) de la École 42.",
-        "Inscribirse en un torneo compromete al participante a estar disponible para todos sus partidos.",
-        "Los resultados de las partidas de torneo son registrados por el organizador y no pueden ser modificados por los jugadores."
-      ]
-    },
-    "s8": {
-      "title": "8. Moderación y sanciones",
-      "items": [
-        "Los administradores pueden suspender temporalmente o banear definitivamente cualquier cuenta por incumplimiento de estas condiciones.",
-        "En caso de ban, el saldo de fichas y el historial se conservan pero la cuenta deja de ser accesible.",
-        "Cualquier reclamación puede presentarse a través del formulario de ticket."
-      ]
-    },
-    "s9": {
-      "title": "9. Disponibilidad del servicio",
-      "body": "La plataforma se ofrece tal cual, sin garantía de disponibilidad continua. Se pueden realizar mantenimientos sin previo aviso."
-    },
-    "s10": {
-      "title": "10. Modificación de las condiciones",
-      "body": "Estas condiciones pueden actualizarse en cualquier momento. Los usuarios son informados mediante una notificación en la aplicación en caso de cambios sustanciales."
-    },
-    "s11": {
-      "title": "11. Contacto",
-      "body": "Para cualquier pregunta o reclamación, utiliza el formulario de ticket en el pie de página o contacta al equipo a través de la intranet 42."
-    }
+    "updated": "Última actualización: junio 2026"
   },
   "ticket": {
     "title": "Enviar un ticket",
@@ -621,17 +364,7 @@
     "success_sub": "Gracias por tu comentario. El equipo lo revisará pronto.",
     "back": "← Volver",
     "err_server": "Error del servidor",
-    "err_network": "Error de red",
-    "pages": [
-      "Inicio",
-      "Clasificación",
-      "Apuestas",
-      "Cola",
-      "Torneos",
-      "Mi perfil",
-      "Ajustes",
-      "Admin"
-    ]
+    "err_network": "Error de red"
   },
   "status": {
     "title": "Estado",
@@ -690,7 +423,6 @@
     "status_cancelled": "Cancelado",
     "status_finished": "Finalizado",
     "btn_cancel_tourn": "Cancelar",
-    "confirm_cancel_tourn": "¿Cancelar el torneo \"{{name}}\"?",
     "quick_title": "Acciones rápidas",
     "btn_create_tourn": "🏆 Crear torneo",
     "seasons_title": "Temporadas",
@@ -711,13 +443,11 @@
     "modal_tourn_date": "Fecha y hora",
     "modal_tourn_deadline": "Límite de inscripción",
     "modal_tourn_max": "Número máximo de jugadores",
-    "modal_tourn_players": "{{n}} jugadores",
     "modal_tourn_cancel": "Cancelar",
     "modal_tourn_submit": "Crear torneo",
     "modal_tourn_err": "Error",
     "modal_tourn_success": "Torneo creado",
     "modal_tourn_close": "Cerrar",
-    "modal_ban_title": "Banear a {{username}}",
     "modal_ban_type": "Tipo de ban",
     "modal_ban_temp": "Temporal",
     "modal_ban_perm": "Definitivo",
@@ -727,7 +457,6 @@
     "modal_ban_doing": "Baneando...",
     "modal_ban_confirm": "Confirmar ban",
     "day_abbr": "d",
-    "modal_elo_title": "Editar ELO — {{username}}",
     "modal_elo_solo": "ELO Solo (1v1)",
     "modal_elo_team": "ELO Equipo (2v2)",
     "modal_elo_cancel": "Cancelar",

@@ -2,10 +2,6 @@ tree
 .
 ├── App.css
 ├── App.jsx
-├── assets
-│   ├── hero.png
-│   ├── react.svg
-│   └── vite.svg
 ├── components
 │   ├── bracket
 │   │   ├── BracketTree.jsx
@@ -20,14 +16,8 @@ tree
 │   │   ├── Topbar.jsx
 │   │   └── Topbar.module.css
 │   └── ui
-│       ├── AvatarCreator.jsx
-│       ├── AvatarCreator.module.css
-│       ├── AvatarEditor.jsx
-│       ├── AvatarEditor.module.css
 │       ├── Avatar.jsx
 │       ├── Avatar.module.css
-│       ├── BetButton.jsx
-│       ├── BetButton.module.css
 │       ├── Card.jsx
 │       ├── Card.module.css
 │       ├── JouerMode.jsx
@@ -42,8 +32,6 @@ tree
 │       ├── Pill.module.css
 │       ├── ProgressBar.jsx
 │       ├── ProgressBar.module.css
-│       ├── QueueItem.jsx
-│       ├── QueueItem.module.css
 │       ├── StatCard.jsx
 │       ├── StatCard.module.css
 │       ├── Toggle.jsx
@@ -83,4 +71,4 @@ tree
 └── styles
     └── global.css
 
-11 directories, 72 files
+10 directories, 70 files
