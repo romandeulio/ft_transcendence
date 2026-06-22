@@ -385,34 +385,21 @@ class AdminSeasonDetailView(APIView):
         if action == 'activate':
             if season.status != 'UPCOMING':
                 return Response({'error': f"Statut actuel : '{season.status}'. Seules les saisons UPCOMING peuvent être activées."}, status=400)
-            from seasons.views import _distribute_rewards
-            from seasons.models import SeasonReward
+            from seasons.views import _close_season
             with transaction.atomic():
-                # Clore proprement l'ancienne saison active (avec récompenses)
+                # Clore proprement l'ancienne saison active : récompenses + reset ELO
                 old_active = Season.objects.filter(status='ACTIVE').first()
                 if old_active:
-                    old_active.status = 'FINISHED'
-                    old_active.save(update_fields=['status'])
-                    if not old_active.rewards_distributed:
-                        _distribute_rewards(old_active, SeasonReward.RankingType.SOLO)
-                        _distribute_rewards(old_active, SeasonReward.RankingType.TEAM)
-                        old_active.rewards_distributed = True
-                        old_active.save(update_fields=['rewards_distributed'])
+                    _close_season(old_active)
                 season.status = 'ACTIVE'
                 season.save(update_fields=['status'])
         elif action == 'finish':
             if season.status != 'ACTIVE':
                 return Response({'error': "Seule une saison ACTIVE peut être terminée."}, status=400)
-            from seasons.views import _distribute_rewards
-            from seasons.models import SeasonReward
+            from seasons.views import _close_season
             with transaction.atomic():
-                season.status = 'FINISHED'
-                season.save(update_fields=['status'])
-                if not season.rewards_distributed:
-                    _distribute_rewards(season, SeasonReward.RankingType.SOLO)
-                    _distribute_rewards(season, SeasonReward.RankingType.TEAM)
-                    season.rewards_distributed = True
-                    season.save(update_fields=['rewards_distributed'])
+                # Termine la saison : récompenses + reset ELO de tous les joueurs
+                _close_season(season)
         else:
             return Response({'error': "Action invalide. Utiliser 'activate' ou 'finish'."}, status=400)
 

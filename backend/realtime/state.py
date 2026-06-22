@@ -40,6 +40,12 @@ pending_invites = {}
 # gameIds terminés : pour rejeter les rejoin obsolètes à la reconnexion
 completed_game_ids = set()
 
+# parentSlotId (gameId du match parent) -> {winner, winner_teammate, match_type}
+# Résultat d'un match dont le(s) gagnant(s) doivent être invités sur un takeWin
+# dont l'équipe n'était PAS encore complète à la fin du match parent. L'invitation
+# est envoyée dès que l'équipe takeWin devient prête (cf. _commit_slot).
+takewin_pending_results = {}
+
 
 def identity_from_scope(scope, channel_name):
     """Identifiant stable du propriétaire d'un slot (user authentifié, invité, ou canal)."""
