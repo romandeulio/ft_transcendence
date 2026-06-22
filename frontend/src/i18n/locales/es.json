@@ -8,7 +8,8 @@
     "tournaments": "Torneos",
     "account": "Cuenta",
     "profile": "Mi perfil",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "achievements": "Logros"
   },
   "topbar": {
     "home": "Inicio",
@@ -85,7 +86,8 @@
     "oldestFirst": "Más antiguo primero",
     "champion": "🏆 Campeón",
     "seasonLabel": "Temporada {{num}}",
-    "seasonBadge": "Temporada actual"
+    "seasonBadge": "Temporada actual",
+    "noSeason": "Sin temporada"
   },
   "bets": {
     "availableTokens": "fichas disponibles",
@@ -329,7 +331,9 @@
       "delete": "Eliminar",
       "login42": "Login 42",
       "email": "Correo electrónico",
-      "save": "Guardar cambios"
+      "save": "Guardar cambios",
+      "uploading": "Subiendo...",
+      "updateError": "Error al actualizar el perfil"
     },
     "security": {
       "changePassword": "Cambiar contraseña",
@@ -338,7 +342,20 @@
       "oauth": "OAuth 42",
       "oauthSub": "Iniciar sesión con cuenta 42",
       "activeSessions": "Sesiones activas",
-      "disconnectAll": "Desconectar todo"
+      "disconnectAll": "Desconectar todo",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmNewPassword": "Confirmar nueva contraseña",
+      "passwordChanged": "Contraseña modificada ✓",
+      "saving": "Guardando...",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordMin": "Mínimo 8 caracteres",
+      "error": "Error",
+      "tfaOnSub": "Se enviará un código de verificación por email en cada inicio de sesión.",
+      "tfaOffSub": "Activa la autenticación de dos factores por email para proteger tu cuenta.",
+      "disable2fa": "Desactivar 2FA",
+      "enable2fa": "Activar 2FA por email",
+      "tfaEnabled": "2FA activado ✓"
     },
     "notifications": {
       "turn": "Es tu turno en el futbolín",
@@ -386,6 +403,20 @@
           "body": "Desde la página Cola, puedes ver los partidos en curso y los próximos. El lápiz en tu espacio te permite modificar o cancelar tu partido. También puedes apostar en los partidos de otros pasando el cursor por encima."
         }
       ]
+    },
+    "gdpr": {
+      "title": "Confirmación requerida",
+      "sentTo": "Se ha enviado un código a",
+      "confirmExport": "Introdúcelo para confirmar la exportación.",
+      "confirmDelete": "Introdúcelo para confirmar la eliminación de tu cuenta.",
+      "valid": "Válido 15 min",
+      "resend": "Reenviar",
+      "enterCode": "Introduce los 6 dígitos",
+      "invalidCode": "Código inválido",
+      "sendFailed": "Error al enviar el código. Inténtalo de nuevo.",
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
     }
   },
   "invite": {
@@ -403,7 +434,8 @@
     "winClaimDeclined": "Un ganador rechazó continuar — el partido ha sido cancelado",
     "inviteCancelled": "{{player}} canceló su invitación",
     "chainCancelled": "Un partido de la cadena fue cancelado — tu plaza ha sido eliminada",
-    "acceptError": "No se pudo aceptar la invitación (inscripciones cerradas o jugador no encontrado)."
+    "acceptError": "No se pudo aceptar la invitación (inscripciones cerradas o jugador no encontrado).",
+    "tournamentTeammate": "te invita a formar equipo para el próximo torneo"
   },
   "addMatch": {
     "title": "Agregar un partido",

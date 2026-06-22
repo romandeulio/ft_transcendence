@@ -352,8 +352,16 @@ class AdminSeasonsView(APIView):
         start_date = request.data.get('start_date')
         end_date = request.data.get('end_date')
 
-        if not name or not start_date or not end_date:
-            return Response({'error': 'Champs requis : name, start_date, end_date'}, status=400)
+        if not name:
+            return Response({'error': 'Champs requis : name'}, status=400)
+
+        # Dates optionnelles : par défaut la saison démarre aujourd'hui
+        # et se termine 3 mois plus tard.
+        from datetime import date, timedelta
+        start_date = start_date or date.today()
+        if not end_date:
+            base = start_date if isinstance(start_date, date) else date.fromisoformat(start_date)
+            end_date = base + timedelta(days=90)
 
         season = Season.objects.create(
             name=name,

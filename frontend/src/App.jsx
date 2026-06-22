@@ -34,7 +34,10 @@ function isTokenValid(token) {
 }
 
 function PrivateRoute({ element }) {
-    const { user } = useAuth()
+    const { user, authChecked } = useAuth()
+    // On attend la validation du token avant de décider, sinon une session
+    // résiduelle (cookie d'un user supprimé) afficherait brièvement la page.
+    if (!authChecked) return null
     return user ? <QueueProvider><BetsProvider>{element}</BetsProvider></QueueProvider> : <Navigate to="/login" replace />
 }
 
@@ -44,7 +47,7 @@ export default function App() {
       <NotifProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/"              element={<Navigate to="/accueil" replace />} />
+            <Route path="/"              element={<Navigate to="/profil" replace />} />
             <Route path="/accueil"       element={<PrivateRoute element={<Accueil />} />} />
             <Route path="/classement"    element={<PrivateRoute element={<Classement />} />} />
             <Route path="/paris"         element={<PrivateRoute element={<Paris />} />} />

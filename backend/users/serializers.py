@@ -143,8 +143,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         send_mail(
-            subject="Activation de votre compte",
-            message=f"Activez votre compte : {activation_link}",
+            subject="Activate your account",
+            message=f"Activate your account: {activation_link}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
             fail_silently=False,

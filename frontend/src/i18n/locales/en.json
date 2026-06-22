@@ -86,7 +86,8 @@
     "oldestFirst": "Oldest first",
     "champion": "🏆 Champion",
     "seasonLabel": "Season {{num}}",
-    "seasonBadge": "Current season"
+    "seasonBadge": "Current season",
+    "noSeason": "No season"
   },
   "bets": {
     "availableTokens": "tokens available",
@@ -330,7 +331,9 @@
       "delete": "Delete",
       "login42": "42 Login",
       "email": "Email",
-      "save": "Save changes"
+      "save": "Save changes",
+      "uploading": "Uploading...",
+      "updateError": "Profile update error"
     },
     "security": {
       "changePassword": "Change password",
@@ -339,7 +342,20 @@
       "oauth": "42 OAuth",
       "oauthSub": "Sign in with 42 account",
       "activeSessions": "Active sessions",
-      "disconnectAll": "Disconnect all"
+      "disconnectAll": "Disconnect all",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "passwordChanged": "Password changed ✓",
+      "saving": "Saving...",
+      "passwordMismatch": "Passwords do not match",
+      "passwordMin": "Minimum 8 characters",
+      "error": "Error",
+      "tfaOnSub": "A verification code will be sent by email on every login.",
+      "tfaOffSub": "Enable two-factor authentication by email to secure your account.",
+      "disable2fa": "Disable 2FA",
+      "enable2fa": "Enable email 2FA",
+      "tfaEnabled": "2FA enabled ✓"
     },
     "notifications": {
       "turn": "It's your turn at the table",
@@ -387,6 +403,20 @@
           "body": "From the Queue page, you can see ongoing and upcoming matches. The pencil icon on your slot lets you edit or cancel your match. You can also bet on others' matches by hovering over them."
         }
       ]
+    },
+    "gdpr": {
+      "title": "Confirmation required",
+      "sentTo": "A code was sent to",
+      "confirmExport": "Enter it to confirm the export.",
+      "confirmDelete": "Enter it to confirm account deletion.",
+      "valid": "Valid for 15 min",
+      "resend": "Resend",
+      "enterCode": "Enter the 6 digits",
+      "invalidCode": "Invalid code",
+      "sendFailed": "Failed to send the code. Try again.",
+      "close": "Close",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
     }
   },
   "invite": {

@@ -59,8 +59,6 @@ function SeasonPanel() {
   const [seasons,  setSeasons]  = useState([])
   const [addOpen,  setAddOpen]  = useState(false)
   const [newName,  setNewName]  = useState('')
-  const [newStart, setNewStart] = useState('')
-  const [newEnd,   setNewEnd]   = useState('')
   const [actionLoading, setActionLoading] = useState(null)
 
   const reload = () => adm('/api/admin/seasons/').then(r => r.json()).then(setSeasons).catch(() => {})
@@ -74,18 +72,15 @@ function SeasonPanel() {
 
   const handleAddSeason = async () => {
     setSeasonError('')
-    if (!newName || !newStart || !newEnd) return
-    const today = new Date().toISOString().split('T')[0]
-    if (newStart < today) { setSeasonError('La date de début ne peut pas être dans le passé.'); return }
-    if (newEnd <= newStart) { setSeasonError('La date de fin doit être après la date de début.'); return }
+    if (!newName) return
     const res = await adm('/api/admin/seasons/', {
       method: 'POST',
-      body: JSON.stringify({ name: newName, start_date: newStart, end_date: newEnd }),
+      body: JSON.stringify({ name: newName }),
     })
     if (res.ok) {
       const created = await res.json()
       setSeasons(prev => [created, ...prev])
-      setNewName(''); setNewStart(''); setNewEnd('')
+      setNewName('')
       setAddOpen(false)
     } else {
       const d = await res.json().catch(() => ({}))
@@ -116,18 +111,10 @@ function SeasonPanel() {
             <label className={styles.addSeasonLabel}>{t('admin.season_name_label')}</label>
             <input className={styles.addSeasonInput} placeholder={t('admin.season_name_ph')} value={newName} onChange={e => setNewName(e.target.value)} />
           </div>
-          <div className={styles.addSeasonField}>
-            <label className={styles.addSeasonLabel}>{t('admin.season_start_label')}</label>
-            <input className={styles.addSeasonInput} type="date" value={newStart} onChange={e => setNewStart(e.target.value)} />
-          </div>
-          <div className={styles.addSeasonField}>
-            <label className={styles.addSeasonLabel}>{t('admin.season_end_label')}</label>
-            <input className={styles.addSeasonInput} type="date" value={newEnd} onChange={e => setNewEnd(e.target.value)} />
-          </div>
           {seasonError && <div className={styles.error} style={{ marginBottom: 8 }}>{seasonError}</div>}
           <div className={styles.addSeasonActions}>
             <button className={styles.seasonCancelBtn} onClick={() => { setAddOpen(false); setSeasonError('') }}>{t('admin.btn_cancel')}</button>
-            <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName || !newStart || !newEnd}>{t('admin.btn_create')}</button>
+            <button className={styles.seasonOkBtn} onClick={handleAddSeason} disabled={!newName}>{t('admin.btn_create')}</button>
           </div>
         </div>
       )}
@@ -180,7 +167,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
   const { t } = useTranslation()
   const [name,       setName]       = useState('')
   const [dateStart,  setDateStart]  = useState('')
-  const [deadline,   setDeadline]   = useState('')
   const [maxPlayers, setMaxPlayers] = useState('16')
   const [done,       setDone]       = useState(false)
   const [error,      setError]      = useState('')
@@ -192,7 +178,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
       body: JSON.stringify({
         name,
         start_date: dateStart,
-        deadline: deadline || null,
         max_players: parseInt(maxPlayers),
       }),
     })
@@ -225,10 +210,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>{t('admin.modal_tourn_date')}</label>
           <input className={styles.modalInput} type="datetime-local" value={dateStart} onChange={e => setDateStart(e.target.value)} />
-        </div>
-        <div className={styles.modalField}>
-          <label className={styles.modalLabel}>{t('admin.modal_tourn_deadline')}</label>
-          <input className={styles.modalInput} type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
         </div>
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>{t('admin.modal_tourn_max')}</label>

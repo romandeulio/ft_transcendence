@@ -86,7 +86,8 @@
     "oldestFirst": "Plus ancien en premier",
     "champion": "🏆 Champion",
     "seasonLabel": "Saison {{num}}",
-    "seasonBadge": "Saison en cours"
+    "seasonBadge": "Saison en cours",
+    "noSeason": "Aucune saison"
   },
   "bets": {
     "availableTokens": "jetons disponibles",
@@ -330,7 +331,9 @@
       "delete": "Supprimer",
       "login42": "Login 42",
       "email": "Email",
-      "save": "Sauvegarder les modifications"
+      "save": "Sauvegarder les modifications",
+      "uploading": "Téléversement...",
+      "updateError": "Erreur mise à jour profil"
     },
     "security": {
       "changePassword": "Changer le mot de passe",
@@ -339,7 +342,20 @@
       "oauth": "OAuth 42",
       "oauthSub": "Connexion via compte 42",
       "activeSessions": "Sessions actives",
-      "disconnectAll": "Déconnecter tout"
+      "disconnectAll": "Déconnecter tout",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmNewPassword": "Confirmer le nouveau mot de passe",
+      "passwordChanged": "Mot de passe modifié ✓",
+      "saving": "Enregistrement...",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordMin": "Minimum 8 caractères",
+      "error": "Erreur",
+      "tfaOnSub": "Un code de vérification sera envoyé par email à chaque connexion.",
+      "tfaOffSub": "Activez la double authentification par email pour sécuriser votre compte.",
+      "disable2fa": "Désactiver le 2FA",
+      "enable2fa": "Activer le 2FA par email",
+      "tfaEnabled": "2FA activé ✓"
     },
     "notifications": {
       "turn": "C'est ton tour au baby",
@@ -387,6 +403,20 @@
           "body": "Depuis la page File d'attente, tu peux voir les matchs en cours et à venir. Le crayon dans ton créneau te permet de modifier ou annuler ton match. Tu peux aussi parier sur les matchs des autres en passant ta souris dessus."
         }
       ]
+    },
+    "gdpr": {
+      "title": "Confirmation requise",
+      "sentTo": "Un code a été envoyé à",
+      "confirmExport": "Saisissez-le pour confirmer l'export.",
+      "confirmDelete": "Saisissez-le pour confirmer la suppression de votre compte.",
+      "valid": "Valable 15 min",
+      "resend": "Renvoyer",
+      "enterCode": "Saisissez les 6 chiffres",
+      "invalidCode": "Code invalide",
+      "sendFailed": "Échec de l'envoi du code. Réessayez.",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "confirm": "Confirmer"
     }
   },
   "invite": {

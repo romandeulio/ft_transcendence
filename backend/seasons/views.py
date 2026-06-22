@@ -171,7 +171,10 @@ def _close_season(season) -> None:
 		reset_all_elo()
 
 		season.rewards_distributed = True
-		season.save(update_fields=['rewards_distributed', 'updated_at'])
+		season.save(update_fields=['status', 'rewards_distributed', 'updated_at'])
+	else:
+		# Récompenses déjà distribuées : on persiste quand même le passage à FINISHED.
+		season.save(update_fields=['status', 'updated_at'])
 
 	# Achievements saison (hors transaction)
 	try:

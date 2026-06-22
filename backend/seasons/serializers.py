@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from rest_framework import serializers
 from .models import Season, SeasonReward
 from .ranks import get_rank, get_rank_progress
@@ -71,17 +72,27 @@ class SeasonCreateSerializer(serializers.ModelSerializer):
 	"""
 	Création d'une saison (POST /api/seasons/) — réservé aux admins.
 	Le status démarre toujours à UPCOMING.
+	Les dates sont optionnelles : par défaut la saison démarre aujourd'hui
+	et se termine 3 mois plus tard.
 	"""
 
 	class Meta:
 		model  = Season
 		fields = ['name', 'start_date', 'end_date']
+		extra_kwargs = {
+			'start_date': {'required': False},
+			'end_date':   {'required': False},
+		}
 
 	def validate(self, data):
-		if data['end_date'] <= data['start_date']:
+		start = data.get('start_date') or date.today()
+		end   = data.get('end_date') or (start + timedelta(days=90))
+		if end <= start:
 			raise serializers.ValidationError(
 				"La date de fin doit être après la date de début."
 			)
+		data['start_date'] = start
+		data['end_date']   = end
 		return data
 
 

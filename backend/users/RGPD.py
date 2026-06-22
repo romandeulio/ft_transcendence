@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User
+from stats.models import Stats
 
 
 def _generate_code():
@@ -17,17 +18,17 @@ def _generate_code():
 
 def _send_verification_mail(user, action: str, code: str):
     labels = {
-        'export': 'export de vos données',
-        'delete': 'suppression de votre compte',
+        'export': 'exporting your data',
+        'delete': 'deleting your account',
     }
     send_mail(
-        subject=f'[Boca] Confirmation : {labels[action]}',
+        subject=f'[Boca] Confirmation: {labels[action]}',
         message=(
-            f'Bonjour {user.username},\n\n'
-            f'Voici votre code de vérification pour {labels[action]} :\n\n'
+            f'Hello {user.username},\n\n'
+            f'Here is your verification code for {labels[action]}:\n\n'
             f'    {code}\n\n'
-            f'Ce code est valable 15 minutes.\n'
-            f'Si vous n\'êtes pas à l\'origine de cette demande, ignorez ce mail.'
+            f'This code is valid for 15 minutes.\n'
+            f'If you did not request this, please ignore this email.'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
@@ -79,80 +80,24 @@ class GDPRExportView(APIView):
                 'last_login': str(user.last_login),
                 'created_at': str(user.created_at),
             },
-            'stats': list(
-                user.stats_set.values(
-                    'total_matches', 'total_wins', 'total_losses',
-                    'total_gamelles', 'total_demis',
-                    'elo_solo', 'elo_team',
-                    'series_wins', 'series_losses',
-                    'total_bets', 'total_wins_bets', 'total_losses_bets',
-                    'total_amount_won', 'total_amount_lost',
-                )
-            ),
-            'season_stats': list(
-                user.season_stats_set.values(
-                    'season_id', 'total_matches', 'total_wins', 'total_losses',
-                    'total_gamelles', 'total_demis', 'elo_solo', 'elo_team',
-                    'updated_at',
-                )
-            ),
-            'season_rewards': list(
-                user.season_rewards_set.values(
-                    'season_id', 'ranking_type', 'tier',
-                    'tokens_awarded', 'elo_at_end', 'rank_at_end', 'awarded_at',
-                )
-            ),
-            'rankings': list(
-                user.rankings.values(
-                    'season_id', 'mode', 'scope', 'score', 'wins', 'losses', 'updated_at',
-                )
-            ),
-            'ranking_history': list(
-                user.ranking_history.values(
-                    'match_id', 'season_id', 'mode', 'scope',
-                    'score_before', 'score_after', 'score_delta', 'recorded_at',
-                )
-            ),
+            'stats': list(Stats.objects.filter(user=user).values()),
+            'season_rewards': list(user.season_rewards.values()),
+            'rankings': list(user.rankings.values()),
+            'ranking_history': list(user.ranking_history.values()),
             'matches_played': list(
-                user.matches_as_player1.values(
-                    'match_type', 'is_ranked', 'status',
-                    'score_player1', 'score_player2',
-                    'gamelles_player1', 'gamelles_player2',
-                    'demis_player1', 'demis_player2',
-                    'elo_solo_p1_before', 'elo_solo_p1_after',
-                    'played_at',
-                ).union(
-                    user.matches_as_player2.values(
-                        'match_type', 'is_ranked', 'status',
-                        'score_player1', 'score_player2',
-                        'gamelles_player1', 'gamelles_player2',
-                        'demis_player1', 'demis_player2',
-                        'elo_solo_p2_before', 'elo_solo_p2_after',
-                        'played_at',
-                    )
+                user.matches_as_player1.values().union(
+                    user.matches_as_player2.values()
                 )
             ),
-            'bets': list(
-                user.bets.values('match_id', 'amount', 'result', 'payout', 'odds', 'created_at')
-            ),
-            'wallet_transactions': list(
-                user.wallet_transactions.values('type', 'amount', 'reference_id', 'created_at')
-            ),
+            'bets': list(user.bets.values()),
+            'wallet_transactions': list(user.wallet_transactions.values()),
             'tournament_registrations': list(
-                user.tournament_registrations_as_p1.values(
-                    'tournament_id', 'registered_at',
-                )
+                user.tournament_registrations_as_p1.values()
             ),
             'organization_memberships': list(
-                user.organization_members.values(
-                    'organization_id', 'role', 'joined_at',
-                )
+                user.organization_memberships.values()
             ),
-            'achievements': list(
-                user.user_achievements.values(
-                    'achievement_id', 'unlocked_at',
-                )
-            ),
+            'achievements': list(user.achievements.values()),
         }
 
         fmt = request.query_params.get('format', 'json')

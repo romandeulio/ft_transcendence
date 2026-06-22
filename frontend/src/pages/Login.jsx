@@ -62,7 +62,7 @@ export default function Login() {
       if (!me.ok) throw new Error('Profile unavailable')
       const user = await me.json()
       login(user)
-      navigate('/accueil')
+      navigate('/profil')
     } catch {
       setError(t('login.networkError'))
     }
@@ -89,7 +89,7 @@ export default function Login() {
       if (!me.ok) throw new Error('Profile unavailable')
       const user = await me.json()
       login(user)
-      navigate('/accueil')
+      navigate('/profil')
     } catch {
       setError(t('login.networkError'))
     }

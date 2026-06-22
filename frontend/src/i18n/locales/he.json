@@ -8,7 +8,8 @@
     "tournaments": "טורנירים",
     "account": "חשבון",
     "profile": "הפרופיל שלי",
-    "settings": "הגדרות"
+    "settings": "הגדרות",
+    "achievements": "הישגים"
   },
   "topbar": {
     "home": "דף הבית",
@@ -85,7 +86,8 @@
     "oldestFirst": "הישן ביותר קודם",
     "champion": "🏆 אלוף",
     "seasonLabel": "עונה {{num}}",
-    "seasonBadge": "עונה נוכחית"
+    "seasonBadge": "עונה נוכחית",
+    "noSeason": "אין עונה"
   },
   "bets": {
     "availableTokens": "אסימונים זמינים",
@@ -329,7 +331,9 @@
       "delete": "מחק",
       "login42": "לוגין 42",
       "email": "אימייל",
-      "save": "שמור שינויים"
+      "save": "שמור שינויים",
+      "uploading": "מעלה...",
+      "updateError": "שגיאה בעדכון הפרופיל"
     },
     "security": {
       "changePassword": "שנה סיסמה",
@@ -338,7 +342,20 @@
       "oauth": "OAuth 42",
       "oauthSub": "כניסה עם חשבון 42",
       "activeSessions": "פגישות פעילות",
-      "disconnectAll": "נתק הכל"
+      "disconnectAll": "נתק הכל",
+      "currentPassword": "סיסמה נוכחית",
+      "newPassword": "סיסמה חדשה",
+      "confirmNewPassword": "אשר סיסמה חדשה",
+      "passwordChanged": "הסיסמה שונתה ✓",
+      "saving": "שומר...",
+      "passwordMismatch": "הסיסמאות אינן תואמות",
+      "passwordMin": "מינימום 8 תווים",
+      "error": "שגיאה",
+      "tfaOnSub": "קוד אימות יישלח במייל בכל התחברות.",
+      "tfaOffSub": "הפעל אימות דו-שלבי במייל כדי לאבטח את חשבונך.",
+      "disable2fa": "בטל אימות דו-שלבי",
+      "enable2fa": "הפעל אימות דו-שלבי במייל",
+      "tfaEnabled": "אימות דו-שלבי מופעל ✓"
     },
     "notifications": {
       "turn": "זה התור שלך בשולחן",
@@ -386,6 +403,20 @@
           "body": "מדף התור ניתן לראות משחקים פעילים ועתידיים. עיפרון בחריץ שלך מאפשר לערוך או לבטל. ניתן גם להמר על משחקים של אחרים ע\"י מעבר עם העכבר."
         }
       ]
+    },
+    "gdpr": {
+      "title": "אישור נדרש",
+      "sentTo": "קוד נשלח אל",
+      "confirmExport": "הזן אותו כדי לאשר את הייצוא.",
+      "confirmDelete": "הזן אותו כדי לאשר את מחיקת החשבון.",
+      "valid": "תקף ל-15 דקות",
+      "resend": "שלח שוב",
+      "enterCode": "הזן את 6 הספרות",
+      "invalidCode": "קוד שגוי",
+      "sendFailed": "שליחת הקוד נכשלה. נסה שוב.",
+      "close": "סגור",
+      "cancel": "ביטול",
+      "confirm": "אישור"
     }
   },
   "invite": {
@@ -403,7 +434,8 @@
     "winClaimDeclined": "מנצח סירב להעביר את הניצחון — המשחק בוטל",
     "inviteCancelled": "{{player}} ביטל את ההזמנה",
     "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר",
-    "acceptError": "לא ניתן לקבל את ההזמנה (ההרשמות סגורות או שהשחקן לא נמצא)."
+    "acceptError": "לא ניתן לקבל את ההזמנה (ההרשמות סגורות או שהשחקן לא נמצא).",
+    "tournamentTeammate": "מזמין אותך לשחק יחד בטורניר הבא"
   },
   "addMatch": {
     "title": "הוסף משחק",

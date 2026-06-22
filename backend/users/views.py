@@ -112,8 +112,8 @@ class LoginView(APIView):
 
             try:
                 send_mail(
-                    subject="Code de vérification 2FA",
-                    message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                    subject="2FA verification code",
+                    message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
@@ -263,8 +263,8 @@ class OAuth42CallbackView(APIView):
 
                 try:
                     send_mail(
-                        subject="Code de vérification 2FA",
-                        message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                        subject="2FA verification code",
+                        message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[user.email],
                         fail_silently=False,
@@ -297,8 +297,8 @@ class OAuth42CallbackView(APIView):
 
                 try:
                     send_mail(
-                        subject="Code de vérification 2FA",
-                        message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                        subject="2FA verification code",
+                        message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[user.email],
                         fail_silently=False,
