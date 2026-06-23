@@ -11,19 +11,43 @@ SEED_USERS = [
     {"username": "player6", "email": "seed_player6@test.local", "password": "Test1234!"},
     {"username": "player7", "email": "seed_player7@test.local", "password": "Test1234!"},
     {"username": "player8", "email": "seed_player8@test.local", "password": "Test1234!"},
+    {"username": "player9", "email": "seed_player9@test.local", "password": "Test1234!"},
+    {"username": "player10", "email": "seed_player10@test.local", "password": "Test1234!"},
+    {"username": "player11", "email": "seed_player11@test.local", "password": "Test1234!"},
+    {"username": "player12", "email": "seed_player12@test.local", "password": "Test1234!"},
+    {"username": "player13", "email": "seed_player13@test.local", "password": "Test1234!"},
+    {"username": "player14", "email": "seed_player14@test.local", "password": "Test1234!"},
+    {"username": "player15", "email": "seed_player15@test.local", "password": "Test1234!"},
+    {"username": "player16", "email": "seed_player16@test.local", "password": "Test1234!"},
+    {"username": "player17", "email": "seed_player17@test.local", "password": "Test1234!"},
+    {"username": "player18", "email": "seed_player18@test.local", "password": "Test1234!"},
+    {"username": "player19", "email": "seed_player19@test.local", "password": "Test1234!"},
+    {"username": "player20", "email": "seed_player20@test.local", "password": "Test1234!"},
+    {"username": "player21", "email": "seed_player21@test.local", "password": "Test1234!"},
+    {"username": "player22", "email": "seed_player22@test.local", "password": "Test1234!"},
+    {"username": "player23", "email": "seed_player23@test.local", "password": "Test1234!"},
+    {"username": "player24", "email": "seed_player24@test.local", "password": "Test1234!"},
+    {"username": "player25", "email": "seed_player25@test.local", "password": "Test1234!"},
+    {"username": "player26", "email": "seed_player26@test.local", "password": "Test1234!"},
+    {"username": "player27", "email": "seed_player27@test.local", "password": "Test1234!"},
+    {"username": "player28", "email": "seed_player28@test.local", "password": "Test1234!"},
+    {"username": "player29", "email": "seed_player29@test.local", "password": "Test1234!"},
+    {"username": "player30", "email": "seed_player30@test.local", "password": "Test1234!"},
+    {"username": "player31", "email": "seed_player31@test.local", "password": "Test1234!"},
+    {"username": "player32", "email": "seed_player32@test.local", "password": "Test1234!"},
 ]
 
 SEED_EMAILS = {u["email"] for u in SEED_USERS}
 
 
 class Command(BaseCommand):
-    help = "Crée (ou supprime) 8 joueurs de test. --clean pour les supprimer."
+    help = "Crée (ou supprime) 32 joueurs de test. --clean pour les supprimer."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--clean",
             action="store_true",
-            help="Supprime les 8 joueurs de test de la base",
+            help="Supprime les 32 joueurs de test de la base",
         )
 
     def handle(self, *args, **options):

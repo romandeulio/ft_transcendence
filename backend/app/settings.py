@@ -178,8 +178,7 @@ SIMPLE_JWT = {
 
 JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
 JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
-#JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
-JWT_COOKIE_SECURE = False #a commente et decommenter la ligne du dessus en prod
+JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
 JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================
