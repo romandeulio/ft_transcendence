@@ -148,6 +148,8 @@ class User(AbstractBaseUser):
             if os.path.exists(path):
                 os.remove(path)
 
+        old_username = self.username
+
         self.username = f"del{str(self.id)[:5]}"
         self.email = f"{uuid.uuid4()}@deleted.invalid"
         self.set_unusable_password()
@@ -160,3 +162,76 @@ class User(AbstractBaseUser):
         self.banned_until = None
         self.gdpr_deleted = True
         self.save()
+
+        self._cancel_open_activity()
+        self._kick_live_session(old_username)
+
+    def _cancel_open_activity(self):
+        """Annule l'activité en cours du joueur et rembourse les paris liés.
+
+        Un compte supprimé en plein match ne doit plus pouvoir clôturer de
+        score : ses matchs PENDING et ses parties live (Reservation IN_PROGRESS)
+        sont annulés, tous les paris correspondants — y compris ses propres mises
+        ouvertes sur d'autres parties — sont remboursés. Tolérant aux pannes pour
+        ne jamais bloquer la suppression.
+        """
+        from matches.models import Match
+
+        pending = Match.objects.filter(status=Match.Status.PENDING).filter(
+            models.Q(player1_id=self.id)
+            | models.Q(player2_id=self.id)
+            | models.Q(player1_teammate_id=self.id)
+            | models.Q(player2_teammate_id=self.id)
+        )
+        for match in pending:
+            match.status = Match.Status.CANCELLED
+            match.save(update_fields=['status', 'updated_at'])
+            try:
+                from bets.services import refund_for_match
+                refund_for_match(match)
+            except Exception:
+                pass
+
+        # Parties live en cours (fenêtre de paris ouverte) : on annule la
+        # réservation et on rembourse les paris ouverts.
+        try:
+            from planning.models import Reservation
+            from bets.services import refund_reservation
+
+            live = Reservation.objects.filter(
+                status=Reservation.Status.IN_PROGRESS,
+            ).filter(
+                models.Q(player1_id=self.id)
+                | models.Q(player2_id=self.id)
+                | models.Q(player1_teammate_id=self.id)
+                | models.Q(player2_teammate_id=self.id)
+            )
+            for r in live:
+                refund_reservation(r)
+                r.status = Reservation.Status.CANCELLED
+                r.save(update_fields=['status'])
+        except Exception:
+            pass
+
+        try:
+            from bets.services import refund_open_bets_for_user
+            refund_open_bets_for_user(self.id)
+        except Exception:
+            pass
+
+    def _kick_live_session(self, username):
+        """Notifie la session WebSocket du joueur supprimé pour fermer sa partie
+        en cours et le déconnecter (il ne peut plus modifier de score)."""
+        if not username:
+            return
+        try:
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+
+            channel_layer = get_channel_layer()
+            if channel_layer is not None:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{username}", {"type": "account.deleted"}
+                )
+        except Exception:
+            pass

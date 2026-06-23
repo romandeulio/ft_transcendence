@@ -370,3 +370,25 @@ def refund_for_match(match):
     if reservation is None:
         return 0
     return refund_reservation(reservation)
+
+
+@transaction.atomic
+def refund_open_bets_for_user(user_id):
+    """Rembourse tous les paris ouverts posés par un utilisateur.
+
+    Utilisé lors de la suppression/anonymisation d'un compte : ses mises en
+    cours sont rendues et marquées « remboursé » plutôt que laissées en
+    suspens.
+    """
+    bets = list(
+        Bet.objects.select_for_update()
+        .filter(user_id=user_id, result__isnull=True)
+    )
+    reservations = set()
+    for bet in bets:
+        if bet.reservation_id:
+            reservations.add(bet.reservation)
+        _refund(bet)
+    for reservation in reservations:
+        _broadcast_market(reservation)
+    return len(bets)

@@ -1,14 +1,20 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { authFetch, apiRefresh } from '../services/api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  const { t } = useTranslation()
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user')) } catch { return null }
   })
   // false tant que la session stockée n'a pas été validée auprès du backend.
   const [authChecked, setAuthChecked] = useState(false)
+  // true quand le compte vient d'être supprimé : déconnecte et affiche un écran
+  // terminal (rendu ici, hors des providers gated par `user`, pour survivre à
+  // la déconnexion).
+  const [accountDeleted, setAccountDeleted] = useState(false)
 
   const login = (u) => {
     setUser(u)
@@ -23,6 +29,19 @@ export function AuthProvider({ children }) {
     setUser(null)
     localStorage.removeItem('user')
   }
+
+  // Compte supprimé (signalé par le WebSocket file d'attente) : on purge la
+  // session locale — ce qui stoppe tous les polls authentifiés (et donc les
+  // 401 en console) — puis on affiche l'écran terminal.
+  const markAccountDeleted = useCallback(() => {
+    fetch('/api/auth/logout/', {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => {})
+    localStorage.removeItem('user')
+    setUser(null)
+    setAccountDeleted(true)
+  }, [])
 
   const updateUser = useCallback((partial) => {
     setUser(prev => {
@@ -94,8 +113,34 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, authChecked, login, logout, updateUser, refreshUser }}>
+    <AuthContext.Provider value={{ user, authChecked, login, logout, updateUser, refreshUser, markAccountDeleted }}>
       {children}
+      {accountDeleted && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.75)',
+        }}>
+          <div style={{
+            background: 'var(--topbar-bg, #001A57)', color: '#fff',
+            padding: '28px 32px', borderRadius: '12px', maxWidth: '420px',
+            textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <h3 style={{ margin: '0 0 12px', color: '#fff' }}>{t('queue.deletedTitle')}</h3>
+            <p style={{ margin: '0 0 20px', color: '#fff', opacity: 0.85 }}>{t('queue.deletedBody')}</p>
+            <button
+              onClick={() => { window.location.href = '/login' }}
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                background: 'var(--color-primary, #4068DB)', color: '#fff',
+                fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {t('queue.deletedButton')}
+            </button>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   )
 }

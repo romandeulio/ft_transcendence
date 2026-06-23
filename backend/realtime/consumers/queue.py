@@ -170,6 +170,30 @@ class QueueConsumer(
             pass
         await self.close(code=4001)
 
+    async def account_deleted(self, event):
+        """Le compte de ce joueur vient d'être supprimé : on abandonne ses
+        parties live en mémoire (les réservations/paris sont déjà annulés en
+        base), on retire ses créneaux de la file, puis on ferme la session pour
+        qu'il ne puisse plus modifier de score."""
+        for game_id in list(state.games.keys()):
+            g = state.games[game_id]
+            if self.username in self._game_usernames(g):
+                del state.games[game_id]
+                state.queue = [s for s in state.queue if s.get("id") != game_id]
+                state.completed_game_ids.add(game_id)
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {"type": "game_ended_msg", "gameId": game_id,
+                     "winner": None, "winner_teammate": None},
+                )
+        state.queue = [s for s in state.queue if s.get("ownerId") != self.user_id]
+        await self._broadcast_queue()
+        try:
+            await self.send(text_data=json.dumps({"type": "account_deleted"}))
+        except Exception:
+            pass
+        await self.close(code=4002)
+
     async def friend_added(self, event):
         try:
             await self.send(text_data=json.dumps({
