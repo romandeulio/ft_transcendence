@@ -1,10 +1,10 @@
 """
-API REST des paris.
+Betting REST API.
 
-  GET    /api/bets/available/   parties ouvertes aux paris (live) + cotes
-  POST   /api/bets/            poser un pari { reservation, side, amount }
-  GET    /api/bets/mine/        historique de mes paris
-  DELETE /api/bets/<id>/        annuler un de mes paris (tant que ouvert)
+  GET    /api/bets/available/   games currently open for betting (live) + odds
+  POST   /api/bets/            place a bet { reservation, side, amount }
+  GET    /api/bets/mine/        the caller's bet history
+  DELETE /api/bets/<id>/        cancel one of the caller's bets (while still open)
 """
 from django.shortcuts import get_object_or_404
 
@@ -22,7 +22,7 @@ from .serializers import serialize_available, serialize_history
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def available_bets(request):
-    """Parties en cours sur lesquelles on peut parier (hors 2v1)."""
+    """Ongoing games that can be bet on (2v1 games excluded)."""
     reservations = (
         Reservation.objects
         .filter(status=Reservation.Status.IN_PROGRESS)
@@ -39,7 +39,7 @@ def available_bets(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def place_bet(request):
-    """Poser un pari : { reservation: <uuid>, side: 'p1'|'p2', amount: int }."""
+    """Place a bet: { reservation: <uuid>, side: 'p1'|'p2', amount: int }."""
     reservation_id = request.data.get('reservation')
     side = request.data.get('side')
     amount = request.data.get('amount')
@@ -72,7 +72,7 @@ def place_bet(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_bets(request):
-    """Historique des paris de l'utilisateur (ouverts + résolus)."""
+    """The user's bet history (open + resolved)."""
     bets = (
         Bet.objects
         .filter(user=request.user)
@@ -90,7 +90,7 @@ def my_bets(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def cancel_bet(request, pk):
-    """Annuler un pari ouvert (remboursement de la mise)."""
+    """Cancel an open bet (refunds the stake)."""
     bet = get_object_or_404(Bet.objects.select_related('reservation'), pk=pk)
     try:
         services.cancel_bet(request.user, bet)
