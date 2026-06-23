@@ -50,55 +50,7 @@ backup:
 seed:
 	docker exec transcendence_backend python manage.py seed_users
 
-# Seed test data (season + users + matches)
-seed2:
-	docker exec -it transcendence_backend python manage.py shell -c "\
-	from seasons.models import Season; \
-	from users.models import User; \
-	from matches.models import Match; \
-	from datetime import date; \
-	import random; \
-	\
-	season, _ = Season.objects.get_or_create( \
-		name='Saison Test', \
-		defaults={ \
-			'start_date': date(2026, 1, 1), \
-			'end_date':   date(2026, 12, 31), \
-			'status':     'ACTIVE', \
-		} \
-	); \
-	print(f'Season: {season.name} ({season.status})'); \
-	\
-	users = list(User.objects.filter(is_active=True)); \
-	print(f'Users found: {len(users)}'); \
-	\
-	if len(users) < 2: \
-		print('Not enough users — log in via OAuth 42 first'); \
-	else: \
-		for i in range(5): \
-			p1 = users[i % len(users)]; \
-			p2 = users[(i + 1) % len(users)]; \
-			if p1 == p2: continue; \
-			delta = random.randint(10, 30); \
-			m = Match.objects.create( \
-				season=season, \
-				match_type='SOLO', \
-				is_ranked=True, \
-				status='VALIDATED', \
-				player1=p1, \
-				player2=p2, \
-				score_player1=10, \
-				score_player2=random.randint(0, 9), \
-				elo_solo_p1_before=p1.elo_solo, \
-				elo_solo_p1_after=p1.elo_solo + delta, \
-				elo_solo_p2_before=p2.elo_solo, \
-				elo_solo_p2_after=p2.elo_solo - delta, \
-			); \
-			p1.elo_solo += delta; p1.save(); \
-			p2.elo_solo -= delta; p2.save(); \
-			print(f'Match {i+1}: {p1.username} vs {p2.username} +{delta}'); \
-		print('Done — reload the ranking page'); \
-	"
+
 unseed:
 	docker exec transcendence_backend python manage.py seed_users --clean
 
