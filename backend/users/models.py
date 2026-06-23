@@ -213,6 +213,23 @@ class User(AbstractBaseUser):
         except Exception:
             pass
 
+        # Créneaux en file d'attente (WAITING/CALLED) : on les annule pour que le
+        # joueur supprimé disparaisse de la file persistée et qu'aucun adversaire
+        # ne puisse lancer un match avec un compte inexistant.
+        try:
+            from planning.models import QueueEntry
+
+            QueueEntry.objects.filter(
+                status__in=[QueueEntry.Status.WAITING, QueueEntry.Status.CALLED]
+            ).filter(
+                models.Q(player1_id=self.id)
+                | models.Q(player2_id=self.id)
+                | models.Q(player1_teammate_id=self.id)
+                | models.Q(player2_teammate_id=self.id)
+            ).update(status=QueueEntry.Status.CANCELLED)
+        except Exception:
+            pass
+
         try:
             from bets.services import refund_open_bets_for_user
             refund_open_bets_for_user(self.id)

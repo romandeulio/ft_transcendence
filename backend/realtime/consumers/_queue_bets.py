@@ -33,6 +33,26 @@ class QueueBetsMixin:
             game.get("player2"), game.get("player2_teammate"),
         } - {None}
 
+    def _slot_involves(self, slot, username):
+        """True si `username` participe à ce créneau (owner, adversaire ou
+        coéquipier), quel que soit le champ où il est stocké (p1/p2/player*)."""
+        return username in self._game_usernames(self._slot_to_game(slot))
+
+    @database_sync_to_async
+    def _filter_active_usernames(self, usernames):
+        """Sous-ensemble des pseudos correspondant à un compte existant ET actif."""
+        from django.contrib.auth import get_user_model
+
+        names = [n for n in usernames if n]
+        if not names:
+            return set()
+        User = get_user_model()
+        return set(
+            User.objects
+            .filter(username__in=names, is_active=True)
+            .values_list("username", flat=True)
+        )
+
     async def _close_bets_for_slot(self, slot):
         """Match retiré de la file sans être joué → ferme + rembourse ses paris."""
         g = self._slot_to_game(slot)

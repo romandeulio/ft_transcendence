@@ -186,7 +186,23 @@ class QueueConsumer(
                     {"type": "game_ended_msg", "gameId": game_id,
                      "winner": None, "winner_teammate": None},
                 )
-        state.queue = [s for s in state.queue if s.get("ownerId") != self.user_id]
+        # Retire TOUS les créneaux où ce joueur apparaît (owner OU adversaire OU
+        # coéquipier) — pas seulement ceux qu'il possède — sinon l'autre joueur
+        # garderait un créneau jouable avec un compte supprimé. On rembourse les
+        # paris ouverts et on signale la fin de chaque créneau aux deux joueurs.
+        involved = [s for s in state.queue if self._slot_involves(s, self.username)]
+        for s in involved:
+            await self._close_bets_for_slot(s)
+            slot_id = s.get("id")
+            if slot_id:
+                state.completed_game_ids.add(slot_id)
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {"type": "game_ended_msg", "gameId": slot_id,
+                     "winner": None, "winner_teammate": None},
+                )
+        involved_ids = {s.get("id") for s in involved}
+        state.queue = [s for s in state.queue if s.get("id") not in involved_ids]
         await self._broadcast_queue()
         try:
             await self.send(text_data=json.dumps({"type": "account_deleted"}))
@@ -338,6 +354,30 @@ class QueueConsumer(
         match_type = data.get("match_type", "SOLO")
         if not (game_id and player1 and player2):
             return
+
+        # Garde-fou autoritaire : un participant a pu être supprimé/désactivé
+        # entre la réservation et le lancement. On refuse de démarrer une partie
+        # avec un compte inexistant, on purge le créneau et on prévient les deux
+        # joueurs (le bouton « jouer » disparaît côté front via game_ended).
+        participants = {player1, player2,
+                        data.get("player1_teammate"),
+                        data.get("player2_teammate")} - {None}
+        active = await self._filter_active_usernames(participants)
+        if active != participants:
+            slot = next((s for s in state.queue if s.get("id") == game_id), None)
+            if slot:
+                await self._close_bets_for_slot(slot)
+            state.queue = [s for s in state.queue if s.get("id") != game_id]
+            state.games.pop(game_id, None)
+            state.completed_game_ids.add(game_id)
+            await self.channel_layer.group_send(
+                self.group_name,
+                {"type": "game_ended_msg", "gameId": game_id,
+                 "winner": None, "winner_teammate": None},
+            )
+            await self._broadcast_queue()
+            return
+
         if game_id not in state.games:
             state.games[game_id] = {
                 "player1": player1,

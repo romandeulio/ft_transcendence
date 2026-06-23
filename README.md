@@ -465,7 +465,7 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 - Created the full design system: 22+ reusable components, shared color palette, typography
 - **Challenge**: building a consistent design system from scratch (not using a library like Material-UI) while maintaining development velocity required upfront investment in component architecture that paid off later.
 
-### Thaïs (LuThaTha) — Product Owner & Tech Lead Backend
+### Thaïs (tvandoor) — Product Owner & Tech Lead Backend
 - Designed the full PostgreSQL schema (16 tables, all relations, constraints, indexes)
 - Implemented the `users/` app: registration, login, JWT session management, OAuth 42 flow, advanced permissions
 - Implemented GDPR features: data export and full anonymization
@@ -473,14 +473,14 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 - Wrote `postgres/init.sql` (the authoritative DB schema)
 - **Challenge**: the 2FA + OAuth 42 flow required careful state management (handling partial sessions between OAuth callback and 2FA verification) and secure TOTP secret storage.
 
-### Roman (rdeulio) — Fullstack Developer (Real-time)
+### Roman (rodeulio) — Fullstack Developer (Real-time)
 - Implemented all WebSocket consumers in `realtime/` (Django Channels): live queue, live notifications, live ranking update broadcast
 - Developed the entire `bets/` backend app: bet creation, validation, automatic closing on match start, proportional winnings distribution, anti-cheat, refund logic, wallet mutations with atomic transactions
 - Developed Betting frontend page: real-time bet interface, wallet display, transaction history
 - Implemented the notification system consumer
 - **Challenge**: ensuring that bet resolution is atomic (no tokens lost or duplicated) when multiple users simultaneously win a bet required careful use of `select_for_update()` and Django's transaction management.
 
-### Sydney (scavallin) — Backend Developer & API
+### Sydney (scavalli) — Backend Developer & API
 - Implemented `matches/` app: match recording (SOLO, TEAM, FUN), ELO calculation (K-factor, expected score formula), result validation
 - Developed `seasons/` app: season lifecycle (UPCOMING → ACTIVE → FINISHED), end-of-season ELO snapshot, token reward distribution to top players
 - Implemented `planning/` app: time slot reservation logic, queue management (join, leave, auto-advance)

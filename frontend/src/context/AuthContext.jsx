@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { authFetch, apiRefresh } from '../services/api'
+import { authFetch, apiRefresh, resetAuthSession } from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
   const [accountDeleted, setAccountDeleted] = useState(false)
 
   const login = (u) => {
+    resetAuthSession()
     setUser(u)
     localStorage.setItem('user', JSON.stringify(u))
   }
@@ -64,6 +65,14 @@ export function AuthProvider({ children }) {
       })
     } catch {}
   }, [])
+
+  // Écoute l'event émis par authFetch quand un refresh échoue après un 401
+  // (user supprimé, session expirée). Affiche le modal de déconnexion.
+  useEffect(() => {
+    const handler = () => markAccountDeleted()
+    window.addEventListener('auth:session-expired', handler)
+    return () => window.removeEventListener('auth:session-expired', handler)
+  }, [markAccountDeleted])
 
   // Valide le cookie JWT au démarrage : un token résiduel (ex. après `make re`
   // qui réinitialise la base) pointe vers un user qui n'existe plus → on purge

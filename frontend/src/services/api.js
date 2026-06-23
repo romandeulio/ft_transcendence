@@ -71,45 +71,76 @@ export function apiRefresh() {
   })
 }*/}
 
-export function authFetch(url, options = {}) {
+// Verrou global : une fois la session morte (compte supprimé / refresh KO), on
+// court-circuite les requêtes authentifiées pour ne pas inonder la console de
+// 401 (chaque composant qui poll réessaierait sinon en boucle). Réarmé au login.
+let sessionDead = false
+
+export function resetAuthSession() {
+  sessionDead = false
+}
+
+// Réponse 401 synthétique avec corps JSON (pour que les `.then(r => r.json())`
+// des appelants ne lèvent pas sur un body vide).
+function deadSessionResponse() {
+  return new Response(
+    JSON.stringify({ detail: 'Session expired' }),
+    { status: 401, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
+export async function authFetch(url, options = {}) {
+  // Session déjà connue morte : aucune requête réseau (évite le spam de 401).
+  if (sessionDead) return deadSessionResponse()
+
   const isJSON =
     !(options.body instanceof FormData) &&
     typeof options.body === 'string'
-  return fetch(url, {
+
+  const doFetch = () => fetch(url, {
     ...options,
     credentials: 'include',
     headers: {
       ...(isJSON ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers || {}),
     },
-  }).then(async (res) => {
-
-    // ❗ BAN HANDLING (tu peux garder ça)
-    if (res.status === 401) {
-      try {
-        const data = await res.clone().json()
-
-        if (data.detail === 'User is banned') {
-          localStorage.removeItem('user')
-
-          const ban = data.ban || {}
-
-          if (ban.type === 'permanent') {
-            window.location.href = '/banned?type=permanent'
-          } else if (ban.type === 'temporary' && ban.until) {
-            window.location.href =
-              `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
-          } else {
-            window.location.href = '/banned?type=permanent'
-          }
-
-          return res
-        }
-      } catch {}
-    }
-
-    return res
   })
+
+  const res = await doFetch()
+  if (res.status !== 401) return res
+
+  // Ban : redirection immédiate vers la page de ban.
+  try {
+    const data = await res.clone().json()
+    if (data.detail === 'User is banned') {
+      localStorage.removeItem('user')
+      const ban = data.ban || {}
+      if (ban.type === 'temporary' && ban.until) {
+        window.location.href = `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
+      } else {
+        window.location.href = '/banned?type=permanent'
+      }
+      return res
+    }
+  } catch {}
+
+  // Pas un ban : tente un refresh silencieux puis rejoue UNE fois la requête.
+  // Attention : le refresh JWT ne vérifie que la signature du token, pas
+  // is_active — pour un compte supprimé il réussit mais la requête rejouée
+  // reste 401. On traite donc « refresh KO » ET « toujours 401 après refresh »
+  // comme une session morte.
+  try {
+    await refreshAuthCookie()
+    const retry = await doFetch()
+    if (retry.status !== 401) return retry
+  } catch {}
+
+  if (!sessionDead) {
+    sessionDead = true
+    // AuthContext écoute cet event → purge la session + affiche le modal.
+    window.dispatchEvent(new CustomEvent('auth:session-expired'))
+  }
+  return res
 }
 
 // Erreur "métier" de tournoi : le backend répond 200 + en-tête X-Tournament-Error

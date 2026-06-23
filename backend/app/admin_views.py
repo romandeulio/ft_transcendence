@@ -495,12 +495,13 @@ class AdminSeasonDetailView(APIView):
 
 class AdminDeleteUserView(APIView):
     permission_classes = [IsAdminSession]
- 
+
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        # Anonymisation (comme la suppression RGPD) plutôt qu'un hard delete : on
-        # préserve l'historique des matchs (FK SET_NULL → '?') et l'intégrité des
-        # données liées (paris, classements…).
+        # anonymize() annule l'activité en cours (matchs, réservations, créneaux
+        # de file) et notifie la session WebSocket du joueur (_kick_live_session
+        # → fermeture code 4002 → markAccountDeleted côté front). Pas besoin de
+        # dupliquer le group_send ici.
         user.anonymize()
         return Response(status=204)
  
