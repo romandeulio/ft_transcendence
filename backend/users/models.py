@@ -163,8 +163,16 @@ class User(AbstractBaseUser):
         self.gdpr_deleted = True
         self.save()
 
-        self._cancel_open_activity()
+        # ORDRE CRITIQUE : on ferme les WS du joueur (dont le WS paris, via son
+        # groupe dédié) AVANT d'annuler son activité. `_cancel_open_activity`
+        # rembourse les paris et appelle `_broadcast_closed` → un `market_closed`
+        # part vers le groupe `bets`. Si ce broadcast précédait la fermeture, le
+        # bets consumer du joueur le relaierait au front, qui déclencherait un
+        # poll authentifié (loadHistory/refreshUser) → 401. En notifiant d'abord,
+        # le `account.deleted` est déjà dans le canal du bets consumer quand le
+        # `market_closed` y arrive → FIFO ferme la connexion (4002) d'abord.
         self._kick_live_session(old_username)
+        self._cancel_open_activity()
 
     def _cancel_open_activity(self):
         """Annule l'activité en cours du joueur et rembourse les paris liés.
@@ -247,6 +255,20 @@ class User(AbstractBaseUser):
 
             channel_layer = get_channel_layer()
             if channel_layer is not None:
+                # ORDRE CRITIQUE : on notifie d'abord le WS paris (groupe dédié),
+                # PUIS le WS file d'attente. Le `market_closed` de la partie
+                # annulée est un effet aval du `account.deleted` reçu par le queue
+                # consumer (group_send vers le groupe `bets`). En enfilant le
+                # `account.deleted` du bets consumer AVANT de réveiller le queue
+                # consumer, on garantit qu'il est dans le canal du bets consumer
+                # avant que le `market_closed` n'y soit ajouté → l'ordre FIFO du
+                # canal ferme la connexion (4002) d'abord. Le front pose alors son
+                # verrou de session (killAuthSession) et n'émet plus de poll
+                # authentifié → aucun 401. (L'ordre inverse laissait le
+                # market_closed passer devant : cf. trace 686ms vs 718ms.)
+                async_to_sync(channel_layer.group_send)(
+                    f"bets_user_{username}", {"type": "account.deleted"}
+                )
                 async_to_sync(channel_layer.group_send)(
                     f"user_{username}", {"type": "account.deleted"}
                 )

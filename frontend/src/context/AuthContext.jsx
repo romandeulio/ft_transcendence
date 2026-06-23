@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { authFetch, apiRefresh, resetAuthSession } from '../services/api'
+import { authFetch, apiRefresh, resetAuthSession, killAuthSession } from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -35,6 +35,9 @@ export function AuthProvider({ children }) {
   // session locale — ce qui stoppe tous les polls authentifiés (et donc les
   // 401 en console) — puis on affiche l'écran terminal.
   const markAccountDeleted = useCallback(() => {
+    // Verrou immédiat : coupe tout authFetch ultérieur (idempotent avec
+    // killAuthSession déjà appelé sur le close 4002 ou par authFetch).
+    killAuthSession()
     fetch('/api/auth/logout/', {
       method: 'POST',
       credentials: 'include',
