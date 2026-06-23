@@ -48,10 +48,10 @@ function BetsChart({ history, yRange }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H + padB}`} width="100%" className={styles.chart} style={{ overflow: 'visible' }}>
-      {ticks.map(v => {
+      {ticks.map((v, ti) => {
         const yt = y(v)
         return (
-          <g key={v}>
+          <g key={`tick-${ti}`}>
             <line x1={padL} y1={yt} x2={W - padR} y2={yt} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3 3" />
             <text x={padL - 4} y={yt} textAnchor="end" fontSize="8" fill="var(--ink3)" dominantBaseline="middle">{v}</text>
           </g>
@@ -61,14 +61,14 @@ function BetsChart({ history, yRange }) {
       <path d={area} fill={fill} />
       <path d={path} fill="none" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
       {vals.map((v, i) => (
-        <g key={i}>
+        <g key={`pt-${i}`}>
           <circle cx={x(i)} cy={y(v)} r="2" fill={color} />
           <title>{history[i]?.date} : {v >= 0 ? '+' : ''}{v} {t('bets.tokensWord')}</title>
         </g>
       ))}
       {history.map((h, i) =>
         (i % step === 0 || i === history.length - 1)
-          ? <text key={i} x={x(i)} y={H + padB - 2} textAnchor="middle" fontSize="8" fill="var(--ink3)">{h.date}</text>
+          ? <text key={`lbl-${i}`} x={x(i)} y={H + padB - 2} textAnchor="middle" fontSize="8" fill="var(--ink3)">{h.date}</text>
           : null
       )}
     </svg>

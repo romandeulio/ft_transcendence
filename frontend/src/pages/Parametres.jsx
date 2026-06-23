@@ -42,8 +42,6 @@ export default function Parametres() {
   // ── 2FA ──
   const [tfaLoading, setTfaLoading] = useState(false)
 
-  // ── OAuth toggle ──
-  const [oauth, setOauth] = useState(true)
 
   // ── Email ──
   const [email, setEmail] = useState(user?.email ?? '')
@@ -90,17 +88,30 @@ export default function Parametres() {
   }
 
   const handleSave = async () => {
+    setAvatarLoading(true)
+    setAvatarError('')
+
+    // Validation email côté client (évite le fetch 400 dans la console)
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setAvatarError(t('settings.profile.invalidEmail'))
+      setAvatarLoading(false)
+      return
+    }
+
     try {
-      setAvatarLoading(true)
-      setAvatarError('')
       const profileData = new FormData()
-      profileData.append('email', email)
+      profileData.append('email', email.trim())
       if (avatarDeleted) profileData.append('delete_avatar', 'true')
       if (avatarFile)    profileData.append('avatar', avatarFile)
       const res = await fetch('/api/auth/profile/update/', {
         method: 'PUT', credentials: 'include', body: profileData,
       })
-      if (!res.ok) throw new Error(t('settings.profile.updateError'))
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        if (body?.error?.includes('invalide'))     throw new Error(t('settings.profile.invalidEmail'))
+        if (body?.error?.includes('déjà utilisé')) throw new Error(t('settings.profile.emailInUse'))
+        throw new Error(t('settings.profile.updateError'))
+      }
       const updated = await res.json()
       login({ ...user, email: updated.email, avatar_url: updated.avatar_url })
       setAvatarPreview(updated.avatar_url ?? null)
@@ -124,11 +135,11 @@ export default function Parametres() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ current_password: pwForm.current, new_password: pwForm.new1 }),
     })
-    if (res.ok) {
+    const data = await res.json()
+    if (data.success) {
       setPwSuccess(true)
       setPwForm({ current: '', new1: '', new2: '' })
     } else {
-      const data = await res.json()
       setPwError(data.error || t('settings.security.error'))
     }
     setPwLoading(false)
@@ -297,7 +308,7 @@ export default function Parametres() {
           {/* ── Sécurité ── */}
           {activeTab === 'security' && (
             <div>
-              {!user?.oauth_42_id && (
+              {!user?.is_oauth && (
                 <div className={styles.section}>
                   <div className={styles.sectionTitle}>{t('settings.security.changePassword')}</div>
                   <input className={styles.input} type="password" placeholder={t('settings.security.currentPassword')} value={pwForm.current} onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))} style={{ marginBottom: '8px' }} />
@@ -335,18 +346,6 @@ export default function Parametres() {
                 )}
               </div>
 
-              <div className={styles.toggleRow}>
-                <div>
-                  <div className={styles.toggleLabel}>{t('settings.security.oauth')}</div>
-                  <div className={styles.toggleSub}>{t('settings.security.oauthSub')}</div>
-                </div>
-                <Toggle on={oauth} onChange={setOauth} />
-              </div>
-
-              <div className={styles.section}>
-                <div className={styles.sectionTitle}>{t('settings.security.activeSessions')}</div>
-                <button className={styles.btnDanger}>{t('settings.security.disconnectAll')}</button>
-              </div>
             </div>
           )}
 

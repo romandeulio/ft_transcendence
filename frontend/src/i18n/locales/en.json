@@ -38,6 +38,7 @@
     "title2fa": "2FA Verification",
     "sentTo": "A code has been sent to",
     "back": "← Back",
+    "invalidCode": "The code must be 6 digits",
     "errors": {
       "invalidEmail": "Invalid email address.",
       "passwordRequired": "Password required.",
@@ -103,6 +104,8 @@
     "seasonBalance": "Season balance",
     "netTokens": "net tokens",
     "availableBets": "Available bets",
+    "betCount_one": "{{count}} bet",
+    "betCount_other": "{{count}} bets",
     "noBets": "No bets available right now.",
     "cancel": "Cancel",
     "bet": "Bet",
@@ -356,7 +359,9 @@
       "email": "Email",
       "save": "Save changes",
       "uploading": "Uploading...",
-      "updateError": "Profile update error"
+      "updateError": "Profile update error",
+      "invalidEmail": "Invalid email format",
+      "emailInUse": "This email is already in use"
     },
     "security": {
       "changePassword": "Change password",

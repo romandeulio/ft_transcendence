@@ -38,6 +38,7 @@
     "title2fa": "Vérification 2FA",
     "sentTo": "Un code a été envoyé à",
     "back": "← Retour",
+    "invalidCode": "Le code doit contenir 6 chiffres",
     "errors": {
       "invalidEmail": "Adresse email invalide.",
       "passwordRequired": "Mot de passe requis.",
@@ -103,6 +104,8 @@
     "seasonBalance": "Bilan saison",
     "netTokens": "jetons net",
     "availableBets": "Paris disponibles",
+    "betCount_one": "{{count}} pari",
+    "betCount_other": "{{count}} paris",
     "noBets": "Aucun paris disponible pour le moment.",
     "cancel": "Annuler",
     "bet": "Miser",
@@ -356,7 +359,9 @@
       "email": "Email",
       "save": "Sauvegarder les modifications",
       "uploading": "Téléversement...",
-      "updateError": "Erreur mise à jour profil"
+      "updateError": "Erreur mise à jour profil",
+      "invalidEmail": "Format d'email invalide",
+      "emailInUse": "Cet email est déjà utilisé"
     },
     "security": {
       "changePassword": "Changer le mot de passe",

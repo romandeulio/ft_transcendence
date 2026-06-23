@@ -158,7 +158,7 @@ class Verify2FACodeView(APIView):
 
         # Code valide — supprimer du cache et connecter
         cache.delete(cache_key)
-        response = Response({'detail': 'Login successful'})
+        response = Response({'success': True, 'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
 
 
@@ -572,7 +572,16 @@ class UpdateProfileView(APIView):
 
         # Mise à jour email
         if request.data.get('email'):
-            user.email = request.data['email']
+            from django.core.validators import validate_email as django_validate_email
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            new_email = request.data['email'].strip()
+            try:
+                django_validate_email(new_email)
+            except DjangoValidationError:
+                return Response({'error': 'Format email invalide'}, status=400)
+            if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                return Response({'error': 'Email déjà utilisé'}, status=400)
+            user.email = new_email
 
         # Suppression avatar
         if request.data.get('delete_avatar') == 'true':
@@ -675,13 +684,13 @@ class ChangePasswordView(APIView):
         new_pass = request.data.get('new_password')
 
         if not user.check_password(current):
-            return Response({'error': 'Mot de passe actuel incorrect'}, status=400)
+            return Response({'success': False, 'error': 'Mot de passe actuel incorrect'})
         if len(new_pass) < 8:
-            return Response({'error': 'Minimum 8 caractères'}, status=400)
+            return Response({'success': False, 'error': 'Minimum 8 caractères'})
 
         user.set_password(new_pass)
         user.save()
-        return Response({'status': 'Mot de passe modifié'})
+        return Response({'success': True, 'status': 'Mot de passe modifié'})
 
 
 class Disable2FAView(APIView):

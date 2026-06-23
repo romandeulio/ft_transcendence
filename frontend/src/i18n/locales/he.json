@@ -38,6 +38,7 @@
     "title2fa": "אימות דו-שלבי",
     "sentTo": "קוד נשלח אל",
     "back": "← חזרה",
+    "invalidCode": "הקוד חייב להכיל 6 ספרות",
     "errors": {
       "invalidEmail": "כתובת אימייל לא תקינה.",
       "passwordRequired": "נדרשת סיסמה.",
@@ -103,6 +104,8 @@
     "seasonBalance": "מאזן עונה",
     "netTokens": "אסימונים נטו",
     "availableBets": "הימורים זמינים",
+    "betCount_one": "הימור {{count}}",
+    "betCount_other": "{{count}} הימורים",
     "noBets": "אין הימורים זמינים כרגע.",
     "cancel": "בטל",
     "bet": "הימר",
@@ -356,7 +359,9 @@
       "email": "אימייל",
       "save": "שמור שינויים",
       "uploading": "מעלה...",
-      "updateError": "שגיאה בעדכון הפרופיל"
+      "updateError": "שגיאה בעדכון הפרופיל",
+      "invalidEmail": "פורמט אימייל לא תקין",
+      "emailInUse": "האימייל הזה כבר בשימוש"
     },
     "security": {
       "changePassword": "שנה סיסמה",

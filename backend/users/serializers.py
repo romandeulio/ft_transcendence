@@ -157,6 +157,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     elo_solo = serializers.IntegerField(source="stats.elo_solo", read_only=True)
     elo_team = serializers.IntegerField(source="stats.elo_team", read_only=True)
+    is_oauth = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -170,4 +171,8 @@ class UserSerializer(serializers.ModelSerializer):
             "elo_team",
             "wallet_tokens",
             "is_2fa_enabled",
+            "is_oauth",
         ]
+
+    def get_is_oauth(self, obj):
+        return bool(obj.oauth_42_id)
