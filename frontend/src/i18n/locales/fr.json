@@ -37,7 +37,8 @@
     "validate": "Valider",
     "title2fa": "Vérification 2FA",
     "sentTo": "Un code a été envoyé à",
-    "back": "← Retour"
+    "back": "← Retour",
+    "invalidCode": "Le code doit contenir 6 chiffres"
   },
   "home": {
     "scheduledMatch": "📋 Match prévu",

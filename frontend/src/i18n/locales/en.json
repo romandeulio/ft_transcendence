@@ -37,7 +37,8 @@
     "validate": "Submit",
     "title2fa": "2FA Verification",
     "sentTo": "A code has been sent to",
-    "back": "← Back"
+    "back": "← Back",
+    "invalidCode": "The code must be 6 digits"
   },
   "home": {
     "scheduledMatch": "📋 Scheduled match",

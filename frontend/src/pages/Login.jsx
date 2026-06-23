@@ -71,6 +71,10 @@ export default function Login() {
   const handleVerify2FA = async (e) => {
     e.preventDefault()
     setError(null)
+    if (!/^\d{6}$/.test(tfaCode)) {
+      setError(t('login.invalidCode'))
+      return
+    }
     setTfaLoading(true)
     try {
       const res = await fetch('/api/auth/2fa/verify/', {
@@ -80,8 +84,8 @@ export default function Login() {
         body: JSON.stringify({ user_id: twoFA.user_id, code: tfaCode }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Code invalide')
+      if (!data.success) {
+        setError(data.error || t('login.invalidCode'))
         setTfaLoading(false)
         return
       }
@@ -168,7 +172,7 @@ export default function Login() {
                 autoFocus
               />
               {error && <div className={styles.error}>{error}</div>}
-              <button className={styles.btnLogin} type="submit" disabled={tfaCode.length < 6 || tfaLoading}>
+              <button className={styles.btnLogin} type="submit" disabled={tfaLoading}>
                 {tfaLoading ? t('login.verifying') : t('login.validate')}
               </button>
             </form>

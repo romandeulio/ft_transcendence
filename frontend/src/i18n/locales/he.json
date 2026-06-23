@@ -37,7 +37,8 @@
     "validate": "אשר",
     "title2fa": "אימות דו-שלבי",
     "sentTo": "קוד נשלח אל",
-    "back": "← חזרה"
+    "back": "← חזרה",
+    "invalidCode": "הקוד חייב להכיל 6 ספרות"
   },
   "home": {
     "scheduledMatch": "📋 משחק מתוכנן",

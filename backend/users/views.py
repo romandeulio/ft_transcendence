@@ -150,14 +150,14 @@ class Verify2FACodeView(APIView):
         stored_code = cache.get(cache_key)
 
         if stored_code is None:
-            return Response({'error': 'Code expiré, reconnectez-vous'}, status=401)
+            return Response({'success': False, 'error': 'Code expiré, reconnectez-vous'})
 
         if stored_code != code:
-            return Response({'error': 'Code invalide'}, status=401)
+            return Response({'success': False, 'error': 'Code invalide'})
 
         # Code valide — supprimer du cache et connecter
         cache.delete(cache_key)
-        response = Response({'detail': 'Login successful'})
+        response = Response({'success': True, 'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
 
 
@@ -681,13 +681,13 @@ class ChangePasswordView(APIView):
         new_pass = request.data.get('new_password')
 
         if not user.check_password(current):
-            return Response({'error': 'Mot de passe actuel incorrect'}, status=400)
+            return Response({'success': False, 'error': 'Mot de passe actuel incorrect'})
         if len(new_pass) < 8:
-            return Response({'error': 'Minimum 8 caractères'}, status=400)
+            return Response({'success': False, 'error': 'Minimum 8 caractères'})
 
         user.set_password(new_pass)
         user.save()
-        return Response({'status': 'Mot de passe modifié'})
+        return Response({'success': True, 'status': 'Mot de passe modifié'})
 
 
 class Disable2FAView(APIView):

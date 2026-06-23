@@ -157,6 +157,11 @@ REST_FRAMEWORK = {
 	},
 }
 
+# Pas de migrations Django — toutes les tables sont créées par init.sql
+MIGRATION_MODULES = {
+	'public_api': None,
+}
+
 # ===========================================================================
 # JWT
 # ===========================================================================

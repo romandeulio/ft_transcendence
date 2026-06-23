@@ -42,8 +42,6 @@ export default function Parametres() {
   // ── 2FA ──
   const [tfaLoading, setTfaLoading] = useState(false)
 
-  // ── OAuth toggle ──
-  const [oauth, setOauth] = useState(true)
 
   // ── Email ──
   const [email, setEmail] = useState(user?.email ?? '')
@@ -137,11 +135,11 @@ export default function Parametres() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ current_password: pwForm.current, new_password: pwForm.new1 }),
     })
-    if (res.ok) {
+    const data = await res.json()
+    if (data.success) {
       setPwSuccess(true)
       setPwForm({ current: '', new1: '', new2: '' })
     } else {
-      const data = await res.json()
       setPwError(data.error || t('settings.security.error'))
     }
     setPwLoading(false)
@@ -310,7 +308,7 @@ export default function Parametres() {
           {/* ── Sécurité ── */}
           {activeTab === 'security' && (
             <div>
-              {!user?.oauth_42_id && (
+              {!user?.is_oauth && (
                 <div className={styles.section}>
                   <div className={styles.sectionTitle}>{t('settings.security.changePassword')}</div>
                   <input className={styles.input} type="password" placeholder={t('settings.security.currentPassword')} value={pwForm.current} onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))} style={{ marginBottom: '8px' }} />
@@ -348,18 +346,6 @@ export default function Parametres() {
                 )}
               </div>
 
-              <div className={styles.toggleRow}>
-                <div>
-                  <div className={styles.toggleLabel}>{t('settings.security.oauth')}</div>
-                  <div className={styles.toggleSub}>{t('settings.security.oauthSub')}</div>
-                </div>
-                <Toggle on={oauth} onChange={setOauth} />
-              </div>
-
-              <div className={styles.section}>
-                <div className={styles.sectionTitle}>{t('settings.security.activeSessions')}</div>
-                <button className={styles.btnDanger}>{t('settings.security.disconnectAll')}</button>
-              </div>
             </div>
           )}
 
