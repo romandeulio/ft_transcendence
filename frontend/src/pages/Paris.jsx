@@ -137,7 +137,7 @@ export default function Paris() {
       <div className={styles.content}>
         <div className={styles.statsGrid}>
           <StatCard color="var(--orange-pale)" label={t('bets.betsPlaced')} value={betHistory.length} sub={t('bets.thisSeason')} />
-          <StatCard color="var(--yellow-pale)" label={t('bets.totalBet')}   value="—"                 sub={t('bets.tokensBet')} />
+          <StatCard color="var(--yellow-pale)" label={t('bets.tokensWord')} value={user?.wallet_tokens ?? '—'} sub={t('profile.tokensSub')} />
           <StatCard color="var(--green-pale)"  label={t('bets.seasonBalance')} value={totalBalance >= 0 ? `+${totalBalance}` : totalBalance} sub={t('bets.netTokens')} />
         </div>
 
