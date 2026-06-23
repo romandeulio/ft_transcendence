@@ -394,7 +394,7 @@ Total: **28 points** (minimum required: 14)
 | Real-time collaborative features | Minor | 1 | Shared live match state edited collaboratively over WebSocket: both players act on the same `game_id` session (`state.games[game_id]`), sending `score_update` actions that mutate a shared score and rebroadcast `game_state` to every connected client in real time. Includes collaborative game flow events — invitations (`invite_received`/`invite_response`), win claims requiring opponent confirmation (`win_invite`/`win_claim_declined`), and synchronized game end (`game_ended`). Built on Django Channels + Redis with a shared in-memory game state. |
 | Advanced search | Minor | 1 | User search with filters integrated in the Profile page friends panel: search players by username, see real-time online/offline status, add or remove friends, paginated results. |
 | Public API | Major | 2 | Documented API secured with `X-API-Key` header and rate limiting. 5 endpoints covering GET/POST/PUT/DELETE on matches and GET on rankings. |
-| Custom design system | Minor | 1 | 22+ reusable components with a coherent color palette, typography, and icon set. Minimum 10 reusable components exceeded. |
+| Custom design system | Minor | 1 | 17+ reusable components with a coherent color palette, typography, and icon set. Minimum 10 reusable components exceeded. |
 
 ### User Management — 7 pts
 
