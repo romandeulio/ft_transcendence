@@ -13,6 +13,9 @@
   position: absolute;
   top: 20px;
   right: 24px;
+  /* Au-dessus du sélecteur de langue : en responsive les deux coins se
+     rejoignent et langBar (plus loin dans le DOM) le recouvrirait sinon. */
+  z-index: 2;
   padding: 8px 16px;
   border-radius: 8px;
   background: rgba(255,255,255,0.12);
@@ -25,6 +28,13 @@
   transition: background 0.15s;
 }
 .backBtn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* RTL : le bouton retour passe à gauche (le sélecteur de langue passe à droite),
+   sinon les deux se superposent dans le coin haut-droit. */
+[dir="rtl"] .backBtn {
+  right: auto;
+  left: 24px;
+}
 
 .card {
   background: #ffffff;
@@ -316,6 +326,7 @@
 .pillChill   { background: #EBF0FC; color: #4068DB; }
 .pillActif   { background: #E4EDD4; color: #57722F; }
 .pillInactif { background: #EBF0FC; color: #7A8FD0; }
+.pillClosed  { background: #FFF3CD; color: #856404; }
 
 .playerCell {
   display: flex;
@@ -378,6 +389,8 @@
 
 .miniBtnDanger { border-color: #FBEAE8; color: #CD3122; }
 .miniBtnDanger:hover { background: #FBEAE8; }
+.miniBtnSuccess { border-color: #D4EDDA; color: #1B6B3A; }
+.miniBtnSuccess:hover { background: #D4EDDA; }
 
 /* ── Status mini ── */
 .statusLoading { font-size: 12px; color: #7A8FD0; padding: 4px 0; }
@@ -679,4 +692,15 @@
 [dir="rtl"] .langBar {
   left: auto;
   right: 20px;
+}
+
+/* Petits écrans : la carte est trop haute pour être centrée sans remonter
+   par-dessus les contrôles du haut (retour blanc-sur-blanc = invisible,
+   langues sur la carte). On aligne la carte en haut avec une marge pour
+   dégager le bandeau retour/langues au-dessus (la page défile si besoin). */
+@media (max-width: 768px) {
+  .page {
+    align-items: flex-start;
+    padding-top: 64px;
+  }
 }

@@ -171,7 +171,19 @@ def _close_season(season) -> None:
 		reset_all_elo()
 
 		season.rewards_distributed = True
-	season.save(update_fields=['status', 'rewards_distributed', 'updated_at'])
+		season.save(update_fields=['status', 'rewards_distributed', 'updated_at'])
+	else:
+		# Récompenses déjà distribuées : on persiste quand même le passage à FINISHED.
+		season.save(update_fields=['status', 'updated_at'])
+
+	# Achievements saison (hors transaction)
+	try:
+		from achievements.service import check_season_achievements
+		check_season_achievements(season)
+	except Exception:
+		pass
+
+	return Response(SeasonSerializer(season).data)
 
 
 def _distribute_rewards(season, ranking_type: str) -> None:

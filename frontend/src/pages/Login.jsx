@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authFetch } from '../services/api'
+import { isValidEmail, loginErrorMessage } from '../services/authErrors'
 
 export default function Login() {
   const { t } = useTranslation()
@@ -32,6 +33,16 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+    // Validation côté client : pas de requête si l'email est invalide
+    // (évite un 401 inutile dans les logs) et message traduit affiché.
+    if (!isValidEmail(form.email)) {
+      setError(t('login.errors.invalidEmail'))
+      return
+    }
+    if (!form.password) {
+      setError(t('login.errors.passwordRequired'))
+      return
+    }
     try {
       const res = await fetch('/api/auth/login/', {
         method: 'POST',
@@ -39,18 +50,23 @@ export default function Login() {
         credentials: 'include',
         body: JSON.stringify(form),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        if (data.error === 'banned' && data.ban) {
-          const ban = data.ban
-          if (ban.type === 'permanent') {
-            navigate('/banned?type=permanent')
-          } else {
-            navigate(`/banned?type=temporary&until=${encodeURIComponent(ban.until)}`)
-          }
-          return
+      const data = await res.json().catch(() => ({}))
+      // Échec « attendu » : renvoyé en HTTP 200 avec data.error (pas d'erreur console).
+      if (data.error === 'banned' && data.ban) {
+        const ban = data.ban
+        if (ban.type === 'permanent') {
+          navigate('/banned?type=permanent')
+        } else {
+          navigate(`/banned?type=temporary&until=${encodeURIComponent(ban.until)}`)
         }
-        setError(data.detail || data.error || data.non_field_errors?.[0] || t('login.error'))
+        return
+      }
+      if (data.error) {
+        setError(loginErrorMessage(data, t))
+        return
+      }
+      if (!res.ok) {
+        setError(t('login.networkError'))
         return
       }
       // 2FA par email requis
@@ -62,7 +78,7 @@ export default function Login() {
       if (!me.ok) throw new Error('Profile unavailable')
       const user = await me.json()
       login(user)
-      navigate('/accueil')
+      navigate('/profil')
     } catch {
       setError(t('login.networkError'))
     }
@@ -71,6 +87,11 @@ export default function Login() {
   const handleVerify2FA = async (e) => {
     e.preventDefault()
     setError(null)
+    // Code incomplet : on affiche une erreur sans appeler l'API (pas de 401 dans les logs).
+    if (tfaCode.length !== 6) {
+      setError(t('login.errors.codeLength'))
+      return
+    }
     setTfaLoading(true)
     try {
       const res = await fetch('/api/auth/2fa/verify/', {
@@ -79,9 +100,14 @@ export default function Login() {
         credentials: 'include',
         body: JSON.stringify({ user_id: twoFA.user_id, code: tfaCode }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (data.error) {
+        setError(loginErrorMessage(data, t))
+        setTfaLoading(false)
+        return
+      }
       if (!res.ok) {
-        setError(data.error || 'Code invalide')
+        setError(t('login.networkError'))
         setTfaLoading(false)
         return
       }
@@ -89,7 +115,7 @@ export default function Login() {
       if (!me.ok) throw new Error('Profile unavailable')
       const user = await me.json()
       login(user)
-      navigate('/accueil')
+      navigate('/profil')
     } catch {
       setError(t('login.networkError'))
     }
@@ -152,14 +178,14 @@ export default function Login() {
         {twoFA ? (
           <>
             <div className={styles.logo}>🔒</div>
-            <h1 className={styles.title}>Vérification 2FA</h1>
+            <h1 className={styles.title}>{t('login.title2fa')}</h1>
             <p className={styles.sub}>
-              Un code a été envoyé à <strong>{twoFA.email_hint}</strong>
+              {t('login.sentTo')} <strong>{twoFA.email_hint}</strong>
             </p>
-            <form onSubmit={handleVerify2FA}>
+            <form onSubmit={handleVerify2FA} noValidate>
               <input
                 className={styles.input}
-                placeholder="Code à 6 chiffres"
+                placeholder={t('login.codePlaceholder')}
                 type="text"
                 maxLength={6}
                 value={tfaCode}
@@ -168,15 +194,15 @@ export default function Login() {
                 autoFocus
               />
               {error && <div className={styles.error}>{error}</div>}
-              <button className={styles.btnLogin} type="submit" disabled={tfaCode.length < 6 || tfaLoading}>
-                {tfaLoading ? 'Vérification...' : 'Valider'}
+              <button className={styles.btnLogin} type="submit" disabled={tfaLoading}>
+                {tfaLoading ? t('login.verifying') : t('login.validate')}
               </button>
             </form>
             <button
               style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', marginTop: '12px', fontSize: '13px' }}
               onClick={() => { setTwoFA(null); setTfaCode(''); setError(null) }}
             >
-              ← Retour
+              {t('login.back')}
             </button>
           </>
         ) : (
@@ -188,7 +214,7 @@ export default function Login() {
               {t('login.loginWith42')}
             </button>
             <div className={styles.divider}>{t('login.or')}</div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <input
                 className={styles.input}
                 placeholder={t('login.email')}

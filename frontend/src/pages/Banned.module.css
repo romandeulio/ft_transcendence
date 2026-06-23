@@ -5,6 +5,18 @@
   justify-content: center;
   background: var(--bg3, #f5f3ee);
   padding: 20px;
+  position: relative;
+}
+
+.langBar {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+[dir="rtl"] .langBar {
+  right: auto;
+  left: 20px;
 }
 
 .card {

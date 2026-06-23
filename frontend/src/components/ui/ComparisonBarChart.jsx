@@ -3,16 +3,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { authFetch } from '../../services/api'
 import styles from './ComparisonBarChart.module.css'
 
 const COLORS = ['#CD3122', '#4068DB', '#57722F', '#E6B447']
 
 const METRICS = [
-  { value: 'elo_solo',          label: 'ELO'             },
-  { value: 'total_gamelles',    label: 'Gamelles'        },
-  { value: 'series_wins',       label: 'Série victoires' },
-  { value: 'matches_per_month', label: 'Parties / mois'  },
+  { value: 'elo_solo',          labelKey: 'comparison.elo'          },
+  { value: 'total_gamelles',    labelKey: 'comparison.gamelles'     },
+  { value: 'series_wins',       labelKey: 'comparison.winStreak'    },
+  { value: 'matches_per_month', labelKey: 'comparison.matchesMonth' },
 ]
 
 function CustomTooltip({ active, payload }) {
@@ -36,6 +37,7 @@ function CustomTooltip({ active, payload }) {
 }
 
 export default function ComparisonBarChart({ externalSelected }) {
+  const { t } = useTranslation()
   const [metric,   setMetric]   = useState('elo_solo')
   const [search,   setSearch]   = useState('')
   const [players,  setPlayers]  = useState([])
@@ -88,7 +90,7 @@ export default function ComparisonBarChart({ externalSelected }) {
             className={`${styles.metricBtn} ${metric === m.value ? styles.metricBtnOn : ''}`}
             onClick={() => setMetric(m.value)}
           >
-            {m.label}
+            {t(m.labelKey)}
           </button>
         ))}
       </div>
@@ -96,7 +98,7 @@ export default function ComparisonBarChart({ externalSelected }) {
       <div className={styles.pickerRow}>
         <div className={styles.selectedChips}>
           {selected.length === 0
-            ? <span className={styles.hint}>Sélectionne jusqu'à 4 joueurs</span>
+            ? <span className={styles.hint}>{t('comparison.selectUp')}</span>
             : selected.map((p, i) => (
                 <span key={p.login} className={styles.chip}
                   style={{ color: COLORS[i], borderColor: COLORS[i], background: COLORS[i] + '18' }}>
@@ -112,7 +114,7 @@ export default function ComparisonBarChart({ externalSelected }) {
           <input
             className={styles.searchInput}
             type="text"
-            placeholder="Rechercher un login…"
+            placeholder={t('comparison.searchLogin')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -128,14 +130,14 @@ export default function ComparisonBarChart({ externalSelected }) {
               )
             })}
             {players.length === 0 && search.trim() && (
-              <span className={styles.noResult}>Aucun joueur trouvé</span>
+              <span className={styles.noResult}>{t('comparison.noPlayer')}</span>
             )}
           </div>
         </div>
       </div>
 
       {selected.length === 0 ? (
-        <div className={styles.empty}>Recherche et sélectionne des joueurs pour comparer</div>
+        <div className={styles.empty}>{t('comparison.emptyHint')}</div>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

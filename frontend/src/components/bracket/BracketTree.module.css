@@ -7,9 +7,8 @@
   grid-template-columns: repeat(var(--round-count), minmax(150px, 1fr));
   column-gap: clamp(28px, 5vw, 96px);
   align-items: stretch;
-  width: 100%;
-  min-width: calc(var(--round-count) * 170px);
-  overflow-x: auto;
+  width: max-content;
+  min-width: 100%;
   padding: 22px 4px 18px;
 }
 

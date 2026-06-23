@@ -17,14 +17,22 @@ function buildFetchOptions(options = {}) {
 
 async function refreshAuthCookie() {
   if (!refreshPromise) {
+    // Le endpoint renvoie 200 {refreshed: bool} (jamais 401) → on lit le payload,
+    // pas le statut, pour éviter une erreur dans la console du navigateur.
     refreshPromise = fetch(`${BASE}/token/refresh/`, buildFetchOptions({ method: 'POST' }))
+      .then(res => res.json().catch(() => ({})))
       .finally(() => {
         refreshPromise = null
       })
   }
 
-  const res = await refreshPromise
-  if (!res.ok) throw new Error('Session expired')
+  const data = await refreshPromise
+  if (!data.refreshed) throw new Error('Session expired')
+}
+
+// Rafraîchit le cookie JWT — utilisé par AuthContext
+export function apiRefresh() {
+  return refreshAuthCookie()
 }
 
 // Fetch authentifié — les JWT HttpOnly sont envoyés via cookies same-origin.
@@ -63,45 +71,92 @@ async function refreshAuthCookie() {
   })
 }*/}
 
-export function authFetch(url, options = {}) {
+// Verrou global : une fois la session morte (compte supprimé / refresh KO), on
+// court-circuite les requêtes authentifiées pour ne pas inonder la console de
+// 401 (chaque composant qui poll réessaierait sinon en boucle). Réarmé au login.
+let sessionDead = false
+
+export function resetAuthSession() {
+  sessionDead = false
+}
+
+// Marque la session morte SANS attendre un 401 réseau — appelé dès qu'on apprend
+// la suppression du compte (fermeture WS code 4002). Tout authFetch ultérieur
+// est court-circuité → plus aucun 401 dans la console même si un message WS
+// (ex. market_closed) déclenche un poll juste après.
+export function killAuthSession() {
+  sessionDead = true
+}
+
+// Réponse 401 synthétique avec corps JSON (pour que les `.then(r => r.json())`
+// des appelants ne lèvent pas sur un body vide).
+function deadSessionResponse() {
+  return new Response(
+    JSON.stringify({ detail: 'Session expired' }),
+    { status: 401, headers: { 'Content-Type': 'application/json' } },
+  )
+}
+
+export async function authFetch(url, options = {}) {
+  // Session déjà connue morte : aucune requête réseau (évite le spam de 401).
+  if (sessionDead) return deadSessionResponse()
+
   const isJSON =
     !(options.body instanceof FormData) &&
     typeof options.body === 'string'
-  return fetch(url, {
+
+  const doFetch = () => fetch(url, {
     ...options,
     credentials: 'include',
     headers: {
       ...(isJSON ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers || {}),
     },
-  }).then(async (res) => {
-
-    // ❗ BAN HANDLING (tu peux garder ça)
-    if (res.status === 401) {
-      try {
-        const data = await res.clone().json()
-
-        if (data.detail === 'User is banned') {
-          localStorage.removeItem('user')
-
-          const ban = data.ban || {}
-
-          if (ban.type === 'permanent') {
-            window.location.href = '/banned?type=permanent'
-          } else if (ban.type === 'temporary' && ban.until) {
-            window.location.href =
-              `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
-          } else {
-            window.location.href = '/banned?type=permanent'
-          }
-
-          return res
-        }
-      } catch {}
-    }
-
-    return res
   })
+
+  const res = await doFetch()
+  if (res.status !== 401) return res
+
+  // Ban : redirection immédiate vers la page de ban.
+  try {
+    const data = await res.clone().json()
+    if (data.detail === 'User is banned') {
+      localStorage.removeItem('user')
+      const ban = data.ban || {}
+      if (ban.type === 'temporary' && ban.until) {
+        window.location.href = `/banned?type=temporary&until=${encodeURIComponent(ban.until)}`
+      } else {
+        window.location.href = '/banned?type=permanent'
+      }
+      return res
+    }
+  } catch {}
+
+  // Pas un ban : tente un refresh silencieux puis rejoue UNE fois la requête.
+  // Attention : le refresh JWT ne vérifie que la signature du token, pas
+  // is_active — pour un compte supprimé il réussit mais la requête rejouée
+  // reste 401. On traite donc « refresh KO » ET « toujours 401 après refresh »
+  // comme une session morte.
+  try {
+    await refreshAuthCookie()
+    const retry = await doFetch()
+    if (retry.status !== 401) return retry
+  } catch {}
+
+  if (!sessionDead) {
+    sessionDead = true
+    // AuthContext écoute cet event → purge la session + affiche le modal.
+    window.dispatchEvent(new CustomEvent('auth:session-expired'))
+  }
+  return res
+}
+
+// Erreur "métier" de tournoi : le backend répond 200 + en-tête X-Tournament-Error
+// (au lieu d'un 400) pour ne pas laisser de ligne rouge dans la console. Renvoie
+// le code d'erreur (ex. 'FULL', 'PAST_DATE') si présent, sinon null. Les handlers
+// doivent traiter `tournamentError(res)` comme un échec malgré un res.ok à true.
+export function tournamentError(res) {
+  return res.headers.get('X-Tournament-Error')
 }
 
 // Transforme un match API en ligne affichable pour Profil / Accueil
@@ -135,41 +190,9 @@ export function matchToRow(m, username) {
   const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`
 
   const isDraw = myScore != null && theirScore != null && myScore === theirScore
-  return { vs: vs ?? '?', score: `${myScore ?? '?'}-${theirScore ?? '?'}`, result: isDraw ? 'Egalité' : (isWin ? 'Victoire' : 'Défaite'), elo: eloStr, date }
+  // `result` est une CLÉ stable (win/loss/draw) — traduite à l'affichage via i18n.
+  return { vs: vs ?? '?', score: `${myScore ?? '?'}-${theirScore ?? '?'}`, result: isDraw ? 'draw' : (isWin ? 'win' : 'loss'), elo: eloStr, date }
 }
 
-export async function apiRegister({ username, email, password }) {
-  const res = await fetch(`${BASE}/register/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, email, password }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw data
-  return data
-}
 
-export async function apiLogin({ email, password, totp_code }) {
-  const body = { email, password }
-  if (totp_code) body.totp_code = totp_code
-  const res = await fetch(`${BASE}/login/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) throw data
-  return data
-}
 
-export async function apiRefresh() {
-  const res = await fetch(`${BASE}/token/refresh/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-  })
-  const data = await res.json()
-  if (!res.ok) throw data
-  return data
-}

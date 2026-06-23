@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import Modal from '../components/ui/Modal'
 import Pill from '../components/ui/Pill'
 import Avatar from '../components/ui/Avatar'
 import AddMatchModal from '../components/ui/AddMatchModal'
-import { useBets } from '../context/BetsContext'
 import { useQueue } from '../context/QueueContext'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
@@ -14,17 +14,12 @@ import styles from './Planning.module.css'
 const MAX_TOKENS = 1412
 
 export default function Planning() {
-  const { bets: liveMarkets, placeBet } = useBets()
   const { queue, mySlots, activeGame, completedGameIds, joinQueue, leaveQueue, cancelAsP2, updateSlot, connected, sendInvite, pendingInvites, cancelInvite, liveGames } = useQueue()
   const { user } = useAuth()
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [hoveredIdx,  setHoveredIdx]  = useState(null)
   const [inviteMsg,   setInviteMsg]   = useState(null)
-
-  const [betSlot,   setBetSlot]   = useState(null)
-  const [betAmount, setBetAmount] = useState(50)
-  const [betTeam,   setBetTeam]   = useState(null)
-  const [betMsg,    setBetMsg]    = useState(null)
 
   const [joinOpen, setJoinOpen] = useState(false)
 
@@ -42,7 +37,6 @@ export default function Planning() {
     if (format === 'Seul') return
     if (userPendingCount() >= 3) return t('home.maxMatches')
 
-    // Vérification max 3 matchs en attente pour les cibles invitées
     if (!takeWin) {
       const targets = [...(bluePlayers || []), ...(redPlayers || [])].filter(p => p && p !== user?.username)
       const overloaded = targets.filter(p => {
@@ -98,38 +92,6 @@ export default function Planning() {
     }
   }
 
-  const handleBet = async () => {
-    if (!betSlot || !betTeam) return
-    setBetMsg(null)
-    const norm = s => (s || '').toString().toLowerCase()
-    let reservationId = betSlot.reservationId || null
-    let side = null
-    if (reservationId) {
-      side = betTeam === betSlot.p1 ? 'p1' : 'p2'
-    } else {
-      const market = liveMarkets.find(m =>
-        (norm(m.p1).includes(norm(betSlot.p1)) && norm(m.p2).includes(norm(betSlot.p2))) ||
-        (norm(m.p1).includes(norm(betSlot.p2)) && norm(m.p2).includes(norm(betSlot.p1)))
-      )
-      if (market) {
-        reservationId = market.reservationId
-        side = norm(market.p1).includes(norm(betTeam)) ? 'p1' : 'p2'
-      }
-    }
-    if (!reservationId) {
-      setBetMsg('Les paris ouvriront quand la partie démarrera.')
-      return
-    }
-    try {
-      await placeBet(reservationId, side, betAmount)
-      setBetSlot(null)
-      setBetAmount(50)
-      setBetTeam(null)
-      setBetMsg(null)
-    } catch (e) {
-      setBetMsg(e.message || 'Pari refusé.')
-    }
-  }
 
 
   const u = user?.username
@@ -264,7 +226,7 @@ export default function Planning() {
                       {(isLive || isTaken) && hovered && (
                         <button
                           className={styles.hoverBetBtn}
-                          onClick={e => { e.stopPropagation(); setBetSlot(slot); setBetAmount(50) }}
+                          onClick={e => { e.stopPropagation(); navigate('/paris') }}
                         >
                           {t('queue.betOn')}
                         </button>
@@ -400,61 +362,6 @@ export default function Planning() {
         </div>
       </div>
 
-      {/* ── Modal parier ── */}
-      <Modal open={!!betSlot} onClose={() => { setBetSlot(null); setBetTeam(null); setBetMsg(null) }} title={t('queue.betModalTitle')}>
-        {betSlot && (
-          <>
-            <div className={styles.betMatchRow}>
-              <strong>{betSlot.p1}</strong> vs <strong>{betSlot.p2}</strong>
-            </div>
-            <div className={styles.modalSection}>
-              <label className={styles.modalLabel}>{t('queue.betOn2')}</label>
-              <div className={styles.betTeamChoice}>
-                <button
-                  className={`${styles.betTeamBtn} ${betTeam === betSlot.p1 ? styles.betTeamActive : ''}`}
-                  onClick={() => setBetTeam(betSlot.p1)}
-                >
-                  {betSlot.p1}
-                </button>
-                <button
-                  className={`${styles.betTeamBtn} ${betTeam === betSlot.p2 ? styles.betTeamActive : ''}`}
-                  onClick={() => setBetTeam(betSlot.p2)}
-                >
-                  {betSlot.p2}
-                </button>
-              </div>
-            </div>
-            <div className={styles.modalSection}>
-              <label className={styles.modalLabel}>{t('queue.betAmount')}</label>
-              <div className={styles.sliderBox}>
-                <div className={styles.sliderLabel}>{t('bets.amount', { amount: betAmount })}</div>
-                <input
-                  type="range" min={1} max={Math.max(user?.wallet_tokens ?? 1, 1)} value={betAmount}
-                  onChange={e => setBetAmount(+e.target.value)}
-                  className={styles.slider}
-                />
-                <div className={styles.sliderRange}><span>1</span><span>{user?.wallet_tokens ?? 0}</span></div>
-              </div>
-            </div>
-            {betMsg && (
-              <div className={styles.modalSection} style={{ color: '#CD3122', fontSize: 13 }}>
-                {betMsg}
-              </div>
-            )}
-            <div className={styles.modalActions}>
-              <button
-                className={styles.confirmBtn}
-                onClick={handleBet}
-                disabled={!betTeam}
-                style={!betTeam ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-              >
-                {t('queue.confirmBet', { amount: betAmount })}
-              </button>
-            </div>
-          </>
-        )}
-      </Modal>
-
       <AddMatchModal
         open={joinOpen}
         onClose={() => setJoinOpen(false)}
@@ -463,7 +370,7 @@ export default function Planning() {
         prevTeam={prevTeam}
       />
 
-      {/* ── Modal modifier créneau ── */}
+      {/* ── Edit slot modal ── */}
       <Modal open={editOpen} onClose={() => { setEditOpen(false); setCancelTargetSlot(null) }} title={t('queue.mySlotTitle')}>
         <div className={styles.editOptions}>
           <button className={styles.editCancelBtn} onClick={cancelSlot}>{t('queue.cancelSlot')}</button>

@@ -474,8 +474,9 @@
     grid-template-columns: 1fr;
   }
 
+  /* Pastille informative du solde : masquée dans la topbar mobile pour
+     laisser la place au titre (le solde reste utilisé par le curseur de mise). */
   .wallet {
-    font-size: 11px;
-    padding: 5px 10px;
+    display: none;
   }
 }

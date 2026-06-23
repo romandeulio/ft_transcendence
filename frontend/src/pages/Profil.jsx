@@ -12,6 +12,7 @@ import { getPlayerBadge } from '../utils/playerBadge'
 import { useAuth } from '../context/AuthContext'
 import { useQueue } from '../context/QueueContext'
 import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { authFetch, matchToRow } from '../services/api'
 import { getFriends, addFriend, removeFriend } from '../services/friends'
 import ComparisonBarChart from '../components/ui/ComparisonBarChart'
@@ -26,7 +27,7 @@ async function uploadAvatar(file, user, login) {
     body: formData,
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Erreur upload')
+  if (!res.ok) throw new Error(data.error || i18n.t('profile.uploadError'))
   login({ ...user, avatar_url: data.avatar_url + '?v=' + Date.now() })
 }
 
@@ -182,7 +183,7 @@ export default function Profil() {
       const opp = m.vs.split(' & ')[0]
       if (!stats[opp]) stats[opp] = { wins: 0, total: 0 }
       stats[opp].total++
-      if (m.result === 'Victoire') stats[opp].wins++
+      if (m.result === 'win') stats[opp].wins++
     })
     const entries = Object.entries(stats)
     setOpponents(
@@ -289,12 +290,12 @@ export default function Profil() {
     const resv = await authFetch('/api/planning/reservation/', { method: 'POST', body: JSON.stringify(body) })
     if (resv.ok) {
       const resvData = await resv.json().catch(() => ({}))
-      setMatchError('✅ Table réservée ! À vous de jouer.')
+      setMatchError(t('profile.tableReserved'))
       joinQueue({ ...baseSlot, reservationId: resvData.id, type: 'live' })
       return
     }
     const resvErr = await resv.json().catch(() => ({}))
-    setMatchError(Object.values(resvErr).flat().join(' ') || 'Erreur lors de la réservation.')
+    setMatchError(Object.values(resvErr).flat().join(' ') || t('profile.reservationError'))
   }
 
   const handlePhotoUpload = async (e) => {
@@ -311,8 +312,8 @@ export default function Profil() {
 
   const filteredMatches = recentMatches.filter(m => {
     if (matchSearch && !m.vs.toLowerCase().includes(matchSearch.toLowerCase())) return false
-    if (matchFilters.wins   && m.result !== 'Victoire')  return false
-    if (matchFilters.losses && m.result !== 'Défaite')   return false
+    if (matchFilters.wins   && m.result !== 'win')   return false
+    if (matchFilters.losses && m.result !== 'loss')  return false
     if (matchFilters.low) {
       const myScore = parseInt(m.score.split('-')[0], 10)
       if (isNaN(myScore) || myScore >= 5) return false
@@ -326,11 +327,11 @@ export default function Profil() {
     const login = newPartner.trim()
     if (!login) return
     if (login === user?.username) {
-      setAddError("Tu ne peux pas t'ajouter toi-même.")
+      setAddError(t('profile.cantAddSelf'))
       return
     }
     if (!allPlayers.some(p => p.login === login)) {
-      setAddError('Joueur introuvable dans la base de données.')
+      setAddError(t('profile.playerNotFound'))
       return
     }
     setAddError('')
@@ -348,7 +349,8 @@ export default function Profil() {
 
   const myLogin = user?.username ?? '—'
   const myWins  = stats.wins
-  const myElo   = user?.elo_solo ?? '—'
+  const myElo     = user?.elo_solo ?? '—'
+  const myEloTeam = user?.elo_team ?? '—'
   const badge   = getPlayerBadge(myWins)
 
   return (
@@ -409,22 +411,30 @@ export default function Profil() {
             <div className={styles.heroInfo}>
               <div className={styles.heroName}>{myLogin}</div>
               <div className={styles.heroBadges}>
-                {user?.rank != null && <Pill label={`#${user.rank} Classement`} type="orange" />}
-                {myWins > 0 && <Pill label={`${myWins} Victoires`} type="win" />}
+                {user?.rank != null && <Pill label={t('profile.rankBadge', { rank: user.rank })} type="orange" />}
+                {myWins > 0 && <Pill label={t('profile.winsBadge', { count: myWins })} type="win" />}
               </div>
               <span className={styles.playerTitleBadge} style={{ background: badge.bg, color: badge.color }}>
-                {t('profile.myBadge', { label: badge.label })}
+                {t('profile.myBadge', { label: t(badge.labelKey) })}
               </span>
             </div>
           </div>
           <div className={styles.heroElo}>
-            <div className={styles.eloVal}>{myElo}</div>
-            <div className={styles.eloDelta}>ELO</div>
+            <div className={styles.eloRow}>
+              <div className={styles.eloBlock}>
+                <div className={styles.eloVal}>{myElo}</div>
+                <div className={styles.eloDelta}>{t('profile.elo1v1')}</div>
+              </div>
+              <div className={styles.eloBlock}>
+                <div className={styles.eloVal}>{myEloTeam}</div>
+                <div className={styles.eloDelta}>{t('profile.elo2v2')}</div>
+              </div>
+            </div>
             <button
               className={styles.logoutBtn}
               onClick={() => setStatsCardOpen(true)}
             >
-              My Stats Card
+              {t('profile.myStatsCard')}
             </button>
           </div>
         </div>
@@ -452,7 +462,7 @@ export default function Profil() {
                         setTimeout(() => comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
                       }}
                     >
-                      Comparer ({compareChecked.length})
+                      {t('profile.compare', { count: compareChecked.length })}
                     </button>
                   )}
                   <span className={styles.counter}>{teammates_.length}</span>
@@ -464,7 +474,7 @@ export default function Profil() {
                   <input
                     className={styles.friendSearch}
                     type="text"
-                    placeholder="Rechercher un ami…"
+                    placeholder={t('profile.searchFriend')}
                     value={friendSearch}
                     onChange={e => { setFriendSearch(e.target.value); setFriendPage(0) }}
                   />
@@ -475,15 +485,15 @@ export default function Profil() {
                   >
                     <option value="az">A → Z</option>
                     <option value="za">Z → A</option>
-                    <option value="online">En ligne d'abord</option>
-                    <option value="recent">Récemment joué</option>
+                    <option value="online">{t('profile.sortOnline')}</option>
+                    <option value="recent">{t('profile.sortRecent')}</option>
                   </select>
                 </div>
               )}
 
               <div className={styles.friendList}>
                 {filteredFriends.length === 0 && (
-                  <div className={styles.noMatch}>{teammates_.length === 0 ? t('profile.noTeammate') : 'Aucun résultat.'}</div>
+                  <div className={styles.noMatch}>{teammates_.length === 0 ? t('profile.noTeammate') : t('profile.noResult')}</div>
                 )}
                 {friendSlice.map(tm => {
                   const isChecked = compareChecked.includes(tm.login)
@@ -505,7 +515,7 @@ export default function Profil() {
                       </div>
                       <span className={styles.teammateName}>{tm.name}</span>
                       <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
-                      <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
+                      <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title={t('profile.removeTeammate')}>✕</button>
                     </div>
                   )
                 })}
@@ -583,9 +593,9 @@ export default function Profil() {
                 />
                 <div className={styles.matchFilters}>
                   {[
-                    { key: 'wins',   label: 'Victoires' },
-                    { key: 'losses', label: 'Défaites' },
-                    { key: 'low',    label: '< 5 pts marqués' },
+                    { key: 'wins',   label: t('profile.filterWins') },
+                    { key: 'losses', label: t('profile.filterLosses') },
+                    { key: 'low',    label: t('profile.filterLowScore') },
                   ].map(f => (
                     <label key={f.key} className={`${styles.filterChip} ${matchFilters[f.key] ? styles.filterChipOn : ''}`}>
                       <input
@@ -601,7 +611,7 @@ export default function Profil() {
               </div>
               {matchSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>
-                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : m.result === 'Egalité' ? 'draw' : 'loss'} />
+                  <Pill label={t(`profile.result.${m.result}`)} type={m.result} />
                   <div className={styles.matchInfo}>
                     <span className={styles.matchVs}>vs {m.vs}</span>
                     <span className={styles.matchScore}>{m.score}</span>
@@ -638,7 +648,7 @@ export default function Profil() {
             </Card>
 
             <div ref={comparisonRef}>
-              <Card title="Comparaison joueurs">
+              <Card title={t('comparison.title')}>
                 <ComparisonBarChart externalSelected={compareTarget} />
               </Card>
             </div>

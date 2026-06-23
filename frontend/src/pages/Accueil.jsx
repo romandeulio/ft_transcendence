@@ -11,7 +11,7 @@ import AddMatchModal from '../components/ui/AddMatchModal'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useQueue } from '../context/QueueContext'
-import { authFetch, matchToRow } from '../services/api'
+import { authFetch, matchToRow, tournamentError } from '../services/api'
 import styles from './Accueil.module.css'
 
 const MATCHES_PER_PAGE = 3
@@ -63,7 +63,7 @@ export default function Accueil() {
         vs,
         vsColor,
         format:   s.format || '1v1',
-        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        mode:     s.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
         label:    s.type === 'pending_invite' ? t('invite.pendingLabel') : t('home.waiting'),
         cancelFn: s.type === 'pending_invite'
           ? () => cancelInvite(s._localId)
@@ -99,7 +99,7 @@ export default function Accueil() {
         vs,
         vsColor,
         format:   s.format || '1v1',
-        mode:     s.is_ranked ? 'Compétition' : 'Chill',
+        mode:     s.is_ranked ? t('addMatch.competition') : t('addMatch.chill'),
         label:    t('home.waiting'),
         cancelFn: () => cancelAsP2(s.id || s._localId),
         _slot:    s,
@@ -129,7 +129,7 @@ export default function Accueil() {
           : (activeGame.player1 || '?'),
         vsColor: activeGame.player1 === user.username ? 'red' : 'blue',
         format: activeGame.match_type === 'TEAM' ? '2v2' : '1v1',
-        mode: 'Chill',
+        mode: t('addMatch.chill'),
         label: t('home.waiting'),
         cancelFn: () => {},
         _slot: {
@@ -305,7 +305,7 @@ export default function Accueil() {
 
       if (resv.ok) {
         const resvData = await resv.json().catch(() => ({}))
-        setMatchError('✅ Table réservée ! À vous de jouer.')
+        setMatchError(t('home.tableReserved'))
         joinQueue({ ...baseSlot, reservationId: resvData.id, type: 'live' })
         return
       }
@@ -322,22 +322,22 @@ export default function Accueil() {
         body: JSON.stringify(body),
       })
       if (queueRes.ok) {
-        setMatchError('✅ Ajouté à la file d\'attente !')
+        setMatchError(t('home.addedToQueue'))
         joinQueue({ ...baseSlot, type: 'waiting' })
       } else {
         const err = await queueRes.json().catch(() => ({}))
         const errMsg = Object.values(err).flat().join(' ') || ''
         const alreadyQueued = errMsg.toLowerCase().includes('déjà') || errMsg.toLowerCase().includes('already')
         if (alreadyQueued) {
-          setMatchError('✅ Ajouté à la file d\'attente !')
+          setMatchError(t('home.addedToQueue'))
           joinQueue({ ...baseSlot, type: 'waiting' })
         } else {
-          setMatchError(errMsg || 'Erreur inconnue')
+          setMatchError(errMsg || t('home.unknownError'))
         }
       }
     } catch (err) {
       console.error(err)
-      setMatchError('Erreur réseau, réessaie.')
+      setMatchError(t('home.networkError'))
     }
   }
 
@@ -383,7 +383,7 @@ export default function Accueil() {
       .map(([login, count]) => ({ login, count }))
   }, [matches])
 
-  const handleMatchComplete = async (scoreRed, scoreBlue, gamellesRed = 0, gamellesBlue = 0) => {
+  const handleMatchComplete = async (scoreRed, scoreBlue, gamellesRed = 0, gamellesBlue = 0, demisRed = 0, demisBlue = 0) => {
     setJouerOpen(false)
     const rawSlot = selectedMatch?._slot
     // Relire le slot depuis mySlots pour obtenir player2 à jour (cas takeWin)
@@ -428,6 +428,8 @@ export default function Accueil() {
         score_player2:     scoreRed,
         gamelles_player1:  gamellesBlue,
         gamelles_player2:  gamellesRed,
+        demis_player1:     demisBlue,
+        demis_player2:     demisRed,
         ...(slot.player1_teammate ? { player1_teammate: slot.player1_teammate } : {}),
         ...(slot.player2_teammate ? { player2_teammate: slot.player2_teammate } : {}),
       }
@@ -437,7 +439,7 @@ export default function Accueil() {
       })
       if (!matchRes.ok) {
         const err = await matchRes.json().catch(() => ({}))
-        setMatchError(Object.values(err).flat().join(' ') || 'Erreur création match')
+        setMatchError(Object.values(err).flat().join(' ') || t('home.matchCreateError'))
         doCleanup()
         return
       }
@@ -478,7 +480,7 @@ export default function Accueil() {
         .catch(console.error)
     } catch (err) {
       console.error(err)
-      setMatchError('Erreur réseau lors de la validation.')
+      setMatchError(t('home.networkValidationError'))
       doCleanup()
     }
   }
@@ -538,7 +540,11 @@ export default function Accueil() {
           onTieCancel={handleTieCancel}
           scoreRed={activeGame?.scoreRed}
           scoreBlue={activeGame?.scoreBlue}
-          onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
+          gamellesRed={activeGame?.gamellesRed}
+          gamellesBlue={activeGame?.gamellesBlue}
+          demisRed={activeGame?.demisRed}
+          demisBlue={activeGame?.demisBlue}
+          onScoreChange={(r, b, extra) => activeGame?.gameId && updateScore(activeGame.gameId, r, b, extra)}
           startTime={activeGame?.startTime}
         />
       )}
@@ -629,7 +635,7 @@ export default function Accueil() {
               </div>
               {pageSlice.map((m, i) => (
                 <div key={i} className={styles.matchRow}>
-                  <Pill label={m.result} type={m.result === 'Victoire' ? 'win' : m.result === 'Egalité' ? 'draw' : 'loss'} />
+                  <Pill label={t(`profile.result.${m.result}`)} type={m.result} />
                   <div className={styles.matchInfo}>
                     <span className={styles.matchVs}>vs {m.vs}</span>
                     <span className={styles.matchScore}>{m.score}</span>
@@ -711,11 +717,22 @@ export default function Accueil() {
                     onClick={async () => {
                       if (inv.slot?.type === 'tournament_teammate' && inv.slot?.tournamentId) {
                         try {
-                          await authFetch(`/api/tournaments/${inv.slot.tournamentId}/accept-invite/`, {
+                          const res = await authFetch(`/api/tournaments/${inv.slot.tournamentId}/accept-invite/`, {
                             method: 'POST',
                             body: JSON.stringify({ inviter: inv.from }),
                           })
-                        } catch {}
+                          if (!res.ok || tournamentError(res)) {
+                            const text = await res.text().catch(() => '')
+                            let code = ''
+                            try { code = text ? JSON.parse(text).code : '' } catch {}
+                            const msg = code ? t(`tournaments.errCode.${code}`, { defaultValue: '' }) : ''
+                            window.alert(msg || t('invite.acceptError'))
+                            return
+                          }
+                        } catch {
+                          window.alert(t('invite.acceptError'))
+                          return
+                        }
                       }
                       respondToInvite(inv.inviteId, true, inv.slot, inv.from, inv.isWinClaim, inv.slotId)
                     }}

@@ -1,6 +1,9 @@
 .topbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* Colonne du titre rétractable (minmax 0) : quand la place manque, le titre
+     se tronque (ellipsis) au lieu de se faire recouvrir par le groupe de droite
+     (pastille + langues + thème). Centré quand il y a de la place. */
+  grid-template-columns: 1fr minmax(0, max-content) 1fr;
   align-items: center;
   padding: 0 24px;
   height: 56px;

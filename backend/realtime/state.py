@@ -1,54 +1,54 @@
 """
-État partagé en mémoire du salon « file d'attente » (temps réel baby-foot).
+Shared in-memory state of the "queue" room (real-time table football).
 
-Tout le consumer (découpé en mixins) s'appuie sur ces structures. Elles vivent
-ICI, dans un seul module, pour que tous les fichiers en partagent EXACTEMENT la
-même instance.
+The whole consumer (split into mixins) relies on these structures. They live
+HERE, in a single module, so every file shares EXACTLY the same instance.
 
-⚠️ Règle d'or : on accède toujours à ces objets via `state.queue`, `state.games`…
-(jamais `from realtime.state import queue`). Sinon, une réassignation de `queue`
-dans un fichier ne serait pas vue par les autres (piège classique des globals
-Python). Avec `state.queue = [...]`, on modifie bien l'unique attribut partagé.
+Golden rule: always reach these objects through `state.queue`, `state.games`...
+(never `from realtime.state import queue`). Otherwise a reassignment of `queue`
+in one file would not be visible to the others (the classic Python globals trap).
+With `state.queue = [...]`, the single shared attribute is mutated in place.
 
-Hypothèse d'exécution : un seul process Daphne sert HTTP + WebSocket, donc cet
-état mémoire est cohérent. La diffusion entre clients passe par Redis (channels).
+Runtime assumption: a single Daphne process serves HTTP + WebSocket, so this
+in-memory state stays consistent. Cross-client delivery goes through Redis
+(channels).
 """
 
-# File d'attente live : liste de « slots » (dicts). RÉASSIGNÉE → via state.queue.
+# Live queue: list of "slots" (dicts). REASSIGNED -> always via state.queue.
 queue = []
 
 # gameId -> {player1, player2, player1_teammate, player2_teammate,
 #            match_type, scoreRed, scoreBlue, startTime}
 games = {}
 
-# inviteId -> {slotId, targets, accepted, owner}  (invitations « take-the-winner »)
+# inviteId -> {slotId, targets, accepted, owner}  ("take-the-winner" invites)
 win_invites = {}
 
-# inviteId -> {from, ownerId, targets, slot, accepted}  (invitations directes)
-# Permet d'activer le créneau dans la file à l'acceptation même si l'invitant
-# (J1) est hors-ligne à ce moment-là.
+# inviteId -> {from, ownerId, targets, slot, accepted}  (direct invites)
+# Lets the slot be activated on acceptance even if the inviter (P1) is offline
+# at that moment.
 invites = {}
 
-# pseudos actuellement connectés
+# usernames currently connected
 online_users = set()
 
 active_connections = {}
 
-# pseudo -> liste de messages stockés pour un joueur hors-ligne (re-livrés à la reco)
+# username -> list of messages buffered for an offline player (redelivered on reconnect)
 pending_invites = {}
 
-# gameIds terminés : pour rejeter les rejoin obsolètes à la reconnexion
+# finished gameIds: to reject stale rejoins on reconnection
 completed_game_ids = set()
 
-# parentSlotId (gameId du match parent) -> {winner, winner_teammate, match_type}
-# Résultat d'un match dont le(s) gagnant(s) doivent être invités sur un takeWin
-# dont l'équipe n'était PAS encore complète à la fin du match parent. L'invitation
-# est envoyée dès que l'équipe takeWin devient prête (cf. _commit_slot).
+# parentSlotId (gameId of the parent match) -> {winner, winner_teammate, match_type}
+# Result of a match whose winner(s) must be invited onto a takeWin whose team was
+# NOT yet complete when the parent match ended. The invite is sent as soon as the
+# takeWin team becomes ready (cf. _commit_slot).
 takewin_pending_results = {}
 
 
 def identity_from_scope(scope, channel_name):
-    """Identifiant stable du propriétaire d'un slot (user authentifié, invité, ou canal)."""
+    """Stable identifier of a slot owner (authenticated user, guest, or channel)."""
     user = scope.get("user")
     if user is not None and getattr(user, "is_authenticated", False):
         return f"user:{user.id}"
@@ -59,7 +59,7 @@ def identity_from_scope(scope, channel_name):
 
 
 def username_from_scope(scope):
-    """Pseudo associé à la connexion (compte authentifié ou invité)."""
+    """Username tied to the connection (authenticated account or guest)."""
     user = scope.get("user")
     if user is not None and getattr(user, "is_authenticated", False):
         return getattr(user, "username", "") or ""
@@ -67,7 +67,7 @@ def username_from_scope(scope):
 
 
 def reservation_usernames(reservation):
-    """Ensemble des pseudos (non nuls) des 4 emplacements joueur d'une réservation."""
+    """Set of the (non-null) usernames of a reservation's 4 player slots."""
     return {
         getattr(reservation.player1, "username", None),
         getattr(reservation.player1_teammate, "username", None),

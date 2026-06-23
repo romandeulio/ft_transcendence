@@ -15,7 +15,11 @@ urlpatterns = [
     path('matches/',                                 v.AdminRecentMatchesView.as_view()),
     path('matches/<uuid:match_id>/cancel/',          v.AdminCancelMatchView.as_view()),
     path('tournaments/',                             v.AdminTournamentsView.as_view()),
-    path('tournaments/<uuid:tournament_id>/cancel/', v.AdminCancelTournamentView.as_view()),
+    path('tournaments/create/',                      v.AdminCreateTournamentView.as_view()),
+    path('tournaments/<uuid:tournament_id>/cancel/',            v.AdminCancelTournamentView.as_view()),
+    path('tournaments/<uuid:tournament_id>/import-players/',    v.AdminImportPlayersView.as_view()),
+    path('tournaments/<uuid:tournament_id>/close/',             v.AdminCloseRegistrationsView.as_view()),
+    path('tournaments/<uuid:tournament_id>/start/',             v.AdminStartTournamentView.as_view()),
     path('seasons/',                                 v.AdminSeasonsView.as_view()),
     path('seasons/<uuid:season_id>/',                v.AdminSeasonDetailView.as_view()),
 ]

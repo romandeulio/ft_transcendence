@@ -2,7 +2,9 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  width: 100vw;
+  /* 100% (pas 100vw) : 100vw inclut la barre de défilement verticale et
+     déborde de ~15px à droite → contenu coupé sous la scrollbar. */
+  width: 100%;
 }
 
 .shellBody {

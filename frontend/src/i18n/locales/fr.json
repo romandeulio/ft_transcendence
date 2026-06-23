@@ -8,6 +8,7 @@
     "tournaments": "Tournois",
     "account": "Compte",
     "profile": "Mon profil",
+    "achievements": "Achievements",
     "settings": "Parametres"
   },
   "topbar": {
@@ -17,13 +18,7 @@
     "queue": "File d'attente",
     "tournaments": "Tournois",
     "profile": "Mon Profil",
-    "settings": "Parametres",
-    "admin": "Admin",
-    "ticket": "Ticket"
-  },
-  "sidebar": {
-    "tokens": "🪙 {{count}} jetons",
-    "close": "Fermer"
+    "settings": "Parametres"
   },
   "login": {
     "title": "BABYFOOT 42",
@@ -36,15 +31,28 @@
     "error": "Email ou mot de passe incorrect.",
     "networkError": "Erreur réseau, réessaie plus tard.",
     "noAccount": "Pas encore de compte ?",
-    "registerLink": "S'inscrire"
+    "registerLink": "S'inscrire",
+    "codePlaceholder": "Code à 6 chiffres",
+    "verifying": "Vérification...",
+    "validate": "Valider",
+    "title2fa": "Vérification 2FA",
+    "sentTo": "Un code a été envoyé à",
+    "back": "← Retour",
+    "invalidCode": "Le code doit contenir 6 chiffres",
+    "errors": {
+      "invalidEmail": "Adresse email invalide.",
+      "passwordRequired": "Mot de passe requis.",
+      "notActivated": "Compte non activé. Vérifie tes emails.",
+      "codeInvalid": "Code invalide.",
+      "codeExpired": "Code expiré, reconnecte-toi.",
+      "codeLength": "Le code doit contenir 6 chiffres.",
+      "codeSendError": "Erreur lors de l'envoi du code."
+    }
   },
   "home": {
     "scheduledMatch": "📋 Match prévu",
     "addMatch": "Ajouter un match",
     "play": "Jouer",
-    "selectToPlay": "Sélectionne un match pour activer",
-    "notParticipant": "Tu n'es pas participant de ce match",
-    "awaitingConfirmation": "En attente de confirmation des autres joueurs",
     "myMatches": "Mes matchs",
     "favFriends": "Adversaires favoris",
     "favFriendsNote": "Top 5 des adversaires contre lesquels tu as le plus joué",
@@ -52,9 +60,6 @@
     "searchLogin": "Rechercher un login...",
     "noMatch": "Aucun match trouvé",
     "addQueue": "Inviter à jouer",
-    "addPlayer": "+ Ajouter",
-    "loginPlayer": "Login joueur...",
-    "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "Mes matchs prévus",
     "noScheduled": "Aucun match prévu. Ajoute-toi à la file d'attente.",
     "cancelMatch": "Annuler ce match",
@@ -62,19 +67,21 @@
     "or": "OU",
     "waiting": "En attente",
     "maxMatches": "Tu as déjà 3 matchs en attente, annules-en un avant d'en créer un nouveau.",
-    "targetMaxMatches": "{{player}} a déjà 3 matchs en attente et ne peut pas être invité(e).",
     "pendingInvites": "Invitations en cours",
-    "noPendingInvites": "Aucune invitation en attente"
+    "noPendingInvites": "Aucune invitation en attente",
+    "tableReserved": "✅ Table réservée ! À vous de jouer.",
+    "addedToQueue": "✅ Ajouté à la file d'attente !",
+    "unknownError": "Erreur inconnue",
+    "networkError": "Erreur réseau, réessaie.",
+    "matchCreateError": "Erreur création match",
+    "networkValidationError": "Erreur réseau lors de la validation.",
+    "targetMaxMatches": "{{player}} a déjà 3 matchs en attente."
   },
   "ranking": {
     "currentSeason": "Saison actuelle",
-    "season": "Saison {{num}}",
-    "annualRanking": "Classement annuel",
-    "show": "Afficher :",
     "palmares1v1": "PALMARÈS 1v1",
     "palmares2v2": "PALMARÈS 2v2",
     "player": "Joueur",
-    "team": "Équipe",
     "winsLosses": "V · D",
     "rank": "Rang",
     "noData": "Aucune donnée disponible",
@@ -85,7 +92,8 @@
     "oldestFirst": "Plus ancien en premier",
     "champion": "🏆 Champion",
     "seasonLabel": "Saison {{num}}",
-    "seasonBadge": "Saison en cours"
+    "seasonBadge": "Saison en cours",
+    "noSeason": "Aucune saison"
   },
   "bets": {
     "availableTokens": "jetons disponibles",
@@ -102,22 +110,29 @@
     "cancel": "Annuler",
     "bet": "Miser",
     "whoDoYouBet": "Sur qui pariez-vous ?",
-    "betPlacedOn": "Mise placée sur {{player}} :",
     "change": "changer",
-    "amount": "Mise : {{amount}} jetons",
-    "confirm": "Confirmer — {{amount}} jetons",
     "history": "Historique des paris",
     "noHistory": "Aucun historique disponible.",
-    "bettedOn": "Parié sur {{player}} · {{date}}",
-    "won": "gagné",
-    "lost": "perdu",
     "yourBetStats": "Tes stats de paris",
     "bestGain": "Meilleur gain",
     "biggestLoss": "Plus grosse perte",
     "balanceEvolution": "Évolution du solde",
     "noChartData": "Aucun historique à afficher.",
     "hoverHint": "Survolez un point pour voir le détail",
-    "pctOn": "— {{pct}}% sur {{player}}"
+    "ranked": "classé",
+    "free": "libre",
+    "betRejected": "Pari refusé.",
+    "result": {
+      "won": "gagné",
+      "lost": "perdu",
+      "refunded": "remboursé",
+      "pending": "en cours"
+    },
+    "tokensWord": "jetons",
+    "amount": "{{amount}} jetons",
+    "betPlacedOn": "Pari sur {{player}}",
+    "bettedOn": "Parié sur {{player}} · {{date}}",
+    "confirm": "Confirmer ({{amount}} jetons)"
   },
   "queue": {
     "joinQueue": "+ S'ajouter à la file",
@@ -125,6 +140,9 @@
     "supersededTitle": "Session ouverte dans un autre onglet",
     "supersededBody": "Votre compte a été ouvert dans un autre onglet ou navigateur. Une seule session active est autorisée. Rafraîchissez pour reprendre la main ici.",
     "supersededReload": "Rafraîchir",
+    "deletedTitle": "Compte supprimé",
+    "deletedBody": "Votre compte a été supprimé. Votre partie en cours a été annulée et les paris associés remboursés. Vous allez être déconnecté.",
+    "deletedButton": "Se déconnecter",
     "waitingMatches": "Matchs en attente",
     "live": "En cours",
     "myMatch": "Mon match",
@@ -134,23 +152,18 @@
     "noMatch": "Pas de match prévu",
     "noLive": "Aucun match en cours",
     "betOn": "Parier →",
-    "editSlot": "Modifier",
     "cancelSlot": "✕ Annuler mon créneau",
-    "modifyPlayers": "✏️ Modifier les joueurs",
-    "me": "Toi",
-    "opponent": "Adversaire",
-    "save": "Enregistrer",
     "mySlotTitle": "Mon créneau",
     "betModalTitle": "Parier sur ce match",
     "betOn2": "Parier sur",
     "betAmount": "Montant de la mise",
-    "confirmBet": "Confirmer — {{amount}} jetons",
-    "loginPlaceholder": "Login...",
     "waitingWinner": "En attente du gagnant...",
     "pendingAccept": "En cours d'acceptation",
     "noPending": "Aucune invitation en cours",
-    "pendingVs": "vs {{opponent}}",
-    "cancelInvite": "✕ Annuler"
+    "cancelInvite": "✕ Annuler",
+    "confirmBet": "Confirmer le pari ({{amount}} jetons)",
+    "pendingVs": "En attente vs {{opponent}}",
+    "betsWillOpen": "Les paris ouvriront quand la partie démarrera."
   },
   "tournaments": {
     "bdeAccess": "Accès BDE",
@@ -160,14 +173,9 @@
     "findTeammate": "Trouve un coéquipier",
     "findTeammateSub": "Ces joueurs sont seuls en liste d'attente pour ce tournoi. Envoie-leur une invitation d'équipe.",
     "noWaiting": "Aucun joueur en attente pour le moment.",
-    "waitingSince": "En attente depuis {{since}}",
     "invited": "✓ Invitation envoyée",
     "invite": "Inviter",
     "waitingList": "LISTE D'ATTENTE",
-    "teams": "{{count}} équipe",
-    "teams_plural": "{{count}} équipes",
-    "noTeams": "Aucune équipe en attente",
-    "confirmedTeam": "Équipe confirmée",
     "searchingPartner": "En recherche de partenaire",
     "confirmedTeams": "ÉQUIPES CONFIRMÉES",
     "noConfirmedTeams": "Aucune équipe confirmée pour l'instant",
@@ -178,71 +186,201 @@
     "hours": "H",
     "minutes": "M",
     "seconds": "S",
-    "bdePwd": "Mot de passe BDE",
-    "incorrectPwd": "Mot de passe incorrect",
     "verifying": "Vérification…",
     "access": "Accéder",
     "createTournament": "Créer un tournoi",
-    "planNextTournament": "Planifier un nouveau tournoi",
+    "planNextTournament": "Planifier le prochain tournoi",
     "tournamentName": "Nom du tournoi",
     "tournamentNamePlaceholder": "Ex: Tournoi du jeudi #5",
     "dateTime": "Date et heure",
     "registrationDeadline": "Limite d'inscription",
-    "maxPlayers": "Nombre maximum de joueurs",
-    "playersCount": "{{count}} joueurs",
     "createBtn": "Créer le tournoi",
     "registerTitle": "S'inscrire au tournoi",
     "myLogin": "Mon login",
     "partner": "Partenaire",
     "partnerPlaceholder": "Login joueur... (optionnel)",
-    "partnerNote": "✓ {{partner}} sera invité et inscrit directement avec toi.",
     "partnerEmpty": "Laisse vide pour être associé à un partenaire aléatoirement.",
     "soloNote": "Si tu es seul, tu entres en liste d'attente. La liste d'attente sera affichée et tu pourras envoyer une demande d'équipe aux autres joueurs en attente.",
     "confirmRegister": "Confirmer l'inscription",
     "inscriptions": "Inscriptions jusqu'au {{date}}",
-    "registered": "{{count}} / {{max}} participants"
+    "registered": "{{count}} participants",
+    "fmtSingle": "🏆 Élimination directe",
+    "fmtRoundRobin": "🔄 Round Robin",
+    "fmtSwiss": "🇨🇭 Tournoi Suisse",
+    "adminMode": "Mode admin BDE",
+    "adminModeSub": "Création, édition, équipes, validation et replanification.",
+    "editTournament": "Modifier le tournoi",
+    "importPlayers": "Importer une liste de joueurs",
+    "importing": "Import…",
+    "swissNextRoundLong": "Round suivant (Suisse)",
+    "swissNextRound": "Round suivant",
+    "generating": "Génération…",
+    "deleting": "Suppression…",
+    "cancelTournament": "Annuler le tournoi",
+    "eventDate": "Date de l'évènement :",
+    "rewards": "🏆 Récompenses :",
+    "starting": "Lancement…",
+    "startTournament": "Lancer le tournoi",
+    "youAreRegistered": "Tu es inscrit au tournoi.",
+    "unregister": "Se désinscrire",
+    "registeredPlayers": "Joueurs inscrits",
+    "noRegisteredPlayers": "Aucun joueur inscrit.",
+    "registerPlayer": "Inscrire un joueur",
+    "forceTeam": "Forcer une équipe",
+    "registerPlayerSub": "Inscrit un joueur directement.",
+    "forceTeamSub": "Associe deux logins et retire leurs anciennes inscriptions si besoin.",
+    "playerLogin1": "login joueur 1",
+    "playerLogin2": "login joueur 2",
+    "doRegister": "Inscrire",
+    "associate": "Associer",
+    "remove": "Retirer",
+    "viewStandings": "Voir le classement",
+    "formatLabel": "Format",
+    "modeLabel": "Mode",
+    "prizeOptional": "Prix (optionnel)",
+    "prizePlaceholder": "ex: Couverture offerte",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer",
+    "is1v1Note": "Ce tournoi est en 1v1 — tu t'inscriras seul.",
+    "creating": "Création…",
+    "standingsSwiss": "Classement Suisse",
+    "standingsRoundRobin": "Classement Round Robin",
+    "bdeCheckSub": "Vérifie ton accès BDE via ton compte.",
+    "importResultTitle": "Résultat de l'import",
+    "importRegistered": "Inscrits",
+    "importSkipped": "Ignorés",
+    "importErrors": "Erreurs",
+    "close": "Fermer",
+    "standingsTeam": "Équipe",
+    "standingsWins": "V",
+    "standingsLosses": "D",
+    "standingsPoints": "Pts",
+    "noStandings": "Aucun classement disponible.",
+    "confirmDelete": "Annuler et supprimer ce tournoi ?",
+    "confirmWinner": "Confirmer le gagnant de ce match ?",
+    "confirmRemove": "Retirer cette inscription du tournoi ?",
+    "errNetwork": "Erreur réseau.",
+    "errNotEnoughTeams": "Il faut au moins {{count}} équipes complètes pour lancer ce format.",
+    "errStart": "Erreur lors du lancement.",
+    "closeRegistrations": "Fermer les inscriptions",
+    "closing": "Fermeture…",
+    "reopenRegistrations": "Rouvrir les inscriptions",
+    "reopening": "Réouverture…",
+    "status_CLOSED": "Inscriptions fermées",
+    "status_ONGOING": "En cours",
+    "status_DONE": "Terminé",
+    "status_CANCELLED": "Annulé",
+    "errPastDate": "La date de début doit être dans le futur.",
+    "errEdit": "Erreur lors de la modification.",
+    "errCreate": "Erreur lors de la création.",
+    "partnerNote": "En duo avec {{partner}}",
+    "playersCount": "{{count}} joueurs",
+    "waitingSince": "En attente depuis {{since}}",
+    "errNoBde": "Vous n'avez pas les droits BDE.",
+    "errUnexpected": "Erreur inattendue.",
+    "errDeleteTournament": "Erreur lors de la suppression du tournoi.",
+    "errValidateMatch": "Erreur lors de la validation du match.",
+    "errReschedule": "Erreur lors de la replanification.",
+    "errGeneric": "Erreur.",
+    "errRegister": "Erreur lors de l'inscription.",
+    "errEditTeams": "Erreur lors de la modification des équipes.",
+    "errDelete": "Erreur lors de la suppression.",
+    "errCode": {
+      "ALREADY_PLANNED": "Un tournoi est déjà planifié ou en cours.",
+      "ALREADY_REGISTERED": "Vous êtes déjà inscrit à ce tournoi.",
+      "ARCHIVED": "Les tournois archivés ne sont pas modifiables.",
+      "BUILD_ERROR": "Impossible de générer le bracket.",
+      "DEADLINE_PASSED": "La date limite d'inscription est dépassée.",
+      "FULL": "Le tournoi est complet.",
+      "INCOMPLETE_MATCH": "Le match n'est pas complet.",
+      "INVALID": "Données invalides.",
+      "INVALID_SCORE": "Score invalide.",
+      "INVALID_WINNER": "Vainqueur invalide.",
+      "INVITER_REQUIRED": "Invitant requis.",
+      "LOCKED": "Action verrouillée.",
+      "LOCKED_FIELDS": "Ces champs ne peuvent plus être modifiés après le lancement.",
+      "MATCH_DONE": "Ce match est déjà terminé.",
+      "NOT_CLOSED": "Ferme d'abord les inscriptions avant de lancer le tournoi.",
+      "NOT_ENOUGH_TEAMS": "Il faut au moins {{count}} équipes complètes pour lancer ce format.",
+      "NOT_ONGOING": "Le tournoi n'est pas en cours.",
+      "NOT_OPEN": "Les inscriptions ne sont pas ouvertes.",
+      "NOT_READY": "Le match n'est pas prêt.",
+      "NOT_SWISS": "Action réservée au format suisse.",
+      "NO_FILE": "Aucun fichier fourni.",
+      "NO_PLAYERS": "Aucun joueur trouvé dans le fichier.",
+      "NO_RESULT": "Aucun résultat à enregistrer.",
+      "PARSE_ERROR": "Le fichier n'a pas pu être lu.",
+      "PARTNER_NOT_FOUND": "Partenaire introuvable.",
+      "PARTNER_TAKEN": "Ce partenaire est déjà inscrit.",
+      "PAST_DATE": "La date de début doit être dans le futur.",
+      "PLAYER_NOT_FOUND": "Joueur introuvable.",
+      "REGISTRATIONS_CLOSED": "Les inscriptions sont fermées.",
+      "ROUND_NOT_COMPLETE": "Le round en cours n'est pas terminé.",
+      "SAME_PLAYER": "Les deux joueurs doivent être différents.",
+      "SELF_INVITE": "Vous ne pouvez pas vous inviter vous-même.",
+      "SELF_PARTNER": "Vous ne pouvez pas être votre propre partenaire.",
+      "SOLO_TOURNAMENT": "Ce tournoi est en 1v1.",
+      "TIE": "Un match nul n'est pas autorisé.",
+      "TWO_LOGINS_REQUIRED": "Deux logins sont requis."
+    }
   },
   "profile": {
-    "myBadge": "Mon badge : {{label}}",
     "ratio": "Ratio",
     "winLoss": "V · D",
     "streak": "Série en cours",
     "streakSub": "victoires d'affilée",
     "tokensWon": "Jetons gagnés",
     "tokensSub": "bilan saison",
-    "losses": "Gamelles",
-    "lossesSub": "effectuées cette saison",
     "gamesPerMonth": "Parties / mois",
     "gamesPerMonthSub": "ce mois ci",
     "gamelles": "Gamelles",
     "gamellesSub": "buts en gamelle",
     "favoriteTeammates": "Coéquipiers favoris",
-    "teammateNote": "(ajoutés automatiquement selon le nombre de parties jouées ensemble)",
     "noTeammate": "Aucun coéquipier enregistré.",
     "planGame": "Planifier une partie",
     "frequentOpponents": "Adversaires fréquents",
     "noData": "Aucune donnée disponible.",
-    "winrate": "{{pct}}% victoires",
     "fearOpponents": "Adversaires redoutables",
     "fearNote": "Joueurs contre qui tu perds le plus souvent",
-    "lossrate": "{{pct}}% défaites",
     "myMatches": "Mes matchs",
     "searchLogin": "Rechercher un login...",
     "noMatch": "Aucun match trouvé",
     "seasonHistory": "Historique des saisons",
     "noSeason": "Aucune saison disponible.",
-    "ongoing": "En cours",
-    "champion": "Champion 🏆",
-    "seasonLabel": "Saison {{num}}",
-    "logout": "Déconnexion",
     "photo": "📷 Photo",
     "profilePhoto": "Photo de profil",
     "clickToChoose": "Cliquer pour choisir une image",
-    "removePhoto": "Supprimer la photo",
     "close": "Fermer",
-    "counter": "{{count}} / 5 max",
     "loginPlayerPlaceholder": "Login joueur...",
-    "addBtn": "+ Ajouter"
+    "addBtn": "+ Ajouter",
+    "myBadge": "Badge : {{label}}",
+    "myStatsCard": "Ma carte stats",
+    "elo1v1": "ELO 1v1",
+    "elo2v2": "ELO 2v2",
+    "cantAddSelf": "Tu ne peux pas t'ajouter toi-même.",
+    "playerNotFound": "Joueur introuvable dans la base de données.",
+    "tableReserved": "✅ Table réservée ! À vous de jouer.",
+    "reservationError": "Erreur lors de la réservation.",
+    "noResult": "Aucun résultat.",
+    "filterWins": "Victoires",
+    "filterLosses": "Défaites",
+    "filterLowScore": "< 5 pts marqués",
+    "result": {
+      "win": "Victoire",
+      "loss": "Défaite",
+      "draw": "Égalité"
+    },
+    "compare": "Comparer ({{count}})",
+    "searchFriend": "Rechercher un ami…",
+    "sortOnline": "En ligne d'abord",
+    "sortRecent": "Récemment joué",
+    "rankBadge": "#{{rank}} Classement",
+    "winsBadge_one": "{{count}} Victoire",
+    "winsBadge_other": "{{count}} Victoires",
+    "winrate": "{{pct}}% de victoires",
+    "lossrate": "{{pct}}% de défaites",
+    "uploadError": "Erreur upload",
+    "removeTeammate": "Retirer"
   },
   "settings": {
     "tabs": {
@@ -260,16 +398,32 @@
       "delete": "Supprimer",
       "login42": "Login 42",
       "email": "Email",
-      "save": "Sauvegarder les modifications"
+      "save": "Sauvegarder les modifications",
+      "uploading": "Téléversement...",
+      "updateError": "Erreur mise à jour profil",
+      "invalidEmail": "Format d'email invalide",
+      "emailInUse": "Cet email est déjà utilisé"
     },
     "security": {
       "changePassword": "Changer le mot de passe",
       "tfa": "Authentification 2FA",
-      "tfaSub": "Code par application ou SMS",
       "oauth": "OAuth 42",
       "oauthSub": "Connexion via compte 42",
       "activeSessions": "Sessions actives",
-      "disconnectAll": "Déconnecter tout"
+      "disconnectAll": "Déconnecter tout",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmNewPassword": "Confirmer le nouveau mot de passe",
+      "passwordChanged": "Mot de passe modifié ✓",
+      "saving": "Enregistrement...",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordMin": "Minimum 8 caractères",
+      "error": "Erreur",
+      "tfaOnSub": "Un code de vérification sera envoyé par email à chaque connexion.",
+      "tfaOffSub": "Activez la double authentification par email pour sécuriser votre compte.",
+      "disable2fa": "Désactiver le 2FA",
+      "enable2fa": "Activer le 2FA par email",
+      "tfaEnabled": "2FA activé ✓"
     },
     "notifications": {
       "turn": "C'est ton tour au baby",
@@ -285,10 +439,6 @@
     "account": {
       "export": "Exporter mes données (RGPD) → JSON",
       "privacy": "Politique de confidentialité",
-      "dangerZone": "Zone dangereuse",
-      "resetStats": "Réinitialiser mes stats",
-      "resetStatsSub": "Supprime ton historique de matchs et ELO",
-      "reset": "Réinitialiser",
       "deleteAccount": "Supprimer mon compte",
       "deleteAccountSub": "Confirmation envoyée par email",
       "delete": "Supprimer"
@@ -317,32 +467,44 @@
           "body": "Depuis la page File d'attente, tu peux voir les matchs en cours et à venir. Le crayon dans ton créneau te permet de modifier ou annuler ton match. Tu peux aussi parier sur les matchs des autres en passant ta souris dessus."
         }
       ]
+    },
+    "gdpr": {
+      "title": "Confirmation requise",
+      "sentTo": "Un code a été envoyé à",
+      "confirmExport": "Saisissez-le pour confirmer l'export.",
+      "confirmDelete": "Saisissez-le pour confirmer la suppression de votre compte.",
+      "valid": "Valable 15 min",
+      "resend": "Renvoyer",
+      "enterCode": "Saisissez les 6 chiffres",
+      "invalidCode": "Code invalide",
+      "sendFailed": "Échec de l'envoi du code. Réessayez.",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "confirm": "Confirmer"
     }
   },
   "invite": {
-    "received": "t'invite à un match {{format}} · {{mode}}",
     "accept": "Accepter ✓",
     "decline": "Refuser",
-    "accepted": "{{player}} a accepté ton invitation ✓",
-    "acceptedPartial": "{{player}} a accepté · {{count}}/{{total}} confirmé(s)",
-    "declined": "{{player}} a refusé ton invitation",
-    "sent": "✅ Invitation envoyée à {{player}}",
     "pendingLabel": "En attente d'acceptation",
-    "matchCancelled": "{{player}} a annulé le match",
-    "offline": "{{player}} n'est pas connecté(e), invitation annulée",
-    "winClaimReceived": "{{player}} t'invite à reprendre ta gagne dans son prochain match",
     "winClaimDeclined": "Un gagnant a refusé de reprendre la gagne — le match a été annulé",
-    "inviteCancelled": "{{player}} a annulé son invitation",
     "chainCancelled": "Un match de la chaîne a été annulé — ton créneau a été supprimé",
-    "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi"
+    "tournamentTeammate": "t'invite à te mettre en duo pour le prochain tournoi",
+    "acceptError": "Impossible d'accepter l'invitation (inscriptions fermées ou joueur introuvable).",
+    "received": "t'invite pour un match {{format}} ({{mode}})",
+    "winClaimReceived": "{{player}} t'invite à reprendre la gagne",
+    "accepted": "{{player}} a accepté ton invitation ✓",
+    "acceptedPartial": "{{player}} a accepté ({{count}}/{{total}})",
+    "declined": "{{player}} a refusé ton invitation",
+    "matchCancelled": "{{player}} a annulé le match",
+    "inviteCancelled": "{{player}} a annulé son invitation",
+    "sent": "Invitation envoyée à {{player}}"
   },
   "addMatch": {
     "title": "Ajouter un match",
     "step1": "Étape 1 / 4 — Mode de jeu",
     "step2": "Étape 2 / 4 — Format",
-    "step3Players": "Étape 3 / 4 — Joueurs",
     "step3Queue": "Étape 3 / 3 — File d'attente",
-    "step4": "Étape 4 / 4 — Reprendre la gagne ?",
     "competition": "🏆 Compétition",
     "chill": "😎 Chill",
     "competNote": "ELO pris en compte · Résultats officiels",
@@ -356,8 +518,6 @@
     "blueTeam": "🔵 Équipe Bleue",
     "redPlayer": "Login joueur rouge...",
     "bluePlayer": "Login joueur bleu...",
-    "redPlayer2v2": "Joueur rouge {{num}}...",
-    "bluePlayer2v2": "Joueur bleu {{num}}...",
     "takeWinQuestion": "Voulez-vous reprendre la gagne de l'équipe qui joue actuellement avant vous ?",
     "no": "Non",
     "yes": "Oui ✓",
@@ -373,7 +533,10 @@
     "opponentLocked": "Adversaire : gagnant du match ci-dessous",
     "missingPlayers": "Tous les joueurs doivent être renseignés.",
     "duplicatePlayer": "Un joueur ne peut apparaître qu'une seule fois.",
-    "takeWinWarning": "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé."
+    "takeWinWarning": "⚠️ Attention : si le(s) gagnant(s) n'accepte(nt) pas ton invitation, le match sera annulé.",
+    "redPlayer2v2": "Login joueur rouge {{num}}...",
+    "bluePlayer2v2": "Login joueur bleu {{num}}...",
+    "playerInPrevMatch": "Ce joueur fait déjà partie du match précédent."
   },
   "game": {
     "red": "Rouge",
@@ -381,21 +544,16 @@
     "quit": "✕ Quitter",
     "endMatch": "Fin de\npartie",
     "half": "Demi ×2",
-    "removeRed": "−1 Rouge",
-    "removeBlue": "−1 Bleu",
     "gamelle": "Gamelle",
     "tie": "Égalité !",
     "tieCancelWarning": "Ce match va être annulé — les reprises de gagne associées seront supprimées.",
-    "wins": "{{color}} gagne !",
+    "close": "Terminer et fermer",
     "duration": "Durée : {{time}}",
-    "close": "Terminer et fermer"
+    "wins": "{{color}} gagne !"
   },
   "common": {
-    "victory": "Victoire",
-    "defeat": "Défaite",
     "vs": "vs",
-    "loading": "Chargement…",
-    "noData": "Aucune donnée disponible"
+    "close": "Fermer"
   },
   "performance": {
     "title": "PERFORMANCE",
@@ -410,17 +568,13 @@
     "dateTo": "Au",
     "noSelected": "Aucun joueur sélectionné",
     "selectPlayer": "Sélectionne au moins un joueur pour afficher le graphique.",
+    "download": "↓ Télécharger",
     "y": {
       "elo": "ELO",
       "wins": "Victoires",
       "losses": "Défaites",
       "winrate": "Win rate (%)",
-      "goals": "Buts marqués",
-      "goals_against": "Buts encaissés",
-      "bets_won": "Paris gagnés",
-      "bets_lost": "Paris perdus",
-      "tournaments_won": "Tournois remportés",
-      "streak": "Série en cours"
+      "goals": "Buts marqués"
     },
     "x": {
       "matches": "Matchs joués (30 derniers)",
@@ -434,7 +588,9 @@
     "quarters": "Quarts de finale",
     "semis": "Demi-finales",
     "final": "Finale",
-    "tbd": "À déterminer"
+    "tbd": "À déterminer",
+    "round": "Round {{n}}",
+    "bye": "Aucun"
   },
   "footer": {
     "explore": "Explorer",
@@ -446,6 +602,7 @@
     "privacy": "Politique de confidentialité",
     "ticket": "Envoyer un ticket",
     "status": "Status",
+    "rgpd": "RGPD",
     "terms": "Conditions d'utilisation",
     "copyright": "© {{year}} ft_transcendence — Tous droits réservés"
   },
@@ -460,7 +617,17 @@
     "alreadyAccount": "Déjà un compte ?",
     "loginLink": "Se connecter",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
-    "networkError": "Erreur réseau, réessaie plus tard."
+    "networkError": "Erreur réseau, réessaie plus tard.",
+    "errors": {
+      "invalid42Login": "Login 42 invalide.",
+      "usernameTaken": "Ce login est déjà utilisé.",
+      "invalidEmail": "Adresse email invalide.",
+      "emailTaken": "Cet email est déjà utilisé.",
+      "weakPassword": "Mot de passe trop faible (8 caractères min., évite les mots de passe courants).",
+      "generic": "Échec de l'inscription. Vérifie tes informations."
+    },
+    "success": "Compte créé. Vérifie tes emails pour activer ton compte.",
+    "successRedirect": "Redirection vers la connexion…"
   },
   "privacy": {
     "title": "Politique de confidentialité",
@@ -630,12 +797,13 @@
       "Accueil",
       "Classement",
       "Paris",
-      "File d'attente",
       "Tournois",
-      "Mon profil",
+      "Profil",
+      "Planning",
       "Paramètres",
-      "Admin"
-    ]
+      "Autre"
+    ],
+    "max_files": "Maximum {{max}} fichiers."
   },
   "status": {
     "title": "Statut",
@@ -676,6 +844,7 @@
     "col_login": "Login",
     "col_elo1v1": "ELO 1v1",
     "col_elo2v2": "ELO 2v2",
+    "col_role": "Rôle",
     "col_status": "Statut",
     "col_actions": "Actions",
     "status_ban_perm": "Ban déf.",
@@ -690,11 +859,19 @@
     "col_name": "Nom",
     "col_spots": "Places",
     "status_open": "Ouvert",
+    "status_closed": "Inscriptions fermées",
     "status_ongoing": "En cours",
     "status_cancelled": "Annulé",
     "status_finished": "Terminé",
     "btn_cancel_tourn": "Annuler",
-    "confirm_cancel_tourn": "Annuler le tournoi \"{{name}}\" ?",
+    "btn_close_tourn": "Fermer inscriptions",
+    "btn_start_tourn": "Lancer",
+    "btn_import_players": "Importer joueurs",
+    "err_start_tourn": "Impossible de lancer le tournoi.",
+    "err_close_tourn": "Impossible de fermer les inscriptions.",
+    "import_result": "Import terminé : {{created}} inscrits, {{skipped}} ignorés, {{errors}} erreurs.",
+    "import_failed": "Échec de l'import.",
+    "err_generic": "Une erreur est survenue.",
     "quick_title": "Actions rapides",
     "btn_create_tourn": "🏆 Créer un tournoi",
     "seasons_title": "Saisons",
@@ -714,14 +891,11 @@
     "modal_tourn_name_ph": "Ex: Tournoi du jeudi #5",
     "modal_tourn_date": "Date et heure",
     "modal_tourn_deadline": "Limite d'inscription",
-    "modal_tourn_max": "Nombre maximum de joueurs",
-    "modal_tourn_players": "{{n}} joueurs",
     "modal_tourn_cancel": "Annuler",
     "modal_tourn_submit": "Créer le tournoi",
     "modal_tourn_err": "Erreur",
     "modal_tourn_success": "Tournoi créé",
     "modal_tourn_close": "Fermer",
-    "modal_ban_title": "Bannir {{username}}",
     "modal_ban_type": "Type de ban",
     "modal_ban_temp": "Temporaire",
     "modal_ban_perm": "Définitif",
@@ -731,11 +905,259 @@
     "modal_ban_doing": "Bannissement...",
     "modal_ban_confirm": "Confirmer le ban",
     "day_abbr": "j",
-    "modal_elo_title": "Modifier ELO — {{username}}",
     "modal_elo_solo": "ELO Solo (1v1)",
     "modal_elo_team": "ELO Team (2v2)",
     "modal_elo_cancel": "Annuler",
     "modal_elo_saving": "Sauvegarde...",
-    "modal_elo_save": "Enregistrer"
+    "modal_elo_save": "Enregistrer",
+    "confirm_start_tourn": "Lancer le tournoi « {{name}} » ?",
+    "confirm_cancel_tourn": "Annuler le tournoi « {{name}} » ?",
+    "modal_ban_title": "Bannir {{username}}",
+    "modal_elo_title": "Modifier l'ELO de {{username}}",
+    "err_role_update": "Erreur lors de la mise à jour du rôle.",
+    "err_delete_user": "Impossible de supprimer cet utilisateur.",
+    "deleting": "Suppression...",
+    "delete_permanently": "Supprimer définitivement",
+    "confirm_cancel_match": "Annuler ce match et restaurer les ELO ?",
+    "match_cancelled": "Annulé",
+    "delete_title": "Supprimer {{username}}",
+    "delete_warning": "Cette action est irréversible. Toutes les données du joueur seront supprimées.",
+    "delete_cancel": "Annuler",
+    "col_tokens": "Jetons",
+    "btn_tokens": "Jetons",
+    "btn_delete_short": "Suppr."
+  },
+  "sidebar": {
+    "tokens": "{{count}} jetons"
+  },
+  "badge": {
+    "elite": "Élite",
+    "veteran": "Vétéran",
+    "confirmed": "Confirmé",
+    "amateur": "Amateur",
+    "newPlayer": "Nouveau"
+  },
+  "comparison": {
+    "title": "Comparaison joueurs",
+    "elo": "ELO",
+    "gamelles": "Gamelles",
+    "winStreak": "Série victoires",
+    "matchesMonth": "Parties / mois",
+    "selectUp": "Sélectionne jusqu'à 4 joueurs",
+    "searchLogin": "Rechercher un login…",
+    "noPlayer": "Aucun joueur trouvé",
+    "emptyHint": "Recherche et sélectionne des joueurs pour comparer"
+  },
+  "friend": {
+    "added": "Ami ajouté",
+    "addedYou": "t'a ajouté en coéquipier favori.",
+    "alreadyAdded": "Déjà ajouté",
+    "addBack": "Ajouter en retour",
+    "ignore": "Ignorer"
+  },
+  "statsCard": {
+    "bestElo": "Meilleur ELO",
+    "matchesPlayed": "Matchs joués",
+    "currentStreak": "Série actuelle",
+    "currentWealth": "Richesse actuelle",
+    "currentRatio": "Ratio actuel",
+    "titleOf": "Stats de {{login}}",
+    "titleMine": "Mes stats",
+    "exporting": "Export…",
+    "download": "↓ Télécharger (.png)"
+  },
+  "rankEvolution": {
+    "title": "Évolution du classement",
+    "loading": "Chargement…",
+    "noData": "Aucune donnée pour cette saison.",
+    "rankPosition": "Position dans le classement",
+    "matchesPlayed": "Matchs joués",
+    "rank": "Rang"
+  },
+  "banned": {
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "hours_one": "{{count}} heure",
+    "hours_other": "{{count}} heures",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "lessThanMinute": "moins d'une minute",
+    "permTitle": "Compte banni",
+    "permText": "Votre compte a été banni définitivement par un administrateur.",
+    "tempTitle": "Compte suspendu",
+    "tempText": "Votre compte est temporairement suspendu.",
+    "timeLeft": "Temps restant :",
+    "contact": "Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur à l'adresse {{email}} .",
+    "backToLogin": "Retour à la connexion"
+  },
+  "achievements": {
+    "cat": {
+      "GAMELLES": "🪣 Gamelles",
+      "DEMIS": "🍺 Demis",
+      "MATCH": "🏓 Matchs",
+      "SERIE": "🔥 Séries",
+      "ELO": "📈 ELO",
+      "SAISON": "🏆 Saisons",
+      "EQUIPE": "🤝 Équipe",
+      "ECONOMIE": "💰 Économie"
+    },
+    "loading": "Chargement…",
+    "progress": "{{unlocked}} / {{total}} débloqués ({{pct}}%)",
+    "items": {
+      "first_gamelle": {
+        "name": "Première gamelle",
+        "desc": "Marquer 1 gamelle"
+      },
+      "gamelleur": {
+        "name": "Gamelleur",
+        "desc": "Marquer 5 gamelles au total"
+      },
+      "roi_gamelle": {
+        "name": "Roi de la gamelle",
+        "desc": "Marquer 20 gamelles au total"
+      },
+      "first_demi": {
+        "name": "Premier demi",
+        "desc": "Marquer 1 demi"
+      },
+      "barman": {
+        "name": "Barman",
+        "desc": "Marquer 10 demis au total"
+      },
+      "patron_bar": {
+        "name": "Patron du bar",
+        "desc": "Marquer 50 demis au total"
+      },
+      "bapteme": {
+        "name": "Baptême du feu",
+        "desc": "Jouer son tout premier match"
+      },
+      "first_win": {
+        "name": "Première victoire",
+        "desc": "Gagner un match"
+      },
+      "ecrasante": {
+        "name": "Victoire écrasante",
+        "desc": "Gagner 10-0"
+      },
+      "serre": {
+        "name": "Match serré",
+        "desc": "Gagner 10-9"
+      },
+      "muraille": {
+        "name": "Muraille",
+        "desc": "Gagner sans encaisser (hors 10-0)"
+      },
+      "comeback": {
+        "name": "Comeback",
+        "desc": "Gagner alors que l'adversaire avait 7+ points"
+      },
+      "wins_10": {
+        "name": "10 victoires",
+        "desc": "Gagner 10 matchs"
+      },
+      "wins_50": {
+        "name": "50 victoires",
+        "desc": "Gagner 50 matchs"
+      },
+      "wins_100": {
+        "name": "100 victoires",
+        "desc": "Gagner 100 matchs"
+      },
+      "matches_10": {
+        "name": "Joueur régulier",
+        "desc": "Jouer 10 matchs"
+      },
+      "matches_50": {
+        "name": "Vétéran",
+        "desc": "Jouer 50 matchs"
+      },
+      "matches_100": {
+        "name": "Légende",
+        "desc": "Jouer 100 matchs"
+      },
+      "serie_3": {
+        "name": "En feu",
+        "desc": "3 victoires d'affilée"
+      },
+      "serie_5": {
+        "name": "Inarrêtable",
+        "desc": "5 victoires d'affilée"
+      },
+      "serie_10": {
+        "name": "Machine",
+        "desc": "10 victoires d'affilée"
+      },
+      "resilient": {
+        "name": "Résilient",
+        "desc": "Gagner après 5 défaites d'affilée"
+      },
+      "elo_1100": {
+        "name": "Grimpeur",
+        "desc": "Atteindre 1100 ELO"
+      },
+      "elo_1200": {
+        "name": "Compétiteur",
+        "desc": "Atteindre 1200 ELO"
+      },
+      "elo_1500": {
+        "name": "Élite",
+        "desc": "Atteindre 1500 ELO"
+      },
+      "elo_2000": {
+        "name": "Légende vivante",
+        "desc": "Atteindre 2000 ELO"
+      },
+      "first_season": {
+        "name": "Première saison",
+        "desc": "Participer à une saison classée"
+      },
+      "top3_season": {
+        "name": "Top 3",
+        "desc": "Finir dans le top 3 d'une saison"
+      },
+      "champion_season": {
+        "name": "Champion",
+        "desc": "Finir #1 d'une saison"
+      },
+      "multi_champion": {
+        "name": "Multi-champion",
+        "desc": "Finir #1 dans 3 saisons"
+      },
+      "first_2v2": {
+        "name": "Coéquipier",
+        "desc": "Jouer un match en 2v2"
+      },
+      "duo_choc": {
+        "name": "Duo de choc",
+        "desc": "Gagner 10 matchs en 2v2"
+      },
+      "capitaine": {
+        "name": "Capitaine",
+        "desc": "Gagner 25 matchs en 2v2"
+      },
+      "first_bet": {
+        "name": "Premier pari",
+        "desc": "Placer un pari"
+      },
+      "jackpot": {
+        "name": "Jackpot",
+        "desc": "Gagner un pari de 1000+ jetons"
+      },
+      "millionnaire": {
+        "name": "Millionnaire",
+        "desc": "Atteindre 50 000 jetons"
+      }
+    }
+  },
+  "activate": {
+    "loadingTitle": "Activation…",
+    "loadingSub": "Vérification de ton lien en cours.",
+    "successTitle": "Compte activé !",
+    "successSub": "Ton compte a bien été activé. Tu peux maintenant te connecter.",
+    "login": "Se connecter",
+    "errorTitle": "Lien invalide",
+    "errorSub": "Ce lien d'activation est invalide ou a déjà été utilisé.",
+    "createAccount": "Créer un compte"
   }
 }

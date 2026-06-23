@@ -1,8 +1,8 @@
 """
-Diffusion temps réel des marchés de paris (cotes/pools) via Channels.
+Real-time broadcast of betting markets (odds/pools) over Channels.
 
-Appelé depuis les vues/services REST, typiquement sous `transaction.on_commit`
-pour ne diffuser qu'après la validation effective en base.
+Called from the REST views/services, typically under `transaction.on_commit`
+so a broadcast only happens once the change is committed to the database.
 """
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -20,10 +20,10 @@ def _send(event):
 
 
 def broadcast_market(reservation):
-    """Pousse le marché à jour d'une partie (nouvelle cote/pool) au groupe bets."""
+    """Push a game's updated market (new odds/pool) to the bets group."""
     _send({"type": "market_update_msg", "market": market_payload(reservation)})
 
 
 def broadcast_closed(reservation):
-    """Signale qu'une partie n'est plus pariable (fermée / annulée / résolue)."""
+    """Signal that a game is no longer bettable (closed / cancelled / settled)."""
     _send({"type": "market_closed_msg", "reservation_id": str(reservation.id)})

@@ -201,6 +201,16 @@
   text-align: right;
 }
 
+.eloRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+}
+
+.eloBlock {
+  text-align: center;
+}
+
 .eloVal {
   font-size: 34px;
   font-weight: 800;
@@ -706,6 +716,17 @@
   padding: 12px 0;
 }
 
+/* ── Tablet ── */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rightCol > * + * {
+    margin-top: 12px;
+  }
+}
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .content {
@@ -714,7 +735,7 @@
   }
 
   .statsGrid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .grid {
@@ -724,15 +745,96 @@
   .heroCard {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .heroLeft {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .heroElo {
+    width: 100%;
     text-align: left;
+  }
+
+  .eloRow {
+    justify-content: flex-start;
+    gap: 32px;
+  }
+
+  .eloVal {
+    font-size: 26px;
+  }
+
+  .logoutBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .friendControls {
+    flex-direction: column;
+  }
+
+  .friendSort {
+    width: 100%;
+  }
+
+  .addTeammateRow {
+    flex-wrap: wrap;
   }
 
   .planBtn {
     font-size: 10px;
     padding: 4px 8px;
+  }
+
+  .seasonRow {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .seasonName {
+    flex: 0 0 100%;
+  }
+}
+
+/* ── Small mobile ── */
+@media (max-width: 480px) {
+  .content {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .heroCard {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .heroName {
+    font-size: 18px;
+  }
+
+  .eloVal {
+    font-size: 22px;
+  }
+
+  .eloRow {
+    gap: 20px;
+  }
+
+  .teammateRow {
+    gap: 6px;
+  }
+
+  .planBtn {
+    font-size: 9px;
+    padding: 3px 6px;
   }
 }

@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 
 from users.models import User
@@ -45,10 +45,12 @@ class AdminLoginView(APIView):
             request.session['is_admin'] = True
             return Response({'detail': 'ok'})
 
-        return Response(
-            {'detail': 'Identifiant ou mot de passe incorrect.'},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
+        # Identifiants invalides renvoyés en 200 + en-tête X-Admin-Login (au lieu
+        # d'un 401) pour éviter une ligne rouge dans la console navigateur. Le
+        # front lit l'en-tête et affiche le message d'erreur traduit.
+        resp = Response({'detail': 'Identifiant ou mot de passe incorrect.'})
+        resp['X-Admin-Login'] = 'failed'
+        return resp
 
 
 class AdminLogoutView(APIView):
@@ -300,7 +302,6 @@ class AdminTournamentsView(APIView):
                 'id': str(t.id),
                 'name': t.name,
                 'status': t.status,
-                'max_players': t.max_players,
                 'start_date': t.start_date.isoformat() if t.start_date else None,
                 'deadline': t.deadline.isoformat() if t.deadline else None,
                 'created_at': t.created_at.isoformat() if t.created_at else None,
@@ -312,19 +313,96 @@ class AdminCancelTournamentView(APIView):
     permission_classes = [IsAdminSession]
 
     def post(self, request, tournament_id):
+        # Erreurs renvoyées en 200 + en-tête X-Admin-Error (au lieu de 400/404)
+        # pour éviter une ligne rouge dans la console. Le front lit l'en-tête.
+        def _err(message, code):
+            resp = Response({'error': message})
+            resp['X-Admin-Error'] = code
+            return resp
+
         try:
             t = Tournament.objects.get(pk=tournament_id)
         except Tournament.DoesNotExist:
-            return Response({'error': 'Tournoi introuvable'}, status=404)
+            return _err('Tournoi introuvable', 'NOT_FOUND')
 
         if t.status == 'CANCELLED':
-            return Response({'error': 'Déjà annulé'}, status=400)
+            return _err('Déjà annulé', 'ALREADY_CANCELLED')
         if t.status == 'DONE':
-            return Response({'error': 'Tournoi terminé, impossible d\'annuler'}, status=400)
+            return _err('Tournoi terminé, impossible d\'annuler', 'DONE')
 
         t.status = 'CANCELLED'
         t.save(update_fields=['status'])
         return Response({'detail': f'Tournoi "{t.name}" annulé.'})
+
+
+class AdminCreateTournamentView(APIView):
+    # Création de tournoi depuis le panneau admin (session is_admin, pas de JWT).
+    # On ne peut pas réutiliser l'endpoint BDE (IsAuthenticated → 403 sans JWT) :
+    # on appelle la logique de création partagée avec created_by=None.
+    permission_classes = [IsAdminSession]
+
+    def post(self, request):
+        from tournaments.views import _create_tournament
+
+        data, error = _create_tournament(request.data, None)
+        if error:
+            resp = Response({'detail': error[0], 'code': error[1]})
+            resp['X-Tournament-Error'] = error[1]
+            return resp
+        return Response(data, status=201)
+
+
+class AdminImportPlayersView(APIView):
+    # Import de joueurs depuis le panneau admin. L'admin s'authentifie par session
+    # (is_admin) et non par JWT : on ne peut donc PAS réutiliser l'endpoint BDE
+    # /api/tournaments/<id>/import-players/ (protégé par IsAuthenticated → 403 pour
+    # une session sans JWT). On réutilise ici la logique d'import partagée.
+    permission_classes = [IsAdminSession]
+    parser_classes     = [MultiPartParser, FormParser]
+
+    def post(self, request, tournament_id):
+        from tournaments.views import _do_import_players
+
+        tournament = get_object_or_404(Tournament, pk=tournament_id)
+        result, error = _do_import_players(tournament, request.FILES.get('file'))
+        if error:
+            # Même convention que le reste : 200 + en-tête (pas de 400 en console).
+            resp = Response({'detail': error[0], 'code': error[1]})
+            resp['X-Tournament-Error'] = error[1]
+            return resp
+        return Response(result, status=201)
+
+
+class AdminCloseRegistrationsView(APIView):
+    permission_classes = [IsAdminSession]
+
+    def post(self, request, tournament_id):
+        tournament = get_object_or_404(Tournament, pk=tournament_id)
+        if tournament.status != Tournament.Status.OPEN:
+            resp = Response({'detail': 'Les inscriptions ne sont pas ouvertes.'})
+            resp['X-Admin-Error'] = 'NOT_OPEN'
+            return resp
+        tournament.status = Tournament.Status.CLOSED
+        tournament.save(update_fields=['status'])
+        return Response({'status': 'CLOSED'})
+
+
+class AdminStartTournamentView(APIView):
+    permission_classes = [IsAdminSession]
+
+    def post(self, request, tournament_id):
+        from tournaments.views import _do_start_tournament
+
+        tournament = get_object_or_404(Tournament, pk=tournament_id)
+        data, error = _do_start_tournament(tournament)
+        if error:
+            payload = {'detail': error[0], 'code': error[1]}
+            if len(error) > 2 and error[2]:
+                payload.update(error[2])
+            resp = Response(payload)
+            resp['X-Tournament-Error'] = error[1]
+            return resp
+        return Response(data)
 
 
 # ---------------------------------------------------------------------------
@@ -352,8 +430,16 @@ class AdminSeasonsView(APIView):
         start_date = request.data.get('start_date')
         end_date = request.data.get('end_date')
 
-        if not name or not start_date or not end_date:
-            return Response({'error': 'Champs requis : name, start_date, end_date'}, status=400)
+        if not name:
+            return Response({'error': 'Champs requis : name'}, status=400)
+
+        # Dates optionnelles : par défaut la saison démarre aujourd'hui
+        # et se termine 3 mois plus tard.
+        from datetime import date, timedelta
+        start_date = start_date or date.today()
+        if not end_date:
+            base = start_date if isinstance(start_date, date) else date.fromisoformat(start_date)
+            end_date = base + timedelta(days=90)
 
         season = Season.objects.create(
             name=name,
@@ -411,10 +497,14 @@ class AdminSeasonDetailView(APIView):
 
 class AdminDeleteUserView(APIView):
     permission_classes = [IsAdminSession]
- 
+
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        user.delete()
+        # anonymize() annule l'activité en cours (matchs, réservations, créneaux
+        # de file) et notifie la session WebSocket du joueur (_kick_live_session
+        # → fermeture code 4002 → markAccountDeleted côté front). Pas besoin de
+        # dupliquer le group_send ici.
+        user.anonymize()
         return Response(status=204)
  
  

@@ -52,6 +52,7 @@ LOCAL_APPS_SYDNEY = [
 	'public_api',
 	'tournaments',
     'stats',
+    'achievements',
 ]
 
 # Apps autres
@@ -156,6 +157,11 @@ REST_FRAMEWORK = {
 	},
 }
 
+# Pas de migrations Django — toutes les tables sont créées par init.sql
+MIGRATION_MODULES = {
+	'public_api': None,
+}
+
 # ===========================================================================
 # JWT
 # ===========================================================================
@@ -172,8 +178,7 @@ SIMPLE_JWT = {
 
 JWT_ACCESS_COOKIE_NAME = config('JWT_ACCESS_COOKIE_NAME', default='access_token')
 JWT_REFRESH_COOKIE_NAME = config('JWT_REFRESH_COOKIE_NAME', default='refresh_token')
-#JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
-JWT_COOKIE_SECURE = False #a commente et decommenter la ligne du dessus en prod
+JWT_COOKIE_SECURE = config('JWT_COOKIE_SECURE', default=True, cast=bool)
 JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 # ===========================================================================
@@ -255,21 +260,21 @@ OAUTH_42_CLIENT_SECRET = config("OAUTH_42_CLIENT_SECRET")
 OAUTH_42_REDIRECT_URI = config("OAUTH_42_REDIRECT_URI")
 
 # mail verification
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = "smtp.gmail.com"   # serveur SMTP d'Outlook
 EMAIL_PORT = 587                    # port TLS
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "babyfoot42nice@gmail.com"  # ton vrai email
-EMAIL_HOST_PASSWORD = "***REMOVED***"   # mot de passe de ton compte ou mot de passe d'application
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # mot de passe de ton compte ou mot de passe d'application
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # BDE — mot de passe partagé pour créer un tournoi
-BDE_PASSWORD = config('BDE_PASSWORD', default='bde42')
+BDE_PASSWORD = config('BDE_PASSWORD')
 
 # Admin dashboard
-ADMIN_LOGIN = config('ADMIN_LOGIN', default='admin')
-ADMIN_PASSWORD = config('ADMIN_PASSWORD', default='admin42')
+ADMIN_LOGIN = config('ADMIN_LOGIN')
+ADMIN_PASSWORD = config('ADMIN_PASSWORD')

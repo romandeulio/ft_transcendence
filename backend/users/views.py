@@ -62,8 +62,11 @@ class  RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Erreurs de validation renvoyées en HTTP 200 (champ `error`/`fields`)
+        # plutôt qu'en 400, pour ne pas polluer la console du navigateur.
         serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response({'error': 'validation', 'fields': serializer.errors})
         user = serializer.save()
         return Response(
             {
@@ -77,28 +80,25 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # NB: les échecs d'authentification « attendus » renvoient HTTP 200 avec
+        # un champ `error` (code stable), et non 4xx, pour ne pas générer
+        # d'erreurs dans la console du navigateur (exigence du sujet).
         email = request.data.get('email')
         password = request.data.get('password')
         try:
             user = User.objects.get(email=email)
             if not user.is_active:
-                return Response({'error': 'Account not activated'}, status=403)
+                return Response({'error': 'not_activated'})
         except User.DoesNotExist:
-            return Response({'error': 'Bad email or password'}, status= 401)
+            return Response({'error': 'invalid_credentials'})
 
         if not user.check_password(password):
-            return Response({'error': 'Bad email or password'}, status=401)
+            return Response({'error': 'invalid_credentials'})
 
         # Vérifier le ban
         ban = user.ban_info()
         if ban:
-            return Response({'error': 'banned', 'ban': ban}, status=403)
-
-
-        # Vérifier le ban
-        ban = user.ban_info()
-        if ban:
-            return Response({'error': 'banned', 'ban': ban}, status=403)
+            return Response({'error': 'banned', 'ban': ban})
 
         if user.is_2fa_enabled:
             # Générer un code 6 chiffres, stocker dans Redis, envoyer par mail
@@ -112,14 +112,14 @@ class LoginView(APIView):
 
             try:
                 send_mail(
-                    subject="Code de vérification 2FA",
-                    message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                    subject="2FA verification code",
+                    message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
             except Exception:
-                return Response({'error': 'Erreur envoi du code'}, status=500)
+                return Response({'error': 'send_error'})
 
             return Response({
                 'requires_2fa': True,
@@ -135,29 +135,30 @@ class Verify2FACodeView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Comme LoginView : échecs attendus en HTTP 200 + code d'erreur, pas de 4xx.
         user_id = request.data.get('user_id')
         code = request.data.get('code', '').strip()
 
         if not user_id or not code:
-            return Response({'error': 'user_id et code requis'}, status=400)
+            return Response({'error': 'invalid_code'})
 
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({'error': 'Utilisateur introuvable'}, status=404)
+            return Response({'error': 'code_expired'})
 
         cache_key = f"2fa_code_{user.id}"
         stored_code = cache.get(cache_key)
 
         if stored_code is None:
-            return Response({'error': 'Code expiré, reconnectez-vous'}, status=401)
+            return Response({'error': 'code_expired'})
 
         if stored_code != code:
-            return Response({'error': 'Code invalide'}, status=401)
+            return Response({'error': 'invalid_code'})
 
         # Code valide — supprimer du cache et connecter
         cache.delete(cache_key)
-        response = Response({'detail': 'Login successful'})
+        response = Response({'success': True, 'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
 
 
@@ -263,8 +264,8 @@ class OAuth42CallbackView(APIView):
 
                 try:
                     send_mail(
-                        subject="Code de vérification 2FA",
-                        message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                        subject="2FA verification code",
+                        message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[user.email],
                         fail_silently=False,
@@ -297,8 +298,8 @@ class OAuth42CallbackView(APIView):
 
                 try:
                     send_mail(
-                        subject="Code de vérification 2FA",
-                        message=f"Votre code de connexion : {code}\n\nCe code expire dans 5 minutes.",
+                        subject="2FA verification code",
+                        message=f"Your login code: {code}\n\nThis code expires in 5 minutes.",
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[user.email],
                         fail_silently=False,
@@ -322,17 +323,19 @@ class CookieTokenRefreshView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Échec de refresh « attendu » (pas/plus de refresh token) en HTTP 200
+        # avec {refreshed: False}, pour ne pas polluer la console du navigateur.
         raw_refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
         if not raw_refresh:
-            return Response({'detail': 'Refresh token missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'refreshed': False})
 
         try:
             refresh = RefreshToken(raw_refresh)
             access = str(refresh.access_token)
         except TokenError:
-            return Response({'detail': 'Refresh token invalid'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'refreshed': False})
 
-        response = Response({'detail': 'Token refreshed'})
+        response = Response({'refreshed': True})
         response.set_cookie(
             settings.JWT_ACCESS_COOKIE_NAME,
             access,
@@ -491,11 +494,20 @@ class FriendAddNotifyView(APIView):
         try:
             from channels.layers import get_channel_layer
             from asgiref.sync import async_to_sync
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                f"user_{target}",
-                {"type": "friend_added", "from": request.user.username},
-            )
+            from realtime import state
+            sender = request.user.username
+            if target in state.online_users:
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target}",
+                    {"type": "friend_added", "from": sender},
+                )
+            else:
+                # Cible hors-ligne : on stocke la notif pour la livrer à sa
+                # prochaine connexion (cf. QueueConsumer._deliver_pending).
+                pending = state.pending_invites.setdefault(target, [])
+                if not any(p.get("friend_added") and p.get("from") == sender for p in pending):
+                    pending.append({"friend_added": True, "from": sender})
         except Exception:
             pass
         return Response({'detail': 'ok'})
@@ -560,7 +572,23 @@ class UpdateProfileView(APIView):
 
         # Mise à jour email
         if request.data.get('email'):
-            user.email = request.data['email']
+            from django.core.validators import validate_email as django_validate_email
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            new_email = request.data['email'].strip()
+            # Erreurs d'email renvoyées en 200 + en-tête X-Profile-Email-Error
+            # (au lieu d'un 400) pour éviter une ligne rouge dans la console.
+            # Le front lit l'en-tête et affiche le message traduit correspondant.
+            try:
+                django_validate_email(new_email)
+            except DjangoValidationError:
+                resp = Response({'error': 'Format email invalide'})
+                resp['X-Profile-Email-Error'] = 'invalid'
+                return resp
+            if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                resp = Response({'error': 'Email déjà utilisé'})
+                resp['X-Profile-Email-Error'] = 'inuse'
+                return resp
+            user.email = new_email
 
         # Suppression avatar
         if request.data.get('delete_avatar') == 'true':
@@ -663,13 +691,13 @@ class ChangePasswordView(APIView):
         new_pass = request.data.get('new_password')
 
         if not user.check_password(current):
-            return Response({'error': 'Mot de passe actuel incorrect'}, status=400)
+            return Response({'success': False, 'error': 'Mot de passe actuel incorrect'})
         if len(new_pass) < 8:
-            return Response({'error': 'Minimum 8 caractères'}, status=400)
+            return Response({'success': False, 'error': 'Minimum 8 caractères'})
 
         user.set_password(new_pass)
         user.save()
-        return Response({'status': 'Mot de passe modifié'})
+        return Response({'success': True, 'status': 'Mot de passe modifié'})
 
 
 class Disable2FAView(APIView):

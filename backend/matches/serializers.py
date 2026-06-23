@@ -35,6 +35,7 @@ class MatchSerializer(serializers.ModelSerializer):
 			# scores
 			'score_player1', 'score_player2',
 			'gamelles_player1', 'gamelles_player2',
+			'demis_player1', 'demis_player2',
 			'winner',
 			# ELO solo
 			'elo_solo_player1_before', 'elo_solo_player1_after',
@@ -85,6 +86,7 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 			'player2', 'player2_teammate',
 			'score_player1', 'score_player2',
 			'gamelles_player1', 'gamelles_player2',
+			'demis_player1', 'demis_player2',
 			'season',
 		]
 
@@ -139,4 +141,4 @@ class MatchValidateSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model  = Match
-		fields = ['score_player1', 'score_player2']
+		fields = ['score_player1', 'score_player2', 'gamelles_player1', 'gamelles_player2', 'demis_player1', 'demis_player2']

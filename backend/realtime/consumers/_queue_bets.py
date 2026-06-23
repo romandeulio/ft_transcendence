@@ -1,12 +1,11 @@
 """
-Mixin « pont paris » du consumer file d'attente.
+"Betting bridge" mixin of the queue consumer.
 
-Quand une partie démarre/se termine, on crée/ferme la Reservation IN_PROGRESS
-correspondante (la fenêtre de paris) et on pousse la cote à jour vers le groupe
-WebSocket "bets". Apparié par l'ensemble des joueurs (baby mono-table → pas
-d'ambiguïté).
+When a game starts/ends, the matching IN_PROGRESS Reservation (the betting
+window) is created/closed and the updated odds are pushed to the "bets"
+WebSocket group. Matched by the set of players (single table -> no ambiguity).
 
-Hérité par QueueConsumer (cf. queue.py).
+Inherited by QueueConsumer (cf. queue.py).
 """
 from channels.db import database_sync_to_async
 
@@ -16,7 +15,7 @@ from realtime import state
 class QueueBetsMixin:
     @staticmethod
     def _slot_to_game(slot):
-        """Normalise un slot de file en dict 'game' (joueurs + type)."""
+        """Normalise a queue slot into a 'game' dict (players + type)."""
         return {
             "player1": slot.get("player1") or slot.get("p1"),
             "player2": slot.get("player2") or slot.get("p2"),
@@ -27,14 +26,34 @@ class QueueBetsMixin:
 
     @staticmethod
     def _game_usernames(game):
-        """Ensemble des pseudos (non nuls) d'un dict 'game' en mémoire."""
+        """Set of the (non-null) usernames of an in-memory 'game' dict."""
         return {
             game.get("player1"), game.get("player1_teammate"),
             game.get("player2"), game.get("player2_teammate"),
         } - {None}
 
+    def _slot_involves(self, slot, username):
+        """True if `username` takes part in this slot (owner, opponent or
+        teammate), regardless of which field stores them (p1/p2/player*)."""
+        return username in self._game_usernames(self._slot_to_game(slot))
+
+    @database_sync_to_async
+    def _filter_active_usernames(self, usernames):
+        """Subset of usernames that map to an existing AND active account."""
+        from django.contrib.auth import get_user_model
+
+        names = [n for n in usernames if n]
+        if not names:
+            return set()
+        User = get_user_model()
+        return set(
+            User.objects
+            .filter(username__in=names, is_active=True)
+            .values_list("username", flat=True)
+        )
+
     async def _close_bets_for_slot(self, slot):
-        """Match retiré de la file sans être joué → ferme + rembourse ses paris."""
+        """Game removed from the queue without being played -> close + refund its bets."""
         g = self._slot_to_game(slot)
         if not g["player1"] or not g["player2"]:
             return
@@ -47,9 +66,9 @@ class QueueBetsMixin:
     @database_sync_to_async
     def _ensure_reservation_for_game(self, game):
         """
-        Crée la Reservation IN_PROGRESS d'une partie (fenêtre de paris) si elle
-        n'existe pas déjà (dédup par joueurs, ex. path « réserver » d'Accueil).
-        Pas de réservation pour les 2v1 (non pariables). Retourne l'id ou None.
+        Create a game's IN_PROGRESS Reservation (betting window) if it does not
+        already exist (dedup by players, e.g. the Home "reserve" path). No
+        reservation for 2v1 games (not bettable). Returns the id or None.
         """
         from django.contrib.auth import get_user_model
         from planning.models import Reservation
@@ -88,9 +107,9 @@ class QueueBetsMixin:
     @database_sync_to_async
     def _close_reservation_for_game(self, game, refund=False):
         """
-        Ferme (DONE) la Reservation IN_PROGRESS d'une partie terminée, appariée
-        par joueurs. Rembourse les paris ouverts si `refund` (partie abandonnée).
-        Retourne l'id fermé ou None.
+        Close (DONE) the IN_PROGRESS Reservation of a finished game, matched by
+        players. Refunds open bets when `refund` (game abandoned).
+        Returns the closed id or None.
         """
         from django.utils import timezone
         from planning.models import Reservation
@@ -115,7 +134,7 @@ class QueueBetsMixin:
         return None
 
     async def _broadcast_bet_market(self, game):
-        """Pousse la cote à jour du marché de paris correspondant à cette partie."""
+        """Push the updated odds of the betting market matching this game."""
         try:
             payload = await self._bet_market_payload(game)
             if payload:
@@ -127,7 +146,7 @@ class QueueBetsMixin:
 
     @database_sync_to_async
     def _bet_market_payload(self, game):
-        """Payload de marché (cotes/pools) de la réservation appariée à `game`."""
+        """Market payload (odds/pools) of the reservation matched to `game`."""
         from planning.models import Reservation
         from bets.serializers import market_payload
 

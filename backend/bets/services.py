@@ -1,13 +1,13 @@
 """
-Logique métier des paris : marché (cotes/pools), pose, annulation, résolution.
+Betting business logic: market (odds/pools), placement, cancellation, settlement.
 
-On parie sur une Reservation IN_PROGRESS (la partie live). La résolution est
-déclenchée quand le Match correspondant est validé : le baby étant mono-table,
-on retrouve la réservation par l'ensemble des joueurs, sans ambiguïté.
+Bets are placed on an IN_PROGRESS Reservation (the live game). Settlement is
+triggered when the matching Match is validated: since the table-football setup
+is single-table, the reservation is found unambiguously from the set of players.
 
-Jetons "mint" : la mise est détruite à la pose, le gain créé à la résolution
-(pas de réserve maison). Chaque mouvement est journalisé dans wallet_transactions
-(type bet/win/refund, reference_id = id du pari).
+"Mint" tokens: the stake is destroyed on placement, the payout created on
+settlement (no house reserve). Every movement is logged in wallet_transactions
+(type bet/win/refund, reference_id = the bet id).
 """
 from decimal import Decimal
 
@@ -26,7 +26,7 @@ OPEN_STATUSES = (Reservation.Status.IN_PROGRESS,)
 
 
 class BetError(ValidationError):
-    """Erreur métier de pari (mappée en 400 par la vue)."""
+    """Business betting error (mapped to HTTP 400 by the view)."""
     pass
 
 
@@ -71,7 +71,7 @@ def _side_elos(reservation):
 
 
 def staked_per_side(reservation):
-    """Total des mises ouvertes sur chaque camp (t1, t2)."""
+    """Total open stakes on each side (t1, t2)."""
     s1, s2 = _side_players(reservation)
     rows = (
         Bet.objects
@@ -95,9 +95,9 @@ def _uname(player):
 
 def _live_score(reservation):
     """
-    (score_camp1, score_camp2) depuis l'état du jeu en mémoire (QueueConsumer),
-    apparié par l'ensemble des joueurs (baby mono-table). None si introuvable.
-    Dans le jeu : player1 = BLUE (scoreBlue), player2 = RED (scoreRed).
+    (side1_score, side2_score) from the in-memory game state (QueueConsumer),
+    matched by the set of players (single table). None if not found.
+    In-game: player1 = BLUE (scoreBlue), player2 = RED (scoreRed).
     """
     try:
         from realtime.consumers.queue import games
@@ -125,8 +125,8 @@ def _live_score(reservation):
 
 def is_launched(reservation):
     """
-    True si la partie est lancée (un jeu existe en mémoire pour ces joueurs).
-    Une fois lancé, les paris ne sont plus annulables.
+    True if the game has started (an in-memory game exists for these players).
+    Once launched, bets can no longer be cancelled.
     """
     return _live_score(reservation) is not None
 
@@ -135,7 +135,7 @@ CUTOFF_TOTAL_SCORE = 5
 
 
 def betting_open(reservation):
-    """Paris ouverts tant que le score cumulé des deux camps < CUTOFF_TOTAL_SCORE."""
+    """Bets stay open while the combined score of both sides < CUTOFF_TOTAL_SCORE."""
     sc = _live_score(reservation)
     if sc is None:
         return True
@@ -143,7 +143,7 @@ def betting_open(reservation):
 
 
 def reservation_market(reservation):
-    """Proba dynamique du camp 1, cotes des deux camps, mises par camp."""
+    """Dynamic probability of side 1, odds for both sides, stakes per side."""
     e1, e2 = _side_elos(reservation)
     p_elo = expected_score(e1, e2)
     t1, t2 = staked_per_side(reservation)
@@ -160,7 +160,7 @@ def reservation_market(reservation):
 
 
 def is_open(reservation):
-    """Une partie accepte des paris si elle est IN_PROGRESS et n'est pas un 2v1."""
+    """A game accepts bets when it is IN_PROGRESS and not a 2v1."""
     return (
         reservation.status in OPEN_STATUSES
         and reservation.match_type != 'TWO_V_ONE'
@@ -199,7 +199,7 @@ def _broadcast_closed(reservation):
 
 @transaction.atomic
 def place_bet(user, reservation, side, amount):
-    """Pose un pari sur `side` ('p1'/'p2') de la partie. Débite la mise, fige la cote."""
+    """Place a bet on `side` ('p1'/'p2') of the game. Debits the stake, freezes the odds."""
     if not is_open(reservation):
         raise BetError("Les paris sont fermés pour cette partie.")
     if not betting_open(reservation):
@@ -251,7 +251,7 @@ def place_bet(user, reservation, side, amount):
 
 @transaction.atomic
 def cancel_bet(user, bet):
-    """Annule un pari ouvert et rembourse la mise (tant que les paris sont ouverts)."""
+    """Cancel an open bet and refund the stake (while betting is still open)."""
     if bet.user_id != user.pk:
         raise BetError("Ce pari ne vous appartient pas.")
     if bet.result is not None:
@@ -276,8 +276,8 @@ def _match_players(match):
 
 def _find_reservation_for_match(match):
     """
-    Retrouve la réservation correspondant à un match (mêmes joueurs) parmi
-    celles ayant encore des paris ouverts. Baby mono-table → pas d'ambiguïté.
+    Find the reservation matching a match (same players) among those that still
+    have open bets. Single table -> no ambiguity.
     """
     players = _match_players(match)
     if not players:
@@ -308,9 +308,9 @@ def _refund(bet):
 @transaction.atomic
 def resolve_for_match(match):
     """
-    Résout les paris de la partie correspondant à `match` (validé).
-    Gagnants : crédités de round(mise * cote). Perdants : 0 (déjà débités).
-    Match nul (pas de vainqueur) : remboursé. Retourne le nombre de paris traités.
+    Settle the bets of the game matching `match` (validated).
+    Winners: credited round(stake * odds). Losers: 0 (already debited).
+    Draw (no winner): refunded. Returns the number of bets processed.
     """
     reservation = _find_reservation_for_match(match)
     if reservation is None:
@@ -336,13 +336,23 @@ def resolve_for_match(match):
             bet.result = Bet.Result.LOST
             bet.payout = 0
         bet.save(update_fields=['match', 'result', 'payout'])
+
+        # Betting achievements
+        try:
+            from achievements.service import check_bet_achievements
+            from django.contrib.auth import get_user_model
+            fresh_user = get_user_model().objects.get(pk=bet.user_id)
+            check_bet_achievements(fresh_user, bet)
+        except Exception:
+            pass
+
     _broadcast_closed(reservation)
     return len(bets)
 
 
 @transaction.atomic
 def refund_reservation(reservation):
-    """Rembourse tous les paris ouverts d'une réservation (annulation)."""
+    """Refund every open bet of a reservation (cancellation)."""
     bets = list(
         Bet.objects.select_for_update()
         .filter(reservation=reservation, result__isnull=True)
@@ -355,8 +365,29 @@ def refund_reservation(reservation):
 
 @transaction.atomic
 def refund_for_match(match):
-    """Rembourse les paris de la partie dont le match a été annulé."""
+    """Refund the bets of the game whose match was cancelled."""
     reservation = _find_reservation_for_match(match)
     if reservation is None:
         return 0
     return refund_reservation(reservation)
+
+
+@transaction.atomic
+def refund_open_bets_for_user(user_id):
+    """Refund every open bet placed by a user.
+
+    Used when an account is deleted/anonymised: their pending stakes are
+    returned and marked "refunded" rather than left dangling.
+    """
+    bets = list(
+        Bet.objects.select_for_update()
+        .filter(user_id=user_id, result__isnull=True)
+    )
+    reservations = set()
+    for bet in bets:
+        if bet.reservation_id:
+            reservations.add(bet.reservation)
+        _refund(bet)
+    for reservation in reservations:
+        _broadcast_market(reservation)
+    return len(bets)

@@ -62,8 +62,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             return None
 
     def validate_username(self, value):
-        if self.get_42_user(value) == None:
-            raise serializers.ValidationError('Not a valid 42 login')
+        # Plus de vérification « login 42 » : on autorise n'importe quel login.
+        # L'enrichissement depuis l'intra 42 (rôle, avatar) reste fait dans
+        # create() s'il s'avère que le login correspond à un utilisateur 42.
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already in use")
         return value
@@ -84,38 +85,40 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user_42 = self.get_42_user(validated_data["username"])
         validated_data.pop("password2")
-        has_piscine = any(
-            c["cursus"]["name"] == "C Piscine"
-            for c in user_42.get("cursus_users", [])
-        )
+        # L'utilisateur 42 est optionnel : login 42 → enrichissement rôle/avatar,
+        # sinon rôle « user » par défaut sans avatar.
+        user_42 = self.get_42_user(validated_data["username"])
 
-        has_42cursus = any(
-            c["cursus"]["name"] == "42cursus"
-            for c in user_42.get("cursus_users", [])
-        )
+        role = "user"
+        if user_42:
+            has_piscine = any(
+                c["cursus"]["name"] == "C Piscine"
+                for c in user_42.get("cursus_users", [])
+            )
+            has_42cursus = any(
+                c["cursus"]["name"] == "42cursus"
+                for c in user_42.get("cursus_users", [])
+            )
+            if user_42.get("staff?"):
+                role = "bocalien"
+            elif user_42.get("alumni?"):
+                role = "alumnni"
+            elif has_piscine and not has_42cursus:
+                role = "piscineux"
+            elif has_42cursus:
+                role = "stud"
+            if role != "bocalien":
+                for group in user_42.get("groups", []):
+                    name = group.get("name", "").lower()
+                    if "bde" in name:
+                        role = "bde"
 
-        if user_42.get("staff?"):
-            role = "bocalien"
-        elif user_42.get("alumni?"):
-            role = "alumnni"
-        elif has_piscine and not has_42cursus:
-            role = "piscineux"
-        elif has_42cursus:
-            role = "stud"
-        else:
-            role = "user"
-        if role != "bocalien":
-            for group in user_42.get("groups", []):
-                name = group.get("name", "").lower()
-                if "bde" in name:
-                    role = "bde"
         user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password'])
         user.role = role
         user.save(update_fields=["role"])
-        avatar_link = user_42.get("image", {}).get("link")
 
+        avatar_link = user_42.get("image", {}).get("link") if user_42 else None
         if avatar_link:
             response = requests.get(avatar_link)
 
@@ -139,12 +142,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         token = default_token_generator.make_token(user)
 
         activation_link = (
-            f"{settings.SITE_URL}/api/auth/activate/{uid}/{token}/"
+            f"{settings.SITE_URL}/activate/{uid}/{token}/"
         )
 
         send_mail(
-            subject="Activation de votre compte",
-            message=f"Activez votre compte : {activation_link}",
+            subject="Activate your account",
+            message=f"Activate your account: {activation_link}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
             fail_silently=False,
@@ -154,6 +157,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     elo_solo = serializers.IntegerField(source="stats.elo_solo", read_only=True)
     elo_team = serializers.IntegerField(source="stats.elo_team", read_only=True)
+    is_oauth = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -167,4 +171,8 @@ class UserSerializer(serializers.ModelSerializer):
             "elo_team",
             "wallet_tokens",
             "is_2fa_enabled",
+            "is_oauth",
         ]
+
+    def get_is_oauth(self, obj):
+        return bool(obj.oauth_42_id)

@@ -8,7 +8,8 @@
     "tournaments": "טורנירים",
     "account": "חשבון",
     "profile": "הפרופיל שלי",
-    "settings": "הגדרות"
+    "settings": "הגדרות",
+    "achievements": "הישגים"
   },
   "topbar": {
     "home": "דף הבית",
@@ -17,13 +18,7 @@
     "queue": "תור",
     "tournaments": "טורנירים",
     "profile": "הפרופיל שלי",
-    "settings": "הגדרות",
-    "admin": "מנהל",
-    "ticket": "כרטיס"
-  },
-  "sidebar": {
-    "tokens": "🪙 {{count}} אסימונים",
-    "close": "סגור"
+    "settings": "הגדרות"
   },
   "login": {
     "title": "BABYFOOT 42",
@@ -36,15 +31,28 @@
     "error": "אימייל או סיסמה שגויים.",
     "networkError": "שגיאת רשת, נסה שוב.",
     "noAccount": "עדיין אין לך חשבון?",
-    "registerLink": "הירשם"
+    "registerLink": "הירשם",
+    "codePlaceholder": "קוד בן 6 ספרות",
+    "verifying": "מאמת...",
+    "validate": "אשר",
+    "title2fa": "אימות דו-שלבי",
+    "sentTo": "קוד נשלח אל",
+    "back": "← חזרה",
+    "invalidCode": "הקוד חייב להכיל 6 ספרות",
+    "errors": {
+      "invalidEmail": "כתובת אימייל לא תקינה.",
+      "passwordRequired": "נדרשת סיסמה.",
+      "notActivated": "החשבון לא הופעל. בדוק את האימייל שלך.",
+      "codeInvalid": "קוד שגוי.",
+      "codeExpired": "הקוד פג, התחבר מחדש.",
+      "codeLength": "הקוד חייב להכיל 6 ספרות.",
+      "codeSendError": "שגיאה בשליחת הקוד."
+    }
   },
   "home": {
     "scheduledMatch": "📋 משחק מתוכנן",
     "addMatch": "הוסף משחק",
     "play": "שחק",
-    "selectToPlay": "בחר משחק כדי להפעיל",
-    "notParticipant": "אינך משתתף במשחק זה",
-    "awaitingConfirmation": "ממתין לאישור שחקנים אחרים",
     "myMatches": "המשחקים שלי",
     "favFriends": "יריבים מועדפים",
     "favFriendsNote": "5 היריבים שנגדם שיחקת הכי הרבה",
@@ -52,9 +60,6 @@
     "searchLogin": "חפש לוגין...",
     "noMatch": "לא נמצא משחק",
     "addQueue": "הזמן לשחק",
-    "addPlayer": "+ הוסף",
-    "loginPlayer": "לוגין שחקן...",
-    "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "המשחקים המתוכננים שלי",
     "noScheduled": "אין משחק מתוכנן. הצטרף לתור.",
     "cancelMatch": "בטל משחק זה",
@@ -62,19 +67,21 @@
     "or": "או",
     "waiting": "ממתין",
     "maxMatches": "כבר יש לך 3 משחקים בהמתנה, בטל אחד לפני יצירת חדש.",
-    "targetMaxMatches": "ל-{{player}} כבר יש 3 משחקים בהמתנה ולא ניתן להזמין אותו/ה.",
     "pendingInvites": "הזמנות בהמתנה",
-    "noPendingInvites": "אין הזמנות בהמתנה"
+    "noPendingInvites": "אין הזמנות בהמתנה",
+    "tableReserved": "✅ השולחן הוזמן! תורך לשחק.",
+    "addedToQueue": "✅ נוסף לתור!",
+    "unknownError": "שגיאה לא ידועה",
+    "networkError": "שגיאת רשת, נסה שוב.",
+    "matchCreateError": "שגיאה ביצירת המשחק",
+    "networkValidationError": "שגיאת רשת בעת האימות.",
+    "targetMaxMatches": "ל-{{player}} כבר יש 3 משחקים ממתינים."
   },
   "ranking": {
     "currentSeason": "עונה נוכחית",
-    "season": "עונה {{num}}",
-    "annualRanking": "דירוג שנתי",
-    "show": "הצג:",
     "palmares1v1": "דירוג 1v1",
     "palmares2v2": "דירוג 2v2",
     "player": "שחקן",
-    "team": "קבוצה",
     "winsLosses": "נ · ה",
     "rank": "דרגה",
     "noData": "אין נתונים זמינים",
@@ -85,7 +92,8 @@
     "oldestFirst": "הישן ביותר קודם",
     "champion": "🏆 אלוף",
     "seasonLabel": "עונה {{num}}",
-    "seasonBadge": "עונה נוכחית"
+    "seasonBadge": "עונה נוכחית",
+    "noSeason": "אין עונה"
   },
   "bets": {
     "availableTokens": "אסימונים זמינים",
@@ -102,22 +110,29 @@
     "cancel": "בטל",
     "bet": "הימר",
     "whoDoYouBet": "על מי אתה מהמר?",
-    "betPlacedOn": "הימור הוצב על {{player}}:",
     "change": "שנה",
-    "amount": "הימור: {{amount}} אסימונים",
-    "confirm": "אשר — {{amount}} אסימונים",
     "history": "היסטוריית הימורים",
     "noHistory": "אין היסטוריה זמינה.",
-    "bettedOn": "הימור על {{player}} · {{date}}",
-    "won": "זכה",
-    "lost": "הפסיד",
     "yourBetStats": "סטטיסטיקות ההימורים שלך",
     "bestGain": "רווח מקסימלי",
     "biggestLoss": "הפסד גדול ביותר",
     "balanceEvolution": "התפתחות יתרה",
     "noChartData": "אין היסטוריה להצגה.",
     "hoverHint": "רחף מעל נקודה לפרטים",
-    "pctOn": "— {{pct}}% על {{player}}"
+    "ranked": "מדורג",
+    "free": "חופשי",
+    "betRejected": "ההימור נדחה.",
+    "result": {
+      "won": "זכייה",
+      "lost": "הפסד",
+      "refunded": "הוחזר",
+      "pending": "בתהליך"
+    },
+    "tokensWord": "אסימונים",
+    "amount": "{{amount}} אסימונים",
+    "betPlacedOn": "הימור על {{player}}",
+    "bettedOn": "הימור על {{player}} · {{date}}",
+    "confirm": "אשר ({{amount}} אסימונים)"
   },
   "queue": {
     "joinQueue": "+ הצטרף לתור",
@@ -125,6 +140,9 @@
     "supersededTitle": "הסשן נפתח בלשונית אחרת",
     "supersededBody": "החשבון שלך נפתח בלשונית או בדפדפן אחר. מותרת רק סשן פעיל אחד. רענן כדי להחזיר את השליטה לכאן.",
     "supersededReload": "רענן",
+    "deletedTitle": "החשבון נמחק",
+    "deletedBody": "החשבון שלך נמחק. המשחק הנוכחי בוטל וההימורים המשויכים הוחזרו. אתה תנותק.",
+    "deletedButton": "התנתק",
     "waitingMatches": "משחקים בהמתנה",
     "live": "בשידור חי",
     "myMatch": "המשחק שלי",
@@ -134,23 +152,18 @@
     "noMatch": "אין משחק מתוכנן",
     "noLive": "אין משחק בעיצומו",
     "betOn": "הימר ←",
-    "editSlot": "ערוך",
     "cancelSlot": "✕ בטל את המקום שלי",
-    "modifyPlayers": "✏️ ערוך שחקנים",
-    "me": "אני",
-    "opponent": "יריב",
-    "save": "שמור",
     "mySlotTitle": "המקום שלי",
     "betModalTitle": "הימר על משחק זה",
     "betOn2": "הימר על",
     "betAmount": "סכום ההימור",
-    "confirmBet": "אשר — {{amount}} אסימונים",
-    "loginPlaceholder": "לוגין...",
     "waitingWinner": "ממתין לזוכה...",
     "pendingAccept": "ממתין לאישור",
     "noPending": "אין הזמנות ממתינות",
-    "pendingVs": "נגד {{opponent}}",
-    "cancelInvite": "✕ בטל"
+    "cancelInvite": "✕ בטל",
+    "confirmBet": "אשר הימור ({{amount}} אסימונים)",
+    "pendingVs": "ממתין מול {{opponent}}",
+    "betsWillOpen": "ההימורים ייפתחו כשהמשחק יתחיל."
   },
   "tournaments": {
     "bdeAccess": "גישה BDE",
@@ -160,14 +173,9 @@
     "findTeammate": "מצא שותף קבוצה",
     "findTeammateSub": "שחקנים אלה נמצאים לבד ברשימת ההמתנה. שלח להם הזמנת קבוצה.",
     "noWaiting": "אין שחקנים בהמתנה כרגע.",
-    "waitingSince": "ממתין מאז {{since}}",
     "invited": "✓ הזמנה נשלחה",
     "invite": "הזמן",
     "waitingList": "רשימת המתנה",
-    "teams": "קבוצה {{count}}",
-    "teams_plural": "{{count}} קבוצות",
-    "noTeams": "אין קבוצות בהמתנה",
-    "confirmedTeam": "קבוצה מאושרת",
     "tournamentStartsIn": "הטורניר מתחיל בעוד",
     "bracketReveal": "הסבב יתגלה בתחילת הטורניר",
     "noTournamentPlanned": "אין טורניר מתוכנן",
@@ -175,71 +183,204 @@
     "hours": "ש",
     "minutes": "ד",
     "seconds": "ש",
-    "bdePwd": "סיסמת BDE",
-    "incorrectPwd": "סיסמה שגויה",
     "verifying": "מאמת…",
     "access": "גישה",
     "createTournament": "צור טורניר",
-    "planNextTournament": "תזמן טורניר חדש",
+    "planNextTournament": "תכנן את הטורניר הבא",
     "tournamentName": "שם הטורניר",
     "tournamentNamePlaceholder": "לדוג': טורניר יום חמישי #5",
     "dateTime": "תאריך ושעה",
     "registrationDeadline": "מועד אחרון להרשמה",
-    "maxPlayers": "מספר שחקנים מקסימלי",
-    "playersCount": "{{count}} שחקנים",
     "createBtn": "צור טורניר",
     "registerTitle": "הירשם לטורניר",
     "myLogin": "הלוגין שלי",
     "partner": "שותף",
     "partnerPlaceholder": "לוגין שחקן... (אופציונלי)",
-    "partnerNote": "✓ {{partner}} יוזמן ויירשם איתך ישירות.",
     "partnerEmpty": "השאר ריק כדי להיות מותאם לשותף אקראי.",
     "soloNote": "אם אתה לבד, אתה נכנס לרשימת ההמתנה. הרשימה תוצג ותוכל לשלוח בקשת קבוצה לשחקנים אחרים בהמתנה.",
     "confirmRegister": "אשר הרשמה",
     "inscriptions": "הרשמות עד {{date}}",
-    "registered": "{{count}} / {{max}} רשומים"
+    "registered": "{{count}} רשומים",
+    "fmtSingle": "🏆 הדחה ישירה",
+    "fmtRoundRobin": "🔄 ליגה (Round Robin)",
+    "fmtSwiss": "🇨🇭 טורניר שוויצרי",
+    "adminMode": "מצב ניהול BDE",
+    "adminModeSub": "יצירה, עריכה, קבוצות, אישור ותזמון מחדש.",
+    "editTournament": "עריכת הטורניר",
+    "importPlayers": "ייבוא רשימת שחקנים",
+    "importing": "מייבא…",
+    "swissNextRoundLong": "סבב הבא (שוויצרי)",
+    "swissNextRound": "סבב הבא",
+    "generating": "מייצר…",
+    "deleting": "מוחק…",
+    "cancelTournament": "ביטול הטורניר",
+    "eventDate": "תאריך האירוע:",
+    "rewards": "🏆 פרסים:",
+    "starting": "מתחיל…",
+    "startTournament": "התחל את הטורניר",
+    "youAreRegistered": "אתה רשום לטורניר.",
+    "unregister": "ביטול הרשמה",
+    "registeredPlayers": "שחקנים רשומים",
+    "noRegisteredPlayers": "אין שחקנים רשומים.",
+    "registerPlayer": "רישום שחקן",
+    "forceTeam": "אילוץ קבוצה",
+    "registerPlayerSub": "רושם שחקן ישירות.",
+    "forceTeamSub": "משייך שני שמות משתמש ומסיר את הרשמותיהם הקודמות במידת הצורך.",
+    "playerLogin1": "שם משתמש שחקן 1",
+    "playerLogin2": "שם משתמש שחקן 2",
+    "doRegister": "רישום",
+    "associate": "שייך",
+    "remove": "הסר",
+    "viewStandings": "צפה בדירוג",
+    "formatLabel": "פורמט",
+    "modeLabel": "מצב",
+    "prizeOptional": "פרס (אופציונלי)",
+    "prizePlaceholder": "לדוגמה: שמיכה חינם",
+    "saving": "שומר…",
+    "save": "שמור",
+    "is1v1Note": "הטורניר הזה הוא 1 על 1 — תירשם לבד.",
+    "creating": "יוצר…",
+    "standingsSwiss": "דירוג שוויצרי",
+    "standingsRoundRobin": "דירוג ליגה",
+    "bdeCheckSub": "בדוק את גישת ה-BDE שלך דרך החשבון.",
+    "importResultTitle": "תוצאת הייבוא",
+    "importRegistered": "נרשמו",
+    "importSkipped": "דולגו",
+    "importErrors": "שגיאות",
+    "close": "סגור",
+    "standingsTeam": "קבוצה",
+    "standingsWins": "נ",
+    "standingsLosses": "ה",
+    "standingsPoints": "נק'",
+    "noStandings": "אין דירוג זמין.",
+    "confirmDelete": "לבטל ולמחוק את הטורניר?",
+    "confirmWinner": "לאשר את המנצח במשחק זה?",
+    "confirmRemove": "להסיר את ההרשמה מהטורניר?",
+    "errNetwork": "שגיאת רשת.",
+    "errNotEnoughTeams": "צריך לפחות {{count}} קבוצות מלאות כדי להתחיל פורמט זה.",
+    "errStart": "שגיאה בעת התחלת הטורניר.",
+    "searchingPartner": "מחפש שותף",
+    "confirmedTeams": "קבוצות מאושרות",
+    "noConfirmedTeams": "אין עדיין קבוצות מאושרות",
+    "closeRegistrations": "סגור הרשמות",
+    "closing": "סוגר…",
+    "reopenRegistrations": "פתח הרשמות מחדש",
+    "reopening": "פותח מחדש…",
+    "status_CLOSED": "ההרשמות סגורות",
+    "status_ONGOING": "מתקיים",
+    "status_DONE": "הסתיים",
+    "status_CANCELLED": "בוטל",
+    "errPastDate": "תאריך ההתחלה חייב להיות בעתיד.",
+    "errEdit": "שגיאה בעת העריכה.",
+    "errCreate": "שגיאה בעת היצירה.",
+    "partnerNote": "בזוג עם {{partner}}",
+    "playersCount": "{{count}} שחקנים",
+    "waitingSince": "ממתין מאז {{since}}",
+    "errNoBde": "אין לך הרשאות BDE.",
+    "errUnexpected": "שגיאה לא צפויה.",
+    "errDeleteTournament": "שגיאה במחיקת הטורניר.",
+    "errValidateMatch": "שגיאה באימות המשחק.",
+    "errReschedule": "שגיאה בתזמון מחדש.",
+    "errGeneric": "שגיאה.",
+    "errRegister": "שגיאה בהרשמה.",
+    "errEditTeams": "שגיאה בעריכת הקבוצות.",
+    "errDelete": "שגיאה במחיקה.",
+    "errCode": {
+      "ALREADY_PLANNED": "כבר קיים טורניר מתוכנן או פעיל.",
+      "ALREADY_REGISTERED": "אתה כבר רשום לטורניר זה.",
+      "ARCHIVED": "לא ניתן לערוך טורנירים בארכיון.",
+      "BUILD_ERROR": "לא ניתן ליצור את הבּרָקֵט.",
+      "DEADLINE_PASSED": "המועד האחרון להרשמה חלף.",
+      "FULL": "הטורניר מלא.",
+      "INCOMPLETE_MATCH": "המשחק אינו שלם.",
+      "INVALID": "נתונים לא תקינים.",
+      "INVALID_SCORE": "תוצאה לא תקינה.",
+      "INVALID_WINNER": "מנצח לא תקין.",
+      "INVITER_REQUIRED": "נדרש מזמין.",
+      "LOCKED": "הפעולה נעולה.",
+      "LOCKED_FIELDS": "לא ניתן לשנות שדות אלה לאחר ההתחלה.",
+      "MATCH_DONE": "המשחק כבר הסתיים.",
+      "NOT_CLOSED": "סגור תחילה את ההרשמות לפני הפעלת הטורניר.",
+      "NOT_ENOUGH_TEAMS": "נדרשות לפחות {{count}} קבוצות מלאות כדי להתחיל פורמט זה.",
+      "NOT_ONGOING": "הטורניר אינו פעיל.",
+      "NOT_OPEN": "ההרשמות אינן פתוחות.",
+      "NOT_READY": "המשחק אינו מוכן.",
+      "NOT_SWISS": "פעולה שמורה לפורמט השוויצרי.",
+      "NO_FILE": "לא סופק קובץ.",
+      "NO_PLAYERS": "לא נמצא שחקן בקובץ.",
+      "NO_RESULT": "אין תוצאה לרישום.",
+      "PARSE_ERROR": "לא ניתן היה לקרוא את הקובץ.",
+      "PARTNER_NOT_FOUND": "השותף לא נמצא.",
+      "PARTNER_TAKEN": "שותף זה כבר רשום.",
+      "PAST_DATE": "תאריך ההתחלה חייב להיות בעתיד.",
+      "PLAYER_NOT_FOUND": "השחקן לא נמצא.",
+      "REGISTRATIONS_CLOSED": "ההרשמות סגורות.",
+      "ROUND_NOT_COMPLETE": "הסבב הנוכחי לא הסתיים.",
+      "SAME_PLAYER": "שני השחקנים חייבים להיות שונים.",
+      "SELF_INVITE": "אינך יכול להזמין את עצמך.",
+      "SELF_PARTNER": "אינך יכול להיות השותף של עצמך.",
+      "SOLO_TOURNAMENT": "טורניר זה הוא 1v1.",
+      "TIE": "תיקו אינו מותר.",
+      "TWO_LOGINS_REQUIRED": "נדרשים שני שמות משתמש."
+    }
   },
   "profile": {
-    "myBadge": "התג שלי: {{label}}",
     "ratio": "יחס",
     "winLoss": "נ · ה",
     "streak": "רצף נוכחי",
     "streakSub": "ניצחונות ברצף",
     "tokensWon": "אסימונים שנצברו",
     "tokensSub": "מאזן עונה",
-    "losses": "הפסדים",
-    "lossesSub": "עונה זו",
     "gamesPerMonth": "משחקים / חודש",
     "gamesPerMonthSub": "ממוצע חודשי",
-    "gamelles": "גמלים 🪣",
+    "gamelles": "גמלים",
     "gamellesSub": "שערי גמל",
     "favoriteTeammates": "שותפי קבוצה מועדפים",
-    "teammateNote": "(נוספים אוטומטית לפי מספר המשחקים ביחד)",
     "noTeammate": "אין שותף קבוצה רשום.",
     "planGame": "תכנן משחק",
     "frequentOpponents": "יריבים תכופים",
     "noData": "אין נתונים זמינים.",
-    "winrate": "{{pct}}% ניצחונות",
     "fearOpponents": "יריבים קשים",
     "fearNote": "שחקנים שאתה מפסיד נגדם לרוב",
-    "lossrate": "{{pct}}% הפסדים",
     "myMatches": "המשחקים שלי",
     "searchLogin": "חפש לוגין...",
     "noMatch": "לא נמצא משחק",
     "seasonHistory": "היסטוריית עונות",
     "noSeason": "אין עונה זמינה.",
-    "ongoing": "פעיל",
-    "champion": "אלוף 🏆",
-    "seasonLabel": "עונה {{num}}",
-    "logout": "התנתק",
     "photo": "📷 תמונה",
     "profilePhoto": "תמונת פרופיל",
     "clickToChoose": "לחץ לבחירת תמונה",
-    "removePhoto": "הסר תמונה",
     "close": "סגור",
-    "counter": "{{count}} / 5 מקסימום",
     "loginPlayerPlaceholder": "לוגין שחקן...",
-    "addBtn": "+ הוסף"
+    "addBtn": "+ הוסף",
+    "myBadge": "תג: {{label}}",
+    "myStatsCard": "כרטיס הנתונים שלי",
+    "elo1v1": "ELO 1v1",
+    "elo2v2": "ELO 2v2",
+    "cantAddSelf": "אינך יכול להוסיף את עצמך.",
+    "playerNotFound": "השחקן לא נמצא במסד הנתונים.",
+    "tableReserved": "✅ השולחן הוזמן! תורך לשחק.",
+    "reservationError": "שגיאה בעת ההזמנה.",
+    "noResult": "אין תוצאה.",
+    "filterWins": "ניצחונות",
+    "filterLosses": "הפסדים",
+    "filterLowScore": "< 5 נקודות",
+    "result": {
+      "win": "ניצחון",
+      "loss": "הפסד",
+      "draw": "תיקו"
+    },
+    "compare": "השווה ({{count}})",
+    "searchFriend": "חפש חבר…",
+    "sortOnline": "מחוברים תחילה",
+    "sortRecent": "שוחק לאחרונה",
+    "rankBadge": "#{{rank}} דירוג",
+    "winsBadge_one": "ניצחון {{count}}",
+    "winsBadge_other": "{{count}} ניצחונות",
+    "winrate": "{{pct}}% ניצחונות",
+    "lossrate": "{{pct}}% הפסדים",
+    "uploadError": "שגיאת העלאה",
+    "removeTeammate": "הסר"
   },
   "settings": {
     "tabs": {
@@ -257,16 +398,32 @@
       "delete": "מחק",
       "login42": "לוגין 42",
       "email": "אימייל",
-      "save": "שמור שינויים"
+      "save": "שמור שינויים",
+      "uploading": "מעלה...",
+      "updateError": "שגיאה בעדכון הפרופיל",
+      "invalidEmail": "פורמט אימייל לא תקין",
+      "emailInUse": "האימייל הזה כבר בשימוש"
     },
     "security": {
       "changePassword": "שנה סיסמה",
       "tfa": "אימות דו-שלבי",
-      "tfaSub": "קוד דרך אפליקציה או SMS",
       "oauth": "OAuth 42",
       "oauthSub": "כניסה עם חשבון 42",
       "activeSessions": "פגישות פעילות",
-      "disconnectAll": "נתק הכל"
+      "disconnectAll": "נתק הכל",
+      "currentPassword": "סיסמה נוכחית",
+      "newPassword": "סיסמה חדשה",
+      "confirmNewPassword": "אשר סיסמה חדשה",
+      "passwordChanged": "הסיסמה שונתה ✓",
+      "saving": "שומר...",
+      "passwordMismatch": "הסיסמאות אינן תואמות",
+      "passwordMin": "מינימום 8 תווים",
+      "error": "שגיאה",
+      "tfaOnSub": "קוד אימות יישלח במייל בכל התחברות.",
+      "tfaOffSub": "הפעל אימות דו-שלבי במייל כדי לאבטח את חשבונך.",
+      "disable2fa": "בטל אימות דו-שלבי",
+      "enable2fa": "הפעל אימות דו-שלבי במייל",
+      "tfaEnabled": "אימות דו-שלבי מופעל ✓"
     },
     "notifications": {
       "turn": "זה התור שלך בשולחן",
@@ -282,10 +439,6 @@
     "account": {
       "export": "ייצא את הנתונים שלי (GDPR) → JSON",
       "privacy": "מדיניות פרטיות",
-      "dangerZone": "אזור מסוכן",
-      "resetStats": "אפס את הסטטיסטיקות שלי",
-      "resetStatsSub": "מוחק את היסטוריית המשחקים וה-ELO שלך",
-      "reset": "אפס",
       "deleteAccount": "מחק את החשבון שלי",
       "deleteAccountSub": "אישור נשלח למייל",
       "delete": "מחק"
@@ -295,7 +448,7 @@
       "sections": [
         {
           "title": "🏓 שחקו משחק",
-          "body": "הצטרף לתור מדף \"תור\". בחר מצב (Chill או תחרות), פורמט (1v1, 2v2 או יחיד), ואז המתן ליריב. התראה תודיע לך כשמשחקך יתחיל."
+          "body": "הצטרף לתור מדף \"תור\". בחר מצב (או תחרות), פורמט (1v1, 2v2 או יחיד), ואז המתן ליריב. התראה תודיע לך כשמשחקך יתחיל."
         },
         {
           "title": "🪙 אסימונים",
@@ -314,31 +467,44 @@
           "body": "מדף התור ניתן לראות משחקים פעילים ועתידיים. עיפרון בחריץ שלך מאפשר לערוך או לבטל. ניתן גם להמר על משחקים של אחרים ע\"י מעבר עם העכבר."
         }
       ]
+    },
+    "gdpr": {
+      "title": "אישור נדרש",
+      "sentTo": "קוד נשלח אל",
+      "confirmExport": "הזן אותו כדי לאשר את הייצוא.",
+      "confirmDelete": "הזן אותו כדי לאשר את מחיקת החשבון.",
+      "valid": "תקף ל-15 דקות",
+      "resend": "שלח שוב",
+      "enterCode": "הזן את 6 הספרות",
+      "invalidCode": "קוד שגוי",
+      "sendFailed": "שליחת הקוד נכשלה. נסה שוב.",
+      "close": "סגור",
+      "cancel": "ביטול",
+      "confirm": "אישור"
     }
   },
   "invite": {
-    "received": "מזמין אותך למשחק {{format}} · {{mode}}",
     "accept": "קבל ✓",
     "decline": "דחה",
-    "accepted": "{{player}} קיבל את ההזמנה שלך ✓",
-    "acceptedPartial": "{{player}} קיבל · {{count}}/{{total}} אושר",
-    "declined": "{{player}} דחה את ההזמנה שלך",
-    "sent": "✅ הזמנה נשלחה ל-{{player}}",
     "pendingLabel": "ממתין לאישור",
-    "matchCancelled": "{{player}} ביטל את המשחק",
-    "offline": "{{player}} אינו מחובר, ההזמנה בוטלה",
-    "winClaimReceived": "{{player}} מזמין אותך לשאת את הניצחון שלך למשחק הבא שלו",
     "winClaimDeclined": "מנצח סירב להעביר את הניצחון — המשחק בוטל",
     "inviteCancelled": "{{player}} ביטל את ההזמנה",
-    "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר"
+    "chainCancelled": "משחק בשרשרת בוטל — הקריץ שלך הוסר",
+    "acceptError": "לא ניתן לקבל את ההזמנה (ההרשמות סגורות או שהשחקן לא נמצא).",
+    "tournamentTeammate": "מזמין אותך לשחק יחד בטורניר הבא",
+    "received": "מזמין אותך למשחק {{format}} ({{mode}})",
+    "winClaimReceived": "{{player}} מזמין אותך לתפוס את מקום המנצח",
+    "accepted": "{{player}} קיבל את ההזמנה שלך ✓",
+    "acceptedPartial": "{{player}} קיבל ({{count}}/{{total}})",
+    "declined": "{{player}} דחה את ההזמנה שלך",
+    "matchCancelled": "{{player}} ביטל את המשחק",
+    "sent": "ההזמנה נשלחה אל {{player}}"
   },
   "addMatch": {
     "title": "הוסף משחק",
     "step1": "שלב 1 / 4 — מצב משחק",
     "step2": "שלב 2 / 4 — פורמט",
-    "step3Players": "שלב 3 / 4 — שחקנים",
     "step3Queue": "שלב 3 / 3 — תור",
-    "step4": "שלב 4 / 4 — קח את הניצחון?",
     "competition": "🏆 תחרות",
     "chill": "😎 Chill",
     "competNote": "ELO נספר · תוצאות רשמיות",
@@ -352,8 +518,6 @@
     "blueTeam": "🔵 קבוצה כחולה",
     "redPlayer": "לוגין שחקן אדום...",
     "bluePlayer": "לוגין שחקן כחול...",
-    "redPlayer2v2": "שחקן אדום {{num}}...",
-    "bluePlayer2v2": "שחקן כחול {{num}}...",
     "takeWinQuestion": "האם ברצונך לקחת את הניצחון מהקבוצה המשחקת כרגע לפניך?",
     "no": "לא",
     "yes": "כן ✓",
@@ -369,7 +533,10 @@
     "opponentLocked": "יריב: מנצח המשחק שלהלן",
     "missingPlayers": "כל השחקנים חייבים להיות מלאים.",
     "duplicatePlayer": "שחקן יכול להופיע רק פעם אחת.",
-    "takeWinWarning": "⚠️ שים לב: אם המנצח(ים) לא יקבלו את ההזמנה שלך, המשחק יבוטל."
+    "takeWinWarning": "⚠️ שים לב: אם המנצח(ים) לא יקבלו את ההזמנה שלך, המשחק יבוטל.",
+    "redPlayer2v2": "לוגין שחקן אדום {{num}}...",
+    "bluePlayer2v2": "לוגין שחקן כחול {{num}}...",
+    "playerInPrevMatch": "שחקן זה כבר נמצא במשחק הקודם."
   },
   "game": {
     "red": "אדום",
@@ -377,21 +544,16 @@
     "quit": "✕ יציאה",
     "endMatch": "סיום\nמשחק",
     "half": "חצי ×2",
-    "removeRed": "−1 אדום",
-    "removeBlue": "−1 כחול",
     "gamelle": "גמל",
     "tie": "!תיקו",
     "tieCancelWarning": "משחק זה יבוטל — שרשראות הרפיזה הקשורות יוסרו.",
-    "wins": "!{{color}} מנצח",
+    "close": "סיים וסגור",
     "duration": "משך: {{time}}",
-    "close": "סיים וסגור"
+    "wins": "{{color}} מנצח!"
   },
   "common": {
-    "victory": "ניצחון",
-    "defeat": "הפסד",
     "vs": "נגד",
-    "loading": "טוען…",
-    "noData": "אין נתונים זמינים"
+    "close": "סגור"
   },
   "performance": {
     "title": "ביצועים",
@@ -406,17 +568,13 @@
     "dateTo": "עד",
     "noSelected": "לא נבחר שחקן",
     "selectPlayer": "בחר לפחות שחקן אחד כדי להציג את הגרף.",
+    "download": "↓ הורדה",
     "y": {
       "elo": "ELO",
       "wins": "ניצחונות",
       "losses": "הפסדים",
       "winrate": "אחוז ניצחון (%)",
-      "goals": "שערים שנכבשו",
-      "goals_against": "שערים שספגנו",
-      "bets_won": "הימורים שנוצחו",
-      "bets_lost": "הימורים שהופסדו",
-      "tournaments_won": "טורנירים שנוצחו",
-      "streak": "רצף נוכחי"
+      "goals": "שערים שנכבשו"
     },
     "x": {
       "matches": "משחקים (30 אחרונים)",
@@ -430,7 +588,9 @@
     "quarters": "רבע גמר",
     "semis": "חצי גמר",
     "final": "גמר",
-    "tbd": "לא נקבע"
+    "tbd": "לא נקבע",
+    "round": "סבב {{n}}",
+    "bye": "אין"
   },
   "footer": {
     "explore": "חקור",
@@ -442,6 +602,7 @@
     "privacy": "מדיניות פרטיות",
     "ticket": "שלח כרטיס",
     "status": "סטטוס",
+    "rgpd": "GDPR",
     "terms": "תנאי שימוש",
     "copyright": "© {{year}} ft_transcendence — כל הזכויות שמורות"
   },
@@ -456,14 +617,24 @@
     "alreadyAccount": "כבר יש לך חשבון?",
     "loginLink": "התחבר",
     "passwordMismatch": "הסיסמאות אינן תואמות.",
-    "networkError": "שגיאת רשת, נסה שוב."
+    "networkError": "שגיאת רשת, נסה שוב.",
+    "errors": {
+      "invalid42Login": "התחברות 42 לא תקינה.",
+      "usernameTaken": "הלוגין הזה כבר בשימוש.",
+      "invalidEmail": "כתובת אימייל לא תקינה.",
+      "emailTaken": "האימייל הזה כבר בשימוש.",
+      "weakPassword": "הסיסמה חלשה מדי (לפחות 8 תווים, הימנע מסיסמאות נפוצות).",
+      "generic": "ההרשמה נכשלה. בדוק את הפרטים שלך."
+    },
+    "success": "החשבון נוצר. בדוק את האימייל שלך כדי להפעיל את החשבון.",
+    "successRedirect": "מעביר להתחברות…"
   },
   "privacy": {
     "title": "מדיניות פרטיות",
     "updated": "עדכון אחרון: יוני 2026",
     "s1": {
       "title": "1. מי אנחנו?",
-      "body": "Babyfoot42 היא פלטפורמה פנימית של École 42 לניהול משחקי כדורגל שולחן: תזמון, דירוג ELO עונתי, הימורים בטוקנים וירטואליים ותחרויות המאורגנות על ידי ה-BDE. מדיניות זו מתארת אילו נתונים נאספים, כיצד הם משמשים ומהן זכויותיך."
+      "body": "Babyfoot42 היא פלטפורמה פנימית של 42 לניהול משחקי כדורגל שולחן: תזמון, דירוג ELO עונתי, הימורים בטוקנים וירטואליים ותחרויות המאורגנות על ידי ה-BDE. מדיניות זו מתארת אילו נתונים נאספים, כיצד הם משמשים ומהן זכויותיך."
     },
     "s2": {
       "title": "2. נתונים הנאספים",
@@ -623,15 +794,16 @@
     "err_server": "שגיאת שרת",
     "err_network": "שגיאת רשת",
     "pages": [
-      "דף הבית",
+      "בית",
       "דירוג",
       "הימורים",
-      "תור",
       "טורנירים",
-      "הפרופיל שלי",
+      "פרופיל",
+      "תכנון",
       "הגדרות",
-      "מנהל"
-    ]
+      "אחר"
+    ],
+    "max_files": "מקסימום {{max}} קבצים."
   },
   "status": {
     "title": "סטטוס",
@@ -672,6 +844,7 @@
     "col_login": "כינוי",
     "col_elo1v1": "ELO 1v1",
     "col_elo2v2": "ELO 2v2",
+    "col_role": "תפקיד",
     "col_status": "סטטוס",
     "col_actions": "פעולות",
     "status_ban_perm": "חסום קבוע",
@@ -686,11 +859,19 @@
     "col_name": "שם",
     "col_spots": "מקומות",
     "status_open": "פתוח",
+    "status_closed": "הרשמות סגורות",
     "status_ongoing": "מתנהל",
     "status_cancelled": "בוטל",
     "status_finished": "הסתיים",
     "btn_cancel_tourn": "בטל",
-    "confirm_cancel_tourn": "לבטל את הטורניר \"{{name}}\"?",
+    "btn_close_tourn": "סגור הרשמות",
+    "btn_start_tourn": "הפעל",
+    "btn_import_players": "ייבא שחקנים",
+    "err_start_tourn": "לא ניתן להפעיל את הטורניר.",
+    "err_close_tourn": "לא ניתן לסגור את ההרשמות.",
+    "import_result": "הייבוא הושלם: {{created}} נרשמו, {{skipped}} דולגו, {{errors}} שגיאות.",
+    "import_failed": "הייבוא נכשל.",
+    "err_generic": "אירעה שגיאה.",
     "quick_title": "פעולות מהירות",
     "btn_create_tourn": "🏆 צור טורניר",
     "seasons_title": "עונות",
@@ -710,14 +891,11 @@
     "modal_tourn_name_ph": "לדוגמה: טורניר יום חמישי #5",
     "modal_tourn_date": "תאריך ושעה",
     "modal_tourn_deadline": "מועד אחרון להרשמה",
-    "modal_tourn_max": "מספר שחקנים מקסימלי",
-    "modal_tourn_players": "{{n}} שחקנים",
     "modal_tourn_cancel": "ביטול",
     "modal_tourn_submit": "צור טורניר",
     "modal_tourn_err": "שגיאה",
     "modal_tourn_success": "הטורניר נוצר",
     "modal_tourn_close": "סגור",
-    "modal_ban_title": "חסום את {{username}}",
     "modal_ban_type": "סוג חסימה",
     "modal_ban_temp": "זמנית",
     "modal_ban_perm": "קבועה",
@@ -727,11 +905,259 @@
     "modal_ban_doing": "חוסם...",
     "modal_ban_confirm": "אשר חסימה",
     "day_abbr": "י",
-    "modal_elo_title": "ערוך ELO — {{username}}",
     "modal_elo_solo": "ELO יחיד (1v1)",
     "modal_elo_team": "ELO קבוצה (2v2)",
     "modal_elo_cancel": "ביטול",
     "modal_elo_saving": "שומר...",
-    "modal_elo_save": "שמור"
+    "modal_elo_save": "שמור",
+    "confirm_start_tourn": "להתחיל את הטורניר «{{name}}»?",
+    "confirm_cancel_tourn": "לבטל את הטורניר «{{name}}»?",
+    "modal_ban_title": "חסום את {{username}}",
+    "modal_elo_title": "ערוך את ה-ELO של {{username}}",
+    "err_role_update": "שגיאה בעדכון התפקיד.",
+    "err_delete_user": "לא ניתן למחוק משתמש זה.",
+    "deleting": "מוחק...",
+    "delete_permanently": "מחק לצמיתות",
+    "confirm_cancel_match": "לבטל את המשחק ולשחזר את ה-ELO?",
+    "match_cancelled": "בוטל",
+    "delete_title": "מחק את {{username}}",
+    "delete_warning": "פעולה זו בלתי הפיכה. כל נתוני השחקן יימחקו.",
+    "delete_cancel": "ביטול",
+    "col_tokens": "אסימונים",
+    "btn_tokens": "אסימונים",
+    "btn_delete_short": "מחק"
+  },
+  "sidebar": {
+    "tokens": "{{count}} אסימונים"
+  },
+  "badge": {
+    "elite": "אליטה",
+    "veteran": "ותיק",
+    "confirmed": "מנוסה",
+    "amateur": "חובב",
+    "newPlayer": "שחקן חדש"
+  },
+  "comparison": {
+    "title": "השוואת שחקנים",
+    "elo": "ELO",
+    "gamelles": "גמלות",
+    "winStreak": "רצף ניצחונות",
+    "matchesMonth": "משחקים / חודש",
+    "selectUp": "בחר עד 4 שחקנים",
+    "searchLogin": "חפש שם משתמש…",
+    "noPlayer": "לא נמצא שחקן",
+    "emptyHint": "חפש ובחר שחקנים להשוואה"
+  },
+  "friend": {
+    "added": "חבר נוסף",
+    "addedYou": "הוסיף אותך כשותף מועדף.",
+    "alreadyAdded": "כבר נוסף",
+    "addBack": "הוסף בחזרה",
+    "ignore": "התעלם"
+  },
+  "statsCard": {
+    "bestElo": "ELO הטוב ביותר",
+    "matchesPlayed": "משחקים ששוחקו",
+    "currentStreak": "רצף נוכחי",
+    "currentWealth": "עושר נוכחי",
+    "currentRatio": "יחס נוכחי",
+    "titleOf": "הנתונים של {{login}}",
+    "titleMine": "הנתונים שלי",
+    "exporting": "מייצא…",
+    "download": "↓ הורד (.png)"
+  },
+  "rankEvolution": {
+    "title": "התפתחות הדירוג",
+    "loading": "טוען…",
+    "noData": "אין נתונים לעונה זו.",
+    "rankPosition": "מיקום בדירוג",
+    "matchesPlayed": "משחקים ששוחקו",
+    "rank": "דירוג"
+  },
+  "banned": {
+    "days_one": "יום {{count}}",
+    "days_other": "{{count}} ימים",
+    "hours_one": "שעה {{count}}",
+    "hours_other": "{{count}} שעות",
+    "minutes_one": "דקה {{count}}",
+    "minutes_other": "{{count}} דקות",
+    "lessThanMinute": "פחות מדקה",
+    "permTitle": "החשבון נחסם",
+    "permText": "חשבונך נחסם לצמיתות על ידי מנהל.",
+    "tempTitle": "החשבון הושעה",
+    "tempText": "חשבונך מושעה זמנית.",
+    "timeLeft": "זמן שנותר:",
+    "contact": "אם לדעתך זו טעות, פנה למנהל בכתובת {{email}} .",
+    "backToLogin": "חזרה להתחברות"
+  },
+  "achievements": {
+    "cat": {
+      "GAMELLES": "🪣 גמלות",
+      "DEMIS": "🍺 חצאים",
+      "MATCH": "🏓 משחקים",
+      "SERIE": "🔥 רצפים",
+      "ELO": "📈 ELO",
+      "SAISON": "🏆 עונות",
+      "EQUIPE": "🤝 קבוצה",
+      "ECONOMIE": "💰 כלכלה"
+    },
+    "loading": "טוען…",
+    "progress": "{{unlocked}} / {{total}} נפתחו ({{pct}}%)",
+    "items": {
+      "first_gamelle": {
+        "name": "גמלה ראשונה",
+        "desc": "להבקיע גמלה אחת"
+      },
+      "gamelleur": {
+        "name": "מבקיע גמלות",
+        "desc": "להבקיע 5 גמלות בסך הכול"
+      },
+      "roi_gamelle": {
+        "name": "מלך הגמלות",
+        "desc": "להבקיע 20 גמלות בסך הכול"
+      },
+      "first_demi": {
+        "name": "חצי ראשון",
+        "desc": "להבקיע חצי אחד"
+      },
+      "barman": {
+        "name": "ברמן",
+        "desc": "להבקיע 10 חצאים בסך הכול"
+      },
+      "patron_bar": {
+        "name": "בעל הבר",
+        "desc": "להבקיע 50 חצאים בסך הכול"
+      },
+      "bapteme": {
+        "name": "טבילת אש",
+        "desc": "לשחק את המשחק הראשון"
+      },
+      "first_win": {
+        "name": "ניצחון ראשון",
+        "desc": "לנצח משחק"
+      },
+      "ecrasante": {
+        "name": "ניצחון מוחץ",
+        "desc": "לנצח 10-0"
+      },
+      "serre": {
+        "name": "משחק צמוד",
+        "desc": "לנצח 10-9"
+      },
+      "muraille": {
+        "name": "חומה",
+        "desc": "לנצח בלי לספוג (חוץ מ-10-0)"
+      },
+      "comeback": {
+        "name": "קאמבק",
+        "desc": "לנצח כשליריב היו 7+ נקודות"
+      },
+      "wins_10": {
+        "name": "10 ניצחונות",
+        "desc": "לנצח 10 משחקים"
+      },
+      "wins_50": {
+        "name": "50 ניצחונות",
+        "desc": "לנצח 50 משחקים"
+      },
+      "wins_100": {
+        "name": "100 ניצחונות",
+        "desc": "לנצח 100 משחקים"
+      },
+      "matches_10": {
+        "name": "שחקן קבוע",
+        "desc": "לשחק 10 משחקים"
+      },
+      "matches_50": {
+        "name": "ותיק",
+        "desc": "לשחק 50 משחקים"
+      },
+      "matches_100": {
+        "name": "אגדה",
+        "desc": "לשחק 100 משחקים"
+      },
+      "serie_3": {
+        "name": "בוער",
+        "desc": "3 ניצחונות ברצף"
+      },
+      "serie_5": {
+        "name": "בלתי ניתן לעצירה",
+        "desc": "5 ניצחונות ברצף"
+      },
+      "serie_10": {
+        "name": "מכונה",
+        "desc": "10 ניצחונות ברצף"
+      },
+      "resilient": {
+        "name": "עמיד",
+        "desc": "לנצח אחרי 5 הפסדים ברצף"
+      },
+      "elo_1100": {
+        "name": "מטפס",
+        "desc": "להגיע ל-1100 ELO"
+      },
+      "elo_1200": {
+        "name": "מתחרה",
+        "desc": "להגיע ל-1200 ELO"
+      },
+      "elo_1500": {
+        "name": "עלית",
+        "desc": "להגיע ל-1500 ELO"
+      },
+      "elo_2000": {
+        "name": "אגדה חיה",
+        "desc": "להגיע ל-2000 ELO"
+      },
+      "first_season": {
+        "name": "עונה ראשונה",
+        "desc": "להשתתף בעונה מדורגת"
+      },
+      "top3_season": {
+        "name": "שלושת הראשונים",
+        "desc": "לסיים בשלושת הראשונים בעונה"
+      },
+      "champion_season": {
+        "name": "אלוף",
+        "desc": "לסיים במקום הראשון בעונה"
+      },
+      "multi_champion": {
+        "name": "רב-אלוף",
+        "desc": "לסיים במקום הראשון ב-3 עונות"
+      },
+      "first_2v2": {
+        "name": "חבר לקבוצה",
+        "desc": "לשחק משחק 2 נגד 2"
+      },
+      "duo_choc": {
+        "name": "צמד מנצח",
+        "desc": "לנצח 10 משחקים ב-2 נגד 2"
+      },
+      "capitaine": {
+        "name": "קפטן",
+        "desc": "לנצח 25 משחקים ב-2 נגד 2"
+      },
+      "first_bet": {
+        "name": "הימור ראשון",
+        "desc": "להניח הימור"
+      },
+      "jackpot": {
+        "name": "ג'קפוט",
+        "desc": "לזכות בהימור של 1000+ אסימונים"
+      },
+      "millionnaire": {
+        "name": "מיליונר",
+        "desc": "להגיע ל-50,000 אסימונים"
+      }
+    }
+  },
+  "activate": {
+    "loadingTitle": "מפעיל…",
+    "loadingSub": "בודק את הקישור שלך.",
+    "successTitle": "החשבון הופעל!",
+    "successSub": "החשבון שלך הופעל. כעת תוכל להתחבר.",
+    "login": "התחבר",
+    "errorTitle": "קישור לא תקין",
+    "errorSub": "קישור ההפעלה אינו תקין או שכבר נעשה בו שימוש.",
+    "createAccount": "צור חשבון"
   }
 }

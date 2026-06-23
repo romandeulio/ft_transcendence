@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './JouerMode.module.css'
 
-export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, onScoreChange, startTime }) {
+export default function JouerMode({ onClose, match, onComplete, onTieCancel, scoreRed: extRed, scoreBlue: extBlue, gamellesRed: extGamellesRed, gamellesBlue: extGamellesBlue, demisRed: extDemisRed, demisBlue: extDemisBlue, onScoreChange, startTime }) {
   const { t } = useTranslation()
 
   const slot    = match?._slot
@@ -27,6 +27,8 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
   const [ended,       setEnded]       = useState(false)
   const [gamellesRed,  setGamellesRed]  = useState(0)
   const [gamellesBlue, setGamellesBlue] = useState(0)
+  const [demisRed,     setDemisRed]     = useState(0)
+  const [demisBlue,    setDemisBlue]    = useState(0)
   const intervalRef = useRef(null)
   const localUpdate = useRef(false)
   const prevStartTime = useRef(startTime)
@@ -39,12 +41,16 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     prevStartTime.current = startTime
   }, [startTime, ended])
 
-  // Sync external score changes (from the other player via WS)
+  // Sync external score / gamelles / demis (from the other player via WS)
   useEffect(() => {
     if (localUpdate.current) return
     if (extRed  !== undefined) setScoreRed(extRed)
     if (extBlue !== undefined) setScoreBlue(extBlue)
-  }, [extRed, extBlue])
+    if (extGamellesRed  !== undefined) setGamellesRed(extGamellesRed)
+    if (extGamellesBlue !== undefined) setGamellesBlue(extGamellesBlue)
+    if (extDemisRed  !== undefined) setDemisRed(extDemisRed)
+    if (extDemisBlue !== undefined) setDemisBlue(extDemisBlue)
+  }, [extRed, extBlue, extGamellesRed, extGamellesBlue, extDemisRed, extDemisBlue])
 
   useEffect(() => {
     if (!ended) {
@@ -57,24 +63,37 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
 
   const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
 
+  // Centralise l'envoi WS pour que score ET gamelles/demis soient synchronisés ensemble.
+  const sync = (r, b, extra = {}) => {
+    onScoreChange?.(r, b, {
+      gamellesRed, gamellesBlue, demisRed, demisBlue, ...extra,
+    })
+  }
+
   const addRed = () => {
     if (ended) return
-    const inc = fois > 0 ? fois : 1
+    const isDemi = fois > 0
+    const inc = isDemi ? fois : 1
     const next = Math.min(19, scoreRed + inc)
+    const nextDemis = demisRed + 1
+    if (isDemi) setDemisRed(nextDemis)
     localUpdate.current = true
     setScoreRed(next)
     setFois(0)
-    onScoreChange?.(next, scoreBlue)
+    sync(next, scoreBlue, isDemi ? { demisRed: nextDemis } : {})
     setTimeout(() => { localUpdate.current = false }, 300)
   }
   const addBlue = () => {
     if (ended) return
-    const inc = fois > 0 ? fois : 1
+    const isDemi = fois > 0
+    const inc = isDemi ? fois : 1
     const next = Math.min(19, scoreBlue + inc)
+    const nextDemis = demisBlue + 1
+    if (isDemi) setDemisBlue(nextDemis)
     localUpdate.current = true
     setScoreBlue(next)
     setFois(0)
-    onScoreChange?.(scoreRed, next)
+    sync(scoreRed, next, isDemi ? { demisBlue: nextDemis } : {})
     setTimeout(() => { localUpdate.current = false }, 300)
   }
   const removeRed = () => {
@@ -82,7 +101,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     const next = scoreRed - 1
     localUpdate.current = true
     setScoreRed(next)
-    onScoreChange?.(next, scoreBlue)
+    sync(next, scoreBlue)
     setTimeout(() => { localUpdate.current = false }, 300)
   }
   const removeBlue = () => {
@@ -90,31 +109,33 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
     const next = scoreBlue - 1
     localUpdate.current = true
     setScoreBlue(next)
-    onScoreChange?.(scoreRed, next)
+    sync(scoreRed, next)
     setTimeout(() => { localUpdate.current = false }, 300)
   }
   const gamelleRed = () => {
     if (ended) return
-    setGamellesRed(g => g + 1)
+    const nextGamelles = gamellesRed + 1
+    setGamellesRed(nextGamelles)
     // Red scored a gamelle: Red +1, Blue -1
     const nextRed  = scoreRed  + 1
     const nextBlue = scoreBlue - 1
     localUpdate.current = true
     setScoreRed(nextRed)
     setScoreBlue(nextBlue)
-    onScoreChange?.(nextRed, nextBlue)
+    sync(nextRed, nextBlue, { gamellesRed: nextGamelles })
     setTimeout(() => { localUpdate.current = false }, 300)
   }
   const gamelleBlue = () => {
     if (ended) return
-    setGamellesBlue(g => g + 1)
+    const nextGamelles = gamellesBlue + 1
+    setGamellesBlue(nextGamelles)
     // Blue scored a gamelle: Blue +1, Red -1
     const nextBlue = scoreBlue + 1
     const nextRed  = scoreRed  - 1
     localUpdate.current = true
     setScoreBlue(nextBlue)
     setScoreRed(nextRed)
-    onScoreChange?.(nextRed, nextBlue)
+    sync(nextRed, nextBlue, { gamellesBlue: nextGamelles })
     setTimeout(() => { localUpdate.current = false }, 300)
   }
 
@@ -146,7 +167,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
               if (onTieCancel) onTieCancel()
               else onClose()
             } else {
-              if (onComplete) onComplete(scoreRed, scoreBlue, gamellesRed, gamellesBlue)
+              if (onComplete) onComplete(scoreRed, scoreBlue, gamellesRed, gamellesBlue, demisRed, demisBlue)
               else onClose()
             }
           }}>
@@ -173,6 +194,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelRed}</div>
           <div className={styles.sideScore}>{scoreRed}</div>
           {gamellesRed > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesRed}</div>}
+          {demisRed > 0 && <div className={`${styles.gamelleIndicator} ${styles.demiCount}`}>🍺 ×{demisRed}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 
@@ -211,6 +233,7 @@ export default function JouerMode({ onClose, match, onComplete, onTieCancel, sco
           <div className={`${styles.sideLabel} ${is2v2 ? styles.sideLabelTeam : ''}`}>{labelBlue}</div>
           <div className={styles.sideScore}>{scoreBlue}</div>
           {gamellesBlue > 0 && <div className={styles.gamelleIndicator}>🪣 ×{gamellesBlue}</div>}
+          {demisBlue > 0 && <div className={`${styles.gamelleIndicator} ${styles.demiCount}`}>🍺 ×{demisBlue}</div>}
           {fois > 0 && <div className={styles.demiIndicator}>×{fois}</div>}
         </button>
 

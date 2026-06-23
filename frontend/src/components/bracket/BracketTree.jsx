@@ -1,10 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PlayerBlock from './PlayerBlock'
 import styles from './BracketTree.module.css'
 
-function createEmptyRounds(maxPlayers = 16) {
-  const teamCount = Math.max(2, Math.ceil(maxPlayers / 2))
+function createEmptyRounds() {
+  const teamCount = 2
   const bracketSize = 1 << Math.ceil(Math.log2(teamCount))
   const totalRounds = Math.max(1, Math.log2(bracketSize))
 
@@ -42,7 +42,8 @@ function MatchBlock({ match, isFinal = false, canReport = false, onWinner, onPos
         name={p1}
         winner={done && winner === p1}
         eliminated={done && p1 && winner !== p1}
-        tbd={!p1}
+        tbd={!p1 && !match.is_bye}
+        bye={!p1 && match.is_bye}
         onClick={canSelectWinner ? () => onWinner?.(match, match.team1.id) : undefined}
       />
       <div className={styles.sep} />
@@ -50,32 +51,39 @@ function MatchBlock({ match, isFinal = false, canReport = false, onWinner, onPos
         name={p2}
         winner={done && winner === p2}
         eliminated={done && p2 && winner !== p2}
-        tbd={!p2}
+        tbd={!p2 && !match.is_bye}
+        bye={!p2 && match.is_bye}
         onClick={canSelectWinner ? () => onWinner?.(match, match.team2.id) : undefined}
       />
     </div>
   )
 }
 
-function roundLabel(t, round, totalRounds) {
+function roundLabel(t, round, totalRounds, format) {
+  // Swiss / Round Robin : pas de phases finales, on numérote les rounds.
+  if (format === 'SWISS' || format === 'ROUND_ROBIN') {
+    return t('bracket.round', { n: round })
+  }
   if (round === totalRounds) return t('bracket.final')
   if (round === totalRounds - 1) return t('bracket.semis')
   if (round === totalRounds - 2) return t('bracket.quarters')
   if (round === totalRounds - 3) return t('bracket.eighths')
-  return `R${round}`
+  return t('bracket.round', { n: round })
 }
 
-export default function BracketTree({ rounds, maxPlayers = 16, canReport = false, onWinner, onPostpone }) {
+export default function BracketTree({ rounds, format = 'SINGLE_ELIMINATION', canReport = false, onWinner, onPostpone }) {
   const { t } = useTranslation()
+  const isElimination = format === 'SINGLE_ELIMINATION'
   const treeRef = useRef(null)
   const matchRefs = useRef(new Map())
+
   const [connectorState, setConnectorState] = useState({ width: 0, height: 0, paths: [] })
   const displayedRounds = useMemo(
-    () => (rounds?.length ? rounds : createEmptyRounds(maxPlayers)).map(round => ({
+    () => (rounds?.length ? rounds : createEmptyRounds()).map(round => ({
       ...round,
       matches: Array.isArray(round.matches) ? round.matches : [],
     })),
-    [rounds, maxPlayers],
+    [rounds],
   )
   const totalRounds = displayedRounds.length
   const maxMatches = Math.max(...displayedRounds.map(round => round.matches.length), 1)
@@ -177,7 +185,7 @@ export default function BracketTree({ rounds, maxPlayers = 16, canReport = false
       )}
       {displayedRounds.map((round, roundIndex) => (
         <div className={styles.round} key={round.round} style={{ '--match-count': round.matches.length }}>
-          <div className={styles.roundLabel}>{roundLabel(t, round.round, totalRounds)}</div>
+          <div className={styles.roundLabel}>{roundLabel(t, round.round, totalRounds, format)}</div>
           <div className={styles.slots}>
             {round.matches.map(match => (
               <div
@@ -187,7 +195,7 @@ export default function BracketTree({ rounds, maxPlayers = 16, canReport = false
               >
                 <MatchBlock
                   match={match}
-                  isFinal={roundIndex === totalRounds - 1}
+                  isFinal={isElimination && roundIndex === totalRounds - 1}
                   canReport={canReport}
                   onWinner={onWinner}
                   onPostpone={onPostpone}

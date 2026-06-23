@@ -8,6 +8,7 @@
     "tournaments": "Tournaments",
     "account": "Account",
     "profile": "My Profile",
+    "achievements": "Achievements",
     "settings": "Settings"
   },
   "topbar": {
@@ -17,13 +18,7 @@
     "queue": "Queue",
     "tournaments": "Tournaments",
     "profile": "My Profile",
-    "settings": "Settings",
-    "admin": "Admin",
-    "ticket": "Ticket"
-  },
-  "sidebar": {
-    "tokens": "🪙 {{count}} tokens",
-    "close": "Close"
+    "settings": "Settings"
   },
   "login": {
     "title": "BABYFOOT 42",
@@ -36,15 +31,28 @@
     "error": "Invalid email or password.",
     "networkError": "Network error, please try again.",
     "noAccount": "No account yet?",
-    "registerLink": "Sign up"
+    "registerLink": "Sign up",
+    "codePlaceholder": "6-digit code",
+    "verifying": "Verifying...",
+    "validate": "Submit",
+    "title2fa": "2FA Verification",
+    "sentTo": "A code has been sent to",
+    "back": "← Back",
+    "invalidCode": "The code must be 6 digits",
+    "errors": {
+      "invalidEmail": "Invalid email address.",
+      "passwordRequired": "Password required.",
+      "notActivated": "Account not activated. Check your email.",
+      "codeInvalid": "Invalid code.",
+      "codeExpired": "Code expired, please log in again.",
+      "codeLength": "The code must be 6 digits.",
+      "codeSendError": "Error sending the code."
+    }
   },
   "home": {
     "scheduledMatch": "📋 Scheduled match",
     "addMatch": "Add a match",
     "play": "Play",
-    "selectToPlay": "Select a match to enable",
-    "notParticipant": "You are not a participant in this match",
-    "awaitingConfirmation": "Waiting for other players to confirm",
     "myMatches": "My matches",
     "favFriends": "Favourite opponents",
     "favFriendsNote": "Top 5 opponents you've played the most games against",
@@ -52,9 +60,6 @@
     "searchLogin": "Search a login...",
     "noMatch": "No match found",
     "addQueue": "Invite to play",
-    "addPlayer": "+ Add",
-    "loginPlayer": "Player login...",
-    "counter": "{{count}} / 5",
     "scheduledMatchesTitle": "My scheduled matches",
     "noScheduled": "No scheduled match. Join the queue.",
     "cancelMatch": "Cancel this match",
@@ -62,19 +67,21 @@
     "or": "OR",
     "waiting": "Waiting",
     "maxMatches": "You already have 3 pending matches, cancel one before creating a new one.",
-    "targetMaxMatches": "{{player}} already has 3 pending matches and cannot be invited.",
     "pendingInvites": "Pending invitations",
-    "noPendingInvites": "No pending invitations"
+    "noPendingInvites": "No pending invitations",
+    "tableReserved": "✅ Table reserved! Your turn to play.",
+    "addedToQueue": "✅ Added to the queue!",
+    "unknownError": "Unknown error",
+    "networkError": "Network error, try again.",
+    "matchCreateError": "Match creation error",
+    "networkValidationError": "Network error during validation.",
+    "targetMaxMatches": "{{player}} already has 3 pending matches."
   },
   "ranking": {
     "currentSeason": "Current season",
-    "season": "Season {{num}}",
-    "annualRanking": "Annual ranking",
-    "show": "Show:",
     "palmares1v1": "1v1 STANDINGS",
     "palmares2v2": "2v2 STANDINGS",
     "player": "Player",
-    "team": "Team",
     "winsLosses": "W · L",
     "rank": "Rank",
     "noData": "No data available",
@@ -85,7 +92,8 @@
     "oldestFirst": "Oldest first",
     "champion": "🏆 Champion",
     "seasonLabel": "Season {{num}}",
-    "seasonBadge": "Current season"
+    "seasonBadge": "Current season",
+    "noSeason": "No season"
   },
   "bets": {
     "availableTokens": "tokens available",
@@ -102,22 +110,29 @@
     "cancel": "Cancel",
     "bet": "Bet",
     "whoDoYouBet": "Who do you bet on?",
-    "betPlacedOn": "Bet placed on {{player}}:",
     "change": "change",
-    "amount": "Wager: {{amount}} tokens",
-    "confirm": "Confirm — {{amount}} tokens",
     "history": "Bet history",
     "noHistory": "No history available.",
-    "bettedOn": "Bet on {{player}} · {{date}}",
-    "won": "won",
-    "lost": "lost",
     "yourBetStats": "Your bet stats",
     "bestGain": "Best gain",
     "biggestLoss": "Biggest loss",
     "balanceEvolution": "Balance evolution",
     "noChartData": "No history to display.",
     "hoverHint": "Hover a point to see details",
-    "pctOn": "— {{pct}}% on {{player}}"
+    "ranked": "ranked",
+    "free": "free",
+    "betRejected": "Bet rejected.",
+    "result": {
+      "won": "won",
+      "lost": "lost",
+      "refunded": "refunded",
+      "pending": "pending"
+    },
+    "tokensWord": "tokens",
+    "amount": "{{amount}} tokens",
+    "betPlacedOn": "Bet on {{player}}",
+    "bettedOn": "Bet on {{player}} · {{date}}",
+    "confirm": "Confirm ({{amount}} tokens)"
   },
   "queue": {
     "joinQueue": "+ Join the queue",
@@ -125,6 +140,9 @@
     "supersededTitle": "Session opened in another tab",
     "supersededBody": "Your account was opened in another tab or browser. Only one active session is allowed. Refresh to take control back here.",
     "supersededReload": "Refresh",
+    "deletedTitle": "Account deleted",
+    "deletedBody": "Your account has been deleted. Your ongoing game was cancelled and the related bets refunded. You will be logged out.",
+    "deletedButton": "Log out",
     "waitingMatches": "Waiting matches",
     "live": "Live",
     "myMatch": "My match",
@@ -134,23 +152,18 @@
     "noMatch": "No match scheduled",
     "noLive": "No match in progress",
     "betOn": "Bet →",
-    "editSlot": "Edit",
     "cancelSlot": "✕ Cancel my slot",
-    "modifyPlayers": "✏️ Edit players",
-    "me": "Me",
-    "opponent": "Opponent",
-    "save": "Save",
     "mySlotTitle": "My slot",
     "betModalTitle": "Bet on this match",
     "betOn2": "Bet on",
     "betAmount": "Wager amount",
-    "confirmBet": "Confirm — {{amount}} tokens",
-    "loginPlaceholder": "Login...",
     "waitingWinner": "Waiting for winner...",
     "pendingAccept": "Awaiting acceptance",
     "noPending": "No pending invitations",
-    "pendingVs": "vs {{opponent}}",
-    "cancelInvite": "✕ Cancel"
+    "cancelInvite": "✕ Cancel",
+    "confirmBet": "Confirm bet ({{amount}} tokens)",
+    "pendingVs": "Waiting vs {{opponent}}",
+    "betsWillOpen": "Bets will open when the match starts."
   },
   "tournaments": {
     "bdeAccess": "BDE Access",
@@ -160,14 +173,9 @@
     "findTeammate": "Find a teammate",
     "findTeammateSub": "These players are alone on the waiting list. Send them a team invite.",
     "noWaiting": "No players waiting right now.",
-    "waitingSince": "Waiting since {{since}}",
     "invited": "✓ Invite sent",
     "invite": "Invite",
     "waitingList": "WAITING LIST",
-    "teams": "{{count}} team",
-    "teams_plural": "{{count}} teams",
-    "noTeams": "No teams waiting",
-    "confirmedTeam": "Confirmed team",
     "searchingPartner": "Looking for a partner",
     "confirmedTeams": "CONFIRMED TEAMS",
     "noConfirmedTeams": "No confirmed teams yet",
@@ -178,71 +186,201 @@
     "hours": "H",
     "minutes": "M",
     "seconds": "S",
-    "bdePwd": "BDE password",
-    "incorrectPwd": "Incorrect password",
     "verifying": "Verifying…",
     "access": "Access",
     "createTournament": "Create a tournament",
-    "planNextTournament": "Schedule a new tournament",
+    "planNextTournament": "Plan the next tournament",
     "tournamentName": "Tournament name",
     "tournamentNamePlaceholder": "E.g. Thursday tournament #5",
     "dateTime": "Date and time",
     "registrationDeadline": "Registration deadline",
-    "maxPlayers": "Maximum number of players",
-    "playersCount": "{{count}} players",
     "createBtn": "Create tournament",
     "registerTitle": "Register for the tournament",
     "myLogin": "My login",
     "partner": "Partner",
     "partnerPlaceholder": "Player login... (optional)",
-    "partnerNote": "✓ {{partner}} will be invited and registered directly with you.",
     "partnerEmpty": "Leave empty to be matched with a random partner.",
     "soloNote": "If you are alone, you enter the waiting list. The list will be displayed and you can send a team request to other waiting players.",
     "confirmRegister": "Confirm registration",
     "inscriptions": "Registrations until {{date}}",
-    "registered": "{{count}} / {{max}} registered"
+    "registered": "{{count}} registered",
+    "fmtSingle": "🏆 Single elimination",
+    "fmtRoundRobin": "🔄 Round Robin",
+    "fmtSwiss": "🇨🇭 Swiss tournament",
+    "adminMode": "BDE admin mode",
+    "adminModeSub": "Creation, editing, teams, validation and rescheduling.",
+    "editTournament": "Edit tournament",
+    "importPlayers": "Import a player list",
+    "importing": "Importing…",
+    "swissNextRoundLong": "Next round (Swiss)",
+    "swissNextRound": "Next round",
+    "generating": "Generating…",
+    "deleting": "Deleting…",
+    "cancelTournament": "Cancel tournament",
+    "eventDate": "Event date:",
+    "rewards": "🏆 Rewards:",
+    "starting": "Starting…",
+    "startTournament": "Start tournament",
+    "youAreRegistered": "You are registered for the tournament.",
+    "unregister": "Unregister",
+    "registeredPlayers": "Registered players",
+    "noRegisteredPlayers": "No registered players.",
+    "registerPlayer": "Register a player",
+    "forceTeam": "Force a team",
+    "registerPlayerSub": "Registers a player directly.",
+    "forceTeamSub": "Pairs two logins and removes their previous registrations if needed.",
+    "playerLogin1": "player 1 login",
+    "playerLogin2": "player 2 login",
+    "doRegister": "Register",
+    "associate": "Pair",
+    "remove": "Remove",
+    "viewStandings": "View standings",
+    "formatLabel": "Format",
+    "modeLabel": "Mode",
+    "prizeOptional": "Prize (optional)",
+    "prizePlaceholder": "e.g. Free blanket",
+    "saving": "Saving…",
+    "save": "Save",
+    "is1v1Note": "This tournament is 1v1 — you'll register alone.",
+    "creating": "Creating…",
+    "standingsSwiss": "Swiss standings",
+    "standingsRoundRobin": "Round Robin standings",
+    "bdeCheckSub": "Check your BDE access via your account.",
+    "importResultTitle": "Import result",
+    "importRegistered": "Registered",
+    "importSkipped": "Skipped",
+    "importErrors": "Errors",
+    "close": "Close",
+    "standingsTeam": "Team",
+    "standingsWins": "W",
+    "standingsLosses": "L",
+    "standingsPoints": "Pts",
+    "noStandings": "No standings available.",
+    "confirmDelete": "Cancel and delete this tournament?",
+    "confirmWinner": "Confirm the winner of this match?",
+    "confirmRemove": "Remove this registration from the tournament?",
+    "errNetwork": "Network error.",
+    "errNotEnoughTeams": "You need at least {{count}} full teams to start this format.",
+    "errStart": "Error while starting the tournament.",
+    "closeRegistrations": "Close registrations",
+    "closing": "Closing…",
+    "reopenRegistrations": "Reopen registrations",
+    "reopening": "Reopening…",
+    "status_CLOSED": "Registrations closed",
+    "status_ONGOING": "Ongoing",
+    "status_DONE": "Finished",
+    "status_CANCELLED": "Cancelled",
+    "errPastDate": "The start date must be in the future.",
+    "errEdit": "Error while editing.",
+    "errCreate": "Error while creating.",
+    "partnerNote": "Teamed up with {{partner}}",
+    "playersCount": "{{count}} players",
+    "waitingSince": "Waiting since {{since}}",
+    "errNoBde": "You don't have BDE rights.",
+    "errUnexpected": "Unexpected error.",
+    "errDeleteTournament": "Error deleting the tournament.",
+    "errValidateMatch": "Error validating the match.",
+    "errReschedule": "Error rescheduling.",
+    "errGeneric": "Error.",
+    "errRegister": "Error during registration.",
+    "errEditTeams": "Error editing the teams.",
+    "errDelete": "Error during deletion.",
+    "errCode": {
+      "ALREADY_PLANNED": "A tournament is already planned or in progress.",
+      "ALREADY_REGISTERED": "You are already registered for this tournament.",
+      "ARCHIVED": "Archived tournaments cannot be edited.",
+      "BUILD_ERROR": "Could not generate the bracket.",
+      "DEADLINE_PASSED": "The registration deadline has passed.",
+      "FULL": "The tournament is full.",
+      "INCOMPLETE_MATCH": "The match is not complete.",
+      "INVALID": "Invalid data.",
+      "INVALID_SCORE": "Invalid score.",
+      "INVALID_WINNER": "Invalid winner.",
+      "INVITER_REQUIRED": "Inviter required.",
+      "LOCKED": "Action locked.",
+      "LOCKED_FIELDS": "These fields can no longer be changed after the start.",
+      "MATCH_DONE": "This match is already finished.",
+      "NOT_CLOSED": "Close registrations first before starting the tournament.",
+      "NOT_ENOUGH_TEAMS": "You need at least {{count}} complete teams to start this format.",
+      "NOT_ONGOING": "The tournament is not in progress.",
+      "NOT_OPEN": "Registrations are not open.",
+      "NOT_READY": "The match is not ready.",
+      "NOT_SWISS": "Action reserved for the Swiss format.",
+      "NO_FILE": "No file provided.",
+      "NO_PLAYERS": "No player found in the file.",
+      "NO_RESULT": "No result to record.",
+      "PARSE_ERROR": "The file could not be read.",
+      "PARTNER_NOT_FOUND": "Partner not found.",
+      "PARTNER_TAKEN": "This partner is already registered.",
+      "PAST_DATE": "The start date must be in the future.",
+      "PLAYER_NOT_FOUND": "Player not found.",
+      "REGISTRATIONS_CLOSED": "Registrations are closed.",
+      "ROUND_NOT_COMPLETE": "The current round is not finished.",
+      "SAME_PLAYER": "The two players must be different.",
+      "SELF_INVITE": "You cannot invite yourself.",
+      "SELF_PARTNER": "You cannot be your own partner.",
+      "SOLO_TOURNAMENT": "This tournament is 1v1.",
+      "TIE": "A draw is not allowed.",
+      "TWO_LOGINS_REQUIRED": "Two logins are required."
+    }
   },
   "profile": {
-    "myBadge": "My badge: {{label}}",
     "ratio": "Ratio",
     "winLoss": "W · L",
     "streak": "Current streak",
     "streakSub": "wins in a row",
     "tokensWon": "Tokens won",
     "tokensSub": "season balance",
-    "losses": "Losses",
-    "lossesSub": "this season",
     "gamesPerMonth": "Games / month",
     "gamesPerMonthSub": "average this month",
-    "gamelles": "Buckets 🪣",
-    "gamellesSub": "gamelle goals",
+    "gamelles": "Buckets",
+    "gamellesSub": "bucket goals",
     "favoriteTeammates": "Favourite teammates",
-    "teammateNote": "(added automatically based on games played together)",
     "noTeammate": "No teammate registered.",
     "planGame": "Schedule a game",
     "frequentOpponents": "Frequent opponents",
     "noData": "No data available.",
-    "winrate": "{{pct}}% wins",
     "fearOpponents": "Tough opponents",
     "fearNote": "Players you lose against most often",
-    "lossrate": "{{pct}}% losses",
     "myMatches": "My matches",
     "searchLogin": "Search a login...",
     "noMatch": "No match found",
     "seasonHistory": "Season history",
     "noSeason": "No season available.",
-    "ongoing": "Ongoing",
-    "champion": "Champion 🏆",
-    "seasonLabel": "Season {{num}}",
-    "logout": "Log out",
     "photo": "📷 Photo",
     "profilePhoto": "Profile photo",
     "clickToChoose": "Click to choose an image",
-    "removePhoto": "Remove photo",
     "close": "Close",
-    "counter": "{{count}} / 5 max",
     "loginPlayerPlaceholder": "Player login...",
-    "addBtn": "+ Add"
+    "addBtn": "+ Add",
+    "myBadge": "Badge: {{label}}",
+    "myStatsCard": "My Stats Card",
+    "elo1v1": "ELO 1v1",
+    "elo2v2": "ELO 2v2",
+    "cantAddSelf": "You can't add yourself.",
+    "playerNotFound": "Player not found in the database.",
+    "tableReserved": "✅ Table reserved! Your turn to play.",
+    "reservationError": "Error during reservation.",
+    "noResult": "No result.",
+    "filterWins": "Wins",
+    "filterLosses": "Losses",
+    "filterLowScore": "< 5 pts scored",
+    "result": {
+      "win": "Win",
+      "loss": "Loss",
+      "draw": "Draw"
+    },
+    "compare": "Compare ({{count}})",
+    "searchFriend": "Search a friend…",
+    "sortOnline": "Online first",
+    "sortRecent": "Recently played",
+    "rankBadge": "#{{rank}} Ranking",
+    "winsBadge_one": "{{count}} Win",
+    "winsBadge_other": "{{count}} Wins",
+    "winrate": "{{pct}}% wins",
+    "lossrate": "{{pct}}% losses",
+    "uploadError": "Upload error",
+    "removeTeammate": "Remove"
   },
   "settings": {
     "tabs": {
@@ -260,16 +398,32 @@
       "delete": "Delete",
       "login42": "42 Login",
       "email": "Email",
-      "save": "Save changes"
+      "save": "Save changes",
+      "uploading": "Uploading...",
+      "updateError": "Profile update error",
+      "invalidEmail": "Invalid email format",
+      "emailInUse": "This email is already in use"
     },
     "security": {
       "changePassword": "Change password",
       "tfa": "2FA Authentication",
-      "tfaSub": "Code via app or SMS",
       "oauth": "42 OAuth",
       "oauthSub": "Sign in with 42 account",
       "activeSessions": "Active sessions",
-      "disconnectAll": "Disconnect all"
+      "disconnectAll": "Disconnect all",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "passwordChanged": "Password changed ✓",
+      "saving": "Saving...",
+      "passwordMismatch": "Passwords don't match",
+      "passwordMin": "Minimum 8 characters",
+      "error": "Error",
+      "tfaOnSub": "A verification code will be sent by email on each login.",
+      "tfaOffSub": "Enable two-factor email authentication to secure your account.",
+      "disable2fa": "Disable 2FA",
+      "enable2fa": "Enable email 2FA",
+      "tfaEnabled": "2FA enabled ✓"
     },
     "notifications": {
       "turn": "It's your turn at the table",
@@ -285,10 +439,6 @@
     "account": {
       "export": "Export my data (GDPR) → JSON",
       "privacy": "Privacy policy",
-      "dangerZone": "Danger zone",
-      "resetStats": "Reset my stats",
-      "resetStatsSub": "Deletes your match history and ELO",
-      "reset": "Reset",
       "deleteAccount": "Delete my account",
       "deleteAccountSub": "Confirmation sent by email",
       "delete": "Delete"
@@ -317,32 +467,44 @@
           "body": "From the Queue page, you can see ongoing and upcoming matches. The pencil icon on your slot lets you edit or cancel your match. You can also bet on others' matches by hovering over them."
         }
       ]
+    },
+    "gdpr": {
+      "title": "Confirmation required",
+      "sentTo": "A code was sent to",
+      "confirmExport": "Enter it to confirm the export.",
+      "confirmDelete": "Enter it to confirm account deletion.",
+      "valid": "Valid for 15 min",
+      "resend": "Resend",
+      "enterCode": "Enter the 6 digits",
+      "invalidCode": "Invalid code",
+      "sendFailed": "Failed to send the code. Try again.",
+      "close": "Close",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
     }
   },
   "invite": {
-    "received": "invites you to a {{format}} match · {{mode}}",
     "accept": "Accept ✓",
     "decline": "Decline",
-    "accepted": "{{player}} accepted your invitation ✓",
-    "acceptedPartial": "{{player}} accepted · {{count}}/{{total}} confirmed",
-    "declined": "{{player}} declined your invitation",
-    "sent": "✅ Invitation sent to {{player}}",
     "pendingLabel": "Awaiting acceptance",
-    "matchCancelled": "{{player}} cancelled the match",
-    "offline": "{{player}} is not connected, invitation cancelled",
-    "winClaimReceived": "{{player}} invites you to carry your win into their next match",
     "winClaimDeclined": "A winner declined to carry the win — the match has been cancelled",
-    "inviteCancelled": "{{player}} cancelled their invitation",
     "chainCancelled": "A match in the chain was cancelled — your slot has been removed",
-    "tournamentTeammate": "invites you to team up for the next tournament"
+    "tournamentTeammate": "invites you to team up for the next tournament",
+    "acceptError": "Could not accept the invite (registrations closed or player not found).",
+    "received": "invites you to a {{format}} match ({{mode}})",
+    "winClaimReceived": "{{player}} invites you to take the winner spot",
+    "accepted": "{{player}} accepted your invitation ✓",
+    "acceptedPartial": "{{player}} accepted ({{count}}/{{total}})",
+    "declined": "{{player}} declined your invitation",
+    "matchCancelled": "{{player}} cancelled the match",
+    "inviteCancelled": "{{player}} cancelled their invitation",
+    "sent": "Invitation sent to {{player}}"
   },
   "addMatch": {
     "title": "Add a match",
     "step1": "Step 1 / 4 — Game mode",
     "step2": "Step 2 / 4 — Format",
-    "step3Players": "Step 3 / 4 — Players",
     "step3Queue": "Step 3 / 3 — Queue",
-    "step4": "Step 4 / 4 — Take the win?",
     "competition": "🏆 Competitive",
     "chill": "😎 Chill",
     "competNote": "ELO counted · Official results",
@@ -356,8 +518,6 @@
     "blueTeam": "🔵 Blue Team",
     "redPlayer": "Red player login...",
     "bluePlayer": "Blue player login...",
-    "redPlayer2v2": "Red player {{num}}...",
-    "bluePlayer2v2": "Blue player {{num}}...",
     "takeWinQuestion": "Do you want to take the win from the team currently playing before you?",
     "no": "No",
     "yes": "Yes ✓",
@@ -373,7 +533,10 @@
     "opponentLocked": "Opponent: winner of the match below",
     "missingPlayers": "All players must be filled in.",
     "duplicatePlayer": "A player can only appear once.",
-    "takeWinWarning": "⚠️ Warning: if the winner(s) don't accept your invitation, the match will be cancelled."
+    "takeWinWarning": "⚠️ Warning: if the winner(s) don't accept your invitation, the match will be cancelled.",
+    "redPlayer2v2": "Red player {{num}} login...",
+    "bluePlayer2v2": "Blue player {{num}} login...",
+    "playerInPrevMatch": "This player is already in the previous match."
   },
   "game": {
     "red": "Red",
@@ -381,21 +544,16 @@
     "quit": "✕ Quit",
     "endMatch": "End\nmatch",
     "half": "Half ×2",
-    "removeRed": "−1 Red",
-    "removeBlue": "−1 Blue",
     "gamelle": "Bucket",
     "tie": "Draw!",
     "tieCancelWarning": "This match will be cancelled — any takeWin chains will be removed.",
-    "wins": "{{color}} wins!",
+    "close": "Finish and close",
     "duration": "Duration: {{time}}",
-    "close": "Finish and close"
+    "wins": "{{color}} wins!"
   },
   "common": {
-    "victory": "Victory",
-    "defeat": "Defeat",
     "vs": "vs",
-    "loading": "Loading…",
-    "noData": "No data available"
+    "close": "Close"
   },
   "performance": {
     "title": "PERFORMANCE",
@@ -410,17 +568,13 @@
     "dateTo": "To",
     "noSelected": "No player selected",
     "selectPlayer": "Select at least one player to display the chart.",
+    "download": "↓ Download",
     "y": {
       "elo": "ELO",
       "wins": "Wins",
       "losses": "Losses",
       "winrate": "Win rate (%)",
-      "goals": "Goals scored",
-      "goals_against": "Goals conceded",
-      "bets_won": "Bets won",
-      "bets_lost": "Bets lost",
-      "tournaments_won": "Tournaments won",
-      "streak": "Current streak"
+      "goals": "Goals scored"
     },
     "x": {
       "matches": "Matches played (last 30)",
@@ -434,7 +588,9 @@
     "quarters": "Quarter-finals",
     "semis": "Semi-finals",
     "final": "Final",
-    "tbd": "To be determined"
+    "tbd": "To be determined",
+    "round": "Round {{n}}",
+    "bye": "None"
   },
   "footer": {
     "explore": "Explore",
@@ -446,6 +602,7 @@
     "privacy": "Privacy policy",
     "ticket": "Submit a ticket",
     "status": "Status",
+    "rgpd": "GDPR",
     "terms": "Terms of Service",
     "copyright": "© {{year}} ft_transcendence — All rights reserved"
   },
@@ -460,7 +617,17 @@
     "alreadyAccount": "Already have an account?",
     "loginLink": "Log in",
     "passwordMismatch": "Passwords do not match.",
-    "networkError": "Network error, please try again."
+    "networkError": "Network error, please try again.",
+    "errors": {
+      "invalid42Login": "Not a valid 42 login.",
+      "usernameTaken": "This login is already in use.",
+      "invalidEmail": "Invalid email address.",
+      "emailTaken": "This email is already in use.",
+      "weakPassword": "Password too weak (8 characters min., avoid common passwords).",
+      "generic": "Registration failed. Check your details."
+    },
+    "success": "Account created. Check your email to activate your account.",
+    "successRedirect": "Redirecting to login…"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -630,12 +797,13 @@
       "Home",
       "Ranking",
       "Bets",
-      "Queue",
       "Tournaments",
-      "My profile",
+      "Profile",
+      "Planning",
       "Settings",
-      "Admin"
-    ]
+      "Other"
+    ],
+    "max_files": "Maximum {{max}} files."
   },
   "status": {
     "title": "Status",
@@ -676,6 +844,7 @@
     "col_login": "Login",
     "col_elo1v1": "ELO 1v1",
     "col_elo2v2": "ELO 2v2",
+    "col_role": "Role",
     "col_status": "Status",
     "col_actions": "Actions",
     "status_ban_perm": "Perm. ban",
@@ -690,11 +859,19 @@
     "col_name": "Name",
     "col_spots": "Spots",
     "status_open": "Open",
+    "status_closed": "Registrations closed",
     "status_ongoing": "Ongoing",
     "status_cancelled": "Cancelled",
     "status_finished": "Finished",
     "btn_cancel_tourn": "Cancel",
-    "confirm_cancel_tourn": "Cancel tournament \"{{name}}\"?",
+    "btn_close_tourn": "Close registrations",
+    "btn_start_tourn": "Start",
+    "btn_import_players": "Import players",
+    "err_start_tourn": "Failed to start tournament.",
+    "err_close_tourn": "Failed to close registrations.",
+    "import_result": "Import done: {{created}} registered, {{skipped}} skipped, {{errors}} errors.",
+    "import_failed": "Import failed.",
+    "err_generic": "An error occurred.",
     "quick_title": "Quick actions",
     "btn_create_tourn": "🏆 Create tournament",
     "seasons_title": "Seasons",
@@ -714,14 +891,11 @@
     "modal_tourn_name_ph": "e.g. Thursday Tournament #5",
     "modal_tourn_date": "Date and time",
     "modal_tourn_deadline": "Registration deadline",
-    "modal_tourn_max": "Maximum number of players",
-    "modal_tourn_players": "{{n}} players",
     "modal_tourn_cancel": "Cancel",
     "modal_tourn_submit": "Create tournament",
     "modal_tourn_err": "Error",
     "modal_tourn_success": "Tournament created",
     "modal_tourn_close": "Close",
-    "modal_ban_title": "Ban {{username}}",
     "modal_ban_type": "Ban type",
     "modal_ban_temp": "Temporary",
     "modal_ban_perm": "Permanent",
@@ -731,11 +905,259 @@
     "modal_ban_doing": "Banning...",
     "modal_ban_confirm": "Confirm ban",
     "day_abbr": "d",
-    "modal_elo_title": "Edit ELO — {{username}}",
     "modal_elo_solo": "ELO Solo (1v1)",
     "modal_elo_team": "ELO Team (2v2)",
     "modal_elo_cancel": "Cancel",
     "modal_elo_saving": "Saving...",
-    "modal_elo_save": "Save"
+    "modal_elo_save": "Save",
+    "confirm_start_tourn": "Start tournament \"{{name}}\"?",
+    "confirm_cancel_tourn": "Cancel tournament \"{{name}}\"?",
+    "modal_ban_title": "Ban {{username}}",
+    "modal_elo_title": "Edit {{username}}'s ELO",
+    "err_role_update": "Error updating the role.",
+    "err_delete_user": "Unable to delete this user.",
+    "deleting": "Deleting...",
+    "delete_permanently": "Delete permanently",
+    "confirm_cancel_match": "Cancel this match and restore ELO?",
+    "match_cancelled": "Cancelled",
+    "delete_title": "Delete {{username}}",
+    "delete_warning": "This action is irreversible. All the player’s data will be deleted.",
+    "delete_cancel": "Cancel",
+    "col_tokens": "Tokens",
+    "btn_tokens": "Tokens",
+    "btn_delete_short": "Del."
+  },
+  "sidebar": {
+    "tokens": "{{count}} tokens"
+  },
+  "badge": {
+    "elite": "Elite",
+    "veteran": "Veteran",
+    "confirmed": "Confirmed",
+    "amateur": "Amateur",
+    "newPlayer": "New Player"
+  },
+  "comparison": {
+    "title": "Player comparison",
+    "elo": "ELO",
+    "gamelles": "Buckets",
+    "winStreak": "Win streak",
+    "matchesMonth": "Matches / month",
+    "selectUp": "Select up to 4 players",
+    "searchLogin": "Search a login…",
+    "noPlayer": "No player found",
+    "emptyHint": "Search and select players to compare"
+  },
+  "friend": {
+    "added": "Friend added",
+    "addedYou": "added you as a favorite teammate.",
+    "alreadyAdded": "Already added",
+    "addBack": "Add back",
+    "ignore": "Ignore"
+  },
+  "statsCard": {
+    "bestElo": "Best ELO",
+    "matchesPlayed": "Matches played",
+    "currentStreak": "Current streak",
+    "currentWealth": "Current wealth",
+    "currentRatio": "Current ratio",
+    "titleOf": "{{login}}'s Stats",
+    "titleMine": "My Stats",
+    "exporting": "Export…",
+    "download": "↓ Download (.png)"
+  },
+  "rankEvolution": {
+    "title": "Ranking evolution",
+    "loading": "Loading…",
+    "noData": "No data for this season.",
+    "rankPosition": "Rank position",
+    "matchesPlayed": "Matches played",
+    "rank": "Rank"
+  },
+  "banned": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "lessThanMinute": "less than a minute",
+    "permTitle": "Account banned",
+    "permText": "Your account has been permanently banned by an administrator.",
+    "tempTitle": "Account suspended",
+    "tempText": "Your account is temporarily suspended.",
+    "timeLeft": "Time left:",
+    "contact": "If you think this is a mistake, contact an administrator at {{email}} .",
+    "backToLogin": "Back to login"
+  },
+  "achievements": {
+    "cat": {
+      "GAMELLES": "🪣 Buckets",
+      "DEMIS": "🍺 Halves",
+      "MATCH": "🏓 Matches",
+      "SERIE": "🔥 Streaks",
+      "ELO": "📈 ELO",
+      "SAISON": "🏆 Seasons",
+      "EQUIPE": "🤝 Team",
+      "ECONOMIE": "💰 Economy"
+    },
+    "loading": "Loading…",
+    "progress": "{{unlocked}} / {{total}} unlocked ({{pct}}%)",
+    "items": {
+      "first_gamelle": {
+        "name": "First bucket",
+        "desc": "Score 1 bucket"
+      },
+      "gamelleur": {
+        "name": "Bucketeer",
+        "desc": "Score 5 buckets total"
+      },
+      "roi_gamelle": {
+        "name": "Bucket king",
+        "desc": "Score 20 buckets total"
+      },
+      "first_demi": {
+        "name": "First half",
+        "desc": "Score 1 half"
+      },
+      "barman": {
+        "name": "Barman",
+        "desc": "Score 10 halves total"
+      },
+      "patron_bar": {
+        "name": "Bar owner",
+        "desc": "Score 50 halves total"
+      },
+      "bapteme": {
+        "name": "Baptism by fire",
+        "desc": "Play your very first match"
+      },
+      "first_win": {
+        "name": "First win",
+        "desc": "Win a match"
+      },
+      "ecrasante": {
+        "name": "Crushing victory",
+        "desc": "Win 10-0"
+      },
+      "serre": {
+        "name": "Close match",
+        "desc": "Win 10-9"
+      },
+      "muraille": {
+        "name": "The Wall",
+        "desc": "Win without conceding (except 10-0)"
+      },
+      "comeback": {
+        "name": "Comeback",
+        "desc": "Win when the opponent had 7+ points"
+      },
+      "wins_10": {
+        "name": "10 wins",
+        "desc": "Win 10 matches"
+      },
+      "wins_50": {
+        "name": "50 wins",
+        "desc": "Win 50 matches"
+      },
+      "wins_100": {
+        "name": "100 wins",
+        "desc": "Win 100 matches"
+      },
+      "matches_10": {
+        "name": "Regular player",
+        "desc": "Play 10 matches"
+      },
+      "matches_50": {
+        "name": "Veteran",
+        "desc": "Play 50 matches"
+      },
+      "matches_100": {
+        "name": "Legend",
+        "desc": "Play 100 matches"
+      },
+      "serie_3": {
+        "name": "On fire",
+        "desc": "3 wins in a row"
+      },
+      "serie_5": {
+        "name": "Unstoppable",
+        "desc": "5 wins in a row"
+      },
+      "serie_10": {
+        "name": "Machine",
+        "desc": "10 wins in a row"
+      },
+      "resilient": {
+        "name": "Resilient",
+        "desc": "Win after 5 losses in a row"
+      },
+      "elo_1100": {
+        "name": "Climber",
+        "desc": "Reach 1100 ELO"
+      },
+      "elo_1200": {
+        "name": "Competitor",
+        "desc": "Reach 1200 ELO"
+      },
+      "elo_1500": {
+        "name": "Elite",
+        "desc": "Reach 1500 ELO"
+      },
+      "elo_2000": {
+        "name": "Living legend",
+        "desc": "Reach 2000 ELO"
+      },
+      "first_season": {
+        "name": "First season",
+        "desc": "Take part in a ranked season"
+      },
+      "top3_season": {
+        "name": "Top 3",
+        "desc": "Finish in the top 3 of a season"
+      },
+      "champion_season": {
+        "name": "Champion",
+        "desc": "Finish #1 of a season"
+      },
+      "multi_champion": {
+        "name": "Multi-champion",
+        "desc": "Finish #1 in 3 seasons"
+      },
+      "first_2v2": {
+        "name": "Teammate",
+        "desc": "Play a 2v2 match"
+      },
+      "duo_choc": {
+        "name": "Power duo",
+        "desc": "Win 10 matches in 2v2"
+      },
+      "capitaine": {
+        "name": "Captain",
+        "desc": "Win 25 matches in 2v2"
+      },
+      "first_bet": {
+        "name": "First bet",
+        "desc": "Place a bet"
+      },
+      "jackpot": {
+        "name": "Jackpot",
+        "desc": "Win a bet of 1000+ tokens"
+      },
+      "millionnaire": {
+        "name": "Millionaire",
+        "desc": "Reach 50,000 tokens"
+      }
+    }
+  },
+  "activate": {
+    "loadingTitle": "Activating…",
+    "loadingSub": "Checking your link.",
+    "successTitle": "Account activated!",
+    "successSub": "Your account has been activated. You can now log in.",
+    "login": "Log in",
+    "errorTitle": "Invalid link",
+    "errorSub": "This activation link is invalid or has already been used.",
+    "createAccount": "Create an account"
   }
 }

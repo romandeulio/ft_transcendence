@@ -18,8 +18,10 @@ import Ticket      from './pages/Ticket'
 import Register    from './pages/Register'
 import LoginSuccess from './pages/LoginSuccess'
 import Banned         from './pages/Banned'
+import Achievements   from './pages/Achievements'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import ActivateAccount from './pages/ActivateAccount'
 
 function isTokenValid(token) {
   if (!token) return false;
@@ -32,7 +34,10 @@ function isTokenValid(token) {
 }
 
 function PrivateRoute({ element }) {
-    const { user } = useAuth()
+    const { user, authChecked } = useAuth()
+    // On attend la validation du token avant de décider, sinon une session
+    // résiduelle (cookie d'un user supprimé) afficherait brièvement la page.
+    if (!authChecked) return null
     return user ? <QueueProvider><BetsProvider>{element}</BetsProvider></QueueProvider> : <Navigate to="/login" replace />
 }
 
@@ -42,13 +47,14 @@ export default function App() {
       <NotifProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/"              element={<Navigate to="/accueil" replace />} />
+            <Route path="/"              element={<Navigate to="/profil" replace />} />
             <Route path="/accueil"       element={<PrivateRoute element={<Accueil />} />} />
             <Route path="/classement"    element={<PrivateRoute element={<Classement />} />} />
             <Route path="/paris"         element={<PrivateRoute element={<Paris />} />} />
             <Route path="/planning"      element={<PrivateRoute element={<Planning />} />} />
             <Route path="/tournois"      element={<PrivateRoute element={<Tournois />} />} />
             <Route path="/profil"        element={<PrivateRoute element={<Profil />} />} />
+            <Route path="/achievements" element={<PrivateRoute element={<Achievements />} />} />
             <Route path="/parametres"    element={<PrivateRoute element={<Parametres />} />} />
             <Route path="/login"         element={<Login />} />
             <Route path="/login-success" element={<LoginSuccess />} />
@@ -59,6 +65,7 @@ export default function App() {
             <Route path="/status"        element={<PrivateRoute element={<Status />} />} />
             <Route path="/privacy-policy"   element={<PrivateRoute element={<PrivacyPolicy />} />} />
             <Route path="/terms-of-service" element={<PrivateRoute element={<TermsOfService />} />} />
+            <Route path="/activate/:uidb64/:token" element={<ActivateAccount />} />
           </Routes>
         </BrowserRouter>
       </NotifProvider>

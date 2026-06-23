@@ -16,7 +16,8 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
     { label: t('nav.queue'),       route: '/planning' },
     { label: t('nav.tournaments'), route: '/tournois' },
     { section: t('nav.account') },
-    { label: t('nav.profile'),     route: '/profil' },
+    { label: t('nav.profile'),      route: '/profil' },
+    { label: t('nav.achievements'), route: '/achievements' },
     { label: t('nav.settings'),    route: '/parametres' },
   ]
 

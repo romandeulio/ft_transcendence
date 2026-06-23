@@ -5,6 +5,8 @@ import Shell from '../components/layout/Shell'
 import Topbar from '../components/layout/Topbar'
 import styles from './Ticket.module.css'
 
+const MAX_PHOTOS = 5
+
 export default function Ticket() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -28,10 +30,22 @@ export default function Ticket() {
     })
   }
 
+  const addPhotos = (files) => {
+    setPhotos(prev => {
+      const room = MAX_PHOTOS - prev.length
+      if (room <= 0) {
+        setError(t('ticket.max_files', { max: MAX_PHOTOS }))
+        return prev
+      }
+      const accepted = files.slice(0, room).map(f => ({ name: f.name, url: URL.createObjectURL(f), file: f }))
+      if (files.length > room) setError(t('ticket.max_files', { max: MAX_PHOTOS }))
+      return [...prev, ...accepted]
+    })
+  }
+
   const handleFiles = (e) => {
-    const files = Array.from(e.target.files)
-    const previews = files.map(f => ({ name: f.name, url: URL.createObjectURL(f), file: f }))
-    setPhotos(prev => [...prev, ...previews])
+    addPhotos(Array.from(e.target.files))
+    e.target.value = ''
   }
 
   const removePhoto = (i) => {
@@ -144,7 +158,7 @@ export default function Ticket() {
                 onDrop={e => {
                   e.preventDefault()
                   const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-                  setPhotos(prev => [...prev, ...files.map(f => ({ name: f.name, url: URL.createObjectURL(f), file: f }))])
+                  addPhotos(files)
                 }}
               >
                 <span className={styles.dropIcon}>📎</span>

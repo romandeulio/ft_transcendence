@@ -49,7 +49,7 @@ function mergeQueueState(liveQueue, persistedQueue) {
 
 export function QueueProvider({ children }) {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, markAccountDeleted } = useAuth()
   const [queue, setQueue] = useState([])
   const [mySlots, setMySlots] = useState(loadMySlots)
   const [activeGame, setActiveGame] = useState(null)
@@ -58,10 +58,10 @@ export function QueueProvider({ children }) {
 
   // Invite state
   const [liveGames, setLiveGames] = useState({})             // gameId → game state (scores, players)
-  const [pendingInvites, setPendingInvites] = useState([])   // received invites (J2 side)
-  const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (J1 side)
+  const [pendingInvites, setPendingInvites] = useState([])   // received invites (P2 side)
+  const [inviteResults,  setInviteResults]  = useState([])   // accept/decline notifications (P1 side)
   const [friendNotifications, setFriendNotifications] = useState([]) // friend-added notifications
-  const invitesSentRef = useRef([])                          // sent invites (J1 side), ref to avoid stale closures
+  const invitesSentRef = useRef([])                          // sent invites (P1 side), ref to avoid stale closures
   const pendingInvitesRef = useRef([])                       // mirror of pendingInvites for non-stale reads in effects
   const acceptedInviteFromsRef = useRef({})                  // inviteId → from, for 2v2 partial-accept tracking
   const persistedQueueRef = useRef([])
@@ -76,20 +76,27 @@ export function QueueProvider({ children }) {
 
   const wsUrl = user?.username ? `/ws/queue/` : null
   const handleMessageRef = useRef(null)
-  const { connected, send, superseded } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
+  const { connected, send, superseded, accountDeleted } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
 
-  // Empile une notification en ignorant les doublons (même `inviteId`) : protège
-  // contre une éventuelle double livraison d'un message côté serveur/transport.
-  // Chaque notification doit donc porter un id STABLE dérivé de l'événement
-  // (jamais Date.now()/Math.random(), sinon la déduplication est inopérante).
+  // Account deleted mid-match: log out and show the terminal screen (handled by
+  // AuthProvider, which survives the logout).
+  useEffect(() => {
+    if (accountDeleted) markAccountDeleted()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountDeleted])
+
+  // Push a notification while ignoring duplicates (same `inviteId`): guards
+  // against a possible double delivery of a message on the server/transport side.
+  // Each notification must therefore carry a STABLE id derived from the event
+  // (never Date.now()/Math.random(), otherwise the dedup is ineffective).
   const pushInviteResult = (result) =>
     setInviteResults(prev =>
       prev.some(r => r.inviteId === result.inviteId) ? prev : [...prev, result]
     )
 
-  // Réassigné à chaque render → capture toujours les dernières valeurs (user,
-  // send, mySlots, refs…). useWebSocket l'invoque pour CHAQUE message reçu, de
-  // façon synchrone (aucune perte due au batching d'un unique slot `data`).
+  // Reassigned on every render -> always captures the latest values (user, send,
+  // mySlots, refs...). useWebSocket calls it for EVERY message received,
+  // synchronously (no loss from batching a single `data` slot).
   handleMessageRef.current = (data) => {
     if (!data) return
     if (data.type === 'queue_state' && data.queue) {
@@ -188,14 +195,14 @@ export function QueueProvider({ children }) {
       })
 
     } else if (data.type === 'invite_received') {
-      // J2 receives an invite from J1
+      // P2 receives an invite from P1
       setPendingInvites(prev => {
         if (prev.find(i => i.inviteId === data.inviteId)) return prev
         return [...prev, { inviteId: data.inviteId, from: data.from, slot: data.slot }]
       })
 
     } else if (data.type === 'invite_cancelled') {
-      // J1 cancelled → remove invite + show notification
+      // P1 cancelled -> remove invite + show notification
       // Read from ref to avoid stale closure; also check acceptedInviteFromsRef for 2v2 partial accepts
       const inviteId = data.inviteId
       const inv = pendingInvitesRef.current.find(i => i.inviteId === inviteId)
@@ -213,7 +220,7 @@ export function QueueProvider({ children }) {
       setPendingInvites(prev => prev.filter(i => i.inviteId !== inviteId))
 
     } else if (data.type === 'p2_left') {
-      // J2 a annulé le match accepté → J1 retire le slot de mySlots + notification
+      // P2 cancelled the accepted match -> P1 removes the slot from mySlots + notification
       setMySlots(prev => {
         const next = prev.filter(s => s._localId !== data.slotId && s.id !== data.slotId)
         localStorage.setItem('myQueueSlots', JSON.stringify(next))
@@ -247,14 +254,14 @@ export function QueueProvider({ children }) {
       })
 
     } else if (data.type === 'invite_response') {
-      // J1 receives a response from one of the invited players
+      // P1 receives a response from one of the invited players
       const { inviteId, accepted, responder } = data
       let invite = invitesSentRef.current.find(i => i.inviteId === inviteId)
       if (!invite) {
-        // J1 vient peut-être de se reconnecter et la réponse différée arrive
-        // AVANT que l'effet `connected` n'ait restauré invitesSentRef depuis les
-        // slots persistés. On reconstruit depuis mySlots pour ne pas perdre
-        // l'acceptation (sinon le match n'est jamais rejoint → il « disparaît »).
+        // P1 may have just reconnected and the deferred response arrives BEFORE
+        // the `connected` effect has restored invitesSentRef from the persisted
+        // slots. Rebuild from mySlots so the acceptance isn't lost (otherwise the
+        // match is never joined -> it "disappears").
         const slot = mySlots.find(s => s._localId === inviteId && s.type === 'pending_invite')
         if (slot) {
           invite = { inviteId, targets: slot._targets || [], slot, accepted: slot._accepted || [] }
@@ -455,8 +462,8 @@ export function QueueProvider({ children }) {
     }
   }
 
-  const updateScore = (gameId, scoreRed, scoreBlue) => {
-    send({ action: 'score_update', gameId, scoreRed, scoreBlue })
+  const updateScore = (gameId, scoreRed, scoreBlue, extra = {}) => {
+    send({ action: 'score_update', gameId, scoreRed, scoreBlue, ...extra })
   }
 
   const closeGame = (gameId, { isTie = false } = {}) => {
@@ -471,7 +478,7 @@ export function QueueProvider({ children }) {
     if (gameId) send({ action: 'game_end', gameId, winner: winner || null, winner_teammate: winnerTeammate || null, match_type: matchType || 'SOLO', completed: true })
   }
 
-  // ── Notification tournoi (sans toucher à la queue) ──────────────────────────
+  // ── Tournament notification (without touching the queue) ────────────────────
   const notifyTournamentTeammate = (target, slot) => {
     const inviteId = crypto.randomUUID()
     send({ action: 'invite', target, inviteId, slot: { ...slot, type: 'tournament_teammate' } })
@@ -512,7 +519,7 @@ export function QueueProvider({ children }) {
 
   const cancelAsP2 = (slotId) => {
     send({ action: 'leave_as_p2', slotId })
-    // La queue_state broadcast côté serveur mettra à jour invitedUpcoming automatiquement
+    // The server-side queue_state broadcast will update invitedUpcoming automatically
   }
 
   const respondToInvite = (inviteId, accepted, slot, fromUser, isWinClaim, slotId) => {

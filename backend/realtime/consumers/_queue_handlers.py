@@ -1,18 +1,18 @@
 """
-Mixin des handlers d'événements de groupe (« *_msg »).
+Mixin for group event handlers ("*_msg").
 
-Channels appelle la méthode dont le nom == event["type"] sur chaque consumer du
-groupe. Ces méthodes ne font que TRADUIRE l'événement interne en message JSON
-envoyé au navigateur (le contrat lu par le front). Aucun état partagé ici.
+Channels calls the method whose name == event["type"] on every consumer in the
+group. These methods only TRANSLATE the internal event into the JSON message
+sent to the browser (the contract the front-end reads). No shared state here.
 
-Hérité par QueueConsumer (cf. queue.py).
+Inherited by QueueConsumer (cf. queue.py).
 """
 import json
 
 
 class QueueHandlersMixin:
     async def queue_state_msg(self, event):
-        # Payload déjà sérialisé par _broadcast_queue → simple renvoi, aucune DB.
+        # Payload already serialised by _broadcast_queue -> plain forward, no DB.
         await self.send(text_data=json.dumps({
             "type": "queue_state",
             "queue": event["queue"],

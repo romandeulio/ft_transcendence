@@ -159,46 +159,60 @@ class PerformanceHistoryView(APIView):
         return self._match_series(login, x, y, date_from, date_to, limit)
 
     def _elo_series(self, login, x, date_from=None, date_to=None, limit=None):
-        from matches.models_ranking import RankingHistory
-        qs = RankingHistory.objects.filter(
-            user__username=login, mode='SOLO', scope='global'
-        ).order_by('recorded_at')
+        from matches.models import Match
+
+        qs = Match.objects.filter(
+            Q(player1__username=login) | Q(player2__username=login),
+            status='VALIDATED',
+            match_type='SOLO',
+        ).select_related('player1', 'player2', 'season').order_by('played_at')
+
         if date_from:
-            qs = qs.filter(recorded_at__date__gte=date_from)
+            qs = qs.filter(played_at__date__gte=date_from)
         if date_to:
-            qs = qs.filter(recorded_at__date__lte=date_to)
+            qs = qs.filter(played_at__date__lte=date_to)
+
+        # Build (match, elo) list — carry forward last known ELO for non-ranked
+        last_elo = 1000
+        entries = []
+        for m in qs:
+            if m.is_ranked:
+                elo = m.elo_solo_player1_after if m.player1.username == login else m.elo_solo_player2_after
+                last_elo = elo
+            else:
+                elo = last_elo
+            entries.append((m, elo))
 
         if x == 'matches':
             if limit:
-                entries = list(qs.order_by('-recorded_at')[:limit])[::-1]
-            else:
-                entries = list(qs)
-            return {i + 1: e.score_after for i, e in enumerate(entries)}
+                entries = entries[-limit:]
+            return {i + 1: elo for i, (_, elo) in enumerate(entries)}
+
+        fmt_week  = '%Y-W%W'
+        fmt_month = '%Y-%m'
 
         if x == 'days':
-            entries = (
-                qs.annotate(p=TruncDate('recorded_at'))
-                  .values('p')
-                  .annotate(elo=Max('score_after'))
-                  .order_by('p')
-            )
-            return {str(e['p']): e['elo'] for e in entries}
+            result = {}
+            for m, elo in entries:
+                result[str(m.played_at.date())] = elo
+            return result
 
         if x == 'seasons':
             result = {}
-            for rh in qs.filter(season__isnull=False).select_related('season').order_by('recorded_at'):
-                result[rh.season.name] = rh.score_after
+            for m, elo in entries:
+                if m.season:
+                    result[m.season.name] = elo
             return result
 
-        trunc = TruncWeek if x == 'weeks' else TruncMonth
-        fmt   = '%G-W%V'  if x == 'weeks' else '%Y-%m'
-        entries = (
-            qs.annotate(p=trunc('recorded_at'))
-              .values('p')
-              .annotate(elo=Max('score_after'))
-              .order_by('p')
-        )
-        return {e['p'].strftime(fmt): e['elo'] for e in entries}
+        # weeks / months : on regroupe par période à partir des (match, elo) déjà
+        # calculés (entries triées par played_at) — la dernière valeur de la période
+        # l'emporte. Pas de requête sur des champs inexistants du modèle Match.
+        fmt = '%G-W%V' if x == 'weeks' else '%Y-%m'
+        result = {}
+        for m, elo in entries:
+            played = timezone.localtime(m.played_at) if timezone.is_aware(m.played_at) else m.played_at
+            result[played.strftime(fmt)] = elo
+        return result
 
     def _match_series(self, login, x, y, date_from=None, date_to=None, limit=None):
         from matches.models import Match

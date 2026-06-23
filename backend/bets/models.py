@@ -5,13 +5,13 @@ from django.conf import settings
 
 class Bet(models.Model):
     """
-    Pari sur une partie en cours (Reservation IN_PROGRESS) = la fenêtre de
-    paris. Table externe (postgres/init.sql) → managed=False.
+    A bet on an ongoing game (Reservation IN_PROGRESS) = the betting window.
+    External table (postgres/init.sql) -> managed=False.
 
-    Le pari porte sur un CAMP : `predicted_winner` stocke le joueur "leader"
-    du camp choisi (player1 ou player2), ce qui identifie le côté.
-    `match` est renseigné à la résolution (le Match officiel qui tranche).
-    `odds` est la cote figée à la pose ; `payout`/`result` à la résolution.
+    A bet targets a SIDE: `predicted_winner` stores the "leader" player of the
+    chosen side (player1 or player2), which identifies that side.
+    `match` is filled in at resolution (the official Match that settles it).
+    `odds` is frozen at placement; `payout`/`result` are set at resolution.
     """
 
     class Result(models.TextChoices):
@@ -80,8 +80,8 @@ class Bet(models.Model):
 
 class WalletTransaction(models.Model):
     """
-    Grand livre des mouvements de jetons. Table externe → managed=False.
-    Une ligne par mouvement ; `reference_id` pointe vers le pari concerné.
+    Ledger of token movements. External table -> managed=False.
+    One row per movement; `reference_id` points to the related bet.
     """
 
     class Type(models.TextChoices):

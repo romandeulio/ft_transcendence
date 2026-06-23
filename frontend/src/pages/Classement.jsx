@@ -16,8 +16,9 @@ export default function Classement() {
   const { t } = useTranslation()
   const { user } = useAuth()
 
-  const [seasonOptions, setSeasonOptions] = useState([{ value: 'current', label: t('ranking.currentSeason') }])
-  const [season,    setSeason]    = useState('current')
+  const [seasonOptions, setSeasonOptions] = useState([])
+  const [season,    setSeason]    = useState('')
+  const [seasonsLoaded, setSeasonsLoaded] = useState(false)
   const [page,      setPage]      = useState(0)
   const [page2v2,   setPage2v2]   = useState(0)
   const [hallOrder, setHallOrder] = useState('recent')
@@ -35,23 +36,30 @@ export default function Classement() {
       .then(r => r.json())
       .then(raw => {
         const allSeasons = Array.isArray(raw) ? raw : (raw?.results ?? [])
-        if (!allSeasons.length && !Array.isArray(raw)) return
 
-        // Construire le sélecteur de saisons
-        const opts = [{ value: 'current', label: t('ranking.currentSeason') }]
+        // Construire le sélecteur de saisons (uniquement les vraies saisons)
+        const opts = []
         const smap = {}
         allSeasons.forEach(s => {
           const key = `season_${s.id}`
           opts.push({ value: key, label: s.name })
           smap[key] = s.id
-          if (s.status === 'ACTIVE') smap['current'] = s.id
         })
         setSeasonOptions(opts)
         setSeasonMap(smap)
-
         setAllSeasonData(allSeasons)
+
+        // Saison affichée par défaut : la saison active si elle existe,
+        // sinon la dernière saison clôturée, sinon aucune.
+        const active = allSeasons.find(s => s.status === 'ACTIVE')
+        const lastFinished = allSeasons
+          .filter(s => s.status === 'FINISHED')
+          .sort((a, b) => new Date(b.end_date) - new Date(a.end_date))[0]
+        const def = active || lastFinished || null
+        setSeason(def ? `season_${def.id}` : '')
+        setSeasonsLoaded(true)
       })
-      .catch(console.error)
+      .catch(() => setSeasonsLoaded(true))
   }, [])
 
   // Hall of Fame : recalcul quand le mode (1v1/2v2) ou les données changent
@@ -88,7 +96,7 @@ export default function Classement() {
     const currentPlayers = hallMode === 'SOLO' ? players : teams2v2
     const activeSeason = allSeasonData.find(s => s.status === 'ACTIVE')
     currentPlayers.forEach(p => {
-      allCandidates.push({ player: p.name, elo: p.elo, seasonName: activeSeason?.name || 'Saison en cours' })
+      allCandidates.push({ player: p.name, elo: p.elo, seasonName: activeSeason?.name || t('ranking.currentSeason') })
     })
 
     if (allCandidates.length > 0) {
@@ -150,6 +158,9 @@ export default function Classement() {
   const total2v2     = Math.ceil(teams2v2.length / PAGE_SIZE)
   const pageSlice2v2 = teams2v2.slice(page2v2 * PAGE_SIZE, page2v2 * PAGE_SIZE + PAGE_SIZE)
 
+  // Aucune saison disponible (ni active, ni clôturée) → on floute tout.
+  const noSeason = seasonsLoaded && !season
+
   const sortedSeasons = [...pastSeasons].sort((a, b) =>
     hallOrder === 'recent'
       ? a.seasonName.localeCompare(b.seasonName) * -1
@@ -161,23 +172,29 @@ export default function Classement() {
       <Topbar
         title={t('topbar.ranking')}
         titleSize={30}
-        right={<Pill label={t('ranking.seasonBadge')} type="season" />}
       />
 
       <div className={styles.content}>
 
         <div className={styles.seasonRow}>
           <label className={styles.seasonLabel}>Saison :</label>
-          <select
-            className={styles.seasonSelect}
-            value={season}
-            onChange={e => { setSeason(e.target.value); setPage(0); setPage2v2(0) }}
-          >
-            {seasonOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          {noSeason ? (
+            <span className={styles.seasonSelect}>{t('ranking.noSeason')}</span>
+          ) : (
+            <select
+              className={styles.seasonSelect}
+              value={season}
+              onChange={e => { setSeason(e.target.value); setPage(0); setPage2v2(0) }}
+            >
+              {seasonOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          )}
         </div>
+
+        <div style={{ position: 'relative' }}>
+        <div style={noSeason ? { filter: 'blur(6px)', pointerEvents: 'none', userSelect: 'none' } : undefined}>
 
         <div className={styles.rankingRow}>
 
@@ -329,6 +346,22 @@ export default function Classement() {
             </div>
 
           </div>
+        </div>
+
+        </div>
+        {noSeason && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 2,
+          }}>
+            <span style={{
+              fontSize: 22, fontWeight: 700, color: 'var(--ink)',
+              background: 'var(--white)', padding: '12px 28px',
+              borderRadius: 12, border: '1.5px solid var(--border)',
+              boxShadow: '0 8px 28px rgba(0,0,0,0.18)',
+            }}>{t('ranking.noSeason')}</span>
+          </div>
+        )}
         </div>
 
       </div>

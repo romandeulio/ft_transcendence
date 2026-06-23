@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -28,6 +29,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function RankingEvolutionChart({ seasonId }) {
+  const { t } = useTranslation()
   const [mode,    setMode]    = useState('solo')
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(false)
@@ -43,13 +45,13 @@ export default function RankingEvolutionChart({ seasonId }) {
   }, [seasonId, mode])
 
   const rankDomain = data.length
-    ? [1, Math.max(...data.map(d => d.rank)) + 1]
-    : [1, 10]
+    ? [1, Math.max(Math.max(...data.map(d => d.rank)) + 1, 5)]
+    : [1, 5]
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <span className={styles.title}>Évolution du classement</span>
+        <span className={styles.title}>{t('rankEvolution.title')}</span>
         <select
           className={styles.seasonSelect}
           value={mode}
@@ -61,21 +63,22 @@ export default function RankingEvolutionChart({ seasonId }) {
       </div>
 
       {loading ? (
-        <div className={styles.empty}>Chargement…</div>
+        <div className={styles.empty}>{t('rankEvolution.loading')}</div>
       ) : data.length === 0 ? (
-        <div className={styles.empty}>Aucune donnée pour cette saison.</div>
+        <div className={styles.empty}>{t('rankEvolution.noData')}</div>
       ) : (
         <div className={styles.charts}>
           <div className={styles.chartBlock}>
-            <div className={styles.chartLabel}>Position dans le classement</div>
+            <div className={styles.chartLabel}>{t('rankEvolution.rankPosition')}</div>
             <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="match" tick={{ fontSize: 10 }} label={{ value: 'Match', position: 'insideBottomRight', offset: -5, fontSize: 10 }} />
+                <XAxis dataKey="match" tick={{ fontSize: 10 }} label={{ value: t('rankEvolution.matchesPlayed'), position: 'insideBottom', offset: -10, fontSize: 11, fill: 'var(--ink3)' }} />
                 <YAxis
                   reversed
                   domain={rankDomain}
                   allowDecimals={false}
+                  tickCount={5}
                   tick={{ fontSize: 11 }}
                   width={32}
                   tickFormatter={v => `#${v}`}
@@ -84,7 +87,7 @@ export default function RankingEvolutionChart({ seasonId }) {
                 <Line
                   type="monotone"
                   dataKey="rank"
-                  name="Rang"
+                  name={t('rankEvolution.rank')}
                   stroke="#4068DB"
                   strokeWidth={2}
                   dot={false}
@@ -99,9 +102,9 @@ export default function RankingEvolutionChart({ seasonId }) {
           <div className={styles.chartBlock}>
             <div className={styles.chartLabel}>ELO</div>
             <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="match" tick={{ fontSize: 10 }} label={{ value: 'Match', position: 'insideBottomRight', offset: -5, fontSize: 10 }} />
+                <XAxis dataKey="match" tick={{ fontSize: 10 }} label={{ value: t('rankEvolution.matchesPlayed'), position: 'insideBottom', offset: -10, fontSize: 11, fill: 'var(--ink3)' }} />
                 <YAxis
                   tick={{ fontSize: 11 }}
                   width={40}

@@ -225,6 +225,13 @@
   position: relative;
 }
 
+.noTournamentMsg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
 .blurred {
   filter: blur(6px);
   user-select: none;
@@ -277,11 +284,19 @@
   gap: 6px;
 }
 
+/* chaque "item" = (": " optionnel) + bloc chiffre, côte à côte sur une ligne */
+.countdownItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .countdownPart {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  min-width: 48px;
 }
 
 .countdownNum {
@@ -291,6 +306,9 @@
   line-height: 1;
   font-family: 'Inter', -apple-system, sans-serif;
   letter-spacing: 0.02em;
+  /* chiffres à chasse fixe : évite que la largeur saute à chaque seconde */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
 }
 
 .countdownUnit {
@@ -305,8 +323,8 @@
   font-size: 2rem;
   font-weight: 800;
   color: #3bbfad;
-  line-height: 1;
-  padding-top: 4px;
+  /* hauteur = celle du chiffre (2.4rem) pour centrer le ":" sur le nombre */
+  line-height: 2.4rem;
 }
 
 .countdownSub {
@@ -318,6 +336,14 @@
   font-size: 12px;
   color: var(--red);
   margin-top: 6px;
+}
+
+/* Dans la barre d'actions (flex), l'erreur prend toute la largeur pour passer
+   sous les boutons au lieu de les décaler horizontalement. */
+.bdeActions .bdeError {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 2px;
 }
 
 .soloNote {
@@ -640,4 +666,69 @@
   .bdeBtnText { display: none; }
   .bdeBtnIcon { display: inline; font-size: 16px; }
   .bdeBtn { padding: 8px 10px; }
+}
+
+.standingsBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.standingsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.standingsTh {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.standingsTd {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.standingsRowEven {
+  background: rgba(255,255,255,0.02);
+}
+
+.standingsRowOdd {
+  background: transparent;
+}
+
+/* Import résultat */
+.importResult {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.importSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.importSectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.importRow {
+  font-size: 13px;
+  padding: 3px 0;
+  opacity: 0.7;
 }
