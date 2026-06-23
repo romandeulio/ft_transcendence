@@ -172,7 +172,6 @@ export default function Classement() {
       <Topbar
         title={t('topbar.ranking')}
         titleSize={30}
-        right={<Pill label={t('ranking.seasonBadge')} type="season" />}
       />
 
       <div className={styles.content}>

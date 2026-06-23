@@ -467,7 +467,7 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 
 ### Thaïs (LuThaTha) — Product Owner & Tech Lead Backend
 - Designed the full PostgreSQL schema (16 tables, all relations, constraints, indexes)
-- Implemented the `users/` app: registration, login, JWT session management, OAuth 42 flow, 2FA (TOTP via `pyotp`), advanced permissions
+- Implemented the `users/` app: registration, login, JWT session management, OAuth 42 flow, advanced permissions
 - Implemented GDPR features: data export and full anonymization
 - Secured all backend endpoints: input validation, permission decorators, rate limiting on auth routes
 - Wrote `postgres/init.sql` (the authoritative DB schema)

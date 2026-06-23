@@ -455,8 +455,8 @@ export function QueueProvider({ children }) {
     }
   }
 
-  const updateScore = (gameId, scoreRed, scoreBlue) => {
-    send({ action: 'score_update', gameId, scoreRed, scoreBlue })
+  const updateScore = (gameId, scoreRed, scoreBlue, extra = {}) => {
+    send({ action: 'score_update', gameId, scoreRed, scoreBlue, ...extra })
   }
 
   const closeGame = (gameId, { isTie = false } = {}) => {

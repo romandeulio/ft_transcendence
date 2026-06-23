@@ -62,8 +62,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             return None
 
     def validate_username(self, value):
-        if self.get_42_user(value) == None:
-            raise serializers.ValidationError('Not a valid 42 login')
+        # Plus de vérification « login 42 » : on autorise n'importe quel login.
+        # L'enrichissement depuis l'intra 42 (rôle, avatar) reste fait dans
+        # create() s'il s'avère que le login correspond à un utilisateur 42.
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already in use")
         return value
@@ -84,38 +85,40 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user_42 = self.get_42_user(validated_data["username"])
         validated_data.pop("password2")
-        has_piscine = any(
-            c["cursus"]["name"] == "C Piscine"
-            for c in user_42.get("cursus_users", [])
-        )
+        # L'utilisateur 42 est optionnel : login 42 → enrichissement rôle/avatar,
+        # sinon rôle « user » par défaut sans avatar.
+        user_42 = self.get_42_user(validated_data["username"])
 
-        has_42cursus = any(
-            c["cursus"]["name"] == "42cursus"
-            for c in user_42.get("cursus_users", [])
-        )
+        role = "user"
+        if user_42:
+            has_piscine = any(
+                c["cursus"]["name"] == "C Piscine"
+                for c in user_42.get("cursus_users", [])
+            )
+            has_42cursus = any(
+                c["cursus"]["name"] == "42cursus"
+                for c in user_42.get("cursus_users", [])
+            )
+            if user_42.get("staff?"):
+                role = "bocalien"
+            elif user_42.get("alumni?"):
+                role = "alumnni"
+            elif has_piscine and not has_42cursus:
+                role = "piscineux"
+            elif has_42cursus:
+                role = "stud"
+            if role != "bocalien":
+                for group in user_42.get("groups", []):
+                    name = group.get("name", "").lower()
+                    if "bde" in name:
+                        role = "bde"
 
-        if user_42.get("staff?"):
-            role = "bocalien"
-        elif user_42.get("alumni?"):
-            role = "alumnni"
-        elif has_piscine and not has_42cursus:
-            role = "piscineux"
-        elif has_42cursus:
-            role = "stud"
-        else:
-            role = "user"
-        if role != "bocalien":
-            for group in user_42.get("groups", []):
-                name = group.get("name", "").lower()
-                if "bde" in name:
-                    role = "bde"
         user = User.objects.create_user(email=validated_data['email'], username=validated_data['username'], password=validated_data['password'])
         user.role = role
         user.save(update_fields=["role"])
-        avatar_link = user_42.get("image", {}).get("link")
 
+        avatar_link = user_42.get("image", {}).get("link") if user_42 else None
         if avatar_link:
             response = requests.get(avatar_link)
 

@@ -540,7 +540,11 @@ export default function Accueil() {
           onTieCancel={handleTieCancel}
           scoreRed={activeGame?.scoreRed}
           scoreBlue={activeGame?.scoreBlue}
-          onScoreChange={(r, b) => activeGame?.gameId && updateScore(activeGame.gameId, r, b)}
+          gamellesRed={activeGame?.gamellesRed}
+          gamellesBlue={activeGame?.gamellesBlue}
+          demisRed={activeGame?.demisRed}
+          demisBlue={activeGame?.demisBlue}
+          onScoreChange={(r, b, extra) => activeGame?.gameId && updateScore(activeGame.gameId, r, b, extra)}
           startTime={activeGame?.startTime}
         />
       )}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
+import { isValidEmail, registerErrorMessage } from '../services/authErrors'
 import styles from './Register.module.css'
 
 export default function Register() {
@@ -23,6 +24,11 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validations côté client : message traduit, pas de requête inutile.
+    if (!isValidEmail(form.email)) {
+      setError(t('register.errors.invalidEmail'));
+      return;
+    }
     if (form.password !== form.password2) {
       setError(t('register.passwordMismatch'));
       return;
@@ -34,12 +40,15 @@ export default function Register() {
         credentials: 'include',
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      setResponse(data);
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      // Erreurs de validation : renvoyées en HTTP 200 (data.error === 'validation').
+      if (data.error === 'validation') {
+        setError(registerErrorMessage(data.fields, t));
+      } else if (res.ok && data.message) {
+        setResponse(data);
         setTimeout(() => navigate("/login"), 5000);
       } else {
-        setError(data.detail || JSON.stringify(data));
+        setError(t('register.networkError'));
       }
     } catch (err) {
       setError(t('register.networkError'));
@@ -58,11 +67,11 @@ export default function Register() {
 
         {response?.message ? (
           <div className={styles.successMsg}>
-            {response.message}<br />
-            <span className={styles.successSub}>Redirection vers la connexion…</span>
+            {t('register.success')}<br />
+            <span className={styles.successSub}>{t('register.successRedirect')}</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
             <input
               className={styles.input}
               placeholder={t('register.login42')}

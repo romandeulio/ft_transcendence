@@ -8,7 +8,7 @@ import styles from './Achievements.module.css'
 const CATEGORY_ORDER = ['GAMELLES', 'DEMIS', 'MATCH', 'SERIE', 'ELO', 'SAISON', 'EQUIPE', 'ECONOMIE']
 
 export default function Achievements() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [achievements, setAchievements] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -34,13 +34,13 @@ export default function Achievements() {
       <Topbar title={t('nav.achievements')} />
       <div className={styles.content}>
         {loading ? (
-          <div className={styles.loading}>Chargement…</div>
+          <div className={styles.loading}>{t('achievements.loading')}</div>
         ) : (
           <>
             {/* Barre de progression */}
             <div className={styles.progressBar}>
               <div className={styles.progressLabel}>
-                {unlocked} / {total} débloqués ({pct}%)
+                {t('achievements.progress', { unlocked, total, pct })}
               </div>
               <div className={styles.progressTrack}>
                 <div className={styles.progressFill} style={{ width: `${pct}%` }} />
@@ -64,11 +64,11 @@ export default function Achievements() {
                       >
                         <span className={styles.icon}>{a.icon}</span>
                         <div className={styles.info}>
-                          <div className={styles.name}>{a.name}</div>
-                          <div className={styles.desc}>{a.description}</div>
+                          <div className={styles.name}>{t(`achievements.items.${a.id}.name`, { defaultValue: a.name })}</div>
+                          <div className={styles.desc}>{t(`achievements.items.${a.id}.desc`, { defaultValue: a.description })}</div>
                           {a.unlocked && a.unlocked_at && (
                             <div className={styles.date}>
-                              {new Date(a.unlocked_at).toLocaleDateString('fr-FR')}
+                              {new Date(a.unlocked_at).toLocaleDateString(i18n.language)}
                             </div>
                           )}
                         </div>

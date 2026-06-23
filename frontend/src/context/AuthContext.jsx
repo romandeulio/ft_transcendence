@@ -64,12 +64,15 @@ export function AuthProvider({ children }) {
     ;(async () => {
       let fresh = null
       try {
-        let res = await authFetch('/api/auth/profile/')
-        if (res.status === 401) {
-          // access token expiré ? on tente un refresh avant de conclure.
-          try { await apiRefresh(); res = await authFetch('/api/auth/profile/') } catch {}
+        // Refresh d'abord (endpoint AllowAny, renvoie 200 {refreshed}). On n'appelle
+        // /profile/ (protégé) QUE si on a un access token valide → jamais de 401
+        // dans la console pour un visiteur non/plus connecté.
+        let refreshed = false
+        try { await apiRefresh(); refreshed = true } catch {}
+        if (refreshed) {
+          const res = await authFetch('/api/auth/profile/')
+          if (res.ok) fresh = await res.json()
         }
-        if (res.ok) fresh = await res.json()
       } catch {}
 
       if (cancelled) return

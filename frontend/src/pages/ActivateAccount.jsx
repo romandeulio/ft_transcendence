@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Login.module.css'
 
 const bgItems = [
@@ -16,6 +18,7 @@ const bgItems = [
 ]
 
 export default function ActivateAccount() {
+  const { t } = useTranslation()
   const { uidb64, token } = useParams()
   const [status, setStatus] = useState('loading')
 
@@ -40,22 +43,26 @@ export default function ActivateAccount() {
         </span>
       ))}
 
+      <div className={styles.langBar}>
+        <LanguageSwitcher />
+      </div>
+
       <div className={styles.card}>
         {status === 'loading' && (
           <>
             <div className={styles.logo}>⏳</div>
-            <h1 className={styles.title}>Activation...</h1>
-            <p className={styles.sub}>Vérification de votre lien en cours.</p>
+            <h1 className={styles.title}>{t('activate.loadingTitle')}</h1>
+            <p className={styles.sub}>{t('activate.loadingSub')}</p>
           </>
         )}
 
         {status === 'success' && (
           <>
             <div className={styles.logo}>✅</div>
-            <h1 className={styles.title}>Compte activé !</h1>
-            <p className={styles.sub}>Votre compte a bien été activé. Vous pouvez maintenant vous connecter.</p>
+            <h1 className={styles.title}>{t('activate.successTitle')}</h1>
+            <p className={styles.sub}>{t('activate.successSub')}</p>
             <Link to="/login" className={styles.btnLogin} style={{ textDecoration: 'none', textAlign: 'center', marginTop: '8px' }}>
-              Se connecter
+              {t('activate.login')}
             </Link>
           </>
         )}
@@ -63,10 +70,10 @@ export default function ActivateAccount() {
         {status === 'error' && (
           <>
             <div className={styles.logo}>❌</div>
-            <h1 className={styles.title}>Lien invalide</h1>
-            <p className={styles.sub}>Ce lien d'activation est invalide ou a déjà été utilisé.</p>
+            <h1 className={styles.title}>{t('activate.errorTitle')}</h1>
+            <p className={styles.sub}>{t('activate.errorSub')}</p>
             <Link to="/register" className={styles.btnLogin} style={{ textDecoration: 'none', textAlign: 'center', marginTop: '8px' }}>
-              Créer un compte
+              {t('activate.createAccount')}
             </Link>
           </>
         )}

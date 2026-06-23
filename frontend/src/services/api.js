@@ -17,14 +17,17 @@ function buildFetchOptions(options = {}) {
 
 async function refreshAuthCookie() {
   if (!refreshPromise) {
+    // Le endpoint renvoie 200 {refreshed: bool} (jamais 401) → on lit le payload,
+    // pas le statut, pour éviter une erreur dans la console du navigateur.
     refreshPromise = fetch(`${BASE}/token/refresh/`, buildFetchOptions({ method: 'POST' }))
+      .then(res => res.json().catch(() => ({})))
       .finally(() => {
         refreshPromise = null
       })
   }
 
-  const res = await refreshPromise
-  if (!res.ok) throw new Error('Session expired')
+  const data = await refreshPromise
+  if (!data.refreshed) throw new Error('Session expired')
 }
 
 // Rafraîchit le cookie JWT — utilisé par AuthContext

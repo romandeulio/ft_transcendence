@@ -37,7 +37,16 @@
     "validate": "Valider",
     "title2fa": "Vérification 2FA",
     "sentTo": "Un code a été envoyé à",
-    "back": "← Retour"
+    "back": "← Retour",
+    "errors": {
+      "invalidEmail": "Adresse email invalide.",
+      "passwordRequired": "Mot de passe requis.",
+      "notActivated": "Compte non activé. Vérifie tes emails.",
+      "codeInvalid": "Code invalide.",
+      "codeExpired": "Code expiré, reconnecte-toi.",
+      "codeLength": "Le code doit contenir 6 chiffres.",
+      "codeSendError": "Erreur lors de l'envoi du code."
+    }
   },
   "home": {
     "scheduledMatch": "📋 Match prévu",
@@ -562,7 +571,17 @@
     "alreadyAccount": "Déjà un compte ?",
     "loginLink": "Se connecter",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
-    "networkError": "Erreur réseau, réessaie plus tard."
+    "networkError": "Erreur réseau, réessaie plus tard.",
+    "errors": {
+      "invalid42Login": "Login 42 invalide.",
+      "usernameTaken": "Ce login est déjà utilisé.",
+      "invalidEmail": "Adresse email invalide.",
+      "emailTaken": "Cet email est déjà utilisé.",
+      "weakPassword": "Mot de passe trop faible (8 caractères min., évite les mots de passe courants).",
+      "generic": "Échec de l'inscription. Vérifie tes informations."
+    },
+    "success": "Compte créé. Vérifie tes emails pour activer ton compte.",
+    "successRedirect": "Redirection vers la connexion…"
   },
   "privacy": {
     "title": "Politique de confidentialité",
@@ -926,6 +945,164 @@
       "SAISON": "🏆 Saisons",
       "EQUIPE": "🤝 Équipe",
       "ECONOMIE": "💰 Économie"
+    },
+    "loading": "Chargement…",
+    "progress": "{{unlocked}} / {{total}} débloqués ({{pct}}%)",
+    "items": {
+      "first_gamelle": {
+        "name": "Première gamelle",
+        "desc": "Marquer 1 gamelle"
+      },
+      "gamelleur": {
+        "name": "Gamelleur",
+        "desc": "Marquer 5 gamelles au total"
+      },
+      "roi_gamelle": {
+        "name": "Roi de la gamelle",
+        "desc": "Marquer 20 gamelles au total"
+      },
+      "first_demi": {
+        "name": "Premier demi",
+        "desc": "Marquer 1 demi"
+      },
+      "barman": {
+        "name": "Barman",
+        "desc": "Marquer 10 demis au total"
+      },
+      "patron_bar": {
+        "name": "Patron du bar",
+        "desc": "Marquer 50 demis au total"
+      },
+      "bapteme": {
+        "name": "Baptême du feu",
+        "desc": "Jouer son tout premier match"
+      },
+      "first_win": {
+        "name": "Première victoire",
+        "desc": "Gagner un match"
+      },
+      "ecrasante": {
+        "name": "Victoire écrasante",
+        "desc": "Gagner 10-0"
+      },
+      "serre": {
+        "name": "Match serré",
+        "desc": "Gagner 10-9"
+      },
+      "muraille": {
+        "name": "Muraille",
+        "desc": "Gagner sans encaisser (hors 10-0)"
+      },
+      "comeback": {
+        "name": "Comeback",
+        "desc": "Gagner alors que l'adversaire avait 7+ points"
+      },
+      "wins_10": {
+        "name": "10 victoires",
+        "desc": "Gagner 10 matchs"
+      },
+      "wins_50": {
+        "name": "50 victoires",
+        "desc": "Gagner 50 matchs"
+      },
+      "wins_100": {
+        "name": "100 victoires",
+        "desc": "Gagner 100 matchs"
+      },
+      "matches_10": {
+        "name": "Joueur régulier",
+        "desc": "Jouer 10 matchs"
+      },
+      "matches_50": {
+        "name": "Vétéran",
+        "desc": "Jouer 50 matchs"
+      },
+      "matches_100": {
+        "name": "Légende",
+        "desc": "Jouer 100 matchs"
+      },
+      "serie_3": {
+        "name": "En feu",
+        "desc": "3 victoires d'affilée"
+      },
+      "serie_5": {
+        "name": "Inarrêtable",
+        "desc": "5 victoires d'affilée"
+      },
+      "serie_10": {
+        "name": "Machine",
+        "desc": "10 victoires d'affilée"
+      },
+      "resilient": {
+        "name": "Résilient",
+        "desc": "Gagner après 5 défaites d'affilée"
+      },
+      "elo_1100": {
+        "name": "Grimpeur",
+        "desc": "Atteindre 1100 ELO"
+      },
+      "elo_1200": {
+        "name": "Compétiteur",
+        "desc": "Atteindre 1200 ELO"
+      },
+      "elo_1500": {
+        "name": "Élite",
+        "desc": "Atteindre 1500 ELO"
+      },
+      "elo_2000": {
+        "name": "Légende vivante",
+        "desc": "Atteindre 2000 ELO"
+      },
+      "first_season": {
+        "name": "Première saison",
+        "desc": "Participer à une saison classée"
+      },
+      "top3_season": {
+        "name": "Top 3",
+        "desc": "Finir dans le top 3 d'une saison"
+      },
+      "champion_season": {
+        "name": "Champion",
+        "desc": "Finir #1 d'une saison"
+      },
+      "multi_champion": {
+        "name": "Multi-champion",
+        "desc": "Finir #1 dans 3 saisons"
+      },
+      "first_2v2": {
+        "name": "Coéquipier",
+        "desc": "Jouer un match en 2v2"
+      },
+      "duo_choc": {
+        "name": "Duo de choc",
+        "desc": "Gagner 10 matchs en 2v2"
+      },
+      "capitaine": {
+        "name": "Capitaine",
+        "desc": "Gagner 25 matchs en 2v2"
+      },
+      "first_bet": {
+        "name": "Premier pari",
+        "desc": "Placer un pari"
+      },
+      "jackpot": {
+        "name": "Jackpot",
+        "desc": "Gagner un pari de 1000+ jetons"
+      },
+      "millionnaire": {
+        "name": "Millionnaire",
+        "desc": "Atteindre 50 000 jetons"
+      }
     }
+  },
+  "activate": {
+    "loadingTitle": "Activation…",
+    "loadingSub": "Vérification de ton lien en cours.",
+    "successTitle": "Compte activé !",
+    "successSub": "Ton compte a bien été activé. Tu peux maintenant te connecter.",
+    "login": "Se connecter",
+    "errorTitle": "Lien invalide",
+    "errorSub": "Ce lien d'activation est invalide ou a déjà été utilisé.",
+    "createAccount": "Créer un compte"
   }
 }

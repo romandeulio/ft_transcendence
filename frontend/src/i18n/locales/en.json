@@ -37,7 +37,16 @@
     "validate": "Submit",
     "title2fa": "2FA Verification",
     "sentTo": "A code has been sent to",
-    "back": "← Back"
+    "back": "← Back",
+    "errors": {
+      "invalidEmail": "Invalid email address.",
+      "passwordRequired": "Password required.",
+      "notActivated": "Account not activated. Check your email.",
+      "codeInvalid": "Invalid code.",
+      "codeExpired": "Code expired, please log in again.",
+      "codeLength": "The code must be 6 digits.",
+      "codeSendError": "Error sending the code."
+    }
   },
   "home": {
     "scheduledMatch": "📋 Scheduled match",
@@ -562,7 +571,17 @@
     "alreadyAccount": "Already have an account?",
     "loginLink": "Log in",
     "passwordMismatch": "Passwords do not match.",
-    "networkError": "Network error, please try again."
+    "networkError": "Network error, please try again.",
+    "errors": {
+      "invalid42Login": "Not a valid 42 login.",
+      "usernameTaken": "This login is already in use.",
+      "invalidEmail": "Invalid email address.",
+      "emailTaken": "This email is already in use.",
+      "weakPassword": "Password too weak (8 characters min., avoid common passwords).",
+      "generic": "Registration failed. Check your details."
+    },
+    "success": "Account created. Check your email to activate your account.",
+    "successRedirect": "Redirecting to login…"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -926,6 +945,164 @@
       "SAISON": "🏆 Seasons",
       "EQUIPE": "🤝 Team",
       "ECONOMIE": "💰 Economy"
+    },
+    "loading": "Loading…",
+    "progress": "{{unlocked}} / {{total}} unlocked ({{pct}}%)",
+    "items": {
+      "first_gamelle": {
+        "name": "First bucket",
+        "desc": "Score 1 bucket"
+      },
+      "gamelleur": {
+        "name": "Bucketeer",
+        "desc": "Score 5 buckets total"
+      },
+      "roi_gamelle": {
+        "name": "Bucket king",
+        "desc": "Score 20 buckets total"
+      },
+      "first_demi": {
+        "name": "First half",
+        "desc": "Score 1 half"
+      },
+      "barman": {
+        "name": "Barman",
+        "desc": "Score 10 halves total"
+      },
+      "patron_bar": {
+        "name": "Bar owner",
+        "desc": "Score 50 halves total"
+      },
+      "bapteme": {
+        "name": "Baptism by fire",
+        "desc": "Play your very first match"
+      },
+      "first_win": {
+        "name": "First win",
+        "desc": "Win a match"
+      },
+      "ecrasante": {
+        "name": "Crushing victory",
+        "desc": "Win 10-0"
+      },
+      "serre": {
+        "name": "Close match",
+        "desc": "Win 10-9"
+      },
+      "muraille": {
+        "name": "The Wall",
+        "desc": "Win without conceding (except 10-0)"
+      },
+      "comeback": {
+        "name": "Comeback",
+        "desc": "Win when the opponent had 7+ points"
+      },
+      "wins_10": {
+        "name": "10 wins",
+        "desc": "Win 10 matches"
+      },
+      "wins_50": {
+        "name": "50 wins",
+        "desc": "Win 50 matches"
+      },
+      "wins_100": {
+        "name": "100 wins",
+        "desc": "Win 100 matches"
+      },
+      "matches_10": {
+        "name": "Regular player",
+        "desc": "Play 10 matches"
+      },
+      "matches_50": {
+        "name": "Veteran",
+        "desc": "Play 50 matches"
+      },
+      "matches_100": {
+        "name": "Legend",
+        "desc": "Play 100 matches"
+      },
+      "serie_3": {
+        "name": "On fire",
+        "desc": "3 wins in a row"
+      },
+      "serie_5": {
+        "name": "Unstoppable",
+        "desc": "5 wins in a row"
+      },
+      "serie_10": {
+        "name": "Machine",
+        "desc": "10 wins in a row"
+      },
+      "resilient": {
+        "name": "Resilient",
+        "desc": "Win after 5 losses in a row"
+      },
+      "elo_1100": {
+        "name": "Climber",
+        "desc": "Reach 1100 ELO"
+      },
+      "elo_1200": {
+        "name": "Competitor",
+        "desc": "Reach 1200 ELO"
+      },
+      "elo_1500": {
+        "name": "Elite",
+        "desc": "Reach 1500 ELO"
+      },
+      "elo_2000": {
+        "name": "Living legend",
+        "desc": "Reach 2000 ELO"
+      },
+      "first_season": {
+        "name": "First season",
+        "desc": "Take part in a ranked season"
+      },
+      "top3_season": {
+        "name": "Top 3",
+        "desc": "Finish in the top 3 of a season"
+      },
+      "champion_season": {
+        "name": "Champion",
+        "desc": "Finish #1 of a season"
+      },
+      "multi_champion": {
+        "name": "Multi-champion",
+        "desc": "Finish #1 in 3 seasons"
+      },
+      "first_2v2": {
+        "name": "Teammate",
+        "desc": "Play a 2v2 match"
+      },
+      "duo_choc": {
+        "name": "Power duo",
+        "desc": "Win 10 matches in 2v2"
+      },
+      "capitaine": {
+        "name": "Captain",
+        "desc": "Win 25 matches in 2v2"
+      },
+      "first_bet": {
+        "name": "First bet",
+        "desc": "Place a bet"
+      },
+      "jackpot": {
+        "name": "Jackpot",
+        "desc": "Win a bet of 1000+ tokens"
+      },
+      "millionnaire": {
+        "name": "Millionaire",
+        "desc": "Reach 50,000 tokens"
+      }
     }
+  },
+  "activate": {
+    "loadingTitle": "Activating…",
+    "loadingSub": "Checking your link.",
+    "successTitle": "Account activated!",
+    "successSub": "Your account has been activated. You can now log in.",
+    "login": "Log in",
+    "errorTitle": "Invalid link",
+    "errorSub": "This activation link is invalid or has already been used.",
+    "createAccount": "Create an account"
   }
 }

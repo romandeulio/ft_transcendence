@@ -323,6 +323,10 @@ class QueueConsumer(
                 "match_type": match_type,
                 "scoreRed": 0,
                 "scoreBlue": 0,
+                "gamellesRed": 0,
+                "gamellesBlue": 0,
+                "demisRed": 0,
+                "demisBlue": 0,
                 "startTime": int(time.time() * 1000),
             }
         await self.channel_layer.group_send(
@@ -338,8 +342,12 @@ class QueueConsumer(
         game_id = data.get("gameId")
         if not (game_id and game_id in state.games):
             return
-        state.games[game_id]["scoreRed"]  = data.get("scoreRed", 0)
-        state.games[game_id]["scoreBlue"] = data.get("scoreBlue", 0)
+        g = state.games[game_id]
+        g["scoreRed"]  = data.get("scoreRed", 0)
+        g["scoreBlue"] = data.get("scoreBlue", 0)
+        for key in ("gamellesRed", "gamellesBlue", "demisRed", "demisBlue"):
+            if data.get(key) is not None:
+                g[key] = data[key]
         await self.channel_layer.group_send(
             self.group_name,
             {"type": "game_state_msg", "game": {**state.games[game_id], "gameId": game_id}},
