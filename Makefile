@@ -46,11 +46,11 @@ ps:
 backup:
 	docker exec transcendence_backup /backup.sh
 
-# Joueurs de test (à supprimer quand plus besoin)
+# Seed test users
 seed:
 	docker exec transcendence_backend python manage.py seed_users
 
-# Créer des données de test (saison + users + matchs)
+# Seed test data (season + users + matches)
 seed2:
 	docker exec -it transcendence_backend python manage.py shell -c "\
 	from seasons.models import Season; \
@@ -59,7 +59,6 @@ seed2:
 	from datetime import date; \
 	import random; \
 	\
-	# Créer la saison active \
 	season, _ = Season.objects.get_or_create( \
 		name='Saison Test', \
 		defaults={ \
@@ -68,16 +67,14 @@ seed2:
 			'status':     'ACTIVE', \
 		} \
 	); \
-	print(f'Saison: {season.name} ({season.status})'); \
+	print(f'Season: {season.name} ({season.status})'); \
 	\
-	# Récupérer tous les users actifs \
 	users = list(User.objects.filter(is_active=True)); \
-	print(f'Users trouvés: {len(users)}'); \
+	print(f'Users found: {len(users)}'); \
 	\
 	if len(users) < 2: \
-		print('Pas assez de users — connecte-toi via OAuth 42 dabord'); \
+		print('Not enough users — log in via OAuth 42 first'); \
 	else: \
-		# Créer 5 matchs SOLO validés avec ELO aléatoire \
 		for i in range(5): \
 			p1 = users[i % len(users)]; \
 			p2 = users[(i + 1) % len(users)]; \
@@ -100,7 +97,7 @@ seed2:
 			p1.elo_solo += delta; p1.save(); \
 			p2.elo_solo -= delta; p2.save(); \
 			print(f'Match {i+1}: {p1.username} vs {p2.username} +{delta}'); \
-		print('Done — recharge la page classement'); \
+		print('Done — reload the ranking page'); \
 	"
 unseed:
 	docker exec transcendence_backend python manage.py seed_users --clean

@@ -27,17 +27,13 @@ function toTimestamp(value) {
   return Number.isFinite(ts) ? ts : null
 }
 
-// Lecture JSON tolérante : renvoie null si le corps est vide ou invalide,
-// au lieu de faire planter res.json() ("JSON.parse: unexpected end of data").
 async function readJson(res) {
   const text = await res.text().catch(() => '')
   if (!text) return null
   try { return JSON.parse(text) } catch { return null }
 }
 
-// Convertit une date ISO (renvoyée en UTC par l'API) en valeur locale
-// "YYYY-MM-DDTHH:mm" pour un <input type="datetime-local">, sinon l'heure
-// pré-remplie serait décalée du fuseau horaire.
+// Converts UTC ISO date to local "YYYY-MM-DDTHH:mm" for datetime-local inputs.
 function toLocalInput(value) {
   if (!value) return ''
   const d = new Date(value)
@@ -75,11 +71,8 @@ const FORMAT_LABEL_KEYS = {
   SWISS:              'tournaments.fmtSwiss',
 }
 
-// Seul le format à élimination directe est proposé désormais.
 const DEFAULT_FORMAT = 'SINGLE_ELIMINATION'
-//Traduit une erreur métier de tournoi via son `code` (200 + en-tête), avec
-// repli sur une clé i18n générique si le code est inconnu — jamais le `detail`
-// brut du backend (français only).
+
 function tourErr(t, data, fallbackKey) {
   const code = data?.code
   if (code) {
@@ -186,7 +179,6 @@ export default function Tournois() {
   const countdown            = useCountdown(tournamentStart)
   const isOpen               = tournament?.status === 'OPEN'
   const isClosed             = tournament?.status === 'CLOSED'
-  // Champs structurels modifiables tant que le tournoi n'est pas lancé.
   const editStructEditable   = isOpen || isClosed
   const minStart             = toLocalInput(Date.now())
   const showCountdownOverlay = (isOpen || isClosed) && countdown != null
@@ -254,11 +246,9 @@ export default function Tournois() {
     if (mapped.status !== 'OPEN') fetchBracket(mapped.id)
   }, [fetchWaitingList, fetchSoloWaiting, checkMyRegistration, fetchBracket])
 
-  // Chargement initial.
   useEffect(() => { loadTournament({ withRecruit: true }) }, [loadTournament])
 
-  // Polling : resynchronise l'état (statut, listes, bracket) pour que les joueurs
-  // voient le tournoi se lancer ou leur équipe se former sans recharger la page.
+  // Polling keeps bracket/status in sync without a manual page reload.
   useEffect(() => {
     const id = setInterval(() => loadTournament(), 15000)
     return () => clearInterval(id)
@@ -696,7 +686,7 @@ export default function Tournois() {
           </div>
         )}
 
-        {/* ── Bannière inscription / désinscription ── */}
+        {/* ── Registration banner ── */}
         {tournament?.status === 'OPEN' && !registered && (
           <div className={styles.registerBanner}>
             <span>{t('tournaments.notRegistered')}</span>
@@ -714,8 +704,7 @@ export default function Tournois() {
           </div>
         )}
 
-        {/* ── Listes d'attente ── */}
-        {/* Joueurs sans partenaire — uniquement en 2v2 */}
+        {/* ── Waiting lists ── */}
         {!is1v1 && (
           <div className={styles.waitingListBox}>
             <div className={styles.waitingListHeader}>
@@ -742,7 +731,7 @@ export default function Tournois() {
           </div>
         )}
 
-        {/* Équipes / joueurs confirmés */}
+        {/* Confirmed teams / players */}
         <div className={styles.confirmedTeamsBox}>
           <div className={styles.waitingListHeader}>
             <span className={styles.waitingListTitle}>
@@ -779,7 +768,7 @@ export default function Tournois() {
           )}
         </div>
 
-        {/* ── Panel admin — Forcer une équipe ── */}
+        {/* ── Admin panel — Force a team ── */}
         {bdeUnlocked && tournament?.status === 'OPEN' && (
           <div className={styles.adminPanel}>
             <div>
@@ -891,7 +880,7 @@ export default function Tournois() {
         </div>
       </div>
 
-      {/* ── Accès BDE ── */}
+      {/* ── BDE access ── */}
       <Modal open={bdeOpen} onClose={() => { setBdeOpen(false); setBdeError('') }} title={t('tournaments.bdeAccess')}>
         <div className={styles.formGroup}>
           <div className={styles.adminSub}>{t('tournaments.bdeCheckSub')}</div>
@@ -904,7 +893,7 @@ export default function Tournois() {
         </div>
       </Modal>
 
-      {/* ── Créer un tournoi ── */}
+      {/* ── Create tournament ── */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('tournaments.createTournament')}>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.tournamentName')}</label>
@@ -1026,7 +1015,7 @@ export default function Tournois() {
         <StandingsTable standings={standings} format={tournament?.format} />
       </Modal>
 
-      {/* ── Résultat import ── */}
+      {/* ── Import result ── */}
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title={t('tournaments.importResultTitle')}>
         {importResult?.error ? (
           <div className={styles.bdeError}>{importResult.error}</div>

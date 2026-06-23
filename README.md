@@ -289,7 +289,7 @@ tournaments ──< tournament_matches
 |---|---|---|
 | Live table view | See in real time who is currently playing | Roman (WS) + Sydney (backend) |
 | Slot reservation | Reserve a time slot on the foosball table | Sydney |
-| Waiting queue | Join the queue; position updates live for all users | Roman (WS) + Sydney (backend) + Coraline (frontend) |
+| Waiting queue | Join the queue; position updates live for all users | Roman (WS) + Sydney (backend) + Léa (frontend) |
 
 ### Betting
 | Feature | Description | Author(s) |
@@ -316,8 +316,8 @@ tournaments ──< tournament_matches
 |---|---|---|
 | Create tournament | BDE members can create a tournament with name, format, and participants | Sydney |
 | Bracket generation | Automatic bracket based on participants | Sydney |
-| Result tracking | Record match results, advance brackets | Sydney + Coraline (frontend) |
-| Tournament page | View bracket, standings, and schedule | Coraline |
+| Result tracking | Record match results, advance brackets | Sydney + Léa (frontend) |
+| Tournament page | View bracket, standings, and schedule | Thais + Léa |
 
 ### Admin
 | Feature | Description | Author(s) |
