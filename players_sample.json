@@ -1,0 +1,7 @@
+[
+  { "player1": "alice",   "player2": "bob"   },
+  { "player1": "charlie", "player2": "dave"  },
+  { "player1": "eve",     "player2": "frank" },
+  { "player1": "grace",   "player2": "henry" },
+  { "player1": "ivan",    "player2": "julia" }
+]

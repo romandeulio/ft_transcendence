@@ -38,6 +38,20 @@ def _require_bde(request):
     return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
 
+def _user_error(detail, code, extra=None):
+    # Erreurs "métier" attendues (date passée, tournoi plein, fichier invalide…)
+    # renvoyées en HTTP 200 + en-tête X-Tournament-Error, et non en 400, pour
+    # éviter une ligne rouge dans la console navigateur (même convention que
+    # GDPR / token refresh / l'update profil). Le front lit l'en-tête (ou
+    # data.code) et affiche le message traduit correspondant.
+    data = {'detail': detail, 'code': code}
+    if extra:
+        data.update(extra)
+    resp = Response(data)
+    resp['X-Tournament-Error'] = code
+    return resp
+
+
 def _make_queue_entry(team1, team2, team_size):
     kwargs = dict(
         player1=team1.player1,
@@ -493,6 +507,28 @@ def bde_unlock(request):
     return Response({'ok': False, 'detail': 'Accès refusé.'})
 
 
+def _create_tournament(data, created_by):
+    """Création partagée entre l'endpoint BDE (JWT) et l'admin (session).
+    Retourne (tournament_data, None) en cas de succès, ou (None, (message, code)).
+    `created_by` peut être None (champ nullable) pour une création admin."""
+    active_exists = Tournament.objects.filter(
+        status__in=[Tournament.Status.OPEN, Tournament.Status.CLOSED, Tournament.Status.ONGOING]
+    ).exists()
+    if active_exists:
+        return None, ('Un tournoi est déjà planifié ou en cours.', 'ALREADY_PLANNED')
+
+    serializer = TournamentCreateSerializer(data=data)
+    if not serializer.is_valid():
+        if 'start_date' in serializer.errors:
+            return None, ('La date de début doit être dans le futur.', 'PAST_DATE')
+        first = next(iter(serializer.errors.values()))
+        msg   = first[0] if isinstance(first, (list, tuple)) else str(first)
+        return None, (str(msg), 'INVALID')
+
+    tournament = serializer.save(created_by=created_by)
+    return TournamentSerializer(tournament).data, None
+
+
 class TournamentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -529,19 +565,10 @@ class TournamentListCreateView(APIView):
         if not _has_bde_access(request):
             return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
-        active_exists = Tournament.objects.filter(
-            status__in=[Tournament.Status.OPEN, Tournament.Status.CLOSED, Tournament.Status.ONGOING]
-        ).exists()
-        if active_exists:
-            return Response(
-                {'detail': 'Un tournoi est déjà planifié ou en cours.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        serializer = TournamentCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        tournament = serializer.save(created_by=request.user)
-        return Response(TournamentSerializer(tournament).data, status=status.HTTP_201_CREATED)
+        data, error = _create_tournament(request.data, request.user)
+        if error:
+            return _user_error(error[0], error[1])
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PATCH', 'DELETE'])
@@ -564,24 +591,44 @@ def update_tournament(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     if tournament.status == Tournament.Status.DONE:
-        return Response(
-            {'detail': 'Les tournois archivés ne sont pas modifiables.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Les tournois archivés ne sont pas modifiables.', 'ARCHIVED')
 
     serializer = TournamentUpdateSerializer(tournament, data=request.data, partial=True)
-    serializer.is_valid(raise_exception=True)
+    if not serializer.is_valid():
+        if 'start_date' in serializer.errors:
+            return _user_error('La date de début doit être dans le futur.', 'PAST_DATE')
+        first = next(iter(serializer.errors.values()))
+        msg   = first[0] if isinstance(first, (list, tuple)) else str(first)
+        return _user_error(str(msg), 'INVALID')
 
     if tournament.status != Tournament.Status.OPEN:
         blocked = {'start_date', 'deadline', 'max_players', 'format', 'team_size'} & set(serializer.validated_data.keys())
         if blocked:
-            return Response(
-                {'detail': 'Ces champs ne peuvent plus être modifiés après le lancement.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _user_error('Ces champs ne peuvent plus être modifiés après le lancement.', 'LOCKED_FIELDS')
 
     tournament = serializer.save()
     return Response(TournamentSerializer(tournament).data)
+
+
+def _do_start_tournament(tournament):
+    """Logique partagée entre l'endpoint BDE et l'admin pour démarrer un tournoi.
+    Retourne (tournament_data, None) ou (None, (message, code)).
+    """
+    if tournament.status != Tournament.Status.CLOSED:
+        return None, ("Ferme d'abord les inscriptions avant de lancer le tournoi.", 'NOT_CLOSED')
+
+    regs = _get_valid_registrations(tournament)
+    min_teams = {'SINGLE_ELIMINATION': 2, 'ROUND_ROBIN': 3, 'SWISS': 4}
+    needed = min_teams.get(tournament.format, 2)
+    if len(regs) < needed:
+        return None, (f'Il faut au moins {needed} équipes complètes pour lancer ce format.', 'NOT_ENOUGH_TEAMS')
+
+    with transaction.atomic():
+        error = _build_and_start_tournament(tournament)
+        if error:
+            return None, (error, 'BUILD_ERROR')
+
+    return TournamentSerializer(tournament).data, None
 
 
 @api_view(['POST'])
@@ -591,35 +638,10 @@ def start_tournament(request, pk):
     if not _has_bde_access(request):
         return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
-    # Démarrage en 2 temps : il faut d'abord fermer les inscriptions (CLOSED).
-    if tournament.status != Tournament.Status.CLOSED:
-        return Response(
-            {
-                'detail': "Ferme d'abord les inscriptions avant de lancer le tournoi.",
-                'code': 'NOT_CLOSED',
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    regs = _get_valid_registrations(tournament)
-    min_teams = {'SINGLE_ELIMINATION': 2, 'ROUND_ROBIN': 3, 'SWISS': 4}
-    needed = min_teams.get(tournament.format, 2)
-    if len(regs) < needed:
-        return Response(
-            {
-                'detail': f'Il faut au moins {needed} équipes complètes pour lancer ce format.',
-                'code': 'NOT_ENOUGH_TEAMS',
-                'needed': needed,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    with transaction.atomic():
-        error = _build_and_start_tournament(tournament)
-        if error:
-            return Response({'detail': error}, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(TournamentSerializer(tournament).data)
+    data, error = _do_start_tournament(tournament)
+    if error:
+        return _user_error(error[0], error[1])
+    return Response(data)
 
 
 @api_view(['POST'])
@@ -630,10 +652,7 @@ def close_registrations(request, pk):
         return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
     if tournament.status != Tournament.Status.OPEN:
-        return Response(
-            {'detail': 'Les inscriptions ne sont pas ouvertes.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Les inscriptions ne sont pas ouvertes.', 'NOT_OPEN')
 
     tournament.status = Tournament.Status.CLOSED
     tournament.save(update_fields=['status'])
@@ -648,10 +667,7 @@ def reopen_registrations(request, pk):
         return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
     if tournament.status != Tournament.Status.CLOSED:
-        return Response(
-            {'detail': 'Les inscriptions ne sont pas fermées.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Les inscriptions ne sont pas fermées.', 'NOT_CLOSED')
 
     tournament.status = Tournament.Status.OPEN
     tournament.save(update_fields=['status'])
@@ -707,15 +723,9 @@ def swiss_next_round(request, pk):
         return denied
 
     if tournament.format != 'SWISS':
-        return Response(
-            {'detail': 'Ce tournoi n\'est pas au format Swiss.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Ce tournoi n\'est pas au format Swiss.', 'NOT_SWISS')
     if tournament.status != Tournament.Status.ONGOING:
-        return Response(
-            {'detail': 'Le tournoi n\'est pas en cours.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Le tournoi n\'est pas en cours.', 'NOT_ONGOING')
 
     last_round = (
         tournament.bracket_matches
@@ -725,10 +735,7 @@ def swiss_next_round(request, pk):
     ) or 0
 
     if not _swiss_round_complete(tournament, last_round):
-        return Response(
-            {'detail': f'Le round {last_round} n\'est pas encore terminé.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error(f'Le round {last_round} n\'est pas encore terminé.', 'ROUND_NOT_COMPLETE')
 
     n_teams    = tournament.teams.count()
     max_rounds = _max_swiss_rounds(n_teams)
@@ -747,48 +754,32 @@ def swiss_next_round(request, pk):
     return Response(TournamentSerializer(tournament).data)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def import_players(request, pk):
-    tournament = get_object_or_404(Tournament, pk=pk)
-    denied = _require_bde(request)
-    if denied:
-        return denied
-
+def _do_import_players(tournament, file):
+    """Logique d'import partagée entre l'endpoint BDE (JWT) et l'admin (session).
+    Retourne (result, None) en cas de succès — result = {created, skipped, errors} —
+    ou (None, (message, code)) en cas d'erreur métier."""
     if tournament.status != Tournament.Status.OPEN:
-        return Response(
-            {'detail': 'Les inscriptions sont fermées.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return None, ('Les inscriptions sont fermées.', 'REGISTRATIONS_CLOSED')
 
-    file = request.FILES.get('file')
     if not file:
-        return Response({'detail': 'Aucun fichier fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        return None, ('Aucun fichier fourni.', 'NO_FILE')
 
     try:
         pairs = _parse_import_file(file)
     except Exception as e:
-        return Response(
-            {'detail': f'Erreur de parsing : {e}'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return None, (f'Erreur de parsing : {e}', 'PARSE_ERROR')
 
     if not pairs:
-        return Response({'detail': 'Aucun joueur trouvé dans le fichier.'}, status=status.HTTP_400_BAD_REQUEST)
+        return None, ('Aucun joueur trouvé dans le fichier.', 'NO_PLAYERS')
 
     created  = []
     skipped  = []
     errors   = []
 
-    max_teams    = tournament.max_players // tournament.team_size
-    current_regs = tournament.registrations.count()
-
+    # Aucune limite de capacité à l'import (choix BDE) : on inscrit tout le monde,
+    # c'est le lancement du tournoi qui contrôle le nombre d'équipes.
     with transaction.atomic():
         for p1_login, p2_login in pairs:
-            if current_regs >= max_teams:
-                skipped.append(f"{p1_login} (tournoi complet)")
-                continue
-
             try:
                 player1 = User.objects.get(username=p1_login)
             except User.DoesNotExist:
@@ -822,13 +813,22 @@ def import_players(request, pk):
                 player2=player2,
             )
             created.append(p1_login if not player2 else f"{p1_login} & {p2_login}")
-            current_regs += 1
 
-    return Response({
-        'created': created,
-        'skipped': skipped,
-        'errors':  errors,
-    }, status=status.HTTP_201_CREATED)
+    return {'created': created, 'skipped': skipped, 'errors': errors}, None
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def import_players(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    denied = _require_bde(request)
+    if denied:
+        return denied
+
+    result, error = _do_import_players(tournament, request.FILES.get('file'))
+    if error:
+        return _user_error(error[0], error[1])
+    return Response(result, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PATCH'])
@@ -846,13 +846,10 @@ def tournament_match_result(request, match_id):
         return Response({'detail': 'Accès BDE requis.'}, status=status.HTTP_403_FORBIDDEN)
 
     if match.status != TournamentMatch.Status.PENDING:
-        return Response({'detail': 'Ce match est déjà terminé.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Ce match est déjà terminé.', 'MATCH_DONE')
 
     if not match.team1_id or not match.team2_id:
-        return Response(
-            {'detail': "Ce match n'a pas encore deux équipes."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error("Ce match n'a pas encore deux équipes.", 'INCOMPLETE_MATCH')
 
     score_team1 = request.data.get('score_team1')
     score_team2 = request.data.get('score_team2')
@@ -863,26 +860,17 @@ def tournament_match_result(request, match_id):
             score_team1 = int(score_team1)
             score_team2 = int(score_team2)
         except (TypeError, ValueError):
-            return Response({'detail': 'Les scores doivent être des nombres.'}, status=status.HTTP_400_BAD_REQUEST)
+            return _user_error('Les scores doivent être des nombres.', 'INVALID_SCORE')
         if score_team1 == score_team2:
-            return Response(
-                {'detail': 'Un match de tournoi ne peut pas finir sur une égalité.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _user_error('Un match de tournoi ne peut pas finir sur une égalité.', 'TIE')
         winner = match.team1 if score_team1 > score_team2 else match.team2
     elif winner_id:
         winner = get_object_or_404(TournamentTeam, pk=winner_id, tournament=match.tournament)
         if winner.pk not in (match.team1_id, match.team2_id):
-            return Response(
-                {'detail': 'Le gagnant doit être une des deux équipes du match.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _user_error('Le gagnant doit être une des deux équipes du match.', 'INVALID_WINNER')
         score_team1 = score_team2 = None
     else:
-        return Response(
-            {'detail': 'Fournis score_team1/score_team2 ou winner_team.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Fournis score_team1/score_team2 ou winner_team.', 'NO_RESULT')
 
     with transaction.atomic():
         old_queue_entry = match.queue_entry
@@ -926,10 +914,7 @@ def postpone_tournament_match(request, match_id):
         return denied
 
     if not match.is_ready:
-        return Response(
-            {'detail': 'Ce match ne peut pas encore être planifié.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Ce match ne peut pas encore être planifié.', 'NOT_READY')
 
     # Les matchs de tournoi ne sont plus mis en file d'attente : la replanification
     # n'a plus d'objet (le match se joue hors-ligne, le BDE valide le résultat).
@@ -943,27 +928,24 @@ def register_to_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
 
     if tournament.status != Tournament.Status.OPEN:
-        return Response({'detail': 'Les inscriptions sont fermées.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Les inscriptions sont fermées.', 'REGISTRATIONS_CLOSED')
 
     if tournament.deadline:
         deadline = tournament.deadline
         if timezone.is_naive(deadline):
             deadline = timezone.make_aware(deadline)
         if deadline < timezone.now():
-            return Response(
-                {'detail': "La date limite d'inscription est dépassée."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _user_error("La date limite d'inscription est dépassée.", 'DEADLINE_PASSED')
 
     already = TournamentRegistration.objects.filter(
         tournament=tournament
     ).filter(Q(player1=request.user) | Q(player2=request.user))
     if already.exists():
-        return Response({'detail': 'Vous êtes déjà inscrit.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Vous êtes déjà inscrit.', 'ALREADY_REGISTERED')
 
     max_teams = tournament.max_players // tournament.team_size
     if tournament.registrations.count() >= max_teams:
-        return Response({'detail': 'Le tournoi est complet.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Le tournoi est complet.', 'FULL')
 
     partner_login = (request.data.get('partner') or '').strip()
 
@@ -980,17 +962,14 @@ def register_to_tournament(request, pk):
         try:
             player2 = User.objects.get(username=partner_login)
         except User.DoesNotExist:
-            return Response({'detail': 'Partenaire introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+            return _user_error('Partenaire introuvable.', 'PARTNER_NOT_FOUND')
         if player2 == request.user:
-            return Response(
-                {'detail': 'Vous ne pouvez pas vous inscrire avec vous-même.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _user_error('Vous ne pouvez pas vous inscrire avec vous-même.', 'SELF_PARTNER')
         partner_taken = TournamentRegistration.objects.filter(
             tournament=tournament
         ).filter(Q(player1=player2) | Q(player2=player2))
         if partner_taken.exists():
-            return Response({'detail': 'Ce partenaire est déjà inscrit.'}, status=status.HTTP_400_BAD_REQUEST)
+            return _user_error('Ce partenaire est déjà inscrit.', 'PARTNER_TAKEN')
 
     reg = TournamentRegistration.objects.create(
         tournament=tournament,
@@ -1009,39 +988,43 @@ def force_team(request, pk):
         return denied
 
     if tournament.status != Tournament.Status.OPEN:
-        return Response(
-            {'detail': 'Les équipes ne peuvent plus être modifiées après le lancement.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Les équipes ne peuvent plus être modifiées après le lancement.', 'LOCKED')
 
     player1_login = (request.data.get('player1') or '').strip()
     player2_login = (request.data.get('player2') or '').strip()
 
     if not player1_login:
-        return Response({'detail': 'Login joueur 1 requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Login joueur 1 requis.', 'PLAYER1_REQUIRED')
 
     if tournament.team_size == 2 and not player2_login:
-        return Response({'detail': 'Deux logins sont requis en 2v2.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Deux logins sont requis en 2v2.', 'TWO_LOGINS_REQUIRED')
 
     if player1_login == player2_login:
-        return Response(
-            {'detail': 'Une équipe doit contenir deux joueurs différents.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Une équipe doit contenir deux joueurs différents.', 'SAME_PLAYER')
 
     try:
         player1 = User.objects.get(username=player1_login)
     except User.DoesNotExist:
-        return Response({'detail': f'Joueur introuvable : {player1_login}'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error(f'Joueur introuvable : {player1_login}', 'PLAYER_NOT_FOUND')
 
     player2 = None
     if player2_login:
         try:
             player2 = User.objects.get(username=player2_login)
         except User.DoesNotExist:
-            return Response({'detail': f'Joueur introuvable : {player2_login}'}, status=status.HTTP_400_BAD_REQUEST)
+            return _user_error(f'Joueur introuvable : {player2_login}', 'PLAYER_NOT_FOUND')
 
     players = [player1] + ([player2] if player2 else [])
+
+    # Bug fix : un ajout BDE ne doit pas dépasser la capacité du tournoi. Si aucun
+    # des joueurs n'est déjà inscrit (= vraie nouvelle équipe) et que le tournoi
+    # est complet, on refuse. Un ré-appariement de joueurs déjà inscrits passe.
+    max_teams = tournament.max_players // tournament.team_size
+    already_involved = TournamentRegistration.objects.filter(
+        tournament=tournament
+    ).filter(Q(player1__in=players) | Q(player2__in=players)).exists()
+    if not already_involved and tournament.registrations.count() >= max_teams:
+        return _user_error('Le tournoi est complet.', 'FULL')
 
     with transaction.atomic():
         existing = TournamentRegistration.objects.filter(
@@ -1076,10 +1059,7 @@ def remove_registration(request, pk, reg_id):
         return denied
 
     if tournament.status != Tournament.Status.OPEN:
-        return Response(
-            {'detail': 'Les inscriptions ne peuvent plus être modifiées après le lancement.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Les inscriptions ne peuvent plus être modifiées après le lancement.', 'LOCKED')
 
     reg = get_object_or_404(TournamentRegistration, pk=reg_id, tournament=tournament)
     reg.delete()
@@ -1091,29 +1071,23 @@ def remove_registration(request, pk, reg_id):
 def accept_teammate_invite(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     if tournament.status != Tournament.Status.OPEN:
-        return Response({'detail': 'Les inscriptions sont fermées.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Les inscriptions sont fermées.', 'REGISTRATIONS_CLOSED')
 
     if tournament.team_size == 1:
-        return Response(
-            {'detail': 'Ce tournoi est en 1v1, pas d\'invitation de coéquipier.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Ce tournoi est en 1v1, pas d\'invitation de coéquipier.', 'SOLO_TOURNAMENT')
 
     inviter_login = (request.data.get('inviter') or '').strip()
     if not inviter_login:
-        return Response({'detail': 'Inviteur requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Inviteur requis.', 'INVITER_REQUIRED')
 
     try:
         inviter = User.objects.get(username=inviter_login)
     except User.DoesNotExist:
-        return Response({'detail': 'Joueur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        return _user_error('Joueur introuvable.', 'PLAYER_NOT_FOUND')
 
     j2 = request.user
     if j2 == inviter:
-        return Response(
-            {'detail': 'Vous ne pouvez pas vous inviter vous-même.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return _user_error('Vous ne pouvez pas vous inviter vous-même.', 'SELF_INVITE')
 
     with transaction.atomic():
         existing = TournamentRegistration.objects.filter(

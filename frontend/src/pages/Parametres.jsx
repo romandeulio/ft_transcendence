@@ -106,12 +106,12 @@ export default function Parametres() {
       const res = await fetch('/api/auth/profile/update/', {
         method: 'PUT', credentials: 'include', body: profileData,
       })
-      if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        if (body?.error?.includes('invalide'))     throw new Error(t('settings.profile.invalidEmail'))
-        if (body?.error?.includes('déjà utilisé')) throw new Error(t('settings.profile.emailInUse'))
-        throw new Error(t('settings.profile.updateError'))
-      }
+      // Erreurs d'email : le backend répond 200 + en-tête X-Profile-Email-Error
+      // (évite le 400 rouge dans la console). On affiche le message traduit.
+      const emailError = res.headers.get('X-Profile-Email-Error')
+      if (emailError === 'invalid') throw new Error(t('settings.profile.invalidEmail'))
+      if (emailError === 'inuse')   throw new Error(t('settings.profile.emailInUse'))
+      if (!res.ok)                  throw new Error(t('settings.profile.updateError'))
       const updated = await res.json()
       login({ ...user, email: updated.email, avatar_url: updated.avatar_url })
       setAvatarPreview(updated.avatar_url ?? null)

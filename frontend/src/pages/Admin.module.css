@@ -326,6 +326,7 @@
 .pillChill   { background: #EBF0FC; color: #4068DB; }
 .pillActif   { background: #E4EDD4; color: #57722F; }
 .pillInactif { background: #EBF0FC; color: #7A8FD0; }
+.pillClosed  { background: #FFF3CD; color: #856404; }
 
 .playerCell {
   display: flex;
@@ -388,6 +389,8 @@
 
 .miniBtnDanger { border-color: #FBEAE8; color: #CD3122; }
 .miniBtnDanger:hover { background: #FBEAE8; }
+.miniBtnSuccess { border-color: #D4EDDA; color: #1B6B3A; }
+.miniBtnSuccess:hover { background: #D4EDDA; }
 
 /* ── Status mini ── */
 .statusLoading { font-size: 12px; color: #7A8FD0; padding: 4px 0; }

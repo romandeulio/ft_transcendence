@@ -11,7 +11,7 @@ import AddMatchModal from '../components/ui/AddMatchModal'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useQueue } from '../context/QueueContext'
-import { authFetch, matchToRow } from '../services/api'
+import { authFetch, matchToRow, tournamentError } from '../services/api'
 import styles from './Accueil.module.css'
 
 const MATCHES_PER_PAGE = 3
@@ -721,7 +721,7 @@ export default function Accueil() {
                             method: 'POST',
                             body: JSON.stringify({ inviter: inv.from }),
                           })
-                          if (!res.ok) {
+                          if (!res.ok || tournamentError(res)) {
                             const text = await res.text().catch(() => '')
                             let detail = ''
                             try { detail = text ? JSON.parse(text).detail : '' } catch {}

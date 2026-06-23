@@ -6,7 +6,7 @@ import Topbar from '../components/layout/Topbar'
 import Modal from '../components/ui/Modal'
 import Pill from '../components/ui/Pill'
 import BracketTree from '../components/bracket/BracketTree'
-import { authFetch } from '../services/api'
+import { authFetch, tournamentError } from '../services/api'
 import { useTranslation } from 'react-i18next'
 import styles from './Tournois.module.css'
 
@@ -278,7 +278,7 @@ export default function Tournois() {
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/start/`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) {
+      if (!res.ok || tournamentError(res)) {
         setStartError(
           data.code === 'NOT_ENOUGH_TEAMS'
             ? t('tournaments.errNotEnoughTeams', { count: data.needed })
@@ -304,7 +304,7 @@ export default function Tournois() {
       const endpoint = open ? 'reopen-registrations' : 'close-registrations'
       const res = await authFetch(`/api/tournaments/${tournament.id}/${endpoint}/`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setStartError(data.detail || t('tournaments.errStart')); return }
+      if (!res.ok || tournamentError(res)) { setStartError(data.detail || t('tournaments.errStart')); return }
       setTournament(mapTournament(data))
     } catch { setStartError(t('tournaments.errNetwork')) }
     finally  { setCloseLoading(false) }
@@ -342,7 +342,7 @@ export default function Tournois() {
         method: 'PATCH',
         body: JSON.stringify({ winner_team: winnerTeamId }),
       })
-      if (!res.ok) {
+      if (!res.ok || tournamentError(res)) {
         const data = await res.json().catch(() => ({}))
         setStartError(data.detail || t('tournaments.errValidateMatch'))
         return
@@ -355,7 +355,7 @@ export default function Tournois() {
   const handlePostponeMatch = async (match) => {
     try {
       const res = await authFetch(`/api/tournaments/matches/${match.id}/postpone/`, { method: 'PATCH' })
-      if (!res.ok) {
+      if (!res.ok || tournamentError(res)) {
         const data = await res.json().catch(() => ({}))
         setStartError(data.detail || t('tournaments.errReschedule'))
         return
@@ -372,7 +372,7 @@ export default function Tournois() {
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/swiss-next-round/`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setSwissNextError(data.detail || t('tournaments.errGeneric')); return }
+      if (!res.ok || tournamentError(res)) { setSwissNextError(data.detail || t('tournaments.errGeneric')); return }
       fetchBracket(tournament.id)
     } catch { setSwissNextError(t('tournaments.errNetwork')) }
     finally  { setSwissNextLoading(false) }
@@ -408,8 +408,8 @@ export default function Tournois() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setEditError(data.start_date?.[0] ? t('tournaments.errPastDate') : (data.detail || t('tournaments.errEdit')))
+      if (!res.ok || tournamentError(res)) {
+        setEditError(data.code === 'PAST_DATE' ? t('tournaments.errPastDate') : (data.detail || t('tournaments.errEdit')))
         return
       }
       setTournament(mapTournament(data))
@@ -435,7 +435,7 @@ export default function Tournois() {
         }),
       })
       const data = await res.json()
-      if (res.ok) {
+      if (res.ok && !tournamentError(res)) {
         setTournament(mapTournament(data))
         setWaitingList([]); setSoloWaiting([]); setBracketRounds([]); setStandings([])
         setRegistered(false); setShowRecruit(false); setInvitedSet(new Set())
@@ -444,8 +444,8 @@ export default function Tournois() {
         setCreateFormat('SINGLE_ELIMINATION'); setCreateTeamSize('2')
       } else {
         setCreateError(
-          data.start_date?.[0] ? t('tournaments.errPastDate')
-            : (data.detail || data.name?.[0] || t('tournaments.errCreate'))
+          data.code === 'PAST_DATE' ? t('tournaments.errPastDate')
+            : (data.detail || t('tournaments.errCreate'))
         )
       }
     } catch { setCreateError(t('tournaments.errNetwork')) }
@@ -468,8 +468,8 @@ export default function Tournois() {
         headers: {},
       })
       const data = await res.json()
-      if (!res.ok) {
-        setImportResult({ error: data.detail || 'Erreur lors de l\'import.' })
+      if (!res.ok || tournamentError(res)) {
+        setImportResult({ error: data.detail || t('tournaments.errGeneric') })
       } else {
         setImportResult(data)
         fetchWaitingList(tournament.id)
@@ -496,7 +496,7 @@ export default function Tournois() {
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      if (res.ok) {
+      if (res.ok && !tournamentError(res)) {
         setRegistered(true)
         setRegisterOpen(false)
         if (!is1v1 && !partner.trim()) setShowRecruit(true)
@@ -530,7 +530,7 @@ export default function Tournois() {
         body: JSON.stringify(body),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setTeamAdminError(data.detail || t('tournaments.errEditTeams')); return }
+      if (!res.ok || tournamentError(res)) { setTeamAdminError(data.detail || t('tournaments.errEditTeams')); return }
       setTeamPlayer1(''); setTeamPlayer2('')
       fetchWaitingList(tournament.id)
       fetchSoloWaiting(tournament.id)
@@ -548,7 +548,7 @@ export default function Tournois() {
     setTeamAdminError('')
     try {
       const res = await authFetch(`/api/tournaments/${tournament.id}/registrations/${registrationId}/`, { method: 'DELETE' })
-      if (!res.ok) {
+      if (!res.ok || tournamentError(res)) {
         const data = await res.json().catch(() => ({}))
         setTeamAdminError(data.detail || t('tournaments.errDelete'))
         return

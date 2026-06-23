@@ -575,12 +575,19 @@ class UpdateProfileView(APIView):
             from django.core.validators import validate_email as django_validate_email
             from django.core.exceptions import ValidationError as DjangoValidationError
             new_email = request.data['email'].strip()
+            # Erreurs d'email renvoyées en 200 + en-tête X-Profile-Email-Error
+            # (au lieu d'un 400) pour éviter une ligne rouge dans la console.
+            # Le front lit l'en-tête et affiche le message traduit correspondant.
             try:
                 django_validate_email(new_email)
             except DjangoValidationError:
-                return Response({'error': 'Format email invalide'}, status=400)
+                resp = Response({'error': 'Format email invalide'})
+                resp['X-Profile-Email-Error'] = 'invalid'
+                return resp
             if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
-                return Response({'error': 'Email déjà utilisé'}, status=400)
+                resp = Response({'error': 'Email déjà utilisé'})
+                resp['X-Profile-Email-Error'] = 'inuse'
+                return resp
             user.email = new_email
 
         # Suppression avatar

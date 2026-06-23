@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
+import { tournamentError } from '../services/api'
 import styles from './Admin.module.css'
 
 const adm = (url, opts = {}) =>
@@ -173,7 +174,7 @@ function CreateTournamentModal({ onClose, onCreated }) {
 
   const handleCreate = async () => {
     if (!name) return
-    const res = await adm('/api/tournaments/', {
+    const res = await adm('/api/admin/tournaments/create/', {
       method: 'POST',
       body: JSON.stringify({
         name,
@@ -181,7 +182,7 @@ function CreateTournamentModal({ onClose, onCreated }) {
         max_players: parseInt(maxPlayers),
       }),
     })
-    if (res.ok) {
+    if (res.ok && !tournamentError(res)) {
       setDone(true)
       onCreated?.()
     } else {
@@ -509,12 +510,61 @@ function Dashboard({ onLogout }) {
     }
   }
 
+  const handleCloseRegistrations = async (tourn) => {
+    if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
+    const res = await adm(`/api/admin/tournaments/${tourn.id}/close/`, { method: 'POST' })
+    if (res.ok && !res.headers.get('X-Admin-Error')) {
+      setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'CLOSED' } : x))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.detail || t('admin.err_close_tourn'))
+    }
+  }
+
+  const handleStartTournament = async (tourn) => {
+    if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
+    const res = await adm(`/api/admin/tournaments/${tourn.id}/start/`, { method: 'POST' })
+    if (res.ok && !res.headers.get('X-Tournament-Error')) {
+      setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'ONGOING' } : x))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.detail || t('admin.err_start_tourn'))
+    }
+  }
+
   const handleCancelTournament = async (tourn) => {
     if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
     const res = await adm(`/api/admin/tournaments/${tourn.id}/cancel/`, { method: 'POST' })
-    if (res.ok) {
+    if (res.ok && !res.headers.get('X-Admin-Error')) {
       setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'CANCELLED' } : x))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error || d.detail || t('admin.err_generic'))
     }
+  }
+
+  // Import de joueurs depuis l'admin (CSV/TXT/JSON) — appelle l'endpoint tournoi
+  // qui accepte la session admin. FormData → pas de Content-Type forcé (≠ adm()).
+  const handleImportPlayers = async (tourn, file) => {
+    if (!file) return
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`/api/admin/tournaments/${tourn.id}/import-players/`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || tournamentError(res)) {
+      alert(data.detail || t('admin.import_failed'))
+      return
+    }
+    alert(t('admin.import_result', {
+      created: data.created?.length ?? 0,
+      skipped: data.skipped?.length ?? 0,
+      errors:  data.errors?.length  ?? 0,
+    }))
+    loadAll()
   }
 
   const handleEloSaved = () => {
@@ -529,6 +579,7 @@ function Dashboard({ onLogout }) {
 
   const tournStatus = (status) => ({
     OPEN: t('admin.status_open'),
+    CLOSED: t('admin.status_closed'),
     ONGOING: t('admin.status_ongoing'),
     CANCELLED: t('admin.status_cancelled'),
   }[status] ?? t('admin.status_finished'))
@@ -668,7 +719,7 @@ function Dashboard({ onLogout }) {
                       <th>{t('admin.col_elo1v1')}</th>
                       <th>{t('admin.col_elo2v2')}</th>
                       <th>{t('admin.col_tokens')}</th>
-                      <th>role</th>
+                      <th>{t('admin.col_role')}</th>
                       <th>{t('admin.col_status')}</th>
                       <th>{t('admin.col_actions')}</th>
                     </tr>
@@ -755,6 +806,7 @@ function Dashboard({ onLogout }) {
                         <td>
                           <span className={`${styles.pill} ${
                             tourn.status === 'OPEN' ? styles.pillActif :
+                            tourn.status === 'CLOSED' ? styles.pillClosed :
                             tourn.status === 'ONGOING' ? styles.pillCompet :
                             tourn.status === 'CANCELLED' ? styles.pillInactif :
                             styles.pillChill
@@ -765,27 +817,51 @@ function Dashboard({ onLogout }) {
                         <td className={styles.tdScore}>{tourn.max_players}</td>
                         <td className={styles.tdDate}>{fmtDate(tourn.start_date)}</td>
                         <td className={styles.tdActions}>
-                          {(tourn.status === 'OPEN' || tourn.status === 'ONGOING') && (
+                          {(tourn.status === 'OPEN' || tourn.status === 'CLOSED' || tourn.status === 'ONGOING') && (
                             <>
-                              <button
-                                className={styles.miniBtn}
-                                onClick={() => document.getElementById(`import-players-${tourn.id}`)?.click()}
-                              >
-                                Importer joueurs
-                              </button>
-                              <input
-                                id={`import-players-${tourn.id}`}
-                                type="file"
-                                accept=".csv,.txt,.json"
-                                style={{ display: 'none' }}
-                                onChange={() => {}}
-                              />
-                              <button
-                                className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
-                                onClick={() => handleCancelTournament(tourn)}
-                              >
-                                {t('admin.btn_cancel_tourn')}
-                              </button>
+                              {tourn.status === 'OPEN' && (
+                                <>
+                                  <button
+                                    className={styles.miniBtn}
+                                    onClick={() => document.getElementById(`import-players-${tourn.id}`)?.click()}
+                                  >
+                                    {t('admin.btn_import_players')}
+                                  </button>
+                                  <input
+                                    id={`import-players-${tourn.id}`}
+                                    type="file"
+                                    accept=".csv,.txt,.json"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0]
+                                      e.target.value = ''
+                                      if (file) handleImportPlayers(tourn, file)
+                                    }}
+                                  />
+                                  <button
+                                    className={styles.miniBtn}
+                                    onClick={() => handleCloseRegistrations(tourn)}
+                                  >
+                                    {t('admin.btn_close_tourn')}
+                                  </button>
+                                </>
+                              )}
+                              {tourn.status === 'CLOSED' && (
+                                <button
+                                  className={`${styles.miniBtn} ${styles.miniBtnSuccess}`}
+                                  onClick={() => handleStartTournament(tourn)}
+                                >
+                                  {t('admin.btn_start_tourn')}
+                                </button>
+                              )}
+                              {(tourn.status === 'OPEN' || tourn.status === 'CLOSED') && (
+                                <button
+                                  className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
+                                  onClick={() => handleCancelTournament(tourn)}
+                                >
+                                  {t('admin.btn_cancel_tourn')}
+                                </button>
+                              )}
                             </>
                           )}
                         </td>
@@ -837,7 +913,7 @@ export default function Admin() {
         credentials: 'include',
         body: JSON.stringify({ login, password }),
       })
-      if (res.ok) {
+      if (res.ok && res.headers.get('X-Admin-Login') !== 'failed') {
         setLoggedIn(true)
       } else {
         setError(t('admin.err_credentials'))

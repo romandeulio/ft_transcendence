@@ -112,6 +112,14 @@ export function authFetch(url, options = {}) {
   })
 }
 
+// Erreur "métier" de tournoi : le backend répond 200 + en-tête X-Tournament-Error
+// (au lieu d'un 400) pour ne pas laisser de ligne rouge dans la console. Renvoie
+// le code d'erreur (ex. 'FULL', 'PAST_DATE') si présent, sinon null. Les handlers
+// doivent traiter `tournamentError(res)` comme un échec malgré un res.ok à true.
+export function tournamentError(res) {
+  return res.headers.get('X-Tournament-Error')
+}
+
 // Transforme un match API en ligne affichable pour Profil / Accueil
 export function matchToRow(m, username) {
   // Detect team membership — player1_teammate is on team1, not team2
