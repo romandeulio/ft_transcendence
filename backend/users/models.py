@@ -163,8 +163,8 @@ class User(AbstractBaseUser):
         self.gdpr_deleted = True
         self.save()
 
-        self._cancel_open_activity()
         self._kick_live_session(old_username)
+        self._cancel_open_activity()
 
     def _cancel_open_activity(self):
         """Annule l'activité en cours du joueur et rembourse les paris liés.

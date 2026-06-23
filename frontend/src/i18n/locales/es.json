@@ -910,6 +910,7 @@
 		"modal_elo_cancel": "Cancelar",
 		"modal_elo_saving": "Guardando...",
 		"modal_elo_save": "Guardar",
+		"confirm_start_tourn": "¿Iniciar el torneo «{{name}}»?",
 		"confirm_cancel_tourn": "¿Cancelar el torneo «{{name}}»?",
 		"modal_ban_title": "Banear a {{username}}",
 		"modal_elo_title": "Editar el ELO de {{username}}",

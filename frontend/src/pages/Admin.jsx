@@ -521,7 +521,7 @@ function Dashboard({ onLogout }) {
   }
 
   const handleStartTournament = async (tourn) => {
-    if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
+    if (!confirm(t('admin.confirm_start_tourn', { name: tourn.name }))) return
     const res = await adm(`/api/admin/tournaments/${tourn.id}/start/`, { method: 'POST' })
     if (res.ok && !res.headers.get('X-Tournament-Error')) {
       setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'ONGOING' } : x))

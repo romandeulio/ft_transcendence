@@ -67,10 +67,6 @@ def _make_queue_entry(team1, team2, team_size):
 
 
 def _schedule_ready_match(match):
-    # Les matchs de tournoi ne passent PLUS par la file d'attente : ils se jouent
-    # hors-ligne (babyfoot) et seul le BDE valide le gagnant via le bracket. On ne
-    # crée donc plus de QueueEntry pour eux. Le matchmaking classique (app planning)
-    # n'est pas concerné par cette fonction.
     return match
 
 

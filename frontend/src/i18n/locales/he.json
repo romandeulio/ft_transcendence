@@ -910,6 +910,7 @@
     "modal_elo_cancel": "ביטול",
     "modal_elo_saving": "שומר...",
     "modal_elo_save": "שמור",
+    "confirm_start_tourn": "להתחיל את הטורניר «{{name}}»?",
     "confirm_cancel_tourn": "לבטל את הטורניר «{{name}}»?",
     "modal_ban_title": "חסום את {{username}}",
     "modal_elo_title": "ערוך את ה-ELO של {{username}}",

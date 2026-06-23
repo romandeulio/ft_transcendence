@@ -127,7 +127,7 @@ function StandingsTable({ standings, format }) {
 export default function Tournois() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
-  const { notifyTournamentTeammate } = useQueue()
+  useQueue()
   const importInputRef = useRef(null)
 
   const [bdeOpen,     setBdeOpen]     = useState(false)
@@ -159,9 +159,6 @@ export default function Tournois() {
   const [partner,          setPartner]          = useState('')
   const [registerError,    setRegisterError]    = useState('')
   const [registerLoading,  setRegisterLoading]  = useState(false)
-  const [showRecruit,      setShowRecruit]      = useState(false)
-  const [invitedSet,       setInvitedSet]       = useState(new Set())
-
   const [standingsOpen,    setStandingsOpen]    = useState(false)
   const [standings,        setStandings]        = useState([])
 
@@ -229,7 +226,6 @@ export default function Tournois() {
     if (data) {
       setRegistered(true)
       setMyRegistrationId(data.id)
-      if (!data.player2) setShowRecruit(true)
     }
   }, [])
 
@@ -267,6 +263,7 @@ export default function Tournois() {
     const id = setInterval(() => loadTournament(), 15000)
     return () => clearInterval(id)
   }, [loadTournament])
+
 
 
   const handleBdeSubmit = async () => {
@@ -335,8 +332,6 @@ export default function Tournois() {
       setBracketRounds([])
       setStandings([])
       setRegistered(false)
-      setShowRecruit(false)
-      setInvitedSet(new Set())
     } catch { setStartError(t('tournaments.errNetwork')) }
     finally  { setDeleteLoading(false) }
   }
@@ -442,7 +437,7 @@ export default function Tournois() {
       if (res.ok && !tournamentError(res)) {
         setTournament(mapTournament(data))
         setWaitingList([]); setSoloWaiting([]); setBracketRounds([]); setStandings([])
-        setRegistered(false); setShowRecruit(false); setInvitedSet(new Set())
+        setRegistered(false)
         setCreateOpen(false)
         setCreateName(''); setCreateStart(''); setCreatePrize('')
         setCreateFormat('SINGLE_ELIMINATION'); setCreateTeamSize('2')
@@ -500,7 +495,6 @@ export default function Tournois() {
       if (res.ok && !tournamentError(res)) {
         setRegistered(true)
         setRegisterOpen(false)
-        if (!is1v1 && !partner.trim()) setShowRecruit(true)
         fetchWaitingList(tournament.id)
         fetchSoloWaiting(tournament.id)
         const increment = is1v1 ? 1 : (partner.trim() ? 2 : 1)
@@ -515,7 +509,7 @@ export default function Tournois() {
   const handleSelfUnregister = async () => {
     if (!tournament || !myRegistrationId) return
     const res = await authFetch(`/api/tournaments/${tournament.id}/my-registration/`, { method: 'DELETE' })
-    if (res.ok) { setRegistered(false); setMyRegistrationId(null); setShowRecruit(false) }
+    if (res.ok) { setRegistered(false); setMyRegistrationId(null) }
   }
 
 
@@ -717,47 +711,6 @@ export default function Tournois() {
             <button className={styles.unregisterBtn} onClick={handleSelfUnregister}>
               {t('tournaments.unregister')}
             </button>
-          </div>
-        )}
-
-        {/* ── Panel recrutement (uniquement 2v2) ── */}
-        {registered && showRecruit && !is1v1 && (
-          <div className={styles.recruitPanel}>
-            <div className={styles.recruitHeader}>
-              <span className={styles.recruitIcon}>🤝</span>
-              <span className={styles.recruitTitle}>{t('tournaments.findTeammate')}</span>
-            </div>
-            <div className={styles.recruitSub}>{t('tournaments.findTeammateSub')}</div>
-            {soloWaiting.length === 0 && (
-              <div className={styles.waitingListEmpty}>{t('tournaments.noWaiting')}</div>
-            )}
-            {soloWaiting.map(p => (
-              <div key={p.login} className={styles.recruitRow}>
-                <div className={styles.recruitAvatar}>{p.login[0].toUpperCase()}</div>
-                <div className={styles.recruitInfo}>
-                  <div className={styles.recruitLogin}>{p.login}</div>
-                  <div className={styles.recruitSince}>{t('tournaments.waitingSince', { since: p.since })}</div>
-                </div>
-                {invitedSet.has(p.login) ? (
-                  <span className={styles.invitedBadge}>{t('tournaments.invited')}</span>
-                ) : (
-                  <button
-                    className={styles.inviteBtn}
-                    onClick={() => {
-                      setInvitedSet(prev => new Set([...prev, p.login]))
-                      notifyTournamentTeammate(p.login, {
-                        tournamentId:   tournament?.id,
-                        tournamentName: tournament?.name,
-                        format:         '2v2',
-                        is_ranked:      false,
-                      })
-                    }}
-                  >
-                    {t('tournaments.invite')}
-                  </button>
-                )}
-              </div>
-            ))}
           </div>
         )}
 

@@ -77,17 +77,6 @@ export default function BracketTree({ rounds, format = 'SINGLE_ELIMINATION', can
   const treeRef = useRef(null)
   const matchRefs = useRef(new Map())
 
-  useEffect(() => {
-    const el = treeRef.current
-    if (!el) return
-    const onWheel = (e) => {
-      if (el.scrollWidth <= el.clientWidth) return
-      e.preventDefault()
-      el.scrollLeft += e.deltaY + e.deltaX
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [])
   const [connectorState, setConnectorState] = useState({ width: 0, height: 0, paths: [] })
   const displayedRounds = useMemo(
     () => (rounds?.length ? rounds : createEmptyRounds()).map(round => ({
