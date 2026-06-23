@@ -39,7 +39,7 @@ The application is built around four core pillars:
 
 **Key technical features:**
 - Real-time updates via WebSockets (live queue, live ranking, instant notifications)
-- Full authentication system: email/password + OAuth 42 + 2FA (TOTP)
+- Full authentication system: email/password + OAuth 42 + 2FA (OTP)
 - Advanced role system: admin, user, bde
 - Public API with API key authentication and rate limiting
 - Full internationalization: French, English, Spanish, Hebrew (with RTL layout)
@@ -278,7 +278,7 @@ tournaments ──< tournament_matches
 | Email / password registration | Secure sign-up with hashed + salted password | Thaïs |
 | Login / logout | JWT-based session, HttpOnly cookie | Thaïs |
 | OAuth 42 | "Login with 42" button, auto account creation on first login | Thaïs |
-| 2FA (TOTP) | 6-digit code via Google Authenticator / Authy, activatable in settings | Sydney |
+| 2FA (OTP) | 6-digit code via Google Authenticator / Authy, activatable in settings | Sydney |
 | Profile editing | Change username, avatar upload, display stats | Léa |
 | Friends system | Add/remove friends, see online status | Léa |
 | GDPR export | Export all personal data as JSON or CSV | Thaïs |
@@ -402,7 +402,7 @@ Total: **28 points** (minimum required: 14)
 |---|---|---|---|
 | Standard user management | Major | 2 | Registration and login via email/password. Profile page with editable username and avatar. Friends system with online status. Stats and match history displayed on profile. |
 | OAuth 42 | Minor | 1 | "Login with 42" button redirects to the 42 intranet. On first login, an account is created automatically using the intra login and email. |
-| 2FA (Two-Factor Authentication) | Minor | 1 | TOTP-based 2FA (compatible with Google Authenticator, Authy). Activated from user settings. On login, a 6-digit code is required after password validation. |
+| 2FA (Two-Factor Authentication) | Minor | 1 | OTP-based 2FA (compatible with Google Authenticator, Authy). Activated from user settings. On login, a 6-digit code is required after password validation. |
 | Advanced permissions | Major | 2 | Three roles: **admin** (manage users, seasons, matches, dashboard), **bde** (create and manage tournaments), and **user** (play, bet, reserve). Different views and available actions per role. Admin panel with CRUD on users. |
 | User activity analytics dashboard | Minor | 1 | ELO curve over time, performance history, per-season stats, multi-player comparison. Filterable by date period. Endpoints at `/api/performance/`. Visualized with `PerformanceChart` and `ComparisonBarChart` components. |
 
