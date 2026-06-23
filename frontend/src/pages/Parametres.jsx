@@ -90,17 +90,30 @@ export default function Parametres() {
   }
 
   const handleSave = async () => {
+    setAvatarLoading(true)
+    setAvatarError('')
+
+    // Validation email côté client (évite le fetch 400 dans la console)
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setAvatarError(t('settings.profile.invalidEmail'))
+      setAvatarLoading(false)
+      return
+    }
+
     try {
-      setAvatarLoading(true)
-      setAvatarError('')
       const profileData = new FormData()
-      profileData.append('email', email)
+      profileData.append('email', email.trim())
       if (avatarDeleted) profileData.append('delete_avatar', 'true')
       if (avatarFile)    profileData.append('avatar', avatarFile)
       const res = await fetch('/api/auth/profile/update/', {
         method: 'PUT', credentials: 'include', body: profileData,
       })
-      if (!res.ok) throw new Error(t('settings.profile.updateError'))
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        if (body?.error?.includes('invalide'))     throw new Error(t('settings.profile.invalidEmail'))
+        if (body?.error?.includes('déjà utilisé')) throw new Error(t('settings.profile.emailInUse'))
+        throw new Error(t('settings.profile.updateError'))
+      }
       const updated = await res.json()
       login({ ...user, email: updated.email, avatar_url: updated.avatar_url })
       setAvatarPreview(updated.avatar_url ?? null)

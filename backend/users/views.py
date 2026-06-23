@@ -569,7 +569,16 @@ class UpdateProfileView(APIView):
 
         # Mise à jour email
         if request.data.get('email'):
-            user.email = request.data['email']
+            from django.core.validators import validate_email as django_validate_email
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            new_email = request.data['email'].strip()
+            try:
+                django_validate_email(new_email)
+            except DjangoValidationError:
+                return Response({'error': 'Format email invalide'}, status=400)
+            if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                return Response({'error': 'Email déjà utilisé'}, status=400)
+            user.email = new_email
 
         # Suppression avatar
         if request.data.get('delete_avatar') == 'true':

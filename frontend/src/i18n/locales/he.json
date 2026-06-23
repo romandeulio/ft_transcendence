@@ -347,7 +347,9 @@
       "email": "אימייל",
       "save": "שמור שינויים",
       "uploading": "מעלה...",
-      "updateError": "שגיאה בעדכון הפרופיל"
+      "updateError": "שגיאה בעדכון הפרופיל",
+      "invalidEmail": "פורמט אימייל לא תקין",
+      "emailInUse": "האימייל הזה כבר בשימוש"
     },
     "security": {
       "changePassword": "שנה סיסמה",

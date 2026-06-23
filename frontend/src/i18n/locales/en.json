@@ -347,7 +347,9 @@
       "email": "Email",
       "save": "Save changes",
       "uploading": "Uploading...",
-      "updateError": "Profile update error"
+      "updateError": "Profile update error",
+      "invalidEmail": "Invalid email format",
+      "emailInUse": "This email is already in use"
     },
     "security": {
       "changePassword": "Change password",

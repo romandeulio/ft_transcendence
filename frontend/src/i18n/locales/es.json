@@ -347,7 +347,9 @@
       "email": "Correo electrónico",
       "save": "Guardar cambios",
       "uploading": "Subiendo...",
-      "updateError": "Error al actualizar el perfil"
+      "updateError": "Error al actualizar el perfil",
+      "invalidEmail": "Formato de email inválido",
+      "emailInUse": "Este email ya está en uso"
     },
     "security": {
       "changePassword": "Cambiar contraseña",
