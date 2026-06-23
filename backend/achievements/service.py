@@ -66,7 +66,8 @@ def _check_for_player(user, match, is_p1, on_team1):
 
     # Récupérer les stats cumulées depuis TOUS les matchs validés
     all_matches = Match.objects.filter(
-        Q(player1__username=login) | Q(player2__username=login),
+        Q(player1__username=login) | Q(player2__username=login)
+        | Q(player1_teammate__username=login) | Q(player2_teammate__username=login),
         status='VALIDATED'
     ).select_related('player1', 'player1_teammate', 'player2', 'player2_teammate').order_by('played_at')
 
