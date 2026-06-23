@@ -347,7 +347,7 @@ class AdminCreateTournamentView(APIView):
 
         data, error = _create_tournament(request.data, None)
         if error:
-            resp = Response({'detail': error[0]})
+            resp = Response({'detail': error[0], 'code': error[1]})
             resp['X-Tournament-Error'] = error[1]
             return resp
         return Response(data, status=201)
@@ -368,7 +368,7 @@ class AdminImportPlayersView(APIView):
         result, error = _do_import_players(tournament, request.FILES.get('file'))
         if error:
             # Même convention que le reste : 200 + en-tête (pas de 400 en console).
-            resp = Response({'detail': error[0]})
+            resp = Response({'detail': error[0], 'code': error[1]})
             resp['X-Tournament-Error'] = error[1]
             return resp
         return Response(result, status=201)
@@ -397,7 +397,10 @@ class AdminStartTournamentView(APIView):
         tournament = get_object_or_404(Tournament, pk=tournament_id)
         data, error = _do_start_tournament(tournament)
         if error:
-            resp = Response({'detail': error[0]})
+            payload = {'detail': error[0], 'code': error[1]}
+            if len(error) > 2 and error[2]:
+                payload.update(error[2])
+            resp = Response(payload)
             resp['X-Tournament-Error'] = error[1]
             return resp
         return Response(data)

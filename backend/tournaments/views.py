@@ -601,7 +601,9 @@ def update_tournament(request, pk):
         msg   = first[0] if isinstance(first, (list, tuple)) else str(first)
         return _user_error(str(msg), 'INVALID')
 
-    if tournament.status != Tournament.Status.OPEN:
+    # Tant que le tournoi n'est pas lancé (OPEN ou CLOSED), tout reste modifiable.
+    # Une fois ONGOING (bracket construit), on verrouille les champs structurels.
+    if tournament.status not in (Tournament.Status.OPEN, Tournament.Status.CLOSED):
         blocked = {'start_date', 'deadline', 'max_players', 'format', 'team_size'} & set(serializer.validated_data.keys())
         if blocked:
             return _user_error('Ces champs ne peuvent plus être modifiés après le lancement.', 'LOCKED_FIELDS')
@@ -612,21 +614,24 @@ def update_tournament(request, pk):
 
 def _do_start_tournament(tournament):
     """Logique partagée entre l'endpoint BDE et l'admin pour démarrer un tournoi.
-    Retourne (tournament_data, None) ou (None, (message, code)).
+    Retourne (tournament_data, None) ou (None, (message, code, extra)).
     """
     if tournament.status != Tournament.Status.CLOSED:
-        return None, ("Ferme d'abord les inscriptions avant de lancer le tournoi.", 'NOT_CLOSED')
+        return None, ("Ferme d'abord les inscriptions avant de lancer le tournoi.", 'NOT_CLOSED', None)
 
     regs = _get_valid_registrations(tournament)
-    min_teams = {'SINGLE_ELIMINATION': 2, 'ROUND_ROBIN': 3, 'SWISS': 4}
-    needed = min_teams.get(tournament.format, 2)
+    needed = 2  # élimination directe : au moins 2 équipes
     if len(regs) < needed:
-        return None, (f'Il faut au moins {needed} équipes complètes pour lancer ce format.', 'NOT_ENOUGH_TEAMS')
+        return None, (
+            f'Il faut au moins {needed} équipes complètes pour lancer ce format.',
+            'NOT_ENOUGH_TEAMS',
+            {'needed': needed},
+        )
 
     with transaction.atomic():
         error = _build_and_start_tournament(tournament)
         if error:
-            return None, (error, 'BUILD_ERROR')
+            return None, (error, 'BUILD_ERROR', None)
 
     return TournamentSerializer(tournament).data, None
 
@@ -640,7 +645,7 @@ def start_tournament(request, pk):
 
     data, error = _do_start_tournament(tournament)
     if error:
-        return _user_error(error[0], error[1])
+        return _user_error(error[0], error[1], extra=error[2])
     return Response(data)
 
 

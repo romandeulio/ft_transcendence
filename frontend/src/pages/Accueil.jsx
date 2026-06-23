@@ -723,9 +723,10 @@ export default function Accueil() {
                           })
                           if (!res.ok || tournamentError(res)) {
                             const text = await res.text().catch(() => '')
-                            let detail = ''
-                            try { detail = text ? JSON.parse(text).detail : '' } catch {}
-                            window.alert(detail || t('invite.acceptError'))
+                            let code = ''
+                            try { code = text ? JSON.parse(text).code : '' } catch {}
+                            const msg = code ? t(`tournaments.errCode.${code}`, { defaultValue: '' }) : ''
+                            window.alert(msg || t('invite.acceptError'))
                             return
                           }
                         } catch {

@@ -187,7 +187,8 @@ function CreateTournamentModal({ onClose, onCreated }) {
       onCreated?.()
     } else {
       const d = await res.json().catch(() => ({}))
-      setError(d.detail || d.error || t('admin.modal_tourn_err'))
+      const coded = d.code ? t(`tournaments.errCode.${d.code}`, { count: d.needed, defaultValue: '' }) : ''
+      setError(coded || t('admin.modal_tourn_err'))
     }
   }
 
@@ -215,7 +216,7 @@ function CreateTournamentModal({ onClose, onCreated }) {
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>{t('admin.modal_tourn_max')}</label>
           <select className={styles.modalInput} value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)}>
-            {[16, 32].map(n => <option key={n} value={n}>{t('admin.modal_tourn_players', { n })}</option>)}
+            {[4, 8, 16, 32, 64].map(n => <option key={n} value={n}>{t('admin.modal_tourn_players', { n })}</option>)}
           </select>
         </div>
         {error && <div className={styles.error}>{error}</div>}
@@ -510,14 +511,20 @@ function Dashboard({ onLogout }) {
     }
   }
 
+  // Traduit une erreur tournoi par son `code` (jamais le `detail` français brut).
+  const tourErrMsg = (data, fallbackKey) => {
+    const code = data?.code
+    const msg = code ? t(`tournaments.errCode.${code}`, { count: data?.needed, defaultValue: '' }) : ''
+    return msg || t(fallbackKey)
+  }
+
   const handleCloseRegistrations = async (tourn) => {
     if (!confirm(t('admin.confirm_cancel_tourn', { name: tourn.name }))) return
     const res = await adm(`/api/admin/tournaments/${tourn.id}/close/`, { method: 'POST' })
     if (res.ok && !res.headers.get('X-Admin-Error')) {
       setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'CLOSED' } : x))
     } else {
-      const d = await res.json().catch(() => ({}))
-      alert(d.detail || t('admin.err_close_tourn'))
+      alert(t('admin.err_close_tourn'))
     }
   }
 
@@ -528,7 +535,7 @@ function Dashboard({ onLogout }) {
       setTournaments(prev => prev.map(x => x.id === tourn.id ? { ...x, status: 'ONGOING' } : x))
     } else {
       const d = await res.json().catch(() => ({}))
-      alert(d.detail || t('admin.err_start_tourn'))
+      alert(tourErrMsg(d, 'admin.err_start_tourn'))
     }
   }
 
@@ -556,7 +563,7 @@ function Dashboard({ onLogout }) {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok || tournamentError(res)) {
-      alert(data.detail || t('admin.import_failed'))
+      alert(tourErrMsg(data, 'admin.import_failed'))
       return
     }
     alert(t('admin.import_result', {

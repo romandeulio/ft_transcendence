@@ -18,7 +18,7 @@ class Tournament(models.Model):
     team_size   = models.IntegerField(choices=[(1, '1'), (2, '2')], default=2)
     start_date  = models.DateTimeField()
     deadline    = models.DateTimeField(null=True, blank=True)
-    max_players = models.IntegerField(choices=[(16, '16'), (32, '32')], default=16)
+    max_players = models.IntegerField(default=16)
     prize       = models.CharField(max_length=200, blank=True, default='')
     status      = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
     created_by  = models.ForeignKey(

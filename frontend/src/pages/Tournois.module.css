@@ -338,6 +338,14 @@
   margin-top: 6px;
 }
 
+/* Dans la barre d'actions (flex), l'erreur prend toute la largeur pour passer
+   sous les boutons au lieu de les décaler horizontalement. */
+.bdeActions .bdeError {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 2px;
+}
+
 .soloNote {
   font-size: 12px;
   color: var(--ink);
