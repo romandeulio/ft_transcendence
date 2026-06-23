@@ -65,7 +65,6 @@ function mapTournament(data) {
     dateLabel:   data.date_label,
     prize:       data.prize || null,
     registered:  data.registered,
-    maxPlayers:  data.max_players,
     status:      data.status,
   }
 }
@@ -78,11 +77,7 @@ const FORMAT_LABEL_KEYS = {
 
 // Seul le format à élimination directe est proposé désormais.
 const DEFAULT_FORMAT = 'SINGLE_ELIMINATION'
-// Plus de plafond 16/32 : on propose un éventail de tailles (puissances de 2
-// pour un bracket propre).
-const PLAYER_OPTIONS = [4, 8, 16, 32, 64]
-
-// Traduit une erreur métier de tournoi via son `code` (200 + en-tête), avec
+//Traduit une erreur métier de tournoi via son `code` (200 + en-tête), avec
 // repli sur une clé i18n générique si le code est inconnu — jamais le `detail`
 // brut du backend (français only).
 function tourErr(t, data, fallbackKey) {
@@ -146,7 +141,6 @@ export default function Tournois() {
   const [createPrize,    setCreatePrize]    = useState('')
   const [createFormat,   setCreateFormat]   = useState('SINGLE_ELIMINATION')
   const [createTeamSize, setCreateTeamSize] = useState('2')
-  const [maxPlayers,     setMaxPlayers]     = useState('16')
   const [createLoading,  setCreateLoading]  = useState(false)
   const [createError,    setCreateError]    = useState('')
 
@@ -156,7 +150,6 @@ export default function Tournois() {
   const [editPrize,      setEditPrize]      = useState('')
   const [editFormat,     setEditFormat]     = useState('SINGLE_ELIMINATION')
   const [editTeamSize,   setEditTeamSize]   = useState('2')
-  const [editMaxPlayers, setEditMaxPlayers] = useState('16')
   const [editLoading,    setEditLoading]    = useState(false)
   const [editError,      setEditError]      = useState('')
 
@@ -400,7 +393,6 @@ export default function Tournois() {
     setEditPrize(tournament.prize || '')
     setEditFormat(tournament.format || 'SINGLE_ELIMINATION')
     setEditTeamSize(String(tournament.teamSize || 2))
-    setEditMaxPlayers(String(tournament.maxPlayers || 16))
     setEditError('')
     setEditOpen(true)
   }
@@ -413,12 +405,11 @@ export default function Tournois() {
       const res = await authFetch(`/api/tournaments/${tournament.id}/`, {
         method: 'PATCH',
         body: JSON.stringify({
-          name:        editName,
-          start_date:  editStart,
-          max_players: parseInt(editMaxPlayers, 10),
-          prize:       editPrize,
-          format:      editFormat,
-          team_size:   parseInt(editTeamSize, 10),
+          name:      editName,
+          start_date: editStart,
+          prize:     editPrize,
+          format:    editFormat,
+          team_size: parseInt(editTeamSize, 10),
         }),
       })
       const data = await res.json()
@@ -440,12 +431,11 @@ export default function Tournois() {
       const res = await authFetch('/api/tournaments/', {
         method: 'POST',
         body: JSON.stringify({
-          name:        createName,
-          start_date:  createStart,
-          max_players: parseInt(maxPlayers, 10),
-          prize:       createPrize,
-          format:      createFormat,
-          team_size:   parseInt(createTeamSize, 10),
+          name:       createName,
+          start_date: createStart,
+          prize:      createPrize,
+          format:     createFormat,
+          team_size:  parseInt(createTeamSize, 10),
         }),
       })
       const data = await res.json()
@@ -674,9 +664,9 @@ export default function Tournois() {
                   type={tournament.status === 'ONGOING' ? 'live' : 'season'}
                 />
               )}
-              {tournament.registered != null && tournament.maxPlayers != null && (
+              {tournament.registered != null && (
                 <span className={styles.participants}>
-                  {t('tournaments.registered', { count: tournament.registered, max: tournament.maxPlayers })}
+                  {t('tournaments.registered', { count: tournament.registered })}
                 </span>
               )}
             </div>
@@ -910,7 +900,7 @@ export default function Tournois() {
                       { val: cd.m, unit: t('tournaments.minutes') },
                       { val: cd.s, unit: t('tournaments.seconds') },
                     ].map(({ val, unit }, i) => (
-                      <div key={unit} className={styles.countdownItem}>
+                      <div key={i} className={styles.countdownItem}>
                         {i > 0 && <span className={styles.countdownColon}>:</span>}
 
                         <div className={styles.countdownPart}>
@@ -939,7 +929,6 @@ export default function Tournois() {
           {tournament && (
             <BracketTree
               rounds={bracketRounds.length ? bracketRounds : undefined}
-              maxPlayers={tournament?.maxPlayers ?? 16}
               format={tournament?.format ?? 'SINGLE_ELIMINATION'}
               canReport={bdeUnlocked && tournament?.status === 'ONGOING'}
               onWinner={handleMatchWinner}
@@ -985,14 +974,6 @@ export default function Tournois() {
           <input className={styles.input} type="datetime-local" lang={i18n.language} min={minStart} value={createStart} onChange={e => setCreateStart(e.target.value)} />
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t('tournaments.maxPlayers')}</label>
-          <select className={styles.input} value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)}>
-            {PLAYER_OPTIONS.map(n => (
-              <option key={n} value={n}>{t('tournaments.playersCount', { count: n })}</option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.prizeOptional')}</label>
           <input className={styles.input} placeholder={t('tournaments.prizePlaceholder')} value={createPrize} onChange={e => setCreatePrize(e.target.value)} />
         </div>
@@ -1025,14 +1006,6 @@ export default function Tournois() {
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.dateTime')}</label>
           <input className={styles.input} type="datetime-local" lang={i18n.language} min={minStart} value={editStart} onChange={e => setEditStart(e.target.value)} disabled={!editStructEditable} />
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>{t('tournaments.maxPlayers')}</label>
-          <select className={styles.input} value={editMaxPlayers} onChange={e => setEditMaxPlayers(e.target.value)} disabled={!editStructEditable}>
-            {PLAYER_OPTIONS.map(n => (
-              <option key={n} value={n}>{t('tournaments.playersCount', { count: n })}</option>
-            ))}
-          </select>
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>{t('tournaments.prizeOptional')}</label>

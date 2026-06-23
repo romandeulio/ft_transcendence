@@ -442,10 +442,6 @@ def _build_and_start_tournament(tournament):
     if len(regs) < min_teams.get(fmt, 2):
         return f"Il faut au moins {min_teams[fmt]} équipes pour lancer ce format."
 
-    max_teams = tournament.max_players // tournament.team_size
-    if len(regs) > max_teams:
-        return "Il y a trop d'équipes inscrites pour la capacité du tournoi."
-
     random.shuffle(regs)
     teams = _create_teams(tournament, regs)
 
@@ -604,7 +600,7 @@ def update_tournament(request, pk):
     # Tant que le tournoi n'est pas lancé (OPEN ou CLOSED), tout reste modifiable.
     # Une fois ONGOING (bracket construit), on verrouille les champs structurels.
     if tournament.status not in (Tournament.Status.OPEN, Tournament.Status.CLOSED):
-        blocked = {'start_date', 'deadline', 'max_players', 'format', 'team_size'} & set(serializer.validated_data.keys())
+        blocked = {'start_date', 'deadline', 'format', 'team_size'} & set(serializer.validated_data.keys())
         if blocked:
             return _user_error('Ces champs ne peuvent plus être modifiés après le lancement.', 'LOCKED_FIELDS')
 
@@ -948,10 +944,6 @@ def register_to_tournament(request, pk):
     if already.exists():
         return _user_error('Vous êtes déjà inscrit.', 'ALREADY_REGISTERED')
 
-    max_teams = tournament.max_players // tournament.team_size
-    if tournament.registrations.count() >= max_teams:
-        return _user_error('Le tournoi est complet.', 'FULL')
-
     partner_login = (request.data.get('partner') or '').strip()
 
     if tournament.team_size == 1:
@@ -1020,16 +1012,6 @@ def force_team(request, pk):
             return _user_error(f'Joueur introuvable : {player2_login}', 'PLAYER_NOT_FOUND')
 
     players = [player1] + ([player2] if player2 else [])
-
-    # Bug fix : un ajout BDE ne doit pas dépasser la capacité du tournoi. Si aucun
-    # des joueurs n'est déjà inscrit (= vraie nouvelle équipe) et que le tournoi
-    # est complet, on refuse. Un ré-appariement de joueurs déjà inscrits passe.
-    max_teams = tournament.max_players // tournament.team_size
-    already_involved = TournamentRegistration.objects.filter(
-        tournament=tournament
-    ).filter(Q(player1__in=players) | Q(player2__in=players)).exists()
-    if not already_involved and tournament.registrations.count() >= max_teams:
-        return _user_error('Le tournoi est complet.', 'FULL')
 
     with transaction.atomic():
         existing = TournamentRegistration.objects.filter(

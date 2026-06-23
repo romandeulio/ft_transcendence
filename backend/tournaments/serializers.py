@@ -20,7 +20,7 @@ class TournamentSerializer(serializers.ModelSerializer):
         model  = Tournament
         fields = [
             'id', 'name', 'format', 'team_size',
-            'start_date', 'deadline', 'max_players',
+            'start_date', 'deadline',
             'prize', 'status', 'registered', 'teams_count',
             'date_label', 'deadline_label', 'created_at',
         ]
@@ -76,7 +76,7 @@ class TournamentSerializer(serializers.ModelSerializer):
 class TournamentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Tournament
-        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'max_players', 'prize']
+        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'prize']
         extra_kwargs = {
             'deadline': {'required': False, 'allow_null': True},
             'prize':    {'required': False, 'allow_blank': True},
@@ -92,54 +92,28 @@ class TournamentCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("team_size doit être 1 ou 2.")
         return value
 
-    def validate_max_players(self, value):
-        # Plus de plafond 16/32 : on accepte tout nombre raisonnable, pair pour
-        # garder un bracket d'élimination directe propre.
-        if value is None or value < MIN_PLAYERS:
-            raise serializers.ValidationError(f"Il faut au moins {MIN_PLAYERS} joueurs.")
-        if value % 2 != 0:
-            raise serializers.ValidationError("Le nombre de joueurs doit être pair.")
-        return value
-
     def validate_start_date(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("La date de début doit être dans le futur.")
         return value
 
-    def validate(self, data):
-        max_pl    = data.get('max_players', 16)
-        team_size = data.get('team_size', 2)
-
-        max_teams = max_pl // team_size
-        if max_teams < 2:
-            raise serializers.ValidationError("Il faut au moins 2 équipes pour une élimination directe.")
-        return data
-
 
 class TournamentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Tournament
-        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'max_players', 'prize']
+        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'prize']
         extra_kwargs = {
-            'name':        {'required': False},
-            'format':      {'required': False},
-            'team_size':   {'required': False},
-            'start_date':  {'required': False},
-            'deadline':    {'required': False, 'allow_null': True},
-            'max_players': {'required': False},
-            'prize':       {'required': False, 'allow_blank': True},
+            'name':       {'required': False},
+            'format':     {'required': False},
+            'team_size':  {'required': False},
+            'start_date': {'required': False},
+            'deadline':   {'required': False, 'allow_null': True},
+            'prize':      {'required': False, 'allow_blank': True},
         }
 
     def validate_format(self, value):
         if value not in VALID_FORMATS:
             raise serializers.ValidationError(f"Format invalide. Choix : {VALID_FORMATS}")
-        return value
-
-    def validate_max_players(self, value):
-        if value is None or value < MIN_PLAYERS:
-            raise serializers.ValidationError(f"Il faut au moins {MIN_PLAYERS} joueurs.")
-        if value % 2 != 0:
-            raise serializers.ValidationError("Le nombre de joueurs doit être pair.")
         return value
 
     def validate_start_date(self, value):

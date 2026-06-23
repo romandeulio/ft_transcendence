@@ -302,7 +302,6 @@ class AdminTournamentsView(APIView):
                 'id': str(t.id),
                 'name': t.name,
                 'status': t.status,
-                'max_players': t.max_players,
                 'start_date': t.start_date.isoformat() if t.start_date else None,
                 'deadline': t.deadline.isoformat() if t.deadline else None,
                 'created_at': t.created_at.isoformat() if t.created_at else None,

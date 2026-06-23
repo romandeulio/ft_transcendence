@@ -193,7 +193,6 @@ CREATE TABLE tournaments (
     team_size        INTEGER DEFAULT 2 CHECK (team_size IN (1, 2)),
     start_date  TIMESTAMP NOT NULL,
     deadline    TIMESTAMP,
-    max_players INTEGER NOT NULL DEFAULT 16 CHECK (max_players >= 2 AND max_players % 2 = 0),
     prize       VARCHAR(200) NOT NULL DEFAULT '',
     status      VARCHAR(15) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED', 'ONGOING', 'DONE', 'CANCELLED')),
     created_by  UUID REFERENCES users(id) ON DELETE SET NULL,

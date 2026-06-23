@@ -168,7 +168,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
   const { t } = useTranslation()
   const [name,       setName]       = useState('')
   const [dateStart,  setDateStart]  = useState('')
-  const [maxPlayers, setMaxPlayers] = useState('16')
   const [done,       setDone]       = useState(false)
   const [error,      setError]      = useState('')
 
@@ -179,7 +178,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
       body: JSON.stringify({
         name,
         start_date: dateStart,
-        max_players: parseInt(maxPlayers),
       }),
     })
     if (res.ok && !tournamentError(res)) {
@@ -212,12 +210,6 @@ function CreateTournamentModal({ onClose, onCreated }) {
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>{t('admin.modal_tourn_date')}</label>
           <input className={styles.modalInput} type="datetime-local" value={dateStart} onChange={e => setDateStart(e.target.value)} />
-        </div>
-        <div className={styles.modalField}>
-          <label className={styles.modalLabel}>{t('admin.modal_tourn_max')}</label>
-          <select className={styles.modalInput} value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)}>
-            {[4, 8, 16, 32, 64].map(n => <option key={n} value={n}>{t('admin.modal_tourn_players', { n })}</option>)}
-          </select>
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.modalActions}>
@@ -801,7 +793,6 @@ function Dashboard({ onLogout }) {
                     <tr>
                       <th>{t('admin.col_name')}</th>
                       <th>{t('admin.col_status')}</th>
-                      <th>{t('admin.col_spots')}</th>
                       <th>{t('admin.col_date')}</th>
                       <th>{t('admin.col_actions')}</th>
                     </tr>
@@ -821,7 +812,6 @@ function Dashboard({ onLogout }) {
                             {tournStatus(tourn.status)}
                           </span>
                         </td>
-                        <td className={styles.tdScore}>{tourn.max_players}</td>
                         <td className={styles.tdDate}>{fmtDate(tourn.start_date)}</td>
                         <td className={styles.tdActions}>
                           {(tourn.status === 'OPEN' || tourn.status === 'CLOSED' || tourn.status === 'ONGOING') && (

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import PlayerBlock from './PlayerBlock'
 import styles from './BracketTree.module.css'
 
-function createEmptyRounds(maxPlayers = 16) {
-  const teamCount = Math.max(2, Math.ceil(maxPlayers / 2))
+function createEmptyRounds() {
+  const teamCount = 2
   const bracketSize = 1 << Math.ceil(Math.log2(teamCount))
   const totalRounds = Math.max(1, Math.log2(bracketSize))
 
@@ -71,7 +71,7 @@ function roundLabel(t, round, totalRounds, format) {
   return t('bracket.round', { n: round })
 }
 
-export default function BracketTree({ rounds, maxPlayers = 16, format = 'SINGLE_ELIMINATION', canReport = false, onWinner, onPostpone }) {
+export default function BracketTree({ rounds, format = 'SINGLE_ELIMINATION', canReport = false, onWinner, onPostpone }) {
   const { t } = useTranslation()
   const isElimination = format === 'SINGLE_ELIMINATION'
   const treeRef = useRef(null)
@@ -90,11 +90,11 @@ export default function BracketTree({ rounds, maxPlayers = 16, format = 'SINGLE_
   }, [])
   const [connectorState, setConnectorState] = useState({ width: 0, height: 0, paths: [] })
   const displayedRounds = useMemo(
-    () => (rounds?.length ? rounds : createEmptyRounds(maxPlayers)).map(round => ({
+    () => (rounds?.length ? rounds : createEmptyRounds()).map(round => ({
       ...round,
       matches: Array.isArray(round.matches) ? round.matches : [],
     })),
-    [rounds, maxPlayers],
+    [rounds],
   )
   const totalRounds = displayedRounds.length
   const maxMatches = Math.max(...displayedRounds.map(round => round.matches.length), 1)
