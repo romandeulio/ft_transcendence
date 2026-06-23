@@ -411,7 +411,7 @@ Total: **28 points** (minimum required: 14)
 | Module | Type | Pts | Implementation |
 |---|---|---|---|
 | Advanced analytics dashboard with data visualization | Major | 2 | Interactive graphs: ELO curve (line chart), win/loss stats (bar chart), activity by period. Real-time updates. Export to CSV/PDF. Filters by date, season, player. |
-| Data export / import | Minor | 1 | Export leaderboard to CSV. Export season stats. Bulk import of match results with validation. |
+| Data export / import | Minor | 1 | Export leaderboard to CSV. Export season stats. Bulk of comparaison charts. |
 | GDPR compliance | Minor | 1 | "Export my data" button → JSON or CSV (profile, matches, bets, wallet, stats). "Delete my account" button → full anonymization of personal data. |
 
 ### Accessibility & Internationalization — 3 pts
