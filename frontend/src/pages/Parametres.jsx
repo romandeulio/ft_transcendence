@@ -356,10 +356,6 @@ export default function Parametres() {
                 <div className={styles.sectionTitle}>{t('settings.language.title')}</div>
                 <LanguageSwitcher />
               </div>
-              <div className={styles.section}>
-                <label className={styles.label}>{t('settings.language.timezone')}</label>
-                <input className={styles.input} defaultValue="Europe/Paris (UTC+2)" />
-              </div>
             </div>
           )}
 
