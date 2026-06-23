@@ -225,6 +225,13 @@
   position: relative;
 }
 
+.noTournamentMsg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
 .blurred {
   filter: blur(6px);
   user-select: none;

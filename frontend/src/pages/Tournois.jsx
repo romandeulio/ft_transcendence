@@ -161,6 +161,7 @@ export default function Tournois() {
   const [importOpen,    setImportOpen]    = useState(false)
 
   const [tournament,    setTournament]    = useState(null)
+  const [tournamentLoaded, setTournamentLoaded] = useState(false)
   const [waitingList,   setWaitingList]   = useState([])
   const [soloWaiting,   setSoloWaiting]   = useState([])
   const [bracketRounds, setBracketRounds] = useState([])
@@ -234,11 +235,12 @@ export default function Tournois() {
 
   const loadTournament = useCallback(async ({ withRecruit = false } = {}) => {
     const res = await authFetch('/api/tournaments/')
-    if (!res.ok) return
+    if (!res.ok) { setTournamentLoaded(true); return }
     const data = await readJson(res)
-    if (!data) { setTournament(null); return }
+    if (!data) { setTournament(null); setTournamentLoaded(true); return }
     const mapped = mapTournament(data)
     setTournament(mapped)
+    setTournamentLoaded(true)
     fetchWaitingList(mapped.id)
     fetchSoloWaiting(mapped.id)
     if (withRecruit) checkMyRegistration(mapped.id)
@@ -915,22 +917,24 @@ export default function Tournois() {
             )
           })()}
 
-          {!tournament && (
-            <div className={styles.bracketBlur}>
+          {tournamentLoaded && !tournament && (
+            <div className={styles.noTournamentMsg}>
               <div className={styles.countdownBox}>
                 <div className={styles.countdownLabel}>{t('tournaments.noTournamentPlanned')}</div>
               </div>
             </div>
           )}
 
-          <BracketTree
-            rounds={bracketRounds.length ? bracketRounds : undefined}
-            maxPlayers={tournament?.maxPlayers ?? 16}
-            format={tournament?.format ?? 'SINGLE_ELIMINATION'}
-            canReport={bdeUnlocked && tournament?.status === 'ONGOING'}
-            onWinner={handleMatchWinner}
-            onPostpone={handlePostponeMatch}
-          />
+          {tournament && (
+            <BracketTree
+              rounds={bracketRounds.length ? bracketRounds : undefined}
+              maxPlayers={tournament?.maxPlayers ?? 16}
+              format={tournament?.format ?? 'SINGLE_ELIMINATION'}
+              canReport={bdeUnlocked && tournament?.status === 'ONGOING'}
+              onWinner={handleMatchWinner}
+              onPostpone={handlePostponeMatch}
+            />
+          )}
         </div>
       </div>
 
