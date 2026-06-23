@@ -278,7 +278,7 @@ tournaments ──< tournament_matches
 | Email / password registration | Secure sign-up with hashed + salted password | Thaïs |
 | Login / logout | JWT-based session, HttpOnly cookie | Thaïs |
 | OAuth 42 | "Login with 42" button, auto account creation on first login | Thaïs |
-| 2FA (TOTP) | 6-digit code via Google Authenticator / Authy, activatable in settings | Thaïs |
+| 2FA (TOTP) | 6-digit code via Google Authenticator / Authy, activatable in settings | Sydney |
 | Profile editing | Change username, avatar upload, display stats | Léa |
 | Friends system | Add/remove friends, see online status | Léa |
 | GDPR export | Export all personal data as JSON or CSV | Thaïs |
@@ -314,18 +314,18 @@ tournaments ──< tournament_matches
 ### Tournaments
 | Feature | Description | Author(s) |
 |---|---|---|
-| Create tournament | BDE members can create a tournament with name, format, and participants | Sydney |
-| Bracket generation | Automatic bracket based on participants | Sydney |
-| Result tracking | Record match results, advance brackets | Sydney + Léa (frontend) |
+| Create tournament | BDE members can create a tournament with name, format, and participants | Thais |
+| Bracket generation | Automatic bracket based on participants | Thais |
+| Result tracking | Record match results, advance brackets | Thais + Léa (frontend) |
 | Tournament page | View bracket, standings, and schedule | Thais + Léa |
 
 ### Admin
 | Feature | Description | Author(s) |
 |---|---|---|
-| User management | CRUD on users, ban/unban, role assignment | Thaïs |
-| Match management | Validate, cancel, or edit matches | Sydney |
+| User management | CRUD on users, ban/unban | Thaïs |
+| ELO, Bets | Manage ELO and bets of users | Sydney |
 | Season management | Create/close seasons, trigger reward distribution | Sydney |
-| Admin dashboard | Overview of platform activity | Léa |
+| Admin dashboard | Overview of platform activity | Léa + Sydney |
 
 ### Search & Discovery
 | Feature | Description | Author(s) |
