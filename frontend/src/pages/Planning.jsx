@@ -37,7 +37,6 @@ export default function Planning() {
     if (format === 'Seul') return
     if (userPendingCount() >= 3) return t('home.maxMatches')
 
-    // Vérification max 3 matchs en attente pour les cibles invitées
     if (!takeWin) {
       const targets = [...(bluePlayers || []), ...(redPlayers || [])].filter(p => p && p !== user?.username)
       const overloaded = targets.filter(p => {
@@ -371,7 +370,7 @@ export default function Planning() {
         prevTeam={prevTeam}
       />
 
-      {/* ── Modal modifier créneau ── */}
+      {/* ── Edit slot modal ── */}
       <Modal open={editOpen} onClose={() => { setEditOpen(false); setCancelTargetSlot(null) }} title={t('queue.mySlotTitle')}>
         <div className={styles.editOptions}>
           <button className={styles.editCancelBtn} onClick={cancelSlot}>{t('queue.cancelSlot')}</button>
