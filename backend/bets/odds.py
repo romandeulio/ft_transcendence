@@ -1,13 +1,13 @@
 """
-Calcul des cotes de paris.
+Betting odds computation.
 
-Deux notions distinctes, à ne pas confondre :
-  - la cote AFFICHÉE : dynamique, recalculée à la demande ;
-  - la cote d'un PARI : figée au moment de la pose (snapshot écrit dans
-    bets.odds), c'est elle qui garantit le gain.
+Two distinct notions, not to be confused:
+  - the DISPLAYED odds: dynamic, recomputed on demand;
+  - a BET's odds: frozen at placement time (snapshot stored in bets.odds),
+    this is the value that guarantees the payout.
 
-Étape 1 : proba dérivée de l'ELO, décalée par la répartition des mises.
-Étape 2 (WebSocket) : on blendera aussi le score live.
+Step 1: probability derived from ELO, shifted by the stake distribution.
+Step 2 (WebSocket): the live score is blended in as well.
 """
 
 ELO_DIVISOR = 400.0
@@ -21,7 +21,7 @@ W_SCORE = 0.30
 
 
 def expected_score(elo_a, elo_b):
-    """Proba que le camp A batte le camp B selon l'ELO (formule standard)."""
+    """Probability that side A beats side B based on ELO (standard formula)."""
     return 1.0 / (1.0 + 10 ** ((elo_b - elo_a) / ELO_DIVISOR))
 
 
@@ -31,8 +31,8 @@ def _clamp(p):
 
 def score_prob(score1, score2):
     """
-    Proba que le camp 1 l'emporte vu le score courant (lissage de Laplace).
-    0-0 → 0.5 ; l'avance d'un camp raccourcit sa cote.
+    Probability that side 1 wins given the current score (Laplace smoothing).
+    0-0 -> 0.5; a lead shortens the leading side's odds.
     """
     s1 = max(score1 or 0, 0)
     s2 = max(score2 or 0, 0)
@@ -41,9 +41,9 @@ def score_prob(score1, score2):
 
 def blended_prob(p_elo, staked_side1, staked_side2, p_score=None):
     """
-    Proba dynamique du camp 1 = moyenne pondérée de : ELO (baseline), répartition
-    des mises (effet marché), et score live (si connu). Les poids sont renormalisés
-    sur les seules composantes disponibles.
+    Dynamic probability of side 1 = weighted average of: ELO (baseline), stake
+    distribution (market effect), and live score (when known). Weights are
+    renormalised over the available components only.
     """
     weights = [W_ELO]
     probs = [p_elo]
@@ -64,8 +64,8 @@ def blended_prob(p_elo, staked_side1, staked_side2, p_score=None):
 
 def prob_to_odds(p):
     """
-    Cote équitable (sans marge) à partir d'une proba, plafonnée.
-    Arrondie à 2 décimales pour coller à bets.odds NUMERIC(5,2), toujours >= 1.00.
+    Fair odds (no bookmaker margin) from a probability, capped.
+    Rounded to 2 decimals to match bets.odds NUMERIC(5,2), always >= 1.00.
     """
     p = _clamp(p)
     return round(min(max(1.0 / p, 1.0), ODDS_CAP), 2)

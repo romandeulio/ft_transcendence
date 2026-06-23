@@ -1,3 +1,4 @@
+"""WebSocket URL routing: maps ws/ paths to their Channels consumers."""
 from django.urls import re_path
 
 from realtime.consumers.queue import QueueConsumer

@@ -9,11 +9,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user')) } catch { return null }
   })
-  // false tant que la session stockée n'a pas été validée auprès du backend.
+  // false until the stored session has been validated against the backend.
   const [authChecked, setAuthChecked] = useState(false)
-  // true quand le compte vient d'être supprimé : déconnecte et affiche un écran
-  // terminal (rendu ici, hors des providers gated par `user`, pour survivre à
-  // la déconnexion).
+  // true once the account was just deleted: logs out and shows a terminal screen
+  // (rendered here, outside the providers gated by `user`, so it survives the
+  // logout).
   const [accountDeleted, setAccountDeleted] = useState(false)
 
   const login = (u) => {
@@ -31,12 +31,12 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
   }
 
-  // Compte supprimé (signalé par le WebSocket file d'attente) : on purge la
-  // session locale — ce qui stoppe tous les polls authentifiés (et donc les
-  // 401 en console) — puis on affiche l'écran terminal.
+  // Account deleted (signalled by the queue WebSocket): purge the local session
+  // -- which stops every authenticated poll (and thus the 401s in the console)
+  // -- then show the terminal screen.
   const markAccountDeleted = useCallback(() => {
-    // Verrou immédiat : coupe tout authFetch ultérieur (idempotent avec
-    // killAuthSession déjà appelé sur le close 4002 ou par authFetch).
+    // Immediate lock: cuts off any later authFetch (idempotent with
+    // killAuthSession already called on the 4002 close or by authFetch).
     killAuthSession()
     fetch('/api/auth/logout/', {
       method: 'POST',
@@ -69,17 +69,17 @@ export function AuthProvider({ children }) {
     } catch {}
   }, [])
 
-  // Écoute l'event émis par authFetch quand un refresh échoue après un 401
-  // (user supprimé, session expirée). Affiche le modal de déconnexion.
+  // Listens to the event emitted by authFetch when a refresh fails after a 401
+  // (user deleted, session expired). Shows the logout modal.
   useEffect(() => {
     const handler = () => markAccountDeleted()
     window.addEventListener('auth:session-expired', handler)
     return () => window.removeEventListener('auth:session-expired', handler)
   }, [markAccountDeleted])
 
-  // Valide le cookie JWT au démarrage : un token résiduel (ex. après `make re`
-  // qui réinitialise la base) pointe vers un user qui n'existe plus → on purge
-  // la session locale au lieu d'afficher un compte fantôme.
+  // Validate the JWT cookie at startup: a leftover token (e.g. after `make re`
+  // which resets the database) points to a user that no longer exists -> purge
+  // the local session instead of showing a ghost account.
   useEffect(() => {
     let cancelled = false
 
@@ -95,9 +95,9 @@ export function AuthProvider({ children }) {
     ;(async () => {
       let fresh = null
       try {
-        // Refresh d'abord (endpoint AllowAny, renvoie 200 {refreshed}). On n'appelle
-        // /profile/ (protégé) QUE si on a un access token valide → jamais de 401
-        // dans la console pour un visiteur non/plus connecté.
+        // Refresh first (AllowAny endpoint, returns 200 {refreshed}). Only call
+        // /profile/ (protected) IF we have a valid access token -> never a 401
+        // in the console for a visitor that is not/no longer logged in.
         let refreshed = false
         try { await apiRefresh(); refreshed = true } catch {}
         if (refreshed) {

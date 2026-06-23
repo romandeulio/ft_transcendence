@@ -1,9 +1,9 @@
 """
-Sérialisation des paris pour l'API REST.
+Bet serialisation for the REST API.
 
-En fonctions simples (dicts) plutôt qu'en ModelSerializer : les payloads
-agrègent partie + marché + pari de l'utilisateur, et collent au contrat du
-front (Paris.jsx : match, p1, p2, probP1, pctBets, myBet...).
+Plain functions returning dicts rather than ModelSerializers: the payloads
+aggregate game + market + the user's own bet, and follow the front-end contract
+(Paris.jsx: match, p1, p2, probP1, pctBets, myBet...).
 """
 from .models import Bet
 from .services import reservation_market, is_launched, betting_open
@@ -18,7 +18,7 @@ def _side_label(player, teammate):
 
 
 def _bet_side(target, predicted_winner_id):
-    """'p1' / 'p2' selon le camp du leader prédit (target = reservation ou match)."""
+    """'p1' / 'p2' depending on the predicted leader's side (target = reservation or match)."""
     if predicted_winner_id in {target.player1_id, target.player1_teammate_id}:
         return 'p1'
     return 'p2'
@@ -26,8 +26,8 @@ def _bet_side(target, predicted_winner_id):
 
 def market_payload(reservation):
     """
-    Marché d'une partie, indépendant de l'utilisateur (cotes, probas, pools).
-    Sert au snapshot REST et aux broadcasts WebSocket de groupe.
+    A game's market, independent of any user (odds, probabilities, pools).
+    Used for the REST snapshot and the group WebSocket broadcasts.
     """
     market = reservation_market(reservation)
     p1 = _side_label(reservation.player1, reservation.player1_teammate)
@@ -55,7 +55,7 @@ def market_payload(reservation):
 
 
 def serialize_available(reservation, user):
-    """Une partie ouverte aux paris, vue par `user` (marché + pari perso)."""
+    """A game open for betting, as seen by `user` (market + the user's own bet)."""
     payload = market_payload(reservation)
 
     my_bet = None
@@ -79,9 +79,9 @@ def serialize_available(reservation, user):
 
 
 def serialize_history(bet):
-    """Un pari de l'historique de l'utilisateur."""
-    # Pari résolu : le Match officiel porte les joueurs ET le score définitif,
-    # donc on le préfère à la réservation pour aligner noms et score.
+    """A single bet from the user's history."""
+    # Resolved bet: the official Match carries both the players AND the final
+    # score, so prefer it over the reservation to keep names and score aligned.
     target = bet.match or bet.reservation
     if target:
         p1 = _side_label(target.player1, target.player1_teammate)

@@ -28,10 +28,10 @@ export function useWebSocket(url, onMessage) {
   const activeUrl   = useRef(null)
 
   const supersededRef = useRef(false)
-  // Pointe toujours sur le dernier handler : chaque message est livré une fois,
-  // de façon synchrone par événement onmessage — immunisé au batching React.
-  // (Un unique slot `data` perd les messages arrivés en rafale, ex. la salve
-  //  queue_state + invite_received différé à la (re)connexion.)
+  // Always points to the latest handler: each message is delivered once,
+  // synchronously per onmessage event -- immune to React batching.
+  // (A single `data` slot drops burst messages, e.g. the queue_state +
+  //  deferred invite_received salvo on (re)connection.)
   const onMessageRef = useRef(onMessage)
   onMessageRef.current = onMessage
 
@@ -60,7 +60,7 @@ export function useWebSocket(url, onMessage) {
         if (activeUrl.current !== url || wsRef.current !== ws) return
         let msg
         try { msg = JSON.parse(e.data) } catch { msg = e.data }
-        // Livraison directe (aucune perte) ; `data` reste exposé pour compat.
+        // Direct delivery (no loss); `data` stays exposed for compatibility.
         if (onMessageRef.current) onMessageRef.current(msg)
         setData(msg)
       }
@@ -69,12 +69,12 @@ export function useWebSocket(url, onMessage) {
         if (activeUrl.current !== url || wsRef.current !== ws) return
         setConnected(false)
         if (e && e.code === ACCOUNT_DELETED_CODE) {
-          // Compte supprimé : on stoppe la reconnexion (réutilise le verrou
-          // `supersededRef`) et on signale la suppression au consommateur.
-          // killAuthSession() pose le verrou `sessionDead` de façon SYNCHRONE
-          // (avant le re-render React déclenché par setAccountDeleted) : si un
-          // autre WS (ex. bets → market_closed) déclenche un poll dans la
-          // foulée, authFetch est déjà court-circuité → plus de 401 en console.
+          // Account deleted: stop reconnecting (reuse the `supersededRef` lock)
+          // and signal the deletion to the consumer. killAuthSession() sets the
+          // `sessionDead` lock SYNCHRONOUSLY (before the React re-render
+          // triggered by setAccountDeleted): if another WS (e.g. bets ->
+          // market_closed) triggers a poll right after, authFetch is already
+          // short-circuited -> no 401 in the console.
           killAuthSession()
           supersededRef.current = true
           setAccountDeleted(true)
@@ -98,9 +98,9 @@ export function useWebSocket(url, onMessage) {
       }
     }
 
-    // Reconnexion immédiate quand le réseau/onglet revient, au lieu d'attendre
-    // le backoff (jusqu'à 30s) — sinon l'utilisateur croit devoir rafraîchir
-    // (ex. une invite reçue hors-ligne n'arrive qu'à la reconnexion).
+    // Reconnect immediately when the network/tab comes back, instead of waiting
+    // for the backoff (up to 30s) -- otherwise the user thinks they must refresh
+    // (e.g. an invite received offline only arrives on reconnection).
     function reconnectNow() {
       if (!activeUrl.current || supersededRef.current) return
       const ws = wsRef.current

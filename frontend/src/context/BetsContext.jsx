@@ -40,7 +40,7 @@ function mapMarketToBet(m) {
 }
 
 function mapHistory(b) {
-  // `result` est une CLÉ stable (won/lost/refunded/pending) — traduite à l'affichage.
+  // `result` is a stable KEY (won/lost/refunded/pending) -- translated at display time.
   const result = ['won', 'lost', 'refunded'].includes(b.result) ? b.result : 'pending'
   const d = b.created_at ? new Date(b.created_at) : null
   const date = d
@@ -88,8 +88,8 @@ export function BetsProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, loadAvailable, loadHistory])
 
-  // Réassigné à chaque render → useWebSocket l'invoque pour CHAQUE message reçu,
-  // de façon synchrone (aucune perte due au batching d'un unique slot `data`).
+  // Reassigned on every render -> useWebSocket calls it for EVERY message
+  // received, synchronously (no loss from batching a single `data` slot).
   handleMessageRef.current = (data) => {
     if (!data) return
     if (data.type === 'bets_state' && Array.isArray(data.markets)) {
@@ -114,10 +114,10 @@ export function BetsProvider({ children }) {
 
   const bets = Object.values(markets).map(m => {
     const bet = mapMarketToBet(m)
-    // Garde-fou : si l'utilisateur connecté est l'un des joueurs, la partie
-    // n'est jamais pariable — même si le marché vient d'un snapshot WS non
-    // authentifié où `bettable` est absent (sinon le bouton Miser réapparaît
-    // et le POST échoue en 400 « pari sur sa propre partie »).
+    // Guard: if the logged-in user is one of the players, the game is never
+    // bettable -- even if the market comes from an unauthenticated WS snapshot
+    // where `bettable` is missing (otherwise the "Bet" button reappears and the
+    // POST fails with 400 "bet on your own game").
     if (user?.username) {
       const players = `${bet.p1} & ${bet.p2}`.split(' & ').map(s => s.trim())
       if (players.includes(user.username)) bet.bettable = false

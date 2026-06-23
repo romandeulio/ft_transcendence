@@ -1,11 +1,11 @@
 """
-Mixin de sérialisation de la file d'attente.
+Queue serialisation mixin.
 
-Regroupe la construction du « snapshot » envoyé aux clients : on fusionne la file
-live en mémoire (`state.queue`) avec les entrées persistées en base, on superpose
-le score des parties en cours (`state.games`), puis on diffuse le tout.
+Builds the "snapshot" sent to clients: merges the in-memory live queue
+(`state.queue`) with the rows persisted in the database, overlays the score of
+ongoing games (`state.games`), then broadcasts the whole thing.
 
-Hérité par QueueConsumer (cf. queue.py).
+Inherited by QueueConsumer (cf. queue.py).
 """
 import json
 
@@ -18,7 +18,7 @@ from realtime import state
 class QueueSerializeMixin:
     @database_sync_to_async
     def _persisted_queue_slots(self):
-        """Slots reconstruits depuis les QueueEntry WAITING en base (ordre FIFO)."""
+        """Slots rebuilt from the WAITING QueueEntry rows in the DB (FIFO order)."""
         entries = (
             QueueEntry.objects
             .filter(status=QueueEntry.Status.WAITING)
@@ -57,7 +57,7 @@ class QueueSerializeMixin:
         return slots
 
     async def _queue_payload(self, live_queue=None):
-        """File live + entrées persistées (dédupliquées), avec le score live superposé."""
+        """Live queue + persisted entries (deduplicated), with the live score overlaid."""
         live_queue = live_queue if live_queue is not None else state.queue
         persisted_queue = await self._persisted_queue_slots()
         seen = {str(slot.get("id") or slot.get("_localId")) for slot in live_queue}
@@ -81,9 +81,9 @@ class QueueSerializeMixin:
         return sorted(result, key=lambda slot: slot.get("createdAt") or 0)
 
     async def _broadcast_queue(self):
-        """Sérialise la file UNE seule fois puis diffuse le snapshot à tous les
-        clients. Évite une requête DB par client connecté à chaque changement
-        (chaque handler `queue_state_msg` se contente de renvoyer le payload)."""
+        """Serialise the queue ONCE, then broadcast the snapshot to every client.
+        Avoids one DB query per connected client on each change (every
+        `queue_state_msg` handler just forwards the payload)."""
         payload = await self._queue_payload(state.queue)
         await self.channel_layer.group_send(
             self.group_name, {"type": "queue_state_msg", "queue": payload}

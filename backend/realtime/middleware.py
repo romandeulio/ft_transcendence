@@ -1,3 +1,10 @@
+"""
+WebSocket authentication middleware.
+
+Populates scope["user"] from the JWT (either the `token` query param or the
+access-token cookie) and scope["ws_username"] from the `username` query param,
+so consumers can authenticate a connection the same way the REST API does.
+"""
 import logging
 from http.cookies import SimpleCookie
 from urllib.parse import parse_qs
@@ -15,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def _get_user(user_id):
+    """Load the user by id, or AnonymousUser if they no longer exist."""
     try:
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -22,12 +30,15 @@ def _get_user(user_id):
 
 
 class JWTAuthMiddleware(BaseMiddleware):
+    """Resolve the JWT on connect and attach the user/guest identity to the scope."""
+
     async def __call__(self, scope, receive, send):
         scope["user"] = AnonymousUser()
         scope["ws_username"] = None
 
         query_params = parse_qs(scope["query_string"].decode())
 
+        # Token from the query string first, then fall back to the cookie.
         token = (query_params.get("token") or [None])[0]
         if not token:
             cookie_header = dict(scope.get("headers", [])).get(b"cookie", b"").decode()
