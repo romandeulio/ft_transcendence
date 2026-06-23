@@ -95,6 +95,8 @@
     "seasonBalance": "Season balance",
     "netTokens": "net tokens",
     "availableBets": "Available bets",
+    "betCount_one": "{{count}} bet",
+    "betCount_other": "{{count}} bets",
     "noBets": "No bets available right now.",
     "cancel": "Cancel",
     "bet": "Bet",

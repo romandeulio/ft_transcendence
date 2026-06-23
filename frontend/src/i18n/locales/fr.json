@@ -95,6 +95,8 @@
     "seasonBalance": "Bilan saison",
     "netTokens": "jetons net",
     "availableBets": "Paris disponibles",
+    "betCount_one": "{{count}} pari",
+    "betCount_other": "{{count}} paris",
     "noBets": "Aucun paris disponible pour le moment.",
     "cancel": "Annuler",
     "bet": "Miser",

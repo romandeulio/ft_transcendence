@@ -95,6 +95,8 @@
     "seasonBalance": "מאזן עונה",
     "netTokens": "אסימונים נטו",
     "availableBets": "הימורים זמינים",
+    "betCount_one": "הימור {{count}}",
+    "betCount_other": "{{count}} הימורים",
     "noBets": "אין הימורים זמינים כרגע.",
     "cancel": "בטל",
     "bet": "הימר",

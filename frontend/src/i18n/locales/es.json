@@ -95,6 +95,8 @@
     "seasonBalance": "Balance de temporada",
     "netTokens": "fichas netas",
     "availableBets": "Apuestas disponibles",
+    "betCount_one": "{{count}} apuesta",
+    "betCount_other": "{{count}} apuestas",
     "noBets": "No hay apuestas disponibles por el momento.",
     "cancel": "Cancelar",
     "bet": "Apostar",

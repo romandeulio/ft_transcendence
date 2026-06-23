@@ -112,7 +112,18 @@ export function BetsProvider({ children }) {
     }
   }
 
-  const bets = Object.values(markets).map(mapMarketToBet)
+  const bets = Object.values(markets).map(m => {
+    const bet = mapMarketToBet(m)
+    // Garde-fou : si l'utilisateur connecté est l'un des joueurs, la partie
+    // n'est jamais pariable — même si le marché vient d'un snapshot WS non
+    // authentifié où `bettable` est absent (sinon le bouton Miser réapparaît
+    // et le POST échoue en 400 « pari sur sa propre partie »).
+    if (user?.username) {
+      const players = `${bet.p1} & ${bet.p2}`.split(' & ').map(s => s.trim())
+      if (players.includes(user.username)) bet.bettable = false
+    }
+    return bet
+  })
 
   const placeBet = async (reservationId, side, amount) => {
     const res = await authFetch('/api/bets/', {
