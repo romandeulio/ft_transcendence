@@ -162,7 +162,7 @@ No browser console errors or warnings in production mode.
 ### Conventions
 
 - All frontend API calls use relative URLs (e.g., `fetch("/api/matches/")`) — never absolute `localhost:8000` URLs
-- Linting enforced: ESLint + Prettier (frontend), flake8 (backend)
+- Linting enforced: ESLint (frontend), flake8 (backend)
 - `.env` never committed; `.env.example` always kept up to date
 
 ---
