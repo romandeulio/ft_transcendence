@@ -49,7 +49,7 @@ function mergeQueueState(liveQueue, persistedQueue) {
 
 export function QueueProvider({ children }) {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, markAccountDeleted } = useAuth()
   const [queue, setQueue] = useState([])
   const [mySlots, setMySlots] = useState(loadMySlots)
   const [activeGame, setActiveGame] = useState(null)
@@ -76,7 +76,14 @@ export function QueueProvider({ children }) {
 
   const wsUrl = user?.username ? `/ws/queue/` : null
   const handleMessageRef = useRef(null)
-  const { connected, send, superseded } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
+  const { connected, send, superseded, accountDeleted } = useWebSocket(wsUrl, (msg) => handleMessageRef.current?.(msg))
+
+  // Compte supprimé en plein match : on déconnecte et on affiche l'écran
+  // terminal (géré par AuthProvider, qui survit à la déconnexion).
+  useEffect(() => {
+    if (accountDeleted) markAccountDeleted()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountDeleted])
 
   // Empile une notification en ignorant les doublons (même `inviteId`) : protège
   // contre une éventuelle double livraison d'un message côté serveur/transport.

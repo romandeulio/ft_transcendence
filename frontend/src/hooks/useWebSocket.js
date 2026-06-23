@@ -13,11 +13,13 @@ const BASE_DELAY = 1000
 const MAX_DELAY  = 30000
 
 const SUPERSEDED_CODE = 4001
+const ACCOUNT_DELETED_CODE = 4002
 
 export function useWebSocket(url, onMessage) {
   const [data, setData] = useState(null)
   const [connected, setConnected] = useState(false)
   const [superseded, setSuperseded] = useState(false)
+  const [accountDeleted, setAccountDeleted] = useState(false)
   const wsRef       = useRef(null)
   const sendRef     = useRef(null)
   const retryTimer  = useRef(null)
@@ -37,6 +39,7 @@ export function useWebSocket(url, onMessage) {
     retryDelay.current = BASE_DELAY
     supersededRef.current = false
     setSuperseded(false)
+    setAccountDeleted(false)
 
     function connect() {
       const absUrl = buildAbsoluteUrl(activeUrl.current)
@@ -64,6 +67,13 @@ export function useWebSocket(url, onMessage) {
       ws.onclose = (e) => {
         if (activeUrl.current !== url || wsRef.current !== ws) return
         setConnected(false)
+        if (e && e.code === ACCOUNT_DELETED_CODE) {
+          // Compte supprimé : on stoppe la reconnexion (réutilise le verrou
+          // `supersededRef`) et on signale la suppression au consommateur.
+          supersededRef.current = true
+          setAccountDeleted(true)
+          return
+        }
         if (e && e.code === SUPERSEDED_CODE) {
           supersededRef.current = true
           setSuperseded(true)
@@ -124,5 +134,5 @@ export function useWebSocket(url, onMessage) {
 
   sendRef.current = send
 
-  return { data, connected, send, superseded }
+  return { data, connected, send, superseded, accountDeleted }
 }
