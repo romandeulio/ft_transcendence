@@ -34,7 +34,10 @@
     "registerLink": "Sign up",
     "codePlaceholder": "6-digit code",
     "verifying": "Verifying...",
-    "validate": "Submit"
+    "validate": "Submit",
+    "title2fa": "2FA Verification",
+    "sentTo": "A code has been sent to",
+    "back": "← Back"
   },
   "home": {
     "scheduledMatch": "📋 Scheduled match",
@@ -277,8 +280,8 @@
     "tokensSub": "season balance",
     "gamesPerMonth": "Games / month",
     "gamesPerMonthSub": "average this month",
-    "gamelles": "Buckets 🪣",
-    "gamellesSub": "gamelle goals",
+    "gamelles": "Buckets",
+    "gamellesSub": "bucket goals",
     "favoriteTeammates": "Favourite teammates",
     "noTeammate": "No teammate registered.",
     "planGame": "Schedule a game",
@@ -323,7 +326,8 @@
     "winsBadge_other": "{{count}} Wins",
     "winrate": "{{pct}}% wins",
     "lossrate": "{{pct}}% losses",
-    "uploadError": "Upload error"
+    "uploadError": "Upload error",
+    "removeTeammate": "Remove"
   },
   "settings": {
     "tabs": {
@@ -509,6 +513,7 @@
     "dateTo": "To",
     "noSelected": "No player selected",
     "selectPlayer": "Select at least one player to display the chart.",
+    "download": "↓ Download",
     "y": {
       "elo": "ELO",
       "wins": "Wins",
@@ -843,15 +848,25 @@
     "match_cancelled": "Cancelled",
     "delete_title": "Delete {{username}}",
     "delete_warning": "This action is irreversible. All the player’s data will be deleted.",
-    "delete_cancel": "Cancel"
+    "delete_cancel": "Cancel",
+    "col_tokens": "Tokens",
+    "btn_tokens": "Tokens",
+    "btn_delete_short": "Del."
   },
   "sidebar": {
     "tokens": "{{count}} tokens"
   },
+  "badge": {
+    "elite": "Elite",
+    "veteran": "Veteran",
+    "confirmed": "Confirmed",
+    "amateur": "Amateur",
+    "newPlayer": "New Player"
+  },
   "comparison": {
     "title": "Player comparison",
     "elo": "ELO",
-    "gamelles": "Gamelles",
+    "gamelles": "Buckets",
     "winStreak": "Win streak",
     "matchesMonth": "Matches / month",
     "selectUp": "Select up to 4 players",
@@ -903,7 +918,7 @@
   },
   "achievements": {
     "cat": {
-      "GAMELLES": "🪣 Gamelles",
+      "GAMELLES": "🪣 Buckets",
       "DEMIS": "🍺 Halves",
       "MATCH": "🏓 Matches",
       "SERIE": "🔥 Streaks",

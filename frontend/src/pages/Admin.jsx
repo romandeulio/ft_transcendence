@@ -635,7 +635,7 @@ function Dashboard({ onLogout }) {
                                 }
                               }}
                             >
-                              Annuler
+                              {t('admin.btn_cancel')}
                             </button>
                           )}
                         </td>
@@ -667,7 +667,7 @@ function Dashboard({ onLogout }) {
                       <th>{t('admin.col_login')}</th>
                       <th>{t('admin.col_elo1v1')}</th>
                       <th>{t('admin.col_elo2v2')}</th>
-                      <th>Jetons</th>
+                      <th>{t('admin.col_tokens')}</th>
                       <th>role</th>
                       <th>{t('admin.col_status')}</th>
                       <th>{t('admin.col_actions')}</th>
@@ -704,7 +704,7 @@ function Dashboard({ onLogout }) {
                         </td>
                         <td className={styles.tdActions}>
                           <button className={styles.miniBtn} onClick={() => setEditEloPlayer(p)}>{t('admin.btn_elo')}</button>
-                          <button className={styles.miniBtn} onClick={() => setEditWalletPlayer(p)}>Jetons</button>
+                          <button className={styles.miniBtn} onClick={() => setEditWalletPlayer(p)}>{t('admin.btn_tokens')}</button>
                           {p.is_banned ? (
                             <button className={styles.miniBtn} onClick={() => handleUnban(p)}>{t('admin.btn_unban')}</button>
                           ) : (
@@ -721,7 +721,7 @@ function Dashboard({ onLogout }) {
                               className={`${styles.miniBtn} ${styles.miniBtnDanger}`}
                               onClick={() => setDeletePlayer(p)}
                             >
-                              Suppr.
+                              {t('admin.btn_delete_short')}
                             </button>
                           )}
                         </td>

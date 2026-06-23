@@ -34,7 +34,10 @@
     "registerLink": "Registrarse",
     "codePlaceholder": "Código de 6 dígitos",
     "verifying": "Verificando...",
-    "validate": "Validar"
+    "validate": "Validar",
+    "title2fa": "Verificación 2FA",
+    "sentTo": "Se ha enviado un código a",
+    "back": "← Volver"
   },
   "home": {
     "scheduledMatch": "📋 Partido programado",
@@ -72,7 +75,7 @@
     "winsLosses": "V · D",
     "rank": "Rango",
     "noData": "No hay datos disponibles",
-    "hallOfFame": "Hall of Fame",
+    "hallOfFame": "Salon de la Fama",
     "allTimeRecords": "Récords históricos",
     "seasonChampions": "Campeones de temporada",
     "recentFirst": "Más reciente primero",
@@ -186,7 +189,7 @@
     "fmtSingle": "🏆 Eliminación directa",
     "fmtRoundRobin": "🔄 Round Robin",
     "fmtSwiss": "🇨🇭 Torneo suizo",
-    "adminMode": "Modo admin BDE",
+    "adminMode": "Modo administración BDE",
     "adminModeSub": "Creación, edición, equipos, validación y reprogramación.",
     "editTournament": "Editar el torneo",
     "importPlayers": "Importar una lista de jugadores",
@@ -277,8 +280,8 @@
     "tokensSub": "balance de temporada",
     "gamesPerMonth": "Partidos / mes",
     "gamesPerMonthSub": "promedio este mes",
-    "gamelles": "Gamelles 🪣",
-    "gamellesSub": "goles en gamelle",
+    "gamelles": "Bot",
+    "gamellesSub": "goles en bot",
     "favoriteTeammates": "Compañeros favoritos",
     "noTeammate": "Ningún compañero registrado.",
     "planGame": "Planificar una partida",
@@ -323,7 +326,8 @@
     "winsBadge_other": "{{count}} Victorias",
     "winrate": "{{pct}}% victorias",
     "lossrate": "{{pct}}% derrotas",
-    "uploadError": "Error de subida"
+    "uploadError": "Error de subida",
+    "removeTeammate": "Quitar"
   },
   "settings": {
     "tabs": {
@@ -339,7 +343,7 @@
       "photo": "Foto de perfil",
       "edit": "Editar",
       "delete": "Eliminar",
-      "login42": "Login 42",
+      "login42": "Acceso 42",
       "email": "Correo electrónico",
       "save": "Guardar cambios",
       "uploading": "Subiendo...",
@@ -485,7 +489,7 @@
     "quit": "✕ Salir",
     "endMatch": "Fin de\npartido",
     "half": "Mitad ×2",
-    "gamelle": "Gamelle",
+    "gamelle": "Bot",
     "tie": "¡Empate!",
     "tieCancelWarning": "Este partido será cancelado — las cadenas de reprise serán eliminadas.",
     "close": "Terminar y cerrar",
@@ -509,6 +513,7 @@
     "dateTo": "Hasta",
     "noSelected": "Ningún jugador seleccionado",
     "selectPlayer": "Selecciona al menos un jugador para mostrar el gráfico.",
+    "download": "↓ Descargar",
     "y": {
       "elo": "ELO",
       "wins": "Victorias",
@@ -537,7 +542,7 @@
     "sitemap": "Mapa del sitio",
     "ranking": "Clasificación",
     "tournaments": "Torneos",
-    "admin": "Admin",
+    "admin": "Administración",
     "services": "Soporte y servicios",
     "privacy": "Política de privacidad",
     "ticket": "Enviar un ticket",
@@ -586,7 +591,7 @@
         "Garantizar la seguridad de las cuentas (autenticación, 2FA, detección de abusos).",
         "Calcular y mostrar la clasificación ELO en tiempo real.",
         "Gestionar el monedero de fichas virtuales y las transacciones asociadas.",
-        "Moderar la plataforma (rol admin/BDE)."
+        "Moderar la plataforma (rol administración/BDE)."
       ]
     },
     "s4": {
@@ -617,7 +622,7 @@
       ]
     },
     "s8": {
-      "title": "8. Cookies",
+      "title": "8. Galletas",
       "body": "La plataforma utiliza una única cookie de sesión JWT (HttpOnly, Secure, SameSite=Lax) estrictamente necesaria para la autenticación. No se utilizan cookies publicitarias ni de rastreo de terceros."
     },
     "s9": {
@@ -707,7 +712,7 @@
   "ticket": {
     "title": "Enviar un ticket",
     "intro": "¿Algo no funciona? Descríbenos el problema y nos ocupamos.",
-    "login_label": "Login o nombre",
+    "login_label": "Acceso o nombre",
     "login_placeholder": "Ej: ltcherep",
     "desc_label": "Descripción del error",
     "desc_placeholder": "Describe lo que observaste, los pasos para reproducir el problema y lo que esperabas...",
@@ -771,13 +776,13 @@
     "players_title": "Jugadores",
     "players_empty": "No hay jugadores registrados.",
     "players_search": "Buscar un jugador...",
-    "col_login": "Login",
+    "col_login": "Acceso",
     "col_elo1v1": "ELO 1v1",
     "col_elo2v2": "ELO 2v2",
     "col_status": "Estado",
     "col_actions": "Acciones",
-    "status_ban_perm": "Ban def.",
-    "status_ban_temp": "Ban temp.",
+    "status_ban_perm": "Prohibición def.",
+    "status_ban_temp": "Prohibición temp.",
     "status_active": "Activo",
     "status_inactive": "Inactivo",
     "btn_elo": "ELO",
@@ -843,19 +848,29 @@
     "match_cancelled": "Cancelado",
     "delete_title": "Eliminar {{username}}",
     "delete_warning": "Esta acción es irreversible. Se eliminarán todos los datos del jugador.",
-    "delete_cancel": "Cancelar"
+    "delete_cancel": "Cancelar",
+    "col_tokens": "Fichas",
+    "btn_tokens": "Fichas",
+    "btn_delete_short": "Elim."
   },
   "sidebar": {
     "tokens": "{{count}} fichas"
   },
+  "badge": {
+    "elite": "Élite",
+    "veteran": "Veterano",
+    "confirmed": "Confirmado",
+    "amateur": "Aficionado",
+    "newPlayer": "Nuevo jugador"
+  },
   "comparison": {
     "title": "Comparación de jugadores",
     "elo": "ELO",
-    "gamelles": "Gamelles",
+    "gamelles": "Bol",
     "winStreak": "Racha de victorias",
     "matchesMonth": "Partidas / mes",
     "selectUp": "Selecciona hasta 4 jugadores",
-    "searchLogin": "Buscar un login…",
+    "searchLogin": "Buscar un acceso…",
     "noPlayer": "Ningún jugador encontrado",
     "emptyHint": "Busca y selecciona jugadores para comparar"
   },
@@ -903,7 +918,7 @@
   },
   "achievements": {
     "cat": {
-      "GAMELLES": "🪣 Gamelles",
+      "GAMELLES": "🪣 Bot",
       "DEMIS": "🍺 Medias",
       "MATCH": "🏓 Partidas",
       "SERIE": "🔥 Rachas",

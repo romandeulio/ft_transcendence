@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import styles from './Banned.module.css'
 
 function formatRemaining(seconds) {
@@ -44,6 +45,9 @@ export default function Banned() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.langBar}>
+        <LanguageSwitcher />
+      </div>
       <div className={styles.card}>
         <div className={styles.icon}>🚫</div>
 

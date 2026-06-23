@@ -152,9 +152,9 @@ export default function Login() {
         {twoFA ? (
           <>
             <div className={styles.logo}>🔒</div>
-            <h1 className={styles.title}>Vérification 2FA</h1>
+            <h1 className={styles.title}>{t('login.title2fa')}</h1>
             <p className={styles.sub}>
-              Un code a été envoyé à <strong>{twoFA.email_hint}</strong>
+              {t('login.sentTo')} <strong>{twoFA.email_hint}</strong>
             </p>
             <form onSubmit={handleVerify2FA}>
               <input
@@ -176,7 +176,7 @@ export default function Login() {
               style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', marginTop: '12px', fontSize: '13px' }}
               onClick={() => { setTwoFA(null); setTfaCode(''); setError(null) }}
             >
-              ← Retour
+              {t('login.back')}
             </button>
           </>
         ) : (

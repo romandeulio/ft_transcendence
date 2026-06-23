@@ -278,7 +278,7 @@ export default function PerformanceChart() {
               className={styles.exportBtn}
               onClick={() => setShowDownloadMenu(v => !v)}
             >
-              ↓ Télécharger
+              {t('performance.download')}
             </button>
             {showDownloadMenu && (
               <div className={styles.downloadMenu}>

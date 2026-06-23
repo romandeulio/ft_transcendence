@@ -415,7 +415,7 @@ export default function Profil() {
                 {myWins > 0 && <Pill label={t('profile.winsBadge', { count: myWins })} type="win" />}
               </div>
               <span className={styles.playerTitleBadge} style={{ background: badge.bg, color: badge.color }}>
-                {t('profile.myBadge', { label: badge.label })}
+                {t('profile.myBadge', { label: t(badge.labelKey) })}
               </span>
             </div>
           </div>
@@ -515,7 +515,7 @@ export default function Profil() {
                       </div>
                       <span className={styles.teammateName}>{tm.name}</span>
                       <button className={styles.planBtn} onClick={() => { setInitialTeammate(tm.login); setJoinOpen(true) }}>{t('profile.planGame')}</button>
-                      <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title="Retirer">✕</button>
+                      <button className={styles.removeBtn} onClick={() => removeTeammate(tm.login)} title={t('profile.removeTeammate')}>✕</button>
                     </div>
                   )
                 })}

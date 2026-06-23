@@ -34,7 +34,10 @@
     "registerLink": "S'inscrire",
     "codePlaceholder": "Code à 6 chiffres",
     "verifying": "Vérification...",
-    "validate": "Valider"
+    "validate": "Valider",
+    "title2fa": "Vérification 2FA",
+    "sentTo": "Un code a été envoyé à",
+    "back": "← Retour"
   },
   "home": {
     "scheduledMatch": "📋 Match prévu",
@@ -323,7 +326,8 @@
     "winsBadge_other": "{{count}} Victoires",
     "winrate": "{{pct}}% de victoires",
     "lossrate": "{{pct}}% de défaites",
-    "uploadError": "Erreur upload"
+    "uploadError": "Erreur upload",
+    "removeTeammate": "Retirer"
   },
   "settings": {
     "tabs": {
@@ -509,6 +513,7 @@
     "dateTo": "Au",
     "noSelected": "Aucun joueur sélectionné",
     "selectPlayer": "Sélectionne au moins un joueur pour afficher le graphique.",
+    "download": "↓ Télécharger",
     "y": {
       "elo": "ELO",
       "wins": "Victoires",
@@ -843,10 +848,20 @@
     "match_cancelled": "Annulé",
     "delete_title": "Supprimer {{username}}",
     "delete_warning": "Cette action est irréversible. Toutes les données du joueur seront supprimées.",
-    "delete_cancel": "Annuler"
+    "delete_cancel": "Annuler",
+    "col_tokens": "Jetons",
+    "btn_tokens": "Jetons",
+    "btn_delete_short": "Suppr."
   },
   "sidebar": {
     "tokens": "{{count}} jetons"
+  },
+  "badge": {
+    "elite": "Élite",
+    "veteran": "Vétéran",
+    "confirmed": "Confirmé",
+    "amateur": "Amateur",
+    "newPlayer": "Nouveau"
   },
   "comparison": {
     "title": "Comparaison joueurs",

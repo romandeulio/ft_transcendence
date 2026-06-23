@@ -11,7 +11,10 @@
   min-width: calc(var(--round-count) * 170px);
   overflow-x: auto;
   padding: 22px 4px 18px;
+  cursor: grab;
+  scroll-behavior: smooth;
 }
+.tree:active { cursor: grabbing; }
 
 .connectorLayer {
   position: absolute;

@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PlayerBlock from './PlayerBlock'
 import styles from './BracketTree.module.css'
@@ -76,6 +76,18 @@ export default function BracketTree({ rounds, maxPlayers = 16, format = 'SINGLE_
   const isElimination = format === 'SINGLE_ELIMINATION'
   const treeRef = useRef(null)
   const matchRefs = useRef(new Map())
+
+  useEffect(() => {
+    const el = treeRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      if (el.scrollWidth <= el.clientWidth) return
+      e.preventDefault()
+      el.scrollLeft += e.deltaY + e.deltaX
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
   const [connectorState, setConnectorState] = useState({ width: 0, height: 0, paths: [] })
   const displayedRounds = useMemo(
     () => (rounds?.length ? rounds : createEmptyRounds(maxPlayers)).map(round => ({
