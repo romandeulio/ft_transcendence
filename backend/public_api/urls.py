@@ -9,5 +9,5 @@ urlpatterns = [
 
 	# --- Gestion des clés (JWT) ---
 	path('keys/',                  views.APIKeyListCreateView.as_view(),      name='api-key-list'),
-	path('keys/<uuid:pk>/revoke/',  views.api_key_revoke,                     name='api-key-revoke'),
+	path('keys/<int:pk>/revoke/',   views.api_key_revoke,                     name='api-key-revoke'),
 ]

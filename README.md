@@ -278,7 +278,7 @@ tournaments ──< tournament_matches
 | Email / password registration | Secure sign-up with hashed + salted password | Thaïs |
 | Login / logout | JWT-based session, HttpOnly cookie | Thaïs |
 | OAuth 42 | "Login with 42" button, auto account creation on first login | Thaïs |
-| 2FA (OTP) | 6-digit code via Google Authenticator / Authy, activatable in settings | Sydney |
+| 2FA (OTP) | 6-digit code via email, activatable in settings | Sydney |
 | Profile editing | Change username, avatar upload, display stats | Léa |
 | Friends system | Add/remove friends, see online status | Léa |
 | GDPR export | Export all personal data as JSON or CSV | Thaïs |
@@ -402,7 +402,7 @@ Total: **28 points** (minimum required: 14)
 |---|---|---|---|
 | Standard user management | Major | 2 | Registration and login via email/password. Profile page with editable username and avatar. Friends system with online status. Stats and match history displayed on profile. |
 | OAuth 42 | Minor | 1 | "Login with 42" button redirects to the 42 intranet. On first login, an account is created automatically using the intra login and email. |
-| 2FA (Two-Factor Authentication) | Minor | 1 | OTP-based 2FA (compatible with Google Authenticator, Authy). Activated from user settings. On login, a 6-digit code is required after password validation. |
+| 2FA (Two-Factor Authentication) | Minor | 1 | OTP-based 2FA (via email). Activated from user settings. On login, a 6-digit code is required after password validation. |
 | Advanced permissions | Major | 2 | Three roles: **admin** (manage users, seasons, matches, dashboard), **bde** (create and manage tournaments), and **user** (play, bet, reserve). Different views and available actions per role. Admin panel with CRUD on users. |
 | User activity analytics dashboard | Minor | 1 | ELO curve over time, performance history, per-season stats, multi-player comparison. Filterable by date period. Endpoints at `/api/performance/`. Visualized with `PerformanceChart` and `ComparisonBarChart` components. |
 
@@ -471,7 +471,7 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 - Implemented GDPR features: data export and full anonymization
 - Secured all backend endpoints: input validation, permission decorators, rate limiting on auth routes
 - Wrote `postgres/init.sql` (the authoritative DB schema)
-- **Challenge**: the 2FA + OAuth 42 flow required careful state management (handling partial sessions between OAuth callback and 2FA verification) and secure TOTP secret storage.
+- **Challenge**: the 2FA + OAuth 42 flow required careful state management (handling partial sessions between OAuth callback and 2FA verification) and secure OTP secret storage.
 
 ### Roman (rodeulio) — Fullstack Developer (Real-time)
 - Implemented all WebSocket consumers in `realtime/` (Django Channels): live queue, live notifications, live ranking update broadcast
@@ -543,7 +543,7 @@ Estimated recovery time: under **5 minutes** for a standard database.
 - [react-i18next documentation](https://react.i18next.com/)
 - [Nginx documentation](https://nginx.org/en/docs/)
 - [Docker Compose reference](https://docs.docker.com/compose/compose-file/)
-- [pyotp (TOTP/2FA)](https://github.com/pyauth/pyotp)
+- [pyotp (OTP/2FA)](https://github.com/pyauth/pyotp)
 - [ELO rating system (Wikipedia)](https://en.wikipedia.org/wiki/Elo_rating_system)
 - [42 OAuth API](https://api.intra.42.fr/apidoc)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
@@ -558,6 +558,6 @@ AI was used for the following tasks:
 - **Debugging support**: helping diagnose specific errors by explaining error messages and suggesting leads to investigate (e.g., WebSocket connection issues, Nginx proxy configuration) — root causes were always identified and understood by the developer before applying a fix
 - **Documentation assistance**: supporting the writing of this README and the Privacy Policy / Terms of Service pages — all content was written, reviewed, and validated by the team
 - **i18n support**: suggesting initial translation drafts for ES and HE locale files, reviewed and corrected by team members before use
-- **Ideas and explanations**: getting technical explanations on concepts (ELO formula, TOTP flow, JWT cookie flags) to better understand before implementing from scratch
+- **Ideas and explanations**: getting technical explanations on concepts (ELO formula, OTP flow, JWT cookie flags) to better understand before implementing from scratch
 
 Only AI-generated content that every responsible team member fully understood and could explain was kept. No code or content was copy-pasted without being read, understood, tested, and validated. All team members are able to explain their respective implementations.

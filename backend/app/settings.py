@@ -16,11 +16,11 @@ SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='transcendance.maagosti.fr').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
 
 SITE_URL = config(
 	'SITE_URL',
-	default=config('CORS_ALLOWED_ORIGINS', default='https://transcendance.maagosti.fr').split(',')[0],
+	default=config('CORS_ALLOWED_ORIGINS', default='https://localhost').split(',')[0],
 ).rstrip('/')
 
 # ===========================================================================
@@ -188,14 +188,14 @@ JWT_COOKIE_SAMESITE = config('JWT_COOKIE_SAMESITE', default='Lax')
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='https://transcendance.maagosti.fr,http://localhost:3000'
+    default='http://localhost:3000'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='https://transcendance.maagosti.fr,http://localhost:3000'
+    default='http://localhost:3000'
 ).split(',')
 
 SESSION_COOKIE_HTTPONLY = True
@@ -271,9 +271,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-# BDE — mot de passe partagé pour créer un tournoi
-BDE_PASSWORD = config('BDE_PASSWORD')
 
 # Admin dashboard
 ADMIN_LOGIN = config('ADMIN_LOGIN')

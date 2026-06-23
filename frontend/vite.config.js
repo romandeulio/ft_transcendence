@@ -18,6 +18,6 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    allowedHosts: ['localhost', 'transcendance.maagosti.fr'],
+    allowedHosts: ['localhost'],
   }
 })
