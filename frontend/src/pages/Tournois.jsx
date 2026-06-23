@@ -263,9 +263,9 @@ export default function Tournois() {
     setBdeError('')
     try {
       const res = await authFetch('/api/tournaments/bde-unlock/', { method: 'POST' })
-      if (res.ok) { setBdeUnlocked(true); setBdeOpen(false) }
-      else if (res.status === 403) setBdeError(t('tournaments.errNoBde'))
-      else setBdeError(t('tournaments.errUnexpected'))
+      const data = await res.json()
+      if (data.ok) { setBdeUnlocked(true); setBdeOpen(false) }
+      else setBdeError(t('tournaments.errNoBde'))
     } catch { setBdeError(t('tournaments.errNetwork')) }
     finally  { setBdeLoading(false) }
   }

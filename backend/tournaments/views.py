@@ -490,7 +490,7 @@ def _parse_import_file(file):
 def bde_unlock(request):
     if _has_bde_access(request):
         return Response({'ok': True})
-    return Response({'detail': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+    return Response({'ok': False, 'detail': 'Accès refusé.'})
 
 
 class TournamentListCreateView(APIView):
