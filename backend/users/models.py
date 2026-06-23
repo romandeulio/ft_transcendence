@@ -247,6 +247,20 @@ class User(AbstractBaseUser):
 
             channel_layer = get_channel_layer()
             if channel_layer is not None:
+                # ORDRE CRITIQUE : on notifie d'abord le WS paris (groupe dédié),
+                # PUIS le WS file d'attente. Le `market_closed` de la partie
+                # annulée est un effet aval du `account.deleted` reçu par le queue
+                # consumer (group_send vers le groupe `bets`). En enfilant le
+                # `account.deleted` du bets consumer AVANT de réveiller le queue
+                # consumer, on garantit qu'il est dans le canal du bets consumer
+                # avant que le `market_closed` n'y soit ajouté → l'ordre FIFO du
+                # canal ferme la connexion (4002) d'abord. Le front pose alors son
+                # verrou de session (killAuthSession) et n'émet plus de poll
+                # authentifié → aucun 401. (L'ordre inverse laissait le
+                # market_closed passer devant : cf. trace 686ms vs 718ms.)
+                async_to_sync(channel_layer.group_send)(
+                    f"bets_user_{username}", {"type": "account.deleted"}
+                )
                 async_to_sync(channel_layer.group_send)(
                     f"user_{username}", {"type": "account.deleted"}
                 )

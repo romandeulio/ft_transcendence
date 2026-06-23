@@ -80,6 +80,14 @@ export function resetAuthSession() {
   sessionDead = false
 }
 
+// Marque la session morte SANS attendre un 401 réseau — appelé dès qu'on apprend
+// la suppression du compte (fermeture WS code 4002). Tout authFetch ultérieur
+// est court-circuité → plus aucun 401 dans la console même si un message WS
+// (ex. market_closed) déclenche un poll juste après.
+export function killAuthSession() {
+  sessionDead = true
+}
+
 // Réponse 401 synthétique avec corps JSON (pour que les `.then(r => r.json())`
 // des appelants ne lèvent pas sur un body vide).
 function deadSessionResponse() {

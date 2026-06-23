@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { killAuthSession } from '../services/api'
 
 function buildAbsoluteUrl(url) {
   if (!url) return null
@@ -70,6 +71,11 @@ export function useWebSocket(url, onMessage) {
         if (e && e.code === ACCOUNT_DELETED_CODE) {
           // Compte supprimé : on stoppe la reconnexion (réutilise le verrou
           // `supersededRef`) et on signale la suppression au consommateur.
+          // killAuthSession() pose le verrou `sessionDead` de façon SYNCHRONE
+          // (avant le re-render React déclenché par setAccountDeleted) : si un
+          // autre WS (ex. bets → market_closed) déclenche un poll dans la
+          // foulée, authFetch est déjà court-circuité → plus de 401 en console.
+          killAuthSession()
           supersededRef.current = true
           setAccountDeleted(true)
           return

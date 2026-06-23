@@ -14,6 +14,7 @@ import json
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from realtime import state
 from planning.models import Reservation
 from bets.serializers import serialize_available, market_payload
 
@@ -22,7 +23,22 @@ GROUP = "bets"
 
 class BetConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.username = ""
         await self.channel_layer.group_add(GROUP, self.channel_name)
+        # Groupe personnel DÉDIÉ aux paris (pas le `user_{username}` partagé, qui
+        # reçoit invites/notifs que ce consumer ne sait pas router) : reçoit
+        # `account.deleted` quand ce joueur est supprimé, pour fermer ce WS
+        # lui-même (code 4002). Indispensable pour battre le `market_closed` de
+        # sa propre partie annulée : les deux arrivent sur CE consumer, mais
+        # `account.deleted` est émis par `_kick_live_session` AVANT que le
+        # handler queue ne crée le `market_closed` → l'ordre FIFO du canal
+        # garantit la fermeture d'abord, donc aucun poll (loadHistory/
+        # refreshUser) ni 401 côté front.
+        user = self.scope.get("user")
+        if user is not None and getattr(user, "is_authenticated", False):
+            self.username = state.username_from_scope(self.scope) or ""
+            if self.username:
+                await self.channel_layer.group_add(f"bets_user_{self.username}", self.channel_name)
         await self.accept()
         await self.send(text_data=json.dumps({
             "type": "bets_state",
@@ -31,6 +47,17 @@ class BetConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(GROUP, self.channel_name)
+        if self.username:
+            await self.channel_layer.group_discard(f"bets_user_{self.username}", self.channel_name)
+
+    async def account_deleted(self, event):
+        """Compte supprimé : ferme ce WS (code 4002) → le front pose son verrou
+        de session (killAuthSession) et n'émet plus aucune requête authentifiée."""
+        try:
+            await self.send(text_data=json.dumps({"type": "account_deleted"}))
+        except Exception:
+            pass
+        await self.close(code=4002)
 
     async def receive(self, text_data):
         try:
