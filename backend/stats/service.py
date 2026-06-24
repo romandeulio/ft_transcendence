@@ -1,20 +1,7 @@
 from .models import Stats
 
-# Valeur d'ELO de départ (identique au default du modèle Stats et à la base ELO).
-ELO_BASE = 1000
-
-
 def reset_all_elo():
-    """
-    Remet l'ELO solo et team de TOUS les joueurs à la valeur initiale (1000).
-
-    Appelé à la clôture d'une saison : la nouvelle saison repart à 1000.
-    L'ELO de la saison précédente reste consultable :
-      - le classement saisonnier est reconstruit à partir des matchs
-        (champs elo_*_after figés sur chaque match) ;
-      - les lignes Ranking de scope SEASON de la saison close sont conservées.
-    """
-    Stats.objects.update(elo_solo=ELO_BASE, elo_team=ELO_BASE)
+    Stats.objects.update(elo_solo=1000, elo_team=1000)
 
 
 def update_stats_after_match(match):

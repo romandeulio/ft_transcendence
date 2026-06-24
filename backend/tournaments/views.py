@@ -15,15 +15,13 @@ from rest_framework.views import APIView
 
 from planning.models import QueueEntry
 
-from .models import Tournament, TournamentMatch, TournamentRegistration, TournamentRoundRobinsStandings, TournamentSwissStandings, TournamentTeam
+from .models import Tournament, TournamentMatch, TournamentRegistration, TournamentTeam
 
-from .serializers import RegistrationSerializer, TournamentCreateSerializer, TournamentMatchSerializer, TournamentRoundRobinsSerializer, TournamentSerializer, TournamentSwissStandingsSerializer, TournamentUpdateSerializer
+from .serializers import RegistrationSerializer, TournamentCreateSerializer, TournamentMatchSerializer, TournamentSerializer, TournamentUpdateSerializer
 
 User = get_user_model()
 
 def _has_bde_access(request):
-    # Le panneau d'administration s'authentifie par session (is_admin) et non via
-    # request.user (JWT) : on lui accorde donc l'accès BDE complet.
     if request.session.get('is_admin', False):
         return True
     if getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False):
@@ -39,11 +37,6 @@ def _require_bde(request):
 
 
 def _user_error(detail, code, extra=None):
-    # Erreurs "métier" attendues (date passée, tournoi plein, fichier invalide…)
-    # renvoyées en HTTP 200 + en-tête X-Tournament-Error, et non en 400, pour
-    # éviter une ligne rouge dans la console navigateur (même convention que
-    # GDPR / token refresh / l'update profil). Le front lit l'en-tête (ou
-    # data.code) et affiche le message traduit correspondant.
     data = {'detail': detail, 'code': code}
     if extra:
         data.update(extra)
@@ -144,7 +137,7 @@ def _auto_advance_bye(match):
         return False
     match.is_bye = True
     match.status = TournamentMatch.Status.DONE
-    match.save(update_fields=['winner', 'status', 'is_bye'])
+    match.save(update_fields=['winner', 'status'])
     _advance_winner(match)
     return True
 
@@ -184,9 +177,6 @@ def _propagate_byes(tournament):
 
 
 def _build_single_elimination(tournament, teams):
-    # Taille du bracket = plus petite puissance de 2 >= au nombre d'équipes
-    # réellement inscrites (et non au maximum théorique), pour éviter les
-    # rounds entiers de matchs vides quand il y a moins de joueurs que prévu.
     team_count   = max(2, len(teams))
     bracket_size = 1
     while bracket_size < team_count:
@@ -215,190 +205,6 @@ def _build_single_elimination(tournament, teams):
     tournament.save(update_fields=['status'])
     _propagate_byes(tournament)
 
-
-def _build_round_robin(tournament, teams):
-    n = len(teams)
-
-    if n % 2 == 1:
-        teams = teams + [None]
-        n += 1
-
-    half    = n // 2
-    pool    = list(range(1, n))
-    fixed   = 0
-    rounds  = n - 1
-
-    for round_number in range(1, rounds + 1):
-        indices = [fixed] + pool
-        pairs   = [(indices[i], indices[n - 1 - i]) for i in range(half)]
-
-        for position, (i, j) in enumerate(pairs, start=1):
-            t1 = teams[i]
-            t2 = teams[j]
-            is_bye = (t1 is None or t2 is None)
-            match = TournamentMatch.objects.create(
-                tournament=tournament,
-                round_number=round_number,
-                bracket_position=position,
-                team1=t1,
-                team2=t2,
-                is_bye=is_bye,
-                status=TournamentMatch.Status.DONE if is_bye else TournamentMatch.Status.PENDING,
-            )
-            if is_bye:
-                match.winner = t1 if t1 else t2
-                match.save(update_fields=['winner'])
-
-        pool = [pool[-1]] + pool[:-1]
-
-    real_teams = [t for t in teams if t is not None]
-    for team in real_teams:
-        TournamentRoundRobinsStandings.objects.create(
-            tournament=tournament,
-            team=team,
-        )
-
-    tournament.status = Tournament.Status.ONGOING
-    tournament.save(update_fields=['status'])
-
-    _schedule_round_robin_round(tournament, round_number=1)
-
-
-def _schedule_round_robin_round(tournament, round_number):
-    matches = tournament.bracket_matches.select_related(
-        'team1__player1', 'team1__player2',
-        'team2__player1', 'team2__player2',
-    ).filter(
-        round_number=round_number,
-        status=TournamentMatch.Status.PENDING,
-        is_bye=False,
-    )
-    for match in matches:
-        _schedule_ready_match(match)
-
-
-def _check_round_robin_done(tournament):
-    pending = tournament.bracket_matches.filter(
-        status=TournamentMatch.Status.PENDING,
-        is_bye=False,
-    ).exists()
-    if not pending:
-        tournament.status = Tournament.Status.DONE
-        tournament.save(update_fields=['status'])
-
-
-def _update_round_robin_standing(match):
-    if not match.winner:
-        return
-    loser_team = match.team2 if match.winner_id == match.team1_id else match.team1
-
-    TournamentRoundRobinsStandings.objects.filter(
-        tournament=match.tournament, team=match.winner
-    ).update(
-        wins=F('wins') + 1,
-        points=F('points') + 3,
-    )
-    TournamentRoundRobinsStandings.objects.filter(
-        tournament=match.tournament, team=loser_team
-    ).update(losses=F('losses') + 1)
-
-
-def _build_swiss_round(tournament, round_number):
-    teams = list(tournament.teams.select_related('player1', 'player2').all())
-
-    if round_number == 1:
-        random.shuffle(teams)
-    else:
-        standings = {
-            s.team_id: s.wins
-            for s in tournament.swiss_standing.select_related('team').all()
-        }
-        teams.sort(key=lambda t: standings.get(t.id, 0), reverse=True)
-
-    played_pairs = set()
-    for m in tournament.bracket_matches.exclude(
-        status=TournamentMatch.Status.PENDING
-    ).filter(is_bye=False):
-        if m.team1_id and m.team2_id:
-            played_pairs.add(frozenset([m.team1_id, m.team2_id]))
-
-    paired   = []
-    unpaired = list(teams)
-
-    while len(unpaired) >= 2:
-        team = unpaired.pop(0)
-        matched = False
-        for i, opponent in enumerate(unpaired):
-            if frozenset([team.id, opponent.id]) not in played_pairs:
-                paired.append((team, opponent))
-                unpaired.pop(i)
-                matched = True
-                break
-        if not matched:
-            paired.append((team, unpaired.pop(0)))
-
-    bye_team = unpaired[0] if unpaired else None
-
-    for position, (t1, t2) in enumerate(paired, start=1):
-        TournamentMatch.objects.create(
-            tournament=tournament,
-            round_number=round_number,
-            bracket_position=position,
-            team1=t1,
-            team2=t2,
-            swiss_round=round_number,
-        )
-        match = tournament.bracket_matches.filter(
-            round_number=round_number, bracket_position=position
-        ).select_related(
-            'team1__player1', 'team1__player2',
-            'team2__player1', 'team2__player2',
-        ).first()
-        if match:
-            _schedule_ready_match(match)
-
-    if bye_team:
-        pos = len(paired) + 1
-        TournamentMatch.objects.create(
-            tournament=tournament,
-            round_number=round_number,
-            bracket_position=pos,
-            team1=bye_team,
-            team2=None,
-            swiss_round=round_number,
-            is_bye=True,
-            status=TournamentMatch.Status.DONE,
-            winner=bye_team,
-        )
-        TournamentSwissStandings.objects.filter(
-            tournament=tournament, team=bye_team
-        ).update(wins=F('wins') + 1)
-
-
-def _update_swiss_standing(match):
-    if not match.winner or match.is_bye:
-        return
-    loser_team = match.team2 if match.winner_id == match.team1_id else match.team1
-
-    TournamentSwissStandings.objects.filter(
-        tournament=match.tournament, team=match.winner
-    ).update(wins=F('wins') + 1)
-
-    TournamentSwissStandings.objects.filter(
-        tournament=match.tournament, team=loser_team
-    ).update(losses=F('losses') + 1)
-
-
-def _swiss_round_complete(tournament, round_number):
-    return not tournament.bracket_matches.filter(
-        swiss_round=round_number,
-        status=TournamentMatch.Status.PENDING,
-        is_bye=False,
-    ).exists()
-
-
-def _max_swiss_rounds(n_teams):
-    return math.ceil(math.log2(n_teams)) if n_teams > 1 else 1
 
 def _get_valid_registrations(tournament):
     if tournament.team_size == 1:
@@ -431,28 +237,14 @@ def _create_teams(tournament, registrations):
 
 
 def _build_and_start_tournament(tournament):
-    fmt = tournament.format
     regs = _get_valid_registrations(tournament)
-
-    min_teams = {'SINGLE_ELIMINATION': 2, 'ROUND_ROBIN': 3, 'SWISS': 4}
-    if len(regs) < min_teams.get(fmt, 2):
-        return f"Il faut au moins {min_teams[fmt]} équipes pour lancer ce format."
+    if len(regs) < 2:
+        return f"Il faut au moins {2} équipes pour lancer ce format."
 
     random.shuffle(regs)
     teams = _create_teams(tournament, regs)
 
-    if fmt == 'SINGLE_ELIMINATION':
-        _build_single_elimination(tournament, teams)
-    elif fmt == 'ROUND_ROBIN':
-        _build_round_robin(tournament, teams)
-    elif fmt == 'SWISS':
-        for team in teams:
-            TournamentSwissStandings.objects.create(tournament=tournament, team=team)
-        tournament.status = Tournament.Status.ONGOING
-        tournament.save(update_fields=['status'])
-        _build_swiss_round(tournament, round_number=1)
-    else:
-        return f"Format inconnu : {fmt}"
+    _build_single_elimination(tournament, teams)
 
     return None
 
@@ -479,8 +271,6 @@ def _parse_import_file(file):
             row = [c.strip() for c in row if c.strip()]
             if not row:
                 continue
-            # On ne saute l'en-tête que sur la PREMIÈRE ligne non vide, sinon un
-            # joueur réellement nommé "player1" serait pris pour un en-tête.
             if first:
                 first = False
                 if row[0].lower() in ('player1', 'player', 'player2', 'login', 'username'):
@@ -500,9 +290,6 @@ def bde_unlock(request):
 
 
 def _create_tournament(data, created_by):
-    """Création partagée entre l'endpoint BDE (JWT) et l'admin (session).
-    Retourne (tournament_data, None) en cas de succès, ou (None, (message, code)).
-    `created_by` peut être None (champ nullable) pour une création admin."""
     active_exists = Tournament.objects.filter(
         status__in=[Tournament.Status.OPEN, Tournament.Status.CLOSED, Tournament.Status.ONGOING]
     ).exists()
@@ -525,8 +312,6 @@ class TournamentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Le démarrage est désormais 100 % manuel (BDE) : on ne lance plus
-        # automatiquement un tournoi dont la date de début est atteinte.
         tournament = (
             Tournament.objects
             .filter(status__in=[
@@ -593,8 +378,6 @@ def update_tournament(request, pk):
         msg   = first[0] if isinstance(first, (list, tuple)) else str(first)
         return _user_error(str(msg), 'INVALID')
 
-    # Tant que le tournoi n'est pas lancé (OPEN ou CLOSED), tout reste modifiable.
-    # Une fois ONGOING (bracket construit), on verrouille les champs structurels.
     if tournament.status not in (Tournament.Status.OPEN, Tournament.Status.CLOSED):
         blocked = {'start_date', 'deadline', 'format', 'team_size'} & set(serializer.validated_data.keys())
         if blocked:
@@ -605,14 +388,11 @@ def update_tournament(request, pk):
 
 
 def _do_start_tournament(tournament):
-    """Logique partagée entre l'endpoint BDE et l'admin pour démarrer un tournoi.
-    Retourne (tournament_data, None) ou (None, (message, code, extra)).
-    """
     if tournament.status != Tournament.Status.CLOSED:
         return None, ("Ferme d'abord les inscriptions avant de lancer le tournoi.", 'NOT_CLOSED', None)
 
     regs = _get_valid_registrations(tournament)
-    needed = 2  # élimination directe : au moins 2 équipes
+    needed = 2
     if len(regs) < needed:
         return None, (
             f'Il faut au moins {needed} équipes complètes pour lancer ce format.',
@@ -695,66 +475,9 @@ def tournament_bracket(request, pk):
             for rn, rm in rounds.items()
         ],
     }
-
-    if tournament.format == 'SWISS':
-        standings = tournament.swiss_standing.select_related(
-            'team__player1', 'team__player2'
-        ).order_by('-wins')
-        response_data['standings'] = TournamentSwissStandingsSerializer(standings, many=True).data
-
-    elif tournament.format == 'ROUND_ROBIN':
-        standings = tournament.round_robin_standing.select_related(
-            'team__player1', 'team__player2'
-        ).order_by('-points', '-wins')
-        response_data['standings'] = TournamentRoundRobinsSerializer(standings, many=True).data
-
     return Response(response_data)
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def swiss_next_round(request, pk):
-    tournament = get_object_or_404(Tournament, pk=pk)
-    denied = _require_bde(request)
-    if denied:
-        return denied
-
-    if tournament.format != 'SWISS':
-        return _user_error('Ce tournoi n\'est pas au format Swiss.', 'NOT_SWISS')
-    if tournament.status != Tournament.Status.ONGOING:
-        return _user_error('Le tournoi n\'est pas en cours.', 'NOT_ONGOING')
-
-    last_round = (
-        tournament.bracket_matches
-        .order_by('-swiss_round')
-        .values_list('swiss_round', flat=True)
-        .first()
-    ) or 0
-
-    if not _swiss_round_complete(tournament, last_round):
-        return _user_error(f'Le round {last_round} n\'est pas encore terminé.', 'ROUND_NOT_COMPLETE')
-
-    n_teams    = tournament.teams.count()
-    max_rounds = _max_swiss_rounds(n_teams)
-
-    if last_round >= max_rounds:
-        tournament.status = Tournament.Status.DONE
-        tournament.save(update_fields=['status'])
-        return Response(
-            {'detail': 'Tous les rounds sont terminés. Tournoi clôturé.'},
-            status=status.HTTP_200_OK,
-        )
-
-    with transaction.atomic():
-        _build_swiss_round(tournament, round_number=last_round + 1)
-
-    return Response(TournamentSerializer(tournament).data)
-
-
 def _do_import_players(tournament, file):
-    """Logique d'import partagée entre l'endpoint BDE (JWT) et l'admin (session).
-    Retourne (result, None) en cas de succès — result = {created, skipped, errors} —
-    ou (None, (message, code)) en cas d'erreur métier."""
     if tournament.status != Tournament.Status.OPEN:
         return None, ('Les inscriptions sont fermées.', 'REGISTRATIONS_CLOSED')
 
@@ -773,8 +496,6 @@ def _do_import_players(tournament, file):
     skipped  = []
     errors   = []
 
-    # Aucune limite de capacité à l'import (choix BDE) : on inscrit tout le monde,
-    # c'est le lancement du tournoi qui contrôle le nombre d'équipes.
     with transaction.atomic():
         for p1_login, p2_login in pairs:
             try:
@@ -883,15 +604,8 @@ def tournament_match_result(request, match_id):
         if old_queue_entry:
             old_queue_entry.delete()
 
-        fmt = match.tournament.format
-        if fmt == 'SINGLE_ELIMINATION':
-            _advance_winner(match)
-            _propagate_byes(match.tournament)
-        elif fmt == 'ROUND_ROBIN':
-            _update_round_robin_standing(match)
-            _check_round_robin_done(match.tournament)
-        elif fmt == 'SWISS':
-            _update_swiss_standing(match)
+        _advance_winner(match)
+        _propagate_byes(match.tournament)
 
     return Response(TournamentMatchSerializer(match).data)
 
@@ -913,9 +627,6 @@ def postpone_tournament_match(request, match_id):
     if not match.is_ready:
         return _user_error('Ce match ne peut pas encore être planifié.', 'NOT_READY')
 
-    # Les matchs de tournoi ne sont plus mis en file d'attente : la replanification
-    # n'a plus d'objet (le match se joue hors-ligne, le BDE valide le résultat).
-    # On répond sans rien modifier pour ne pas casser l'appel côté front.
     return Response(TournamentMatchSerializer(match).data)
 
 

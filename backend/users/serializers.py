@@ -62,9 +62,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             return None
 
     def validate_username(self, value):
-        # Plus de vérification « login 42 » : on autorise n'importe quel login.
-        # L'enrichissement depuis l'intra 42 (rôle, avatar) reste fait dans
-        # create() s'il s'avère que le login correspond à un utilisateur 42.
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already in use")
         return value
@@ -86,8 +83,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password2")
-        # L'utilisateur 42 est optionnel : login 42 → enrichissement rôle/avatar,
-        # sinon rôle « user » par défaut sans avatar.
         user_42 = self.get_42_user(validated_data["username"])
 
         role = "user"

@@ -189,7 +189,6 @@ CREATE TABLE bets (
 CREATE TABLE tournaments (
     id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name        VARCHAR(100) NOT NULL,
-    format           VARCHAR(20) DEFAULT 'SINGLE_ELIMINATION' CHECK (format IN ('SINGLE_ELIMINATION', 'ROUND_ROBIN', 'SWISS')),
     team_size        INTEGER DEFAULT 2 CHECK (team_size IN (1, 2)),
     start_date  TIMESTAMP NOT NULL,
     deadline    TIMESTAMP,
@@ -233,30 +232,9 @@ CREATE TABLE tournament_matches (
     score_team2      INTEGER CHECK (score_team2 >= 0),
     status           VARCHAR(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'DONE')),
     queue_entry_id   UUID UNIQUE REFERENCES queue(id) ON DELETE SET NULL,
-    swiss_round      INTEGER,
-    is_bye           BOOLEAN DEFAULT FALSE,
     created_at       TIMESTAMP DEFAULT NOW(),
     updated_at       TIMESTAMP DEFAULT NOW(),
     UNIQUE (tournament_id, round_number, bracket_position)
-);
-
-CREATE TABLE tournament_swiss_standings (
-    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-    team_id       UUID NOT NULL REFERENCES tournament_teams(id) ON DELETE CASCADE,
-    wins          INTEGER NOT NULL DEFAULT 0,
-    losses        INTEGER NOT NULL DEFAULT 0,
-    UNIQUE (tournament_id, team_id)
-);
-
-CREATE TABLE tournament_round_robin_standings (
-    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-    team_id       UUID NOT NULL REFERENCES tournament_teams(id) ON DELETE CASCADE,
-    wins          INTEGER NOT NULL DEFAULT 0,
-    losses        INTEGER NOT NULL DEFAULT 0,
-    points        INTEGER NOT NULL DEFAULT 0,
-    UNIQUE (tournament_id, team_id)
 );
 
 CREATE TABLE organizations (
@@ -408,7 +386,7 @@ CREATE TRIGGER trigger_tournament_matches_updated_at
 BEFORE UPDATE ON tournament_matches
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ── Achievements ──────────────────────────────────────────────────────────
+
 CREATE TABLE achievements (
     id          VARCHAR(40) PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
@@ -428,16 +406,16 @@ CREATE TABLE user_achievements (
 
 CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
 
--- Seed achievements
+
 INSERT INTO achievements (id, name, description, icon, category, sort_order) VALUES
--- Gamelles & Demis
+
 ('first_gamelle',    'Première gamelle',    'Marquer 1 gamelle',              '🪣', 'GAMELLES', 1),
 ('gamelleur',        'Gamelleur',           'Marquer 5 gamelles au total',    '🪣', 'GAMELLES', 2),
 ('roi_gamelle',      'Roi de la gamelle',   'Marquer 20 gamelles au total',   '👑', 'GAMELLES', 3),
 ('first_demi',       'Premier demi',        'Marquer 1 demi',                 '🍺', 'DEMIS',    4),
 ('barman',           'Barman',              'Marquer 10 demis au total',      '🍺', 'DEMIS',    5),
 ('patron_bar',       'Patron du bar',       'Marquer 50 demis au total',      '🍻', 'DEMIS',    6),
--- Scores & Matchs
+
 ('bapteme',          'Baptême du feu',      'Jouer son tout premier match',   '🔥', 'MATCH',    10),
 ('first_win',        'Première victoire',   'Gagner un match',                '✅', 'MATCH',    11),
 ('ecrasante',        'Victoire écrasante',  'Gagner 10-0',                    '💀', 'MATCH',    12),
@@ -450,26 +428,26 @@ INSERT INTO achievements (id, name, description, icon, category, sort_order) VAL
 ('matches_10',       'Joueur régulier',     'Jouer 10 matchs',                '🎮', 'MATCH',    19),
 ('matches_50',       'Vétéran',             'Jouer 50 matchs',                '🎖️', 'MATCH',    20),
 ('matches_100',      'Légende',             'Jouer 100 matchs',               '🏅', 'MATCH',    21),
--- Séries
+
 ('serie_3',          'En feu',              '3 victoires d''affilée',         '🔥', 'SERIE',    30),
 ('serie_5',          'Inarrêtable',         '5 victoires d''affilée',         '⚡', 'SERIE',    31),
 ('serie_10',         'Machine',             '10 victoires d''affilée',        '🤖', 'SERIE',    32),
 ('resilient',        'Résilient',           'Gagner après 5 défaites d''affilée', '💪', 'SERIE', 33),
--- ELO
+
 ('elo_1100',         'Grimpeur',            'Atteindre 1100 ELO',             '📈', 'ELO',      40),
 ('elo_1200',         'Compétiteur',         'Atteindre 1200 ELO',             '📊', 'ELO',      41),
 ('elo_1500',         'Élite',               'Atteindre 1500 ELO',             '🏆', 'ELO',      42),
 ('elo_2000',         'Légende vivante',     'Atteindre 2000 ELO',             '👑', 'ELO',      43),
--- Saisons
+
 ('first_season',     'Première saison',     'Participer à une saison classée', '📅', 'SAISON',  50),
 ('top3_season',      'Top 3',               'Finir dans le top 3 d''une saison', '🥉', 'SAISON', 51),
 ('champion_season',  'Champion',            'Finir #1 d''une saison',         '🥇', 'SAISON',   52),
 ('multi_champion',   'Multi-champion',      'Finir #1 dans 3 saisons',        '👑', 'SAISON',   53),
--- 2v2
+
 ('first_2v2',        'Coéquipier',          'Jouer un match en 2v2',          '🤝', 'EQUIPE',   60),
 ('duo_choc',         'Duo de choc',         'Gagner 10 matchs en 2v2',        '💪', 'EQUIPE',   61),
 ('capitaine',        'Capitaine',           'Gagner 25 matchs en 2v2',        '🫡', 'EQUIPE',   62),
--- Économie
+
 ('first_bet',        'Premier pari',        'Placer un pari',                 '🎰', 'ECONOMIE', 70),
 ('jackpot',          'Jackpot',             'Gagner un pari de 1000+ jetons', '💰', 'ECONOMIE', 71),
 ('millionnaire',     'Millionnaire',        'Atteindre 50 000 jetons',        '🤑', 'ECONOMIE', 72);
@@ -492,7 +470,6 @@ CREATE INDEX idx_season_rewards_player      ON season_rewards(player_id);
 CREATE INDEX idx_org_members_player         ON organization_members(player_id);
 CREATE INDEX idx_org_members_org            ON organization_members(organization_id);
 
--- ── Public API Keys ───────────────────────────────────────────────────────
 CREATE TABLE api_keys (
     id              SERIAL PRIMARY KEY,
     name            VARCHAR(100) NOT NULL,

@@ -1,11 +1,8 @@
 from datetime import timezone as dt_timezone
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Tournament, TournamentMatch, TournamentRegistration, TournamentTeam, TournamentSwissStandings, TournamentRoundRobinsStandings
+from .models import Tournament, TournamentMatch, TournamentRegistration, TournamentTeam
 
-# Seul le format à élimination directe est proposé (les formats Suisse et Round
-# Robin ont été retirés). On garde une liste pour la validation.
-VALID_FORMATS = ['SINGLE_ELIMINATION']
 MIN_PLAYERS = 2
 
 class TournamentSerializer(serializers.ModelSerializer):
@@ -19,7 +16,7 @@ class TournamentSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Tournament
         fields = [
-            'id', 'name', 'format', 'team_size',
+            'id', 'name', 'team_size',
             'start_date', 'deadline',
             'prize', 'status', 'registered', 'teams_count',
             'date_label', 'deadline_label', 'created_at',
@@ -42,10 +39,6 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _local(dt):
-        # La colonne est un TIMESTAMP sans fuseau : avec USE_TZ=True, Django
-        # écrit l'heure convertie en UTC (naïf). On relit donc ce naïf comme de
-        # l'UTC, puis on repasse en heure locale — sinon l'affichage est décalé
-        # du fuseau (ex. -2h l'été à Paris).
         if dt is None:
             return None
         if timezone.is_naive(dt):
@@ -53,8 +46,6 @@ class TournamentSerializer(serializers.ModelSerializer):
         return timezone.localtime(dt)
 
     def get_start_date(self, obj):
-        # ISO localisé (avec offset) pour que le front le rejoue correctement
-        # dans un <input datetime-local> sans décalage de fuseau.
         local = self._local(obj.start_date)
         return local.isoformat() if local else None
 
@@ -76,16 +67,11 @@ class TournamentSerializer(serializers.ModelSerializer):
 class TournamentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Tournament
-        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'prize']
+        fields = ['name', 'team_size', 'start_date', 'deadline', 'prize']
         extra_kwargs = {
             'deadline': {'required': False, 'allow_null': True},
             'prize':    {'required': False, 'allow_blank': True},
         }
-
-    def validate_format(self, value):
-        if value not in VALID_FORMATS:
-            raise serializers.ValidationError(f"Format invalide. Choix : {VALID_FORMATS}")
-        return value
 
     def validate_team_size(self, value):
         if value not in (1, 2):
@@ -101,20 +87,14 @@ class TournamentCreateSerializer(serializers.ModelSerializer):
 class TournamentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Tournament
-        fields = ['name', 'format', 'team_size', 'start_date', 'deadline', 'prize']
+        fields = ['name', 'team_size', 'start_date', 'deadline', 'prize']
         extra_kwargs = {
             'name':       {'required': False},
-            'format':     {'required': False},
             'team_size':  {'required': False},
             'start_date': {'required': False},
             'deadline':   {'required': False, 'allow_null': True},
             'prize':      {'required': False, 'allow_blank': True},
         }
-
-    def validate_format(self, value):
-        if value not in VALID_FORMATS:
-            raise serializers.ValidationError(f"Format invalide. Choix : {VALID_FORMATS}")
-        return value
 
     def validate_start_date(self, value):
         if value and value <= timezone.now():
@@ -164,21 +144,5 @@ class TournamentMatchSerializer(serializers.ModelSerializer):
             'id', 'round_number', 'bracket_position',
             'team1', 'team2', 'winner',
             'score_team1', 'score_team2', 'status',
-            'queue_entry_id', 'swiss_round', 'is_bye'
-        ]
-
-class TournamentSwissStandingsSerializer(serializers.ModelSerializer):
-    team          = TournamentTeamSerializer(read_only=True)
-    class Meta:
-        model = TournamentSwissStandings
-        fields = [
-            'id', 'team', 'wins', 'losses'
-        ]
-
-class TournamentRoundRobinsSerializer(serializers.ModelSerializer):
-    team          = TournamentTeamSerializer(read_only=True)
-    class Meta:
-        model = TournamentRoundRobinsStandings
-        fields = [
-            'id', 'team', 'wins', 'losses', 'points'
+            'queue_entry_id'
         ]

@@ -14,7 +14,6 @@ class Tournament(models.Model):
         CANCELLED = 'CANCELLED', 'Annulé'
 
     name        = models.CharField(max_length=100)
-    format      = models.CharField(max_length=20, default='SINGLE_ELIMINATION')
     team_size   = models.IntegerField(choices=[(1, '1'), (2, '2')], default=2)
     start_date  = models.DateTimeField()
     deadline    = models.DateTimeField(null=True, blank=True)
@@ -96,8 +95,6 @@ class TournamentMatch(models.Model):
     score_team2      = models.PositiveIntegerField(null=True, blank=True)
     status           = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     queue_entry      = models.OneToOneField('planning.QueueEntry', null=True, blank=True, on_delete=models.SET_NULL, related_name='tournament_match', db_column='queue_entry_id')
-    swiss_round      = models.IntegerField(null=True, blank=True)
-    is_bye           = models.BooleanField(default=False)
     created_at       = models.DateTimeField(auto_now_add=True)
     updated_at       = models.DateTimeField(auto_now=True)
 
@@ -113,28 +110,3 @@ class TournamentMatch(models.Model):
     @property
     def is_ready(self):
         return bool(self.team1 and self.team2 and self.status == self.Status.PENDING)
-
-class TournamentSwissStandings(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    class Meta:
-        managed         = False
-        db_table        = 'tournament_swiss_standings'
-    
-    tournament       = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='swiss_standing', db_column='tournament_id')
-    team             = models.ForeignKey(TournamentTeam, null=True, blank=True, on_delete=models.SET_NULL, db_column='team_id')
-    wins             = models.IntegerField(default=0)
-    losses           = models.IntegerField(default=0)
-
-class TournamentRoundRobinsStandings(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    class Meta:
-        managed         = False
-        db_table        = 'tournament_round_robin_standings'
-    
-    tournament       = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='round_robin_standing', db_column='tournament_id')
-    team             = models.ForeignKey(TournamentTeam, null=True, blank=True, on_delete=models.SET_NULL, db_column='team_id')
-    wins             = models.IntegerField(default=0)
-    losses           = models.IntegerField(default=0)
-    points           = models.IntegerField(default=0)

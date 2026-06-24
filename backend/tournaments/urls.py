@@ -18,6 +18,5 @@ urlpatterns = [
     path('<uuid:pk>/registrations/<uuid:reg_id>/', views.remove_registration,    name='tournament-remove-registration'),
     path('<uuid:pk>/solo/',                   views.tournament_solo,              name='tournament-solo'),
     path('<uuid:pk>/my-registration/',        views.my_registration,              name='tournament-my-registration'),
-    path('<uuid:pk>/swiss-next-round/', views.swiss_next_round,  name='tournament-swiss-next-round'),
     path('<uuid:pk>/import-players/',   views.import_players,    name='tournament-import-players'),
 ]

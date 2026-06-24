@@ -62,8 +62,6 @@ class  RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # Erreurs de validation renvoyées en HTTP 200 (champ `error`/`fields`)
-        # plutôt qu'en 400, pour ne pas polluer la console du navigateur.
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': 'validation', 'fields': serializer.errors})
@@ -80,9 +78,6 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # NB: les échecs d'authentification « attendus » renvoient HTTP 200 avec
-        # un champ `error` (code stable), et non 4xx, pour ne pas générer
-        # d'erreurs dans la console du navigateur (exigence du sujet).
         email = request.data.get('email')
         password = request.data.get('password')
         try:
@@ -95,18 +90,15 @@ class LoginView(APIView):
         if not user.check_password(password):
             return Response({'error': 'invalid_credentials'})
 
-        # Vérifier le ban
         ban = user.ban_info()
         if ban:
             return Response({'error': 'banned', 'ban': ban})
 
         if user.is_2fa_enabled:
-            # Générer un code 6 chiffres, stocker dans Redis, envoyer par mail
             code = f"{random.randint(0, 999999):06d}"
             cache_key = f"2fa_code_{user.id}"
-            cache.set(cache_key, code, timeout=300)  # 5 minutes
+            cache.set(cache_key, code, timeout=300)
 
-            # Masquer l'email : s***@gmail.com
             parts = user.email.split('@')
             email_hint = f"{parts[0][0]}***@{parts[1]}"
 
@@ -131,11 +123,9 @@ class LoginView(APIView):
         return set_auth_cookies(response, get_tokens(user))
 
 class Verify2FACodeView(APIView):
-    """Valide le code 2FA reçu par email et émet les JWT."""
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # Comme LoginView : échecs attendus en HTTP 200 + code d'erreur, pas de 4xx.
         user_id = request.data.get('user_id')
         code = request.data.get('code', '').strip()
 
@@ -155,8 +145,6 @@ class Verify2FACodeView(APIView):
 
         if stored_code != code:
             return Response({'error': 'invalid_code'})
-
-        # Code valide — supprimer du cache et connecter
         cache.delete(cache_key)
         response = Response({'success': True, 'detail': 'Login successful'})
         return set_auth_cookies(response, get_tokens(user))
@@ -166,7 +154,6 @@ class OAuth42LoginView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Redirige le navigateur vers la page de login 42
         query = urlencode({
             "client_id": settings.OAUTH_42_CLIENT_ID,
             "redirect_uri": settings.OAUTH_42_REDIRECT_URI,
@@ -175,7 +162,6 @@ class OAuth42LoginView(APIView):
         url = f"https://api.intra.42.fr/oauth/authorize?{query}"
         return django_redirect(url)
 
-# --- OAuth 42 ---
 class OAuth42CallbackView(APIView):
     permission_classes = [AllowAny]
 
@@ -253,7 +239,6 @@ class OAuth42CallbackView(APIView):
                 user.role = role
                 user.save(update_fields=['role'])
 
-            # 2FA par email
             if user.is_2fa_enabled:
                 code = f"{random.randint(0, 999999):06d}"
                 cache_key = f"2fa_code_{user.id}"
@@ -276,7 +261,6 @@ class OAuth42CallbackView(APIView):
                 params = urlencode({'2fa': 'true', 'uid': str(user.id), 'hint': email_hint})
                 return django_redirect(f"{settings.SITE_URL}/login?{params}")
 
-            # Vérifier le ban
             ban = user.ban_info()
             if ban:
                 if ban['type'] == 'permanent':
@@ -286,8 +270,6 @@ class OAuth42CallbackView(APIView):
                         f"{settings.SITE_URL}/banned?type=temporary&until={ban['until']}"
                     )
 
-
-            # 2FA par email
             if user.is_2fa_enabled:
                 code = f"{random.randint(0, 999999):06d}"
                 cache_key = f"2fa_code_{user.id}"
@@ -323,8 +305,6 @@ class CookieTokenRefreshView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # Échec de refresh « attendu » (pas/plus de refresh token) en HTTP 200
-        # avec {refreshed: False}, pour ne pas polluer la console du navigateur.
         raw_refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
         if not raw_refresh:
             return Response({'refreshed': False})
@@ -353,25 +333,21 @@ class LogoutView(APIView):
     def post(self, request):
         return delete_auth_cookies(Response({'detail': 'Logged out'}))
 
-# 2FA — simple toggle email
 class Enable2FAView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """Active le 2FA par email"""
         user = request.user
         user.is_2fa_enabled = True
         user.save(update_fields=['is_2fa_enabled'])
         return Response({'status': '2FA activé'})
 
     def delete(self, request):
-        """Désactive le 2FA"""
         user = request.user
         user.is_2fa_enabled = False
         user.save(update_fields=['is_2fa_enabled'])
         return Response({'status': '2FA désactivé'})
 
-# Activation par email
 class ActivateAccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -407,10 +383,8 @@ class UserListView(APIView):
         search = request.query_params.get('search', '').strip()
         users = User.objects.filter(is_active=True)
         if search:
-            # Mode autocomplétion (recherche performance) : filtré + limité
             users = users.filter(username__icontains=search).values('username', 'avatar_url')[:20]
         else:
-            # Liste complète (validation d'ajout de match, map des avatars, comparaison profil)
             users = users.values('username', 'avatar_url')
         return Response([{'login': u['username'], 'name': u['username'], 'avatar_url': u['avatar_url']} for u in users])
 
@@ -463,7 +437,6 @@ class MyStatsCardView(APIView):
                 total_losses += 1
                 current_streak = 0
 
-            # Meilleur ELO solo
             if m.is_ranked and m.match_type == 'SOLO':
                 elo_after = m.elo_solo_player1_after if is_p1 else m.elo_solo_player2_after
                 if elo_after:
@@ -503,8 +476,6 @@ class FriendAddNotifyView(APIView):
                     {"type": "friend_added", "from": sender},
                 )
             else:
-                # Cible hors-ligne : on stocke la notif pour la livrer à sa
-                # prochaine connexion (cf. QueueConsumer._deliver_pending).
                 pending = state.pending_invites.setdefault(target, [])
                 if not any(p.get("friend_added") and p.get("from") == sender for p in pending):
                     pending.append({"friend_added": True, "from": sender})
@@ -522,22 +493,18 @@ class AvatarUploadView(APIView):
         if not file:
             return Response({'error': 'Aucun fichier'}, status=400)
 
-        # Vérifier que c'est bien une image
         if not file.content_type.startswith('image/'):
             return Response({'error': 'Fichier invalide'}, status=400)
 
-        # Vérifier la taille (max 2 Mo)
         if file.size > 2 * 1024 * 1024:
             return Response({'error': 'Image trop lourde (max 2 Mo)'}, status=400)
 
         user = request.user
-        # Supprimer l'ancienne photo si elle existe
         if user.avatar_url and 'media/' in user.avatar_url:
             old_path = os.path.join(settings.MEDIA_ROOT, user.avatar_url.split('/media/')[-1])
             if os.path.exists(old_path):
                 os.remove(old_path)
 
-        # Sauvegarder le fichier
         ext       = file.name.split('.')[-1].lower()
         filename  = f"avatars/{user.id}.{ext}"
         filepath  = os.path.join(settings.MEDIA_ROOT, filename)
@@ -547,7 +514,6 @@ class AvatarUploadView(APIView):
             for chunk in file.chunks():
                 f.write(chunk)
 
-        # Mettre à jour l'URL dans la BDD
         user.avatar_url = f"/media/{filename}"
         user.save(update_fields=['avatar_url'])
 
@@ -570,14 +536,10 @@ class UpdateProfileView(APIView):
     def put(self, request):
         user = request.user
 
-        # Mise à jour email
         if request.data.get('email'):
             from django.core.validators import validate_email as django_validate_email
             from django.core.exceptions import ValidationError as DjangoValidationError
             new_email = request.data['email'].strip()
-            # Erreurs d'email renvoyées en 200 + en-tête X-Profile-Email-Error
-            # (au lieu d'un 400) pour éviter une ligne rouge dans la console.
-            # Le front lit l'en-tête et affiche le message traduit correspondant.
             try:
                 django_validate_email(new_email)
             except DjangoValidationError:
@@ -590,7 +552,6 @@ class UpdateProfileView(APIView):
                 return resp
             user.email = new_email
 
-        # Suppression avatar
         if request.data.get('delete_avatar') == 'true':
             if user.avatar_url and '/media/' in user.avatar_url:
                 old_path = os.path.join(
@@ -601,12 +562,10 @@ class UpdateProfileView(APIView):
                     os.remove(old_path)
             user.avatar_url = None
 
-        # Nouvel avatar
         elif 'avatar' in request.FILES:
             file = request.FILES['avatar']
             ext  = file.name.split('.')[-1].lower()
 
-            # Supprimer l'ancienne image
             if user.avatar_url and '/media/' in (user.avatar_url or ''):
                 old_path = os.path.join(
                     settings.MEDIA_ROOT,
@@ -615,7 +574,6 @@ class UpdateProfileView(APIView):
                 if os.path.exists(old_path):
                     os.remove(old_path)
 
-            # Nom unique pour casser le cache navigateur
             filename = f"avatars/{user.id}_{uuid.uuid4().hex[:8]}.{ext}"
             filepath = os.path.join(settings.MEDIA_ROOT, filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)

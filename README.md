@@ -233,22 +233,25 @@ Frontend — React/Vite    Backend — Django
 
 | Table | Description | Key Relations |
 |---|---|---|
-| `users` | User accounts (email, password hash, OAuth 42 ID, avatar, wallet, role, ban status, GDPR flag) | — |
-| `stats` | Per-user statistics (ELO solo/team, wins, losses, gamelles, bet stats) | → `users` |
-| `seasons` | Seasons (name, start/end date, status: UPCOMING/ACTIVE/FINISHED, rewards distributed flag) | — |
-| `matches` | Match records (type: SOLO/TEAM/FUN, ranked, status, scores, ELO before/after for all 4 players) | → `users`, `seasons` |
-| `season_stats` | User stats snapshot per season (ELO, wins, losses at season end) | → `users`, `seasons` |
-| `season_rewards` | Token rewards distributed at end of season per user | → `users`, `seasons` |
-| `rankings` | Current live ranking (ELO rank, position) | → `users`, `seasons` |
-| `ranking_history` | Ranking snapshots over time | → `users`, `seasons` |
-| `reservations` | Table reservations (time slot, user, status) | → `users` |
-| `queue` | Live waiting queue entries (user, position, timestamp) | → `users` |
-| `bets` | Individual bets (user, match, amount, predicted winner, status, payout) | → `users`, `matches` |
-| `wallet_transactions` | Full wallet transaction log (type, amount, balance before/after) | → `users` |
-| `tournaments` | Tournament metadata (name, status, type) | → `users` (organizer) |
-| `tournament_registrations` | Player registrations for a tournament | → `users`, `tournaments` |
-| `tournament_teams` | Teams within a tournament | → `tournaments` |
-| `tournament_matches` | Bracket matches within a tournament | → `tournaments`, `users` |
+| `users` | Comptes utilisateurs (email, hash mdp, OAuth 42, avatar, wallet, rôle, ban, GDPR) | — |
+| `stats` | Statistiques globales par utilisateur (ELO solo/team, wins, losses, gamelles, paris) | → `users` |
+| `seasons` | Saisons (nom, dates, statut : UPCOMING/ACTIVE/FINISHED, flag rewards) | — |
+| `matches` | Matchs (type : SOLO/TEAM/FUN, classé, statut, scores, ELO avant/après pour les 4 joueurs) | → `users`, `seasons` |
+| `season_stats` | Snapshot des stats par saison (ELO, wins, losses en fin de saison) | → `users`, `seasons` |
+| `season_rewards` | Récompenses en tokens distribuées en fin de saison | → `users`, `seasons` |
+| `rankings` | Classement live (ELO, position, scope, mode SOLO/TEAM) | → `users`, `seasons` |
+| `ranking_history` | Historique des variations de classement match par match | → `users`, `seasons`, `matches` |
+| `reservations` | Réservations de table (type, statut, joueurs, match lié) | → `users`, `matches` |
+| `queue` | File d'attente en temps réel (type, statut, joueurs, timestamp) | → `users` |
+| `bets` | Paris individuels (montant, gagnant prédit, résultat, payout, cotes) | → `users`, `matches`, `reservations` |
+| `wallet_transactions` | Journal complet des transactions (type : bet/win/deposit/refund, montant) | → `users` |
+| `tournaments` | Métadonnées des tournois (nom, team_size, dates, statut, prize) | → `users` (créateur) |
+| `tournament_registrations` | Inscriptions joueurs/équipes à un tournoi | → `users`, `tournaments` |
+| `tournament_teams` | Équipes constituées après lancement du tournoi (seed, joueurs) | → `tournaments`, `tournament_registrations` |
+| `tournament_matches` | Matchs du bracket (round, position, scores, winner, queue entry) | → `tournaments`, `tournament_teams`, `queue` |
+| `achievements` | Catalogue des succès disponibles (catégorie, icône, ordre) | — |
+| `user_achievements` | Succès débloqués par utilisateur (avec timestamp) | → `users`, `achievements` |
+| `api_keys` | Clés API (rate limit, accès complet, expiration, owner) | → `users` |
 
 ### Key Relations
 
@@ -257,15 +260,19 @@ users ──< stats (1:1)
 users ──< matches (player1, player2, teammates)
 users ──< bets ──> matches
 users ──< wallet_transactions
-users ──< reservations
+users ──< reservations ──> matches
 users ──< queue
+users ──< user_achievements ──> achievements
+
 seasons ──< matches
 seasons ──< season_stats ──> users
 seasons ──< season_rewards ──> users
 seasons ──< rankings ──> users
+seasons ──< ranking_history ──> users
+
 tournaments ──< tournament_registrations ──> users
-tournaments ──< tournament_teams
-tournaments ──< tournament_matches
+tournaments ──< tournament_teams ──< tournament_matches
+queue ──> tournament_matches
 ```
 
 ---
@@ -471,7 +478,7 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 - Implemented GDPR features: data export and full anonymization
 - Secured all backend endpoints: input validation, permission decorators, rate limiting on auth routes
 - Wrote `postgres/init.sql` (the authoritative DB schema)
-- **Challenge**: the 2FA + OAuth 42 flow required careful state management (handling partial sessions between OAuth callback and 2FA verification) and secure OTP secret storage.
+- **Challenge**: the real difficulty was the sheer volume of things to learn before writing a single line of code. JWT, HttpOnly cookies, OAuth flow, relational constraints, tournament bracket logic — none of these were familiar going in. Every feature started with a research and understanding phase, and that density of learning is what made the project so rewarding.
 
 ### Roman (rodeulio) — Fullstack Developer (Real-time)
 - Implemented all WebSocket consumers in `realtime/` (Django Channels): live queue, live notifications, live ranking update broadcast

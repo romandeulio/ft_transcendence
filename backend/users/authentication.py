@@ -2,7 +2,6 @@ from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError, AuthenticationFailed
 
-# Paths d'auth où on ne bloque PAS les bannis (ces vues gèrent le ban elles-mêmes)
 _AUTH_SKIP_BAN = (
     '/api/auth/login/',
     '/api/auth/register/',
@@ -17,7 +16,6 @@ _AUTH_SKIP_BAN = (
 
 
 def _raise_banned(user):
-    """Lève AuthenticationFailed avec les infos de ban dans le detail."""
     ban = user.ban_info() or {}
     raise AuthenticationFailed({
         'detail': 'User is banned',
@@ -26,7 +24,6 @@ def _raise_banned(user):
 
 
 def _skip_ban_check(request):
-    """Retourne True si le path est un endpoint d'auth/admin qui gère le ban lui-même."""
     path = request.path
     return any(path.startswith(p) for p in _AUTH_SKIP_BAN)
 

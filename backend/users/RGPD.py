@@ -17,10 +17,6 @@ def _generate_code():
 
 
 def _invalid_code_response():
-    """Réponse « code invalide » en HTTP 200 (au lieu de 400) pour éviter une
-    ligne d'erreur réseau rouge dans la console du navigateur. Le front détecte
-    le cas via l'en-tête X-GDPR-Code-Valid (robuste même quand l'export renvoie
-    un fichier) et/ou le champ JSON `valid`."""
     resp = Response({'valid': False}, status=status.HTTP_200_OK)
     resp['X-GDPR-Code-Valid'] = 'false'
     return resp
