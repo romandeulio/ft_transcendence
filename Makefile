@@ -50,7 +50,6 @@ backup:
 seed:
 	docker exec transcendence_backend python manage.py seed_users
 
-
 unseed:
 	docker exec transcendence_backend python manage.py seed_users --clean
 

@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Load DB credentials persisted by entrypoint.sh (needed when run from cron,
+# which does not inherit the container environment). Harmless when run via
+# `docker exec` (the variables are simply re-set to the same values).
+[ -f /etc/backup.env ] && . /etc/backup.env
+
 DATE=$(date +%Y%m%d_%H%M%S)
 FILENAME="backup_${DATE}.sql"
 

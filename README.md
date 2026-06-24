@@ -55,7 +55,7 @@ The application is built around four core pillars:
 - **`make`**
 - A **`.env`** file filled from `.env.example` (see configuration below)
 
-> All runtime dependencies (Python 3.12, Node 20, PostgreSQL 16, Redis 7, Nginx) are handled inside Docker — nothing to install locally.
+> All runtime dependencies (Python 3.12, Node 20, PostgreSQL 15, Redis 7, Nginx) are handled inside Docker — nothing to install locally.
 
 ### Configuration
 
@@ -138,7 +138,7 @@ No browser console errors or warnings in production mode.
 | Member | 42 Login | Role(s) | Responsibilities |
 |---|---|---|---|
 | Coraline | `cprot` | PM / Scrum Master, DevOps | Organized sprints and team coordination; designed and maintained the full Docker/Nginx infrastructure; implemented i18n, RTL, Privacy Policy and Terms of Service page, documentation, tests QA, help frontend. |
-| Léa | `ltcherep` | Product Owner, Frontend | Defined frontend product vision; developed the core React interfaces (ranking, profile, betting, admin); built the design system (22+ components) and analytics dashboard. |
+| Léa | `ltcherep` | Product Owner, Frontend | Defined frontend product vision; developed the core React interfaces (ranking, profile, betting, admin); built the design system (17+ components) and analytics dashboard. |
 | Thaïs | `tvandoor` | Tech Lead, Database | Defined backend product vision; designed the full DB schema; implemented authentication (email/password, OAuth 42, 2FA), advanced permissions, and GDPR compliance. |
 | Roman | `rodeulio` | Fullstack Developer (Real-time) | Implemented all WebSocket consumers (live queue, notifications, ranking); developed the full betting system backend (bets, wallet, transactions). |
 | Sydney | `scavalli` | Backend Developer, API | Implemented match logic and ELO calculation, seasons, planning, tournaments, and the public API with key authentication and rate limiting. |
@@ -375,7 +375,7 @@ queue ──> tournament_matches
 ### Design System
 | Feature | Description | Author(s) |
 |---|---|---|
-| Reusable components | 22+ components: Modal, Card, Avatar, Toggle, ProgressBar, Pill, StatCard, BetButton, AvatarEditor, LanguageSwitcher, etc. | Léa |
+| Reusable components | 17+ components: Modal, Card, Avatar, Toggle, ProgressBar, Pill, StatCard, BetButton, AvatarEditor, LanguageSwitcher, etc. | Léa |
 | Consistent palette | Unified color system, typography, and icons | Léa |
 
 ### Legal
@@ -469,7 +469,7 @@ We chose to implement a virtual betting system as our "Module of Choice" at Majo
 - Defined and prioritized the frontend product backlog
 - Developed Ranking page (ELO leaderboard with filters and sorting), Profile page (stats, match history, friends), Admin dashboard, Betting/Wallet UI
 - Built the analytics performance dashboard with `PerformanceChart` and `ComparisonBarChart` components
-- Created the full design system: 22+ reusable components, shared color palette, typography
+- Created the full design system: 17+ reusable components, shared color palette, typography
 - **Challenge**: building a consistent design system from scratch (not using a library like Material-UI) while maintaining development velocity required upfront investment in component architecture that paid off later.
 
 ### Thaïs (tvandoor) — Product Owner & Tech Lead Backend
